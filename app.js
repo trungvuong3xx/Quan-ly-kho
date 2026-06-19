@@ -1,4 +1,4 @@
-﻿const API = "https://script.google.com/macros/s/AKfycbyeVxFfSGI-ca8VJkDUUM9GuhqJ0CN91FBSMCaSu_NphsbE7TR-XlMcGVgz21wgzXBSdA/exec";
+const API = "https://script.google.com/macros/s/AKfycbyeVxFfSGI-ca8VJkDUUM9GuhqJ0CN91FBSMCaSu_NphsbE7TR-XlMcGVgz21wgzXBSdA/exec";
 
 async function callAPI(body) {
   const res = await fetch(API, { method: "POST", body: JSON.stringify(body) });
@@ -6,17 +6,30 @@ async function callAPI(body) {
 }
 
 let infoMSP = null;
+let zxingReader = null;
+let dangXuLy = false;
+let ngayChon = null;
+let loaiChon = null;
+let qrDangQuet = null;
 
-// ── Navigation ───────────────────────────────────────────
-function chuyenTrang(id, el) {
-  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-  document.getElementById(id).classList.add('active');
-  el.classList.add('active');
-  if (id !== 'quetQR') dungQuet();
+function formatKg(value) {
+  const num = Number(value || 0);
+  if (!Number.isFinite(num)) return "0";
+  return Number.isInteger(num) ? String(num) : String(Number(num.toFixed(3)));
 }
 
-// ── Tạo QR ──────────────────────────────────────────────
+function isNhap(loai) {
+  return String(loai || "").startsWith("Nhập");
+}
+
+function chuyenTrang(id, el) {
+  document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
+  document.querySelectorAll(".nav-btn").forEach(b => b.classList.remove("active"));
+  document.getElementById(id).classList.add("active");
+  el.classList.add("active");
+  if (id !== "quetQR") dungQuet();
+}
+
 async function timMSP() {
   const input = document.getElementById("msp-tao");
   const msp = input.value.trim();
@@ -28,7 +41,7 @@ async function timMSP() {
   document.getElementById("qr-grid").innerHTML = "";
 
   if (!msp) {
-    alert("Vui long nhap ma MSP!");
+    alert("Vui lòng nhập mã MSP!");
     input.focus();
     return;
   }
@@ -36,7 +49,7 @@ async function timMSP() {
   const info = await callAPI({ action: "getInfo", msp });
 
   if (!info.success) {
-    alert(info.error || "Khong tim thay MSP!");
+    alert(info.error || info.message || "Không tìm thấy MSP!");
     input.focus();
     return;
   }
@@ -51,65 +64,50 @@ async function timMSP() {
   document.getElementById("t-mau").textContent = infoMSP.mau || "-";
   infoBox.classList.add("show");
 }
+
 async function taoQR() {
-if (!infoMSP) return;
+  if (!infoMSP) return;
 
-const sl = parseInt(document.getElementById("sl-qr").value) || 20;
+  const sl = parseInt(document.getElementById("sl-qr").value, 10) || 20;
+  const ids = await callAPI({ action: "taoNhieuID", soLuong: sl });
 
-const ids = await callAPI({
-action: "taoNhieuID",
-soLuong: sl
-});
+  if (ids.error) {
+    alert("❌ " + ids.error);
+    return;
+  }
 
-if (ids.error) {
-alert("❌ " + ids.error);
-return;
+  const grid = document.getElementById("qr-grid");
+  grid.innerHTML = "";
+
+  ids.forEach(id => {
+    const qrData = id + "|" + infoMSP.msp;
+    const nd = document.createElement("div");
+    nd.className = "qr-item";
+    nd.innerHTML = `
+      <div class="qr-label">
+        <div class="qr-info">
+          <div class="qr-ten">${infoMSP.ten}</div>
+          <div class="qr-mau">${infoMSP.mau || "—"}</div>
+          <div class="qr-id">${id}</div>
+        </div>
+        <div class="qr-code-cell">
+          <div class="qr-code-box" id="qr-${id}"></div>
+        </div>
+      </div>
+    `;
+
+    grid.appendChild(nd);
+
+    new QRCode(document.getElementById("qr-" + id), {
+      text: qrData,
+      width: 56,
+      height: 56,
+      correctLevel: QRCode.CorrectLevel.M
+    });
+  });
+
+  document.getElementById("card-qr").style.display = "block";
 }
-
-const grid = document.getElementById("qr-grid");
-grid.innerHTML = "";
-
-ids.forEach(id => {
-
-const qrData = id + "|" + infoMSP.msp;
-
-const nd = document.createElement("div");
-nd.className = "qr-item";
-
-nd.innerHTML = `
-  <div class="qr-label">
-    <div class="qr-info">
-      <div class="qr-ten">${infoMSP.ten}</div>
-      <div class="qr-mau">${infoMSP.mau || "—"}</div>
-      <div class="qr-id">${id}</div>
-    </div>
-    <div class="qr-code-cell">
-      <div class="qr-code-box" id="qr-${id}"></div>
-    </div>
-  </div>
-`;
-
-grid.appendChild(nd);
-
-new QRCode(document.getElementById("qr-" + id), {
-  text: qrData,
-  width: 56,
-  height: 56,
-  correctLevel: QRCode.CorrectLevel.M
-});
-
-});
-
-document.getElementById("card-qr").style.display = "block";
-}
-
-
-// ── Quét QR ─────────────────────────────────────────────
-let zxingReader = null;
-let dangXuLy = false;
-let ngayChon = null;
-let loaiChon = null;
-let dsQuetTrongPhien = [];
 
 function batDauQuet() {
   ngayChon = document.getElementById("chon-ngay").value;
@@ -118,7 +116,6 @@ function batDauQuet() {
   if (!ngayChon) { alert("⚠️ Vui lòng chọn ngày!"); return; }
   if (!loaiChon) { alert("⚠️ Vui lòng chọn loại!"); return; }
 
-  dsQuetTrongPhien = [];
   document.getElementById("form-chon").style.display = "none";
   document.getElementById("cam-box").style.display = "block";
   document.getElementById("btn-stop").style.display = "block";
@@ -130,22 +127,23 @@ function batDauQuet() {
     zxingReader.decodeFromVideoDevice(undefined, "reader", async (result, err) => {
       if (!result || dangXuLy) return;
       dangXuLy = true;
+
       try {
         const text = result.getText();
         const parts = text.split("|");
-        const id = parts[0];
-        const msp = parts[1];
+        const id = (parts[0] || "").trim();
+        const msp = (parts[1] || "").trim();
 
-        // Kiểm tra trùng trong phiên
-        if (dsQuetTrongPhien.includes(id)) {
-          showCanhBao("⚠️ Mã " + id + " đã quét rồi!");
-          setTimeout(() => { dangXuLy = false; }, 2000);
+        if (!id || !msp) {
+          showCanhBao("QR không hợp lệ");
+          setTimeout(() => { dangXuLy = false; }, 1500);
           return;
         }
 
         await hienOverlay({ id, msp });
       } catch(e) {
-        dangXuLy = false;
+        showCanhBao("Lỗi đọc QR");
+        setTimeout(() => { dangXuLy = false; }, 1500);
       }
     });
   } catch(e) {
@@ -156,7 +154,7 @@ function batDauQuet() {
 
 function dungQuet() {
   if (zxingReader) { zxingReader.reset(); zxingReader = null; }
-  dsQuetTrongPhien = [];
+  qrDangQuet = null;
   document.getElementById("form-chon").style.display = "block";
   document.getElementById("cam-box").style.display = "none";
   document.getElementById("btn-stop").style.display = "none";
@@ -165,22 +163,58 @@ function dungQuet() {
 }
 
 async function hienOverlay(data) {
-  // Lấy thông tin từ DanhMuc theo MSP
-  const info = await callAPI({ action: "getInfo", msp: data.msp });
+  const info = await callAPI({
+    action: "kiemTraQR",
+    id: data.id,
+    msp: data.msp,
+    loai: loaiChon
+  });
+
+  if (info.error) {
+    showCanhBao(info.error);
+    setTimeout(() => { dangXuLy = false; }, 1800);
+    return;
+  }
+
+  qrDangQuet = {
+    id: data.id,
+    msp: data.msp,
+    ten: info.ten || "—",
+    mau: info.mau || "—",
+    cheDo: info.cheDo || "luuMoi"
+  };
 
   document.getElementById("q-id").textContent = data.id;
   document.getElementById("q-msp").textContent = data.msp;
-  document.getElementById("q-ten").textContent = info.success ? info.ten : "—";
-  document.getElementById("q-mau").textContent = info.success ? (info.mau || "—") : "—";
+  document.getElementById("q-ten").textContent = qrDangQuet.ten;
+  document.getElementById("q-mau").textContent = qrDangQuet.mau;
   document.getElementById("q-loai").textContent = loaiChon;
   document.getElementById("q-ngay").textContent = ngayChon;
-  document.getElementById("q-kg").value = "";
+  document.getElementById("q-da-nhap").textContent = formatKg(info.tongNhap);
+  document.getElementById("q-da-xuat").textContent = formatKg(info.tongXuat);
+  document.getElementById("q-ton").textContent = formatKg(info.ton);
+
+  const kgInput = document.getElementById("q-kg");
+  const btnLuu = document.getElementById("btn-luu");
+  kgInput.value = "";
+  kgInput.placeholder = "Nhập số kg...";
+  btnLuu.textContent = "💾 Lưu & quét tiếp";
+
+  if (info.cheDo === "capNhatNhap") {
+    kgInput.value = formatKg(info.kgNhap);
+    btnLuu.textContent = "💾 Cập nhật kg nhập";
+  } else if (!isNhap(loaiChon)) {
+    kgInput.placeholder = "Tồn: " + formatKg(info.ton) + " kg";
+  }
+
   document.getElementById("msg-quet").classList.remove("show");
   document.getElementById("overlay").classList.add("show");
+  kgInput.focus();
 }
 
 function dongOverlay() {
   document.getElementById("overlay").classList.remove("show");
+  qrDangQuet = null;
   dangXuLy = false;
 }
 
@@ -188,28 +222,45 @@ function showCanhBao(text) {
   const el = document.getElementById("canh-bao");
   el.textContent = text;
   el.style.display = "block";
-  setTimeout(() => { el.style.display = "none"; }, 2000);
+  setTimeout(() => { el.style.display = "none"; }, 2200);
 }
 
 async function luuGiaoDich() {
-  const id = document.getElementById("q-id").textContent;
-  const msp = document.getElementById("q-msp").textContent;
-  const ten = document.getElementById("q-ten").textContent;
-  const mau = document.getElementById("q-mau").textContent;
+  if (!qrDangQuet) return;
+
   const kg = document.getElementById("q-kg").value;
-  if (!kg || parseFloat(kg) <= 0) { showMsg("⚠️ Nhập số kg hợp lệ!", false); return; }
+  if (!kg || parseFloat(kg) <= 0) {
+    showMsg("⚠️ Nhập số kg hợp lệ!", false);
+    return;
+  }
 
-  document.getElementById("btn-luu").disabled = true;
-  const r = await callAPI({ action: "luuGiaoDich", id, msp, ten, mau, ngay: ngayChon, loai: loaiChon, kg });
-  document.getElementById("btn-luu").disabled = false;
+  const btn = document.getElementById("btn-luu");
+  btn.disabled = true;
 
-  if (r.error) { showMsg("❌ " + r.error, false); return; }
+  const r = await callAPI({
+    action: "luuGiaoDich",
+    id: qrDangQuet.id,
+    msp: qrDangQuet.msp,
+    ten: qrDangQuet.ten,
+    mau: qrDangQuet.mau,
+    ngay: ngayChon,
+    loai: loaiChon,
+    kg
+  });
 
-  // Thêm vào danh sách đã quét
-  dsQuetTrongPhien.push(id);
+  btn.disabled = false;
 
-  showMsg("✅ Đã lưu " + r.kgLuu + " kg!", true);
-  setTimeout(() => dongOverlay(), 800);
+  if (r.error) {
+    showMsg("❌ " + r.error, false);
+    return;
+  }
+
+  const text = r.cheDo === "capNhatNhap"
+    ? "✅ Đã cập nhật " + formatKg(r.kgGoc) + " kg!"
+    : "✅ Đã lưu " + formatKg(r.kgGoc) + " kg!";
+
+  showMsg(text, true);
+  setTimeout(() => dongOverlay(), 900);
 }
 
 function showMsg(text, ok) {
@@ -219,7 +270,7 @@ function showMsg(text, ok) {
 }
 
 window.onload = function() {
-  const today = new Date().toISOString().split('T')[0];
+  const today = new Date().toISOString().split("T")[0];
   document.getElementById("chon-ngay").value = today;
 };
 

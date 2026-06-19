@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Quản lý Kho</title>
-  <link rel="stylesheet" href="style.css?v=20260619-2">
+  <link rel="stylesheet" href="style.css?v=20260619-3">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@zxing/library@0.19.1/umd/index.min.js"></script>
 </head>
@@ -91,6 +91,9 @@
     <div class="irow"><span class="ilabel">Màu</span><span class="ivalue" id="q-mau"></span></div>
     <div class="irow"><span class="ilabel">Ngày</span><span class="ivalue" id="q-ngay"></span></div>
     <div class="irow"><span class="ilabel">Loại</span><span class="ivalue" id="q-loai"></span></div>
+    <div class="irow stock-row"><span class="ilabel">Đã nhập</span><span class="ivalue" id="q-da-nhap">0</span></div>
+    <div class="irow stock-row"><span class="ilabel">Đã xuất</span><span class="ivalue" id="q-da-xuat">0</span></div>
+    <div class="irow stock-row stock-ton"><span class="ilabel">Tồn</span><span class="ivalue" id="q-ton">0</span></div>
     <label>Số kg</label>
     <input type="number" id="q-kg" placeholder="Nhập số kg..." min="0" step="0.1">
     <button class="btn btn-green btn-full" id="btn-luu" onclick="luuGiaoDich()">💾 Lưu & quét tiếp</button>
@@ -99,6 +102,6 @@
   </div>
 </div>
 
-<script src="app.js?v=20260619-2"></script>
+<script src="app.js?v=20260619-3"></script>
 </body>
 </html>
