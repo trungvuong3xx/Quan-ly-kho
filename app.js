@@ -1,7 +1,7 @@
 const API = "https://script.google.com/macros/s/AKfycbyeVxFfSGI-ca8VJkDUUM9GuhqJ0CN91FBSMCaSu_NphsbE7TR-XlMcGVgz21wgzXBSdA/exec";
 
 async function callAPI(body) {
-  const res = await fetch(API, { method: "POST", body: JSON.stringify(body) });
+  const res = await fetch(API, { method: "POST", body: JSON.stringify(body), redirect: "follow" });
   return res.json();
 }
 
