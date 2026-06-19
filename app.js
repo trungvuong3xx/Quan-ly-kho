@@ -15,61 +15,75 @@ function chuyenTrang(id, el) {
 }
 
 // ── Tạo QR ──────────────────────────────────────────────
-let infoMSP = null;
-
-async function timMSP() {
-  const msp = document.getElementById("msp-tao").value.trim();
-  if (!msp) return;
-  document.getElementById("info-tao").classList.remove("show");
-  const d = await callAPI({ action: "getInfo", msp });
-  if (!d.success) { alert("⚠️ " + (d.message || d.error)); return; }
-  infoMSP = { ...d, msp };
-  document.getElementById("t-ten").textContent = d.ten;
-  document.getElementById("t-mau").textContent = d.mau || "—";
-  document.getElementById("info-tao").classList.add("show");
-}
-
 async function taoQR() {
-  if (!infoMSP) return;
-  const sl = parseInt(document.getElementById("sl-qr").value) || 20;
-  const ids = await callAPI({ action: "taoNhieuID", soLuong: sl });
-  if (ids.error) { alert("❌ " + ids.error); return; }
+if (!infoMSP) return;
 
-  const grid = document.getElementById("qr-grid");
-  grid.innerHTML = "";
+const sl = parseInt(document.getElementById("sl-qr").value) || 20;
 
-  ids.forEach(id => {
-    // QR chỉ chứa ID|MSP ngắn gọn
-    const qrData = id + "|" + infoMSP.msp;
+const ids = await callAPI({
+action: "taoNhieuID",
+soLuong: sl
+});
 
-    const nd = document.createElement("div");
-    nd.className = "qr-item";
-    nd.innerHTML = `
-      <table class="qr-table">
-        <tr>
-          <td class="qr-info">
-            <div class="qr-row"><span class="qr-label">QC</span><span class="qr-val">${infoMSP.ten}</span></div>
-            <div class="qr-row"><span class="qr-label">Màu</span><span class="qr-val">${infoMSP.mau || "—"}</span></div>
-          </td>
-          <td class="qr-code-cell">
-            <div class="qr-code-box" id="qr-${id}"></div>
-            <div class="qr-id-text">${id}</div>
-          </td>
-        </tr>
-      </table>
-    `;
-    grid.appendChild(nd);
-
-    new QRCode(document.getElementById("qr-" + id), {
-      text: qrData,
-      width: 80,
-      height: 80,
-      correctLevel: QRCode.CorrectLevel.M
-    });
-  });
-
-  document.getElementById("card-qr").style.display = "block";
+if (ids.error) {
+alert("❌ " + ids.error);
+return;
 }
+
+const grid = document.getElementById("qr-grid");
+grid.innerHTML = "";
+
+ids.forEach(id => {
+
+```
+const qrData = id + "|" + infoMSP.msp;
+
+const nd = document.createElement("div");
+nd.className = "qr-item";
+
+nd.innerHTML = `
+  <table class="qr-table">
+    <tr>
+
+      <td class="qr-info">
+
+        <div class="qr-ten">
+          ${infoMSP.ten}
+        </div>
+
+        <div class="qr-mau">
+          ${infoMSP.mau || "—"}
+        </div>
+
+        <div class="qr-id">
+          ${id}
+        </div>
+
+      </td>
+
+      <td class="qr-code-cell">
+        <div class="qr-code-box" id="qr-${id}"></div>
+      </td>
+
+    </tr>
+  </table>
+`;
+
+grid.appendChild(nd);
+
+new QRCode(document.getElementById("qr-" + id), {
+  text: qrData,
+  width: 70,
+  height: 70,
+  correctLevel: QRCode.CorrectLevel.M
+});
+```
+
+});
+
+document.getElementById("card-qr").style.display = "block";
+}
+
 
 // ── Quét QR ─────────────────────────────────────────────
 let zxingReader = null;

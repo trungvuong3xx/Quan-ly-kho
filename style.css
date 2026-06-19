@@ -110,23 +110,74 @@ padding:10px 0;border-bottom:1px solid rgba(255,255,255,.06);
 .ivalue{color:white;font-weight:700;}
 
 /* QR Grid */
-.qr-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:14px;}
-
-.qr-item{
-background:white;border-radius:18px;padding:10px;
-border:1px solid #e5e7eb;box-shadow:0 4px 12px rgba(0,0,0,.12);
-}
+.qr-grid{display:grid;grid-template-columns:1fr;gap:8px;}
+.qr-item{background:white;border-radius:18px;padding:10px;border:1px solid #e5e7eb;box-shadow:0 4px 12px rgba(0,0,0,.12);}
 
 /* QR Form */
-.qr-table{width:100%;border-collapse:collapse;}
-.qr-info{padding:6px;vertical-align:middle;width:65%;border-right:1px solid #e5e7eb;}
-.qr-row{display:flex;align-items:center;gap:4px;padding:3px 0;border-bottom:1px solid #f0f0f0;}
-.qr-row:last-child{border-bottom:none;}
-.qr-label{font-size:10px;color:#6b7280;min-width:28px;font-weight:600;}
-.qr-val{font-size:10px;font-weight:700;color:#111827;}
-.qr-code-cell{padding:6px;text-align:center;vertical-align:middle;width:30%;}
-.qr-code-box canvas{width:100px!important;height:100px!important;}
-.qr-id-text{font-size:9px;color:#6b7280;margin-top:2px;}
+.qr-grid{
+display:grid;
+grid-template-columns:1fr;
+gap:4px;
+}
+
+.qr-item{
+background:#fff;
+border:1px solid #d1d5db;
+border-radius:4px;
+padding:4px;
+box-shadow:none;
+overflow:hidden;
+}
+
+.qr-table{
+width:100%;
+border-collapse:collapse;
+table-layout:fixed;
+}
+
+.qr-info{
+width:75%;
+padding:4px 8px;
+vertical-align:middle;
+}
+
+.qr-ten{
+font-size:14px;
+font-weight:700;
+color:#111827;
+white-space:nowrap;
+overflow:hidden;
+text-overflow:ellipsis;
+margin-bottom:2px;
+}
+
+.qr-mau{
+font-size:12px;
+font-weight:600;
+color:#374151;
+white-space:nowrap;
+overflow:hidden;
+text-overflow:ellipsis;
+margin-bottom:2px;
+}
+
+.qr-id{
+font-size:10px;
+color:#6b7280;
+font-weight:600;
+}
+
+.qr-code-cell{
+width:25%;
+text-align:center;
+vertical-align:middle;
+padding:0;
+}
+
+.qr-code-box canvas{
+width:70px!important;
+height:70px!important;
+}
 
 .btn-print{
 width:100%;padding:14px;margin-top:18px;border:none;
