@@ -35,49 +35,32 @@ grid.innerHTML = "";
 
 ids.forEach(id => {
 
-```
 const qrData = id + "|" + infoMSP.msp;
 
 const nd = document.createElement("div");
 nd.className = "qr-item";
 
 nd.innerHTML = `
-  <table class="qr-table">
-    <tr>
-
-      <td class="qr-info">
-
-        <div class="qr-ten">
-          ${infoMSP.ten}
-        </div>
-
-        <div class="qr-mau">
-          ${infoMSP.mau || "—"}
-        </div>
-
-        <div class="qr-id">
-          ${id}
-        </div>
-
-      </td>
-
-      <td class="qr-code-cell">
-        <div class="qr-code-box" id="qr-${id}"></div>
-      </td>
-
-    </tr>
-  </table>
+  <div class="qr-label">
+    <div class="qr-info">
+      <div class="qr-ten">${infoMSP.ten}</div>
+      <div class="qr-mau">${infoMSP.mau || "—"}</div>
+      <div class="qr-id">${id}</div>
+    </div>
+    <div class="qr-code-cell">
+      <div class="qr-code-box" id="qr-${id}"></div>
+    </div>
+  </div>
 `;
 
 grid.appendChild(nd);
 
 new QRCode(document.getElementById("qr-" + id), {
   text: qrData,
-  width: 70,
-  height: 70,
+  width: 56,
+  height: 56,
   correctLevel: QRCode.CorrectLevel.M
 });
-```
 
 });
 
