@@ -1,4 +1,4 @@
-const API = "https://script.google.com/macros/s/AKfycbyeVxFfSGI-ca8VJkDUUM9GuhqJ0CN91FBSMCaSu_NphsbE7TR-XlMcGVgz21wgzXBSdA/exec";
+const API = "https://script.google.com/macros/s/AKfycbzXjzccld3X04iJgIpEvKm01in0QT0i7tkjar_oJ6K5-sBGdm9xibe7Mu4UB3mWtha5-w/exec";
 
 async function callAPI(body) {
   const res = await fetch(API, { method: "POST", body: JSON.stringify(body), redirect: "follow" });
