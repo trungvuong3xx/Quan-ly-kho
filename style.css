@@ -119,13 +119,13 @@ border:1px solid #e5e7eb;box-shadow:0 4px 12px rgba(0,0,0,.12);
 
 /* QR Form */
 .qr-table{width:100%;border-collapse:collapse;}
-.qr-info{padding:6px;vertical-align:middle;width:55%;border-right:1px solid #e5e7eb;}
+.qr-info{padding:6px;vertical-align:middle;width:65%;border-right:1px solid #e5e7eb;}
 .qr-row{display:flex;align-items:center;gap:4px;padding:3px 0;border-bottom:1px solid #f0f0f0;}
 .qr-row:last-child{border-bottom:none;}
 .qr-label{font-size:10px;color:#6b7280;min-width:28px;font-weight:600;}
 .qr-val{font-size:10px;font-weight:700;color:#111827;}
-.qr-code-cell{padding:6px;text-align:center;vertical-align:middle;width:45%;}
-.qr-code-box canvas{width:75px!important;height:75px!important;}
+.qr-code-cell{padding:6px;text-align:center;vertical-align:middle;width:30%;}
+.qr-code-box canvas{width:100px!important;height:100px!important;}
 .qr-id-text{font-size:9px;color:#6b7280;margin-top:2px;}
 
 .btn-print{
