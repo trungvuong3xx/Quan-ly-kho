@@ -222,3 +222,11 @@ window.onload = function() {
   const today = new Date().toISOString().split('T')[0];
   document.getElementById("chon-ngay").value = today;
 };
+
+window.timMSP = timMSP;
+window.taoQR = taoQR;
+window.chuyenTrang = chuyenTrang;
+window.batDauQuet = batDauQuet;
+window.dungQuet = dungQuet;
+window.dongOverlay = dongOverlay;
+window.luuGiaoDich = luuGiaoDich;
