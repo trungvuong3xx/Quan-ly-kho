@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Quản lý Kho</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@zxing/library@0.19.1/umd/index.min.js"></script>
+</head>
+<body>
+
+<div class="nav">
+  <button class="nav-btn active" onclick="chuyenTrang('taoQR', this)">🖨️ Tạo QR</button>
+  <button class="nav-btn" onclick="chuyenTrang('quetQR', this)">📷 Quét QR</button>
+</div>
+
+<!-- Cảnh báo trùng -->
+<div class="canh-bao" id="canh-bao"></div>
+
+<!-- TẠO QR -->
+<div id="taoQR" class="page active">
+  <div class="card">
+    <h3>🖨️ Tạo QR hàng loạt</h3>
+    <label>Mã MSP</label>
+    <div class="row">
+      <input type="text" id="msp-tao" placeholder="Nhập MSP..." onkeydown="if(event.key==='Enter') timMSP()">
+      <button class="btn btn-blue" onclick="timMSP()">Tìm</button>
+    </div>
+    <div class="info-box" id="info-tao">
+      <div class="irow"><span class="ilabel">Tên</span><span class="ivalue" id="t-ten"></span></div>
+      <div class="irow"><span class="ilabel">Màu</span><span class="ivalue" id="t-mau"></span></div>
+      <label>Số lượng QR</label>
+      <input type="number" id="sl-qr" value="20" min="1" max="100">
+      <button class="btn btn-green btn-full" onclick="taoQR()">✅ Tạo QR</button>
+    </div>
+  </div>
+  <div class="card" id="card-qr" style="display:none">
+    <h3>📋 Danh sách QR</h3>
+    <div class="qr-grid" id="qr-grid"></div>
+    <button class="btn-print" onclick="window.print()">🖨️ In QR</button>
+  </div>
+</div>
+
+<!-- QUÉT QR -->
+<div id="quetQR" class="page">
+  <div class="card">
+    <h3>📷 Quét mã QR</h3>
+
+    <div id="form-chon">
+      <label>Ngày</label>
+      <input type="date" id="chon-ngay">
+      <label>Loại</label>
+      <select id="chon-loai" style="width:100%;padding:10px 14px;border:1.5px solid #ddd;border-radius:8px;font-size:15px;outline:none;margin-top:4px;">
+        <option value="">-- Chọn loại --</option>
+        <optgroup label="Nhập">
+          <option value="Nhập SX">Nhập SX</option>
+          <option value="Nhập Trả">Nhập Trả</option>
+          <option value="Nhập For">Nhập For</option>
+        </optgroup>
+        <optgroup label="Xuất">
+          <option value="Xuất SX">Xuất SX</option>
+          <option value="Xuất Trả">Xuất Trả</option>
+          <option value="Xuất Gia Công">Xuất Gia Công</option>
+          <option value="Xuất Phế">Xuất Phế</option>
+          <option value="Xuất Bán">Xuất Bán</option>
+        </optgroup>
+        <optgroup label="Khác">
+          <option value="Bình Thuận">Bình Thuận</option>
+          <option value="Xuất For">Xuất For</option>
+        </optgroup>
+      </select>
+      <button class="btn btn-blue btn-full" onclick="batDauQuet()">▶️ Bắt đầu quét</button>
+    </div>
+
+    <div id="cam-box" style="display:none">
+      <video id="reader" autoplay playsinline muted style="width:100%;border-radius:8px;background:#000;margin-top:12px;"></video>
+      <div class="scanner-status" id="scanner-status"></div>
+      <button class="btn btn-red btn-full" id="btn-stop" onclick="dungQuet()" style="display:none">⛔ Dừng quét</button>
+    </div>
+  </div>
+</div>
+
+<!-- OVERLAY nhập kg -->
+<div class="overlay" id="overlay">
+  <div class="overlay-card">
+    <div class="overlay-title">📦 Thông tin QR</div>
+    <div class="irow"><span class="ilabel">ID</span><span class="ivalue" id="q-id"></span></div>
+    <div class="irow"><span class="ilabel">MSP</span><span class="ivalue" id="q-msp"></span></div>
+    <div class="irow"><span class="ilabel">Tên</span><span class="ivalue" id="q-ten"></span></div>
+    <div class="irow"><span class="ilabel">Màu</span><span class="ivalue" id="q-mau"></span></div>
+    <div class="irow"><span class="ilabel">Ngày</span><span class="ivalue" id="q-ngay"></span></div>
+    <div class="irow"><span class="ilabel">Loại</span><span class="ivalue" id="q-loai"></span></div>
+    <label>Số kg</label>
+    <input type="number" id="q-kg" placeholder="Nhập số kg..." min="0" step="0.1">
+    <button class="btn btn-green btn-full" id="btn-luu" onclick="luuGiaoDich()">💾 Lưu & quét tiếp</button>
+    <button class="btn btn-full" style="background:#888;margin-top:8px" onclick="dongOverlay()">↩️ Bỏ qua & quét tiếp</button>
+    <div class="msg" id="msg-quet"></div>
+  </div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
