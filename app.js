@@ -1,9 +1,11 @@
-const API = "https://script.google.com/macros/s/AKfycbyeVxFfSGI-ca8VJkDUUM9GuhqJ0CN91FBSMCaSu_NphsbE7TR-XlMcGVgz21wgzXBSdA/exec";
+﻿const API = "https://script.google.com/macros/s/AKfycbyeVxFfSGI-ca8VJkDUUM9GuhqJ0CN91FBSMCaSu_NphsbE7TR-XlMcGVgz21wgzXBSdA/exec";
 
 async function callAPI(body) {
   const res = await fetch(API, { method: "POST", body: JSON.stringify(body) });
   return res.json();
 }
+
+let infoMSP = null;
 
 // ── Navigation ───────────────────────────────────────────
 function chuyenTrang(id, el) {
@@ -15,6 +17,40 @@ function chuyenTrang(id, el) {
 }
 
 // ── Tạo QR ──────────────────────────────────────────────
+async function timMSP() {
+  const input = document.getElementById("msp-tao");
+  const msp = input.value.trim();
+  const infoBox = document.getElementById("info-tao");
+
+  infoMSP = null;
+  infoBox.classList.remove("show");
+  document.getElementById("card-qr").style.display = "none";
+  document.getElementById("qr-grid").innerHTML = "";
+
+  if (!msp) {
+    alert("Vui long nhap ma MSP!");
+    input.focus();
+    return;
+  }
+
+  const info = await callAPI({ action: "getInfo", msp });
+
+  if (!info.success) {
+    alert(info.error || "Khong tim thay MSP!");
+    input.focus();
+    return;
+  }
+
+  infoMSP = {
+    msp,
+    ten: info.ten || msp,
+    mau: info.mau || ""
+  };
+
+  document.getElementById("t-ten").textContent = infoMSP.ten;
+  document.getElementById("t-mau").textContent = infoMSP.mau || "-";
+  infoBox.classList.add("show");
+}
 async function taoQR() {
 if (!infoMSP) return;
 
