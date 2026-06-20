@@ -22,7 +22,7 @@
 <!-- TẠO QR -->
 <div id="taoQR" class="page active">
   <div class="card">
-    <h3>🖨️ Tạo QR hàng loạt</h3>
+    <h3> Tạo QR hàng loạt</h3>
     <label>Mã MSP</label>
     <div class="row">
       <input type="text" id="msp-tao" placeholder="Nhập MSP..." onkeydown="if(event.key==='Enter') timMSP()">
@@ -33,7 +33,7 @@
       <div class="irow"><span class="ilabel">Màu</span><span class="ivalue" id="t-mau"></span></div>
       <label>Số lượng QR</label>
       <input type="number" id="sl-qr" value="20" min="1" max="100">
-      <button class="btn btn-green btn-full" onclick="taoQR()">✅ Tạo QR</button>
+      <button class="btn btn-green btn-full" onclick="taoQR()"> Tạo QR</button>
     </div>
   </div>
   <div class="card" id="card-qr" style="display:none">
@@ -46,7 +46,7 @@
 <!-- QUÉT QR -->
 <div id="quetQR" class="page">
   <div class="card">
-    <h3>📷 Quét mã QR</h3>
+    <h3> Quét mã QR</h3>
 
     <div id="form-chon">
       <label>Ngày</label>
@@ -78,7 +78,7 @@
 </div>
 
 <input type="hidden" id="chon-loai">
-      <button class="btn btn-blue btn-full" onclick="batDauQuet()">▶️ Bắt đầu quét</button>
+      <button class="btn btn-blue btn-full" onclick="batDauQuet()"> Bắt đầu quét</button>
     </div>
 
     <div id="cam-box" style="display:none">
@@ -92,7 +92,7 @@
 <!-- KIỂM KÊ -->
 <div id="kiemKe" class="page">
   <div class="card">
-    <h3>📋 Kiểm kê kho</h3>
+    <h3> Kiểm kê kho</h3>
     <div id="kk-form">
       <label>Ngày kiểm kê</label>
       <input type="date" id="kk-ngay">
@@ -112,7 +112,7 @@
 <!-- OVERLAY nhập kg -->
 <div class="overlay" id="overlay">
   <div class="overlay-card">
-    <div class="overlay-title">📦 Thông tin QR</div>
+    <div class="overlay-title"> Thông tin QR</div>
     <div class="irow"><span class="ilabel">ID</span><span class="ivalue" id="q-id"></span></div>
     <div class="irow"><span class="ilabel">MSP</span><span class="ivalue" id="q-msp"></span></div>
     <div class="irow"><span class="ilabel">Tên</span><span class="ivalue" id="q-ten"></span></div>
