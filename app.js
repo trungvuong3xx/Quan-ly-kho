@@ -262,6 +262,30 @@ async function luuGiaoDich() {
   showMsg(text, true);
   setTimeout(() => dongOverlay(), 900);
 }
+let loaiDaChon = "";
+
+document.addEventListener("click", e => {
+
+  const btn = document.getElementById("chon-loai-btn");
+  const list = document.getElementById("chon-loai-list");
+
+  if(btn && btn.contains(e.target)){
+    list.classList.toggle("show");
+    return;
+  }
+
+  if(e.target.classList.contains("custom-option")){
+    loaiDaChon = e.target.dataset.value;
+    document.getElementById("chon-loai").value = loaiDaChon;
+    btn.textContent = loaiDaChon;
+    list.classList.remove("show");
+    return;
+  }
+
+  if(list){
+    list.classList.remove("show");
+  }
+});
 
 function showMsg(text, ok) {
   const el = document.getElementById("msg-quet");

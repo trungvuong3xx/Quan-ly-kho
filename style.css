@@ -306,3 +306,43 @@ page-break-inside:avoid;
 page-break-before:always;
 }
 }
+.fake-select{
+height:48px;
+display:flex;
+align-items:center;
+padding:0 14px;
+border-radius:14px;
+border:1px solid #334155;
+background:#0f172a;
+cursor:pointer;
+color:white;
+font-size:15px;
+}
+
+.loai-group{
+margin-top:18px;
+margin-bottom:8px;
+color:#94a3b8;
+font-size:13px;
+font-weight:700;
+}
+
+.loai-item{
+padding:14px;
+margin-bottom:8px;
+border-radius:12px;
+background:#0f172a;
+color:white;
+font-weight:600;
+cursor:pointer;
+transition:.2s;
+}
+
+.loai-item:hover{
+background:#1e293b;
+}
+
+#overlay-loai .overlay-card{
+max-height:80vh;
+overflow-y:auto;
+}
