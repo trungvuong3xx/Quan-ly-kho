@@ -13,6 +13,7 @@
 <div class="nav">
   <button class="nav-btn active" onclick="chuyenTrang('taoQR', this)">🖨️ Tạo QR</button>
   <button class="nav-btn" onclick="chuyenTrang('quetQR', this)">📷 Quét QR</button>
+<button class="nav-btn" onclick="chuyenTrang('kiemKe', this)">📋 Kiểm kê</button>
 </div>
 
 <!-- Cảnh báo trùng -->
@@ -81,6 +82,26 @@
   </div>
 </div>
 
+<!-- KIỂM KÊ -->
+<div id="kiemKe" class="page">
+  <div class="card">
+    <h3>📋 Kiểm kê kho</h3>
+    <div id="kk-form">
+      <label>Ngày kiểm kê</label>
+      <input type="date" id="kk-ngay">
+      <button class="btn btn-blue btn-full" onclick="batDauKiemKe()">▶️ Bắt đầu kiểm kê</button>
+    </div>
+    <div id="kk-cam" style="display:none">
+      <video id="kk-reader" autoplay playsinline muted style="width:100%;border-radius:20px;background:#000;margin-top:12px;border:2px solid #3b82f6;"></video>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:12px;">
+        <div id="kk-dem" style="color:#22c55e;font-weight:700;font-size:16px;">Đã quét: 0 mã</div>
+        <div id="kk-status" class="scanner-status" style="margin:0;"></div>
+      </div>
+      <button class="btn btn-red btn-full" onclick="dungKiemKe()">⛔ Dừng & Lưu</button>
+    </div>
+  </div>
+</div>
+
 <!-- OVERLAY nhập kg -->
 <div class="overlay" id="overlay">
   <div class="overlay-card">
@@ -103,5 +124,6 @@
 </div>
 
 <script src="app.js?v=20260619-3"></script>
+<script src="kiemke.js"></script>
 </body>
 </html>
