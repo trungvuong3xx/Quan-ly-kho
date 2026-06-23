@@ -196,7 +196,7 @@ async function ketThucCX1() {
   // Dòng tổng cộng bảng đợt
   const trTongDot = document.createElement("tr");
   trTongDot.innerHTML = `
-    <td colspan="3" style="padding:10px;font-weight:700;color:#eab308;background:rgba(255,255,255,.02)">TỔNG TIẾN ĐỘ</td>
+    <td colspan="3" style="padding:10px;font-weight:700;color:#eab308;background:rgba(255,255,255,.02)">TỔNG CỘNG</td>
     <td style="padding:10px;text-align:center;font-weight:700;color:#eab308;background:rgba(255,255,255,.02)">${tongQRAll}</td>
     <td style="padding:10px;text-align:right;font-weight:700;color:#eab308;background:rgba(255,255,255,.02)">${tongKGAll.toFixed(2)}</td>
   `;
@@ -218,7 +218,7 @@ async function ketThucCX1() {
   // Dòng tổng cộng bảng gom
   const trTongGom = document.createElement("tr");
   trTongGom.innerHTML = `
-    <td colspan="2" style="padding:10px;font-weight:700;color:#3b82f6;background:rgba(255,255,255,.02)">TỔNG PHIÊN GOM</td>
+    <td colspan="2" style="padding:10px;font-weight:700;color:#3b82f6;background:rgba(255,255,255,.02)">TỔNG CỘNG</td>
     <td style="padding:10px;text-align:center;font-weight:700;color:#3b82f6;background:rgba(255,255,255,.02)">${tongQRAll}</td>
     <td style="padding:10px;text-align:right;font-weight:700;color:#3b82f6;background:rgba(255,255,255,.02)">${tongKGAll.toFixed(2)}</td>
   `;
