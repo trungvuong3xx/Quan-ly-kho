@@ -114,29 +114,32 @@
 <div id="chiFor" class="page">
   <div id="cx1-form" class="card">
     <h3>Chỉ FOR</h3>
-    <button class="btn btn-blue btn-full" onclick="batDauCX1()"> Bắt Đầu</button>
+    <button class="btn btn-blue btn-full" onclick="batDauCX1()">Bắt Đầu</button>
   </div>
 
   <div id="cx1-cam" class="card" style="display:none">
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px">
-      <span id="cx1-status" style="font-weight:700"> Đang quét Đợt 1...</span>
+      <span id="cx1-status" style="font-weight:700">🟢 Đang quét Đợt 1...</span>
       <span id="cx1-dem" class="badge">Đã quét: 0 mã</span>
     </div>
     <div class="video-container" style="position:relative; width:100%; padding-bottom:75%; background:#000; border-radius:8px; overflow:hidden; margin-bottom:15px">
       <video id="cx1-reader" style="position:absolute; width:100%; height:100%; object-fit:cover"></video>
     </div>
+    
     <div style="display:flex; flex-direction:column; gap:10px">
-      <button id="btn-dung-cx1" class="btn btn-red btn-full" onclick="dungCX1()"> Dừng đợt quét</button>
-      <button id="btn-tieptuc-cx1" class="btn btn-blue btn-full" style="display:none" onclick="tiepTucCX1()">Quét đợt mới</button>
-      <button class="btn btn-green btn-full" onclick="ketThucCX1()"> Kết Thúc</button>
+      <button id="btn-flash-cx1" class="btn btn-full" style="background:#6b7280; color:#fff;" onclick="toggleFlashCX1()">🔦 Bật/Tắt</button>
+      
+      <button id="btn-dung-cx1" class="btn btn-red btn-full" onclick="dungCX1()">Dừng quét</button>
+      <button id="btn-tieptuc-cx1" class="btn btn-blue btn-full" style="display:none" onclick="tiepTucCX1()">Tiếp tục quét</button>
+      <button class="btn btn-green btn-full" onclick="ketThucCX1()">Kết Thúc</button>
     </div>
   </div>
 
   <div id="cx1-ketqua" class="card" style="display:none">
-    <h3 style="color:#22c55e; text-align:center; margin-bottom:20px;"> </h3>
+    <h3 style="color:#22c55e; text-align:center; margin-bottom:20px;">" " </h3>
     
     <div style="margin-bottom: 30px;">
-      <h4 style="color:#eab308; margin-bottom:10px;"> CHI TIẾT</h4>
+      <h4 style="color:#eab308; margin-bottom:10px;">CHI TIẾT</h4>
       <div style="overflow-x:auto;">
         <table style="width:100%; border-collapse:collapse; background:rgba(255,255,255,.02); font-size:14px;">
           <thead>
@@ -144,35 +147,33 @@
               <th style="padding:10px; border-bottom:2px solid rgba(255,255,255,.1); text-align:left">Đợt</th>
               <th style="padding:10px; border-bottom:2px solid rgba(255,255,255,.1); text-align:left">MSP</th>
               <th style="padding:10px; border-bottom:2px solid rgba(255,255,255,.1); text-align:left">Quy Cách</th>
-              <th style="padding:10px; border-bottom:2px solid rgba(255,255,255,.1); text-align:center">Số Lượng</th>
+              <th style="padding:10px; border-bottom:2px solid rgba(255,255,255,.1); text-align:center">Số Bao</th>
               <th style="padding:10px; border-bottom:2px solid rgba(255,255,255,.1); text-align:right">Tổng KG</th>
             </tr>
           </thead>
-          <tbody id="cx1-tbody-dot">
-            </tbody>
+          <tbody id="cx1-tbody-dot"></tbody>
         </table>
       </div>
     </div>
 
     <div style="margin-bottom: 20px;">
-      <h4 style="color:#3b82f6; margin-bottom:10px;"> TỔNG HỢP</h4>
+      <h4 style="color:#3b82f6; margin-bottom:10px;">TỔNG HỢP</h4>
       <div style="overflow-x:auto;">
         <table style="width:100%; border-collapse:collapse; background:rgba(255,255,255,.02); font-size:14px;">
           <thead>
             <tr style="background:rgba(255,255,255,.05)">
               <th style="padding:10px; border-bottom:2px solid rgba(255,255,255,.1); text-align:left">MSP</th>
               <th style="padding:10px; border-bottom:2px solid rgba(255,255,255,.1); text-align:left">Quy Cách</th>
-              <th style="padding:10px; border-bottom:2px solid rgba(255,255,255,.1); text-align:center">Số Lượng</th>
+              <th style="padding:10px; border-bottom:2px solid rgba(255,255,255,.1); text-align:center">Số Bao</th>
               <th style="padding:10px; border-bottom:2px solid rgba(255,255,255,.1); text-align:right">Tổng KG</th>
             </tr>
           </thead>
-          <tbody id="cx1-tbody-gom">
-            </tbody>
+          <tbody id="cx1-tbody-gom"></tbody>
         </table>
       </div>
     </div>
 
-    <button class="btn btn-blue btn-full" onclick="quetLaiCX1()"> Quét phiên mới</button>
+    <button class="btn btn-blue btn-full" onclick="quetLaiCX1()">Quét Mới</button>
   </div>
 </div>
 
@@ -199,6 +200,6 @@
 
 <script src="app.js?v=20260619-3"></script>
 <script src="kiemke.js"></script>
-<script src="cx1.js?v=20260623-1"></script>
+<script src="cx1.js?v=20260623-2"></script>
 </body>
 </html>

@@ -1,10 +1,11 @@
 // ── Chỉ FOR ─────────────────────────────────────────────
 let zxingReaderCX1 = null;
 let dangQuetCX1 = false;
-let phienCX1 = []; // lưu chi tiết từng tem QR quét được
-let demSoDot = 0;   // Đếm số đợt bấm quét trong phiên
+let phienCX1 = []; 
+let demSoDot = 0;   
+let denPinBat = false; // Trạng thái đèn pin hiện tại
 
-// Hàm tự động phát tiếng bíp bằng Web Audio API (Không sợ lỗi đồng bộ)
+// Hàm tự động phát tiếng bíp phiên bản TO VÀ RÕ HƠN (Âm lượng 0.8)
 function phatTiengBip() {
   try {
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -15,18 +16,53 @@ function phatTiengBip() {
     gainNode.connect(audioCtx.destination);
 
     oscillator.type = "sine"; 
-    oscillator.frequency.value = 1200; 
+    oscillator.frequency.value = 1300; 
     gainNode.gain.setValueAtTime(1.0, audioCtx.currentTime); 
 
     oscillator.start();
-    gainNode.gain.exponentialRampToValueAtTime(0.00001, audioCtx.currentTime + 0.1);
-    oscillator.stop(audioCtx.currentTime + 0.1);
+    gainNode.gain.exponentialRampToValueAtTime(0.00001, audioCtx.currentTime + 0.15);
+    oscillator.stop(audioCtx.currentTime + 0.15);
   } catch (e) {
     console.log("Trình duyệt chặn phát âm bíp: " + e);
   }
 }
 
-// Hàm xử lý bóc tách dữ liệu từ QR thông minh bằng Regex
+// Hàm Bật/Tắt đèn pin bằng luồng video của trình duyệt
+async function toggleFlashCX1() {
+  if (!zxingReaderCX1 || !dangQuetCX1) return;
+  try {
+    // Lấy luồng video đang chạy từ camera
+    const stream = document.getElementById("cx1-reader").srcObject;
+    if (!stream) return;
+    
+    const track = stream.getVideoTracks()[0];
+    const capabilities = track.getCapabilities();
+    
+    // Kiểm tra điện thoại có hỗ trợ đèn pin (torch) trên trình duyệt không
+    if (!capabilities.torch) {
+      alert("Thiết bị hoặc trình duyệt này không hỗ trợ bật đèn pin trực tiếp.");
+      return;
+    }
+    
+    denPinBat = !denPinBat;
+    await track.applyConstraints({
+      advanced: [{ torch: denPinBat }]
+    });
+    
+    // Đổi màu nút bấm để bệ hạ nhận biết
+    const btnFlash = document.getElementById("btn-flash-cx1");
+    if (denPinBat) {
+      btnFlash.style.background = "#eab308"; // Đèn bật thì nút có màu vàng óng
+      btnFlash.textContent = "🔦 Tắt";
+    } else {
+      btnFlash.style.background = "#6b7280"; // Đèn tắt thì nút màu xám nhạt
+      btnFlash.textContent = "🔦 Bật";
+    }
+  } catch (err) {
+    console.log("Lỗi điều khiển đèn pin: ", err);
+  }
+}
+
 function xuLyDuLieuQR(text) {
   const lines = text.split("\n").map(l => l.trim()).filter(l => l !== "");
   if (lines.length < 2) return null;
@@ -52,23 +88,19 @@ function xuLyDuLieuQR(text) {
   return { id, msp, qc, kg };
 }
 
-// Hàm xử lý khi camera bắt được mã QR
 function khiQuetDuocMa(result) {
   if (!result || !dangQuetCX1) return;
 
   const data = xuLyDuLieuQR(result.getText());
   if (!data) return; 
 
-  // Kiểm tra trùng ID trên toàn bộ phiên quét hiện tại
   if (phienCX1.find(r => r.id === data.id)) {
     showCanhBaoCX1("⚠️ Mã " + data.id + " đã quét rồi!");
     return;
   }
 
-  // Hợp lệ -> Phát tiếng bíp lập tức
   phatTiengBip();
 
-  // Ghi nhận dữ liệu kèm theo số thứ tự của Đợt quét hiện tại
   const thoiGian = new Date();
   phienCX1.push({ 
     id: data.id, 
@@ -86,6 +118,7 @@ function batDauCX1() {
   phienCX1 = [];
   demSoDot = 1; 
   dangQuetCX1 = true;
+  denPinBat = false; // Reset trạng thái đèn pin khi vào phiên mới
 
   document.getElementById("cx1-form").style.display = "none";
   document.getElementById("cx1-cam").style.display = "block";
@@ -93,9 +126,10 @@ function batDauCX1() {
   document.getElementById("cx1-dem").textContent = "Đã quét: 0 mã";
   document.getElementById("cx1-status").textContent = "🟢 Đang quét Đợt 1...";
 
-  // Ẩn/Hiện nút cho đúng trạng thái to rộng
   document.getElementById("btn-dung-cx1").style.display = "block";
   document.getElementById("btn-tieptuc-cx1").style.display = "none";
+  document.getElementById("btn-flash-cx1").style.background = "#6b7280";
+  document.getElementById("btn-flash-cx1").textContent = "🔦 Bật Đèn Pin";
 
   try {
     zxingReaderCX1 = new ZXing.BrowserMultiFormatReader();
@@ -110,8 +144,9 @@ function batDauCX1() {
 
 function dungCX1() {
   dangQuetCX1 = false;
+  denPinBat = false; // Tắt trạng thái đèn khi dừng camera
   if (zxingReaderCX1) { zxingReaderCX1.reset(); zxingReaderCX1 = null; }
-  document.getElementById("cx1-status").textContent = " Đã dừng Đợt " + demSoDot;
+  document.getElementById("cx1-status").textContent = "⏸️ Đã dừng Đợt " + demSoDot;
   document.getElementById("btn-tieptuc-cx1").style.display = "block";
   document.getElementById("btn-dung-cx1").style.display = "none";
 }
@@ -119,9 +154,12 @@ function dungCX1() {
 function tiepTucCX1() {
   demSoDot += 1; 
   dangQuetCX1 = true;
-  document.getElementById("cx1-status").textContent = " Đang quét Đợt " + demSoDot + "...";
+  denPinBat = false;
+  document.getElementById("cx1-status").textContent = "🟢 Đang quét Đợt " + demSoDot + "...";
   document.getElementById("btn-tieptuc-cx1").style.display = "none";
   document.getElementById("btn-dung-cx1").style.display = "block";
+  document.getElementById("btn-flash-cx1").style.background = "#6b7280";
+  document.getElementById("btn-flash-cx1").textContent = "🔦 Bật Đèn Pin";
 
   try {
     zxingReaderCX1 = new ZXing.BrowserMultiFormatReader();
@@ -137,7 +175,6 @@ function tiepTucCX1() {
 async function ketThucCX1() {
   dungCX1();
 
-  // BỌC THỬ NGHIỆM AN TOÀN: Đảm bảo dù gửi dữ liệu lỗi mạng hay lỗi hàm hệ thống vẫn hiện kết quả, không bị đứng máy
   if (phienCX1.length > 0) {
     document.getElementById("cx1-status").textContent = "⏳ Đang lưu...";
     try {
@@ -148,11 +185,10 @@ async function ketThucCX1() {
         }))});
       }
     } catch (err) {
-      console.log("Lỗi lưu API hệ thống, chuyển trực tiếp qua xuất bảng: ", err);
+      console.log("Lỗi lưu API hệ thống: ", err);
     }
   }
 
-  // XỬ LÝ DỮ LIỆU ĐỔ VÀO VÀ HIỂN THỊ 2 BẢNG TÁCH BIỆT
   let tongDotCuaPhien = {}; 
   let tongGomLoaiMa = {};   
   let tongQRAll = 0;
@@ -162,7 +198,6 @@ async function ketThucCX1() {
     tongQRAll += 1;
     tongKGAll += r.kg;
 
-    // Bảng 1: Gom theo Đợt + Cặp mã trùng
     const keyDot = "Dot_" + r.dotQuet + "|" + r.msp + "|" + r.qc;
     if (!tongDotCuaPhien[keyDot]) {
       tongDotCuaPhien[keyDot] = { dot: r.dotQuet, msp: r.msp, qc: r.qc, soLuong: 0, tongKG: 0 };
@@ -170,7 +205,6 @@ async function ketThucCX1() {
     tongDotCuaPhien[keyDot].soLuong += 1;
     tongDotCuaPhien[keyDot].tongKG += r.kg;
 
-    // Bảng 2: Gom toàn bộ phiên theo loại mã độc nhất
     const keyGom = r.msp + "|" + r.qc;
     if (!tongGomLoaiMa[keyGom]) {
       tongGomLoaiMa[keyGom] = { msp: r.msp, qc: r.qc, soLuong: 0, tongKG: 0 };
@@ -179,7 +213,6 @@ async function ketThucCX1() {
     tongGomLoaiMa[keyGom].tongKG += r.kg;
   });
 
-  // Đổ dữ liệu BẢNG 1 (Theo đợt quét)
   const tbodyDot = document.getElementById("cx1-tbody-dot");
   tbodyDot.innerHTML = "";
   Object.values(tongDotCuaPhien).forEach(item => {
@@ -193,16 +226,15 @@ async function ketThucCX1() {
     `;
     tbodyDot.appendChild(tr);
   });
-  // Dòng tổng cộng bảng đợt
+  
   const trTongDot = document.createElement("tr");
   trTongDot.innerHTML = `
-    <td colspan="3" style="padding:10px;font-weight:700;color:#eab308;background:rgba(255,255,255,.02)">TỔNG CỘNG</td>
+    <td colspan="3" style="padding:10px;font-weight:700;color:#eab308;background:rgba(255,255,255,.02)">TỔNG</td>
     <td style="padding:10px;text-align:center;font-weight:700;color:#eab308;background:rgba(255,255,255,.02)">${tongQRAll}</td>
     <td style="padding:10px;text-align:right;font-weight:700;color:#eab308;background:rgba(255,255,255,.02)">${tongKGAll.toFixed(2)}</td>
   `;
   tbodyDot.appendChild(trTongDot);
 
-  // Đổ dữ liệu BẢNG 2 (Sum gom loại mã)
   const tbodyGom = document.getElementById("cx1-tbody-gom");
   tbodyGom.innerHTML = "";
   Object.values(tongGomLoaiMa).forEach(item => {
@@ -215,19 +247,18 @@ async function ketThucCX1() {
     `;
     tbodyGom.appendChild(tr);
   });
-  // Dòng tổng cộng bảng gom
+  
   const trTongGom = document.createElement("tr");
   trTongGom.innerHTML = `
-    <td colspan="2" style="padding:10px;font-weight:700;color:#3b82f6;background:rgba(255,255,255,.02)">TỔNG CỘNG</td>
+    <td colspan="2" style="padding:10px;font-weight:700;color:#3b82f6;background:rgba(255,255,255,.02)">TỔNG</td>
     <td style="padding:10px;text-align:center;font-weight:700;color:#3b82f6;background:rgba(255,255,255,.02)">${tongQRAll}</td>
     <td style="padding:10px;text-align:right;font-weight:700;color:#3b82f6;background:rgba(255,255,255,.02)">${tongKGAll.toFixed(2)}</td>
   `;
   tbodyGom.appendChild(trTongGom);
 
-  // Chuyển màn hình hiển thị kết quả
   document.getElementById("cx1-cam").style.display = "none";
   document.getElementById("cx1-ketqua").style.display = "block";
-  document.getElementById("cx1-status").textContent = " Hoàn tất — " + phienCX1.length + " mã";
+  document.getElementById("cx1-status").textContent = "✅ Hoàn tất — " + phienCX1.length + " mã";
 }
 
 function quetLaiCX1() {
