@@ -14,6 +14,7 @@
   <button class="nav-btn active" onclick="chuyenTrang('taoQR', this)">🖨️ Tạo QR</button>
   <button class="nav-btn" onclick="chuyenTrang('quetQR', this)">📷 Quét QR</button>
 <button class="nav-btn" onclick="chuyenTrang('kiemKe', this)">📋 Kiểm kê</button>
+<button class="nav-btn" onclick="chuyenTrang('chiFor', this)">📦 Chỉ FOR</button>
 </div>
 
 <!-- Cảnh báo trùng -->
@@ -96,7 +97,7 @@
     <div id="kk-form">
       <label>Ngày kiểm kê</label>
       <input type="date" id="kk-ngay">
-      <button class="btn btn-blue btn-full" onclick="batDauKiemKe()">▶️ Bắt đầu kiểm kê</button>
+      <button class="btn btn-blue btn-full" onclick="batDauKiemKe()"> Bắt đầu kiểm kê</button>
     </div>
     <div id="kk-cam" style="display:none">
       <video id="kk-reader" autoplay playsinline muted style="width:100%;border-radius:20px;background:#000;margin-top:12px;border:2px solid #3b82f6;"></video>
@@ -104,8 +105,44 @@
         <div id="kk-dem" style="color:#22c55e;font-weight:700;font-size:16px;">Đã quét: 0 mã</div>
         <div id="kk-status" class="scanner-status" style="margin:0;"></div>
       </div>
-      <button class="btn btn-red btn-full" onclick="dungKiemKe()">⛔ Dừng & Lưu</button>
+      <button class="btn btn-red btn-full" onclick="dungKiemKe()"> Dừng & Lưu</button>
     </div>
+  </div>
+</div>
+
+<!-- CHỈ FOR -->
+<div id="chiFor" class="page">
+  <div class="card">
+    <h3>📦 Chỉ FOR</h3>
+    <div id="cx1-form">
+      <button class="btn btn-blue btn-full" onclick="batDauCX1()">▶️ Bắt đầu phiên</button>
+    </div>
+    <div id="cx1-cam" style="display:none">
+      <video id="cx1-reader" autoplay playsinline muted style="width:100%;border-radius:20px;background:#000;margin-top:12px;border:2px solid #3b82f6;"></video>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:12px;">
+        <div id="cx1-dem" style="color:#22c55e;font-weight:700;font-size:16px;">Đã quét: 0 mã</div>
+        <div id="cx1-status" class="scanner-status" style="margin:0;"></div>
+      </div>
+      <button class="btn btn-red btn-full" id="btn-dung-cx1" onclick="dungCX1()" style="margin-top:8px">⏸️ Dừng quét</button>
+      <button class="btn btn-blue btn-full" id="btn-tieptuc-cx1" onclick="tiepTucCX1()" style="display:none;margin-top:8px">▶️ Tiếp tục quét</button>
+      <button class="btn btn-green btn-full" onclick="ketThucCX1()" style="margin-top:8px">✅ Kết thúc phiên</button>
+    </div>
+  </div>
+
+  <div class="card" id="cx1-ketqua" style="display:none">
+    <h3>📊 Kết quả phiên</h3>
+    <table style="width:100%;border-collapse:collapse;font-size:14px;">
+      <thead>
+        <tr style="color:var(--sub);border-bottom:1px solid rgba(255,255,255,.1)">
+          <th style="padding:10px;text-align:left">MSP</th>
+          <th style="padding:10px;text-align:left">QC</th>
+          <th style="padding:10px;text-align:center">Số QR</th>
+          <th style="padding:10px;text-align:right">Tổng KG</th>
+        </tr>
+      </thead>
+      <tbody id="cx1-tbody"></tbody>
+    </table>
+    <button class="btn btn-blue btn-full" onclick="quetLaiCX1()">🔄 Quét phiên mới</button>
   </div>
 </div>
 
@@ -130,7 +167,10 @@
   </div>
 </div>
 
+</script>
+
 <script src="app.js?v=20260619-3"></script>
 <script src="kiemke.js"></script>
+<script src="cx1.js"></script>
 </body>
 </html>
