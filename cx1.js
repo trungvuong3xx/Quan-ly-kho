@@ -1,4 +1,3 @@
-cat > /mnt/user-data/outputs/cx1.js << 'EOF'
 // ── Chỉ FOR ─────────────────────────────────────────────
 let zxingReaderCX1 = null;
 let dangQuetCX1 = false;
@@ -156,5 +155,3 @@ function showCanhBaoCX1(text) {
   el.style.display = "block";
   setTimeout(() => { el.style.display = "none"; }, 2000);
 }
-EOF
-echo "done"
