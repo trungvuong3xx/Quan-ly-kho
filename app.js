@@ -262,40 +262,54 @@ async function luuGiaoDich() {
   showMsg(text, true);
   setTimeout(() => dongOverlay(), 900);
 }
+
+// ===== TOAN DIEN LOGIC CHON LOAI (CUSTOM SELECT) ĐÃ ĐƯỢC TỐI ƯU CỰC MẠNH =====
 let loaiDaChon = "";
 
 document.addEventListener("click", e => {
-
   const btn = document.getElementById("chon-loai-btn");
   const list = document.getElementById("chon-loai-list");
 
-  if(btn && btn.contains(e.target)){
+  if (!btn || !list) return;
+
+  // Nếu bấm trúng vào nút chọn loại, bật hoặc tắt danh sách và thoát luôn
+  if (btn.contains(e.target)) {
     list.classList.toggle("show");
     return;
   }
 
-  if(e.target.classList.contains("custom-option")){
+  // Nếu bấm vào một lựa chọn bên trong danh sách
+  if (e.target.classList.contains("custom-option")) {
     loaiDaChon = e.target.dataset.value;
-    document.getElementById("chon-loai").value = loaiDaChon;
-    btn.textContent = loaiDaChon;
-    list.classList.remove("show");
+    document.getElementById("chon-loai").value = loaiDaChon; // Gán vào ô input ẩn để gửi dữ liệu
+    btn.textContent = loaiDaChon; // Thay đổi nội dung chữ hiển thị trên nút bấm
+    
+    // Đổi trạng thái màu sắc lựa chọn active
+    document.querySelectorAll(".custom-option").forEach(opt => opt.classList.remove("active"));
+    e.target.classList.add("active");
+    
+    list.classList.remove("show"); // Chọn xong đóng hộp thoại lại
     return;
   }
 
-  if(list){
+  // Nếu bấm ra bất kỳ chỗ nào khác ngoài không gian menu thì tự động đóng hộp thoại
+  if (!list.contains(e.target)) {
     list.classList.remove("show");
   }
 });
 
 function showMsg(text, ok) {
   const el = document.getElementById("msg-quet");
-  el.textContent = text;
-  el.className = "msg show " + (ok ? "ok" : "err");
+  if (el) {
+    el.textContent = text;
+    el.className = "msg show " + (ok ? "ok" : "err");
+  }
 }
 
 window.onload = function() {
   const today = new Date().toISOString().split("T")[0];
-  document.getElementById("chon-ngay").value = today;
+  const ngayInput = document.getElementById("chon-ngay");
+  if (ngayInput) ngayInput.value = today;
 };
 
 window.timMSP = timMSP;
