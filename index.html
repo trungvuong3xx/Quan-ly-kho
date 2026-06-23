@@ -113,7 +113,7 @@
 <!-- CHỈ FOR -->
 <div id="chiFor" class="page">
   <div id="cx1-form" class="card">
-    <h3>📦 Quản Lý Kho — Chỉ FOR</h3>
+    <h3>Chỉ FOR</h3>
     <button class="btn btn-blue btn-full" onclick="batDauCX1()"> Bắt đầu phiên</button>
   </div>
 
@@ -127,16 +127,16 @@
     </div>
     <div style="display:flex; flex-direction:column; gap:10px">
       <button id="btn-dung-cx1" class="btn btn-red btn-full" onclick="dungCX1()"> Dừng đợt quét</button>
-      <button id="btn-tieptuc-cx1" class="btn btn-blue btn-full" style="display:none" onclick="tiepTucCX1()">▶️ Tiếp tục quét đợt mới</button>
+      <button id="btn-tieptuc-cx1" class="btn btn-blue btn-full" style="display:none" onclick="tiepTucCX1()">Quét đợt mới</button>
       <button class="btn btn-green btn-full" onclick="ketThucCX1()"> Kết thúc phiên</button>
     </div>
   </div>
 
   <div id="cx1-ketqua" class="card" style="display:none">
-    <h3 style="color:#22c55e; text-align:center; margin-bottom:20px;"> HOÀN TẤT PHIÊN QUÉT</h3>
+    <h3 style="color:#22c55e; text-align:center; margin-bottom:20px;"> Kết Thúc</h3>
     
     <div style="margin-bottom: 30px;">
-      <h4 style="color:#eab308; margin-bottom:10px;"> CHI TIẾT THEO TỪNG ĐỢT QUÉT</h4>
+      <h4 style="color:#eab308; margin-bottom:10px;"> CHI TIẾT</h4>
       <div style="overflow-x:auto;">
         <table style="width:100%; border-collapse:collapse; background:rgba(255,255,255,.02); font-size:14px;">
           <thead>
@@ -155,15 +155,15 @@
     </div>
 
     <div style="margin-bottom: 20px;">
-      <h4 style="color:#3b82f6; margin-bottom:10px;"> TỔNG HỢP GOM THEO LOẠI MÃ</h4>
+      <h4 style="color:#3b82f6; margin-bottom:10px;"> TỔNG HỢP</h4>
       <div style="overflow-x:auto;">
         <table style="width:100%; border-collapse:collapse; background:rgba(255,255,255,.02); font-size:14px;">
           <thead>
             <tr style="background:rgba(255,255,255,.05)">
-              <th style="padding:10px; border-bottom:2px solid rgba(255,255,255,.1); text-align:left">Mã Sản Phẩm (MSP)</th>
-              <th style="padding:10px; border-bottom:2px solid rgba(255,255,255,.1); text-align:left">Quy Cách (QC)</th>
-              <th style="padding:10px; border-bottom:2px solid rgba(255,255,255,.1); text-align:center">Tổng Số Lượng</th>
-              <th style="padding:10px; border-bottom:2px solid rgba(255,255,255,.1); text-align:right">Tổng KG Toàn Phiên</th>
+              <th style="padding:10px; border-bottom:2px solid rgba(255,255,255,.1); text-align:left">MSP</th>
+              <th style="padding:10px; border-bottom:2px solid rgba(255,255,255,.1); text-align:left">Quy Cách</th>
+              <th style="padding:10px; border-bottom:2px solid rgba(255,255,255,.1); text-align:center">Số Lượng</th>
+              <th style="padding:10px; border-bottom:2px solid rgba(255,255,255,.1); text-align:right">Tổng KG</th>
             </tr>
           </thead>
           <tbody id="cx1-tbody-gom">
