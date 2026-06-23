@@ -4,8 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Quản lý Kho</title>
-  <link rel="stylesheet" href="style.css?v=20260619-3">
-<link rel="stylesheet" href="style.css?v=20260623-fixed">
+  <link rel="stylesheet" href="style.css?v=20260623-sieucap">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@zxing/library@0.19.1/umd/index.min.js"></script>
 </head>
@@ -14,14 +13,12 @@
 <div class="nav">
   <button class="nav-btn active" onclick="chuyenTrang('taoQR', this)">🖨️ Tạo QR</button>
   <button class="nav-btn" onclick="chuyenTrang('quetQR', this)">📷 Quét QR</button>
-<button class="nav-btn" onclick="chuyenTrang('kiemKe', this)">📋 Kiểm kê</button>
-<button class="nav-btn" onclick="chuyenTrang('chiFor', this)">📦 Chỉ FOR</button>
+  <button class="nav-btn" onclick="chuyenTrang('kiemKe', this)">📋 Kiểm kê</button>
+  <button class="nav-btn" onclick="chuyenTrang('chiFor', this)">📦 Chỉ FOR</button>
 </div>
 
-<!-- Cảnh báo trùng -->
 <div class="canh-bao" id="canh-bao"></div>
 
-<!-- TẠO QR -->
 <div id="taoQR" class="page active">
   <div class="card">
     <h3> Tạo QR hàng loạt</h3>
@@ -39,13 +36,12 @@
     </div>
   </div>
   <div class="card" id="card-qr" style="display:none">
-    <h3>📋 Danh sách QR</h3>
+    <h3>Danh sách QR</h3>
     <div class="qr-grid" id="qr-grid"></div>
     <button class="btn-print" onclick="window.print()">🖨️ In QR</button>
   </div>
 </div>
 
-<!-- QUÉT QR -->
 <div id="quetQR" class="page">
   <div class="card">
     <h3> Quét mã QR</h3>
@@ -53,33 +49,31 @@
     <div id="form-chon">
       <label>Ngày</label>
       <input type="date" id="chon-ngay">
+      
       <label>Loại</label>
+      <div class="custom-select">
+        <button type="button" id="chon-loai-btn" class="custom-select-btn" onclick="document.getElementById('chon-loai-list').classList.toggle('show')">
+          -- Chọn loại --
+        </button>
 
-<div class="custom-select">
-  <button type="button" id="chon-loai-btn" class="custom-select-btn">
-    -- Chọn loại --
-  </button>
+        <div id="chon-loai-list" class="custom-select-list">
+          <div class="group-title">📥 Nhập</div>
+          <div class="custom-option" data-value="Nhập SX">Nhập SX</div>
+          <div class="custom-option" data-value="Nhập Trả">Nhập Trả</div>
+          <div class="custom-option" data-value="Nhập For">Nhập For</div>
 
-  <div id="chon-loai-list" class="custom-select-list">
+          <div class="group-title">📤 Xuất</div>
+          <div class="custom-option" data-value="Xuất SX">Xuất SX</div>
+          <div class="custom-option" data-value="Xuất Trả">Xuất Trả</div>
+          <div class="custom-option" data-value="Xuất Gia Công">Xuất Gia Công</div>
+          <div class="custom-option" data-value="Xuất Phế">Xuất Phế</div>
+          <div class="custom-option" data-value="Xuất Bán">Xuất Bán</div>
+          <div class="custom-option" data-value="Bình Thuận">Bình Thuận</div>
+          <div class="custom-option" data-value="Xuất For">Xuất For</div>
+        </div>
+      </div>
 
-    <div class="group-title">📥 Nhập</div>
-    <div class="custom-option" data-value="Nhập SX">Nhập SX</div>
-    <div class="custom-option" data-value="Nhập Trả">Nhập Trả</div>
-    <div class="custom-option" data-value="Nhập For">Nhập For</div>
-
-    <div class="group-title">📤 Xuất</div>
-    <div class="custom-option" data-value="Xuất SX">Xuất SX</div>
-    <div class="custom-option" data-value="Xuất Trả">Xuất Trả</div>
-    <div class="custom-option" data-value="Xuất Gia Công">Xuất Gia Công</div>
-    <div class="custom-option" data-value="Xuất Phế">Xuất Phế</div>
-    <div class="custom-option" data-value="Xuất Bán">Xuất Bán</div>
-    <div class="custom-option" data-value="Bình Thuận">Bình Thuận</div>
-    <div class="custom-option" data-value="Xuất For">Xuất For</div>
-
-  </div>
-</div>
-
-<input type="hidden" id="chon-loai">
+      <input type="hidden" id="chon-loai">
       <button class="btn btn-blue btn-full" onclick="batDauQuet()"> Bắt đầu quét</button>
     </div>
 
@@ -91,7 +85,6 @@
   </div>
 </div>
 
-<!-- KIỂM KÊ -->
 <div id="kiemKe" class="page">
   <div class="card">
     <h3> Kiểm kê kho</h3>
@@ -111,7 +104,6 @@
   </div>
 </div>
 
-<!-- CHỈ FOR -->
 <div id="chiFor" class="page">
   <div id="cx1-form" class="card">
     <h3>Chỉ FOR</h3>
@@ -127,17 +119,16 @@
       <video id="cx1-reader" style="position:absolute; width:100%; height:100%; object-fit:cover"></video>
     </div>
     
-    <div style="display:flex; flex-direction:column; gap:10px">
+    <div style="display:flex; flex-direction:column; gap:10px; width:100%;">
       <button id="btn-flash-cx1" class="btn btn-full" style="background:#6b7280; color:#fff;" onclick="toggleFlashCX1()">🔦 Bật/Tắt</button>
-      
       <button id="btn-dung-cx1" class="btn btn-red btn-full" onclick="dungCX1()">Dừng quét</button>
-      <button id="btn-tieptuc-cx1" class="btn btn-blue btn-full" style="display:none" onclick="tiepTucCX1()">Tiếp tục quét</button>
+      <button id="btn-tieptuc-cx1" class="btn btn-blue btn-full" style="display:none" onclick="tiepTucCX1()">Tiếp tục</button>
       <button class="btn btn-green btn-full" onclick="ketThucCX1()">Kết Thúc</button>
     </div>
   </div>
 
   <div id="cx1-ketqua" class="card" style="display:none">
-    <h3 style="color:#22c55e; text-align:center; margin-bottom:20px;">" " </h3>
+    <h3 style="color:#22c55e; text-align:center; margin-bottom:20px;">王</h3>
     
     <div style="margin-bottom: 30px;">
       <h4 style="color:#eab308; margin-bottom:10px;">CHI TIẾT</h4>
@@ -147,9 +138,9 @@
             <tr style="background:rgba(255,255,255,.05)">
               <th style="padding:10px; border-bottom:2px solid rgba(255,255,255,.1); text-align:left">Đợt</th>
               <th style="padding:10px; border-bottom:2px solid rgba(255,255,255,.1); text-align:left">MSP</th>
-              <th style="padding:10px; border-bottom:2px solid rgba(255,255,255,.1); text-align:left">Quy Cách</th>
-              <th style="padding:10px; border-bottom:2px solid rgba(255,255,255,.1); text-align:center">Số Bao</th>
-              <th style="padding:10px; border-bottom:2px solid rgba(255,255,255,.1); text-align:right">Tổng KG</th>
+              <th style="padding:10px; border-bottom:2px solid rgba(255,255,255,.1); text-align:left">QC</th>
+              <th style="padding:10px; border-bottom:2px solid rgba(255,255,255,.1); text-align:center">Bao</th>
+              <th style="padding:10px; border-bottom:2px solid rgba(255,255,255,.1); text-align:right">KG</th>
             </tr>
           </thead>
           <tbody id="cx1-tbody-dot"></tbody>
@@ -164,9 +155,9 @@
           <thead>
             <tr style="background:rgba(255,255,255,.05)">
               <th style="padding:10px; border-bottom:2px solid rgba(255,255,255,.1); text-align:left">MSP</th>
-              <th style="padding:10px; border-bottom:2px solid rgba(255,255,255,.1); text-align:left">Quy Cách</th>
-              <th style="padding:10px; border-bottom:2px solid rgba(255,255,255,.1); text-align:center">Số Bao</th>
-              <th style="padding:10px; border-bottom:2px solid rgba(255,255,255,.1); text-align:right">Tổng KG</th>
+              <th style="padding:10px; border-bottom:2px solid rgba(255,255,255,.1); text-align:left">QC</th>
+              <th style="padding:10px; border-bottom:2px solid rgba(255,255,255,.1); text-align:center">Bao</th>
+              <th style="padding:10px; border-bottom:2px solid rgba(255,255,255,.1); text-align:right">KG</th>
             </tr>
           </thead>
           <tbody id="cx1-tbody-gom"></tbody>
@@ -178,7 +169,6 @@
   </div>
 </div>
 
-<!-- OVERLAY nhập kg -->
 <div class="overlay" id="overlay">
   <div class="overlay-card">
     <div class="overlay-title"> Thông tin QR</div>
@@ -193,14 +183,14 @@
     <div class="irow stock-row stock-ton"><span class="ilabel">Tồn</span><span class="ivalue" id="q-ton">0</span></div>
     <label>Số kg</label>
     <input type="number" id="q-kg" placeholder="Nhập số kg..." min="0" step="0.1">
-    <button class="btn btn-green btn-full" id="btn-luu" onclick="luuGiaoDich()">💾 Lưu & quét tiếp</button>
-    <button class="btn btn-full" style="background:#888;margin-top:8px" onclick="dongOverlay()">↩️ Bỏ qua & quét tiếp</button>
+    <button class="btn btn-green btn-full" id="btn-luu" onclick="luuGiaoDich()">Lưu & quét tiếp</button>
+    <button class="btn btn-full" style="background:#888;margin-top:8px" onclick="dongOverlay()">Bỏ qua & quét tiếp</button>
     <div class="msg" id="msg-quet"></div>
   </div>
 </div>
 
-<script src="app.js?v=20260619-3"></script>
+<script src="app.js?v=20260623-sieucap"></script>
 <script src="kiemke.js"></script>
-<script src="cx1.js?v=20260623-fixed"></script>
+<script src="cx1.js?v=20260623-sieucap"></script>
 </body>
 </html>
