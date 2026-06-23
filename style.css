@@ -239,3 +239,54 @@ td {
   width: 100%;
   max-width: 600px;
   background: linear-gradient(180deg, #1e
+
+/* ===== SỬA LỖI HỘP THOẠI CUSTOM SELECT XỔ CHỮ ===== */
+.custom-select-list {
+  display: none;
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  margin-top: 8px;
+  background: #111827 !important; /* Ép nền tối để không bị trần trụi */
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  border-radius: 16px !important;
+  overflow: hidden;
+  max-height: 280px;
+  overflow-y: auto;
+  z-index: 99999 !important;
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.6) !important;
+  padding: 6px 0;
+}
+
+.custom-select-list.show {
+  display: block !important;
+}
+
+.group-title {
+  padding: 10px 16px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #6366f1; /* Đổi sang màu tím phát sáng */
+  background: #0f172a;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.custom-option {
+  padding: 14px 16px;
+  color: #e2e8f0;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.custom-option:hover,
+.custom-option.active {
+  background: rgba(99, 102, 241, 0.15) !important;
+  color: #818cf8 !important;
+  font-weight: 700;
+  padding-left: 20px; /* Hiệu ứng đẩy nhẹ chữ khi chọn */
+}

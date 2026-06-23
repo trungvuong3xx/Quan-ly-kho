@@ -178,13 +178,30 @@ async function ketThucCX1() {
   if (phienCX1.length > 0) {
     document.getElementById("cx1-status").textContent = "⏳ Đang lưu...";
     try {
-      if (typeof callAPI === "function") {
-        await callAPI({ action: "luuCX1", data: phienCX1.map(r => ({
-          id: r.id, msp: r.msp, qc: r.qc, kg: r.kg,
-          thoiGian: r.thoiGian.toISOString()
-        }))});
-      }
+      document.getElementById("cx1-status").textContent = "⏳ Đang kết nối server...";
+      
+      // Bệ hạ hãy thay đường dẫn macro/exec Google Apps Script của bệ hạ vào đây:
+      const URL_API = "https://script.google.com/macros/s/AKfycbzk7afcuHDOTnL6QSIQ0ZgT-CSiIDNZ8h5S8_IkGXahc7PQRvqZKpLpjkBphioXAyzDKQ/exec"; 
+      
+      const response = await fetch(URL_API, {
+        method: "POST",
+        mode: "no-cors", // Ép chế độ gửi nhận an toàn không chặn quyền chéo trang
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "luuCX1",
+          data: phienCX1.map(r => ({
+            id: r.id,
+            msp: r.msp,
+            qc: r.qc,
+            kg: r.kg,
+            thoiGian: r.thoiGian.toISOString()
+          }))
+        })
+      });
+      
+      document.getElementById("cx1-status").textContent = "✅ Đã đồng bộ Sheet thành công!";
     } catch (err) {
+      document.getElementById("cx1-status").textContent = "❌ Lỗi mạng: " + err.message;
       console.log("Lỗi lưu API hệ thống: ", err);
     }
   }
