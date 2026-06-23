@@ -4,7 +4,7 @@ let dangQuetCX1 = false;
 let phienCX1 = []; // chi tiết từng QR
 let tongHopCX1 = {}; // tổng hợp theo MSP+QC
 
-// Hàm dùng chung để xử lý và bóc tách dữ liệu từ QR theo cấu trúc của Bệ hạ
+// Hàm dùng chung để xử lý và bóc tách dữ liệu từ mọi định dạng QR của Bệ hạ
 function xuLyDuLieuQR(text) {
   // Lọc bỏ toàn bộ các dòng trống hoặc chỉ có dấu cách
   const lines = text.split("\n").map(l => l.trim()).filter(l => l !== "");
@@ -12,19 +12,27 @@ function xuLyDuLieuQR(text) {
   if (lines.length < 2) return null;
 
   const id = lines[0] || "";
-  const msp = lines[1] || "";
+  const msp = lines[1] || ""; // Luôn lấy chính xác hàng số 2 làm MSP
   
-  // Tìm dòng có chứa dấu "/" và "-" để tách Quy cách và Khối lượng
-  const dongQCKG = lines.find(l => l.includes("/") && l.includes("-")) || "";
+  // Tìm dòng có chứa dấu "-" và có chứa số khối lượng ở trong dòng đó
+  const dongQCKG = lines.find(l => l.includes("-") && /\d+/.test(l)) || "";
   
-  // Tách bằng dấu "/" để lấy Quy cách trước
-  const partsQC = dongQCKG.split("/");
-  const qc = partsQC[0] || ""; // Sẽ lấy được "190M"
+  if (!dongQCKG) return null;
+
+  // Trích xuất phần số KG nằm ở cuối chuỗi (ví dụ: 75.0000 hoặc 63.4000)
+  const matchKG = dongQCKG.match(/[\d.]+$/); 
+  const kg = matchKG ? parseFloat(matchKG[0]) : 0; 
+
+  // Phần còn lại phía trước chính là Quy cách (Bao gồm cả loại và màu sắc nếu có)
+  let qc = dongQCKG;
+  if (matchKG) {
+    qc = dongQCKG.substring(0, dongQCKG.lastIndexOf(matchKG[0])).trim();
+  }
   
-  // Tách phần còn lại bằng dấu "-" để lấy Khối lượng
-  const phanConLai = partsQC[1] || ""; // "KG-75.0000"
-  const partsKG = phanConLai.split("-");
-  const kg = parseFloat(partsKG[1]) || 0; // Sẽ lấy được 75
+  // Tối ưu hóa: Tự động xóa dấu gạch ngang dư thừa ở cuối Quy cách sau khi tách số KG
+  if (qc.endsWith("-")) {
+    qc = qc.slice(0, -1).trim(); 
+  }
 
   if (!id || !msp) return null;
 
