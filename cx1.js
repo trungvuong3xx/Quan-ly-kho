@@ -289,3 +289,16 @@ function showCanhBaoCX1(text) {
   el.style.display = "block";
   setTimeout(() => { el.style.display = "none"; }, 2000);
 }
+
+function toggleDungTiepTuc() {
+  const btn = document.getElementById("btn-dung-tieptuc-cx1");
+  if (dangQuetCX1) {
+    dungCX1();
+    btn.textContent = "▶️ Tiếp tục";
+    btn.className = "btn btn-blue btn-full";
+  } else {
+    tiepTucCX1();
+    btn.textContent = "⏸️ Dừng quét";
+    btn.className = "btn btn-red btn-full";
+  }
+}
