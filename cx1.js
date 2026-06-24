@@ -6,20 +6,32 @@ let demSoDot = 0;
 let denPinBat = false;
 
 function phatTiengBip() {
+  // Rung nhẹ
+  if (navigator.vibrate) navigator.vibrate(50);
+
+  // Tiếng bíp to và chuyên nghiệp hơn
   try {
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    
     const oscillator = audioCtx.createOscillator();
     const gainNode = audioCtx.createGain();
+    const compressor = audioCtx.createDynamicsCompressor();
+
     oscillator.connect(gainNode);
-    gainNode.connect(audioCtx.destination);
-    oscillator.type = "sine"; 
-    oscillator.frequency.value = 1300; 
-    gainNode.gain.setValueAtTime(1.0, audioCtx.currentTime); 
-    oscillator.start();
-    gainNode.gain.exponentialRampToValueAtTime(0.00001, audioCtx.currentTime + 0.15);
-    oscillator.stop(audioCtx.currentTime + 0.15);
+    gainNode.connect(compressor);
+    compressor.connect(audioCtx.destination);
+
+    oscillator.type = "square";
+    oscillator.frequency.setValueAtTime(1800, audioCtx.currentTime);
+    oscillator.frequency.exponentialRampToValueAtTime(900, audioCtx.currentTime + 0.08);
+
+    gainNode.gain.setValueAtTime(1.5, audioCtx.currentTime);
+    gainNode.gain.exponentialRampToValueAtTime(0.00001, audioCtx.currentTime + 0.18);
+
+    oscillator.start(audioCtx.currentTime);
+    oscillator.stop(audioCtx.currentTime + 0.18);
   } catch (e) {
-    console.log("Trình duyệt chặn phát âm bíp: " + e);
+    console.log("Lỗi âm thanh: " + e);
   }
 }
 
@@ -70,11 +82,15 @@ function xuLyDuLieuQR(text) {
 function khiQuetDuocMa(result) {
   if (!result || !dangQuetCX1) return;
   const data = xuLyDuLieuQR(result.getText());
-  if (!data) return; 
-  if (phienCX1.find(r => r.id === data.id)) {
-    showCanhBaoCX1("⚠️ Mã " + data.id + " đã quét rồi!");
+  if (!data) return;
+
+  // Kiểm tra trùng cả ID lẫn KG
+  const trung = phienCX1.find(r => r.id === data.id && r.kg === data.kg);
+  if (trung) {
+    showCanhBaoCX1("⚠️ Mã " + data.id + " + KG " + data.kg + " đã quét rồi!");
     return;
   }
+
   phatTiengBip();
   const thoiGian = new Date();
   phienCX1.push({ 
