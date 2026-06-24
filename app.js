@@ -282,7 +282,7 @@ document.addEventListener("click", e => {
   if (e.target.classList.contains("custom-option")) {
     loaiDaChon = e.target.dataset.value;
     document.getElementById("chon-loai").value = loaiDaChon; // Gán vào ô input ẩn để gửi dữ liệu
-    btn.textContent = loaiDaChon; // Thay đổi nội dung chữ hiển thị trên nút bấm
+    btn.innerHTML = loaiDaChon + '<span style="font-size:12px;color:#94a3b8;margin-left:auto">▼</span>'; // Thay đổi nội dung chữ hiển thị trên nút bấm
     
     // Đổi trạng thái màu sắc lựa chọn active
     document.querySelectorAll(".custom-option").forEach(opt => opt.classList.remove("active"));
