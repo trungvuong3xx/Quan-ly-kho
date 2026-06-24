@@ -144,11 +144,10 @@ function batDauCX1() {
 
 function dungCX1() {
   dangQuetCX1 = false;
-  denPinBat = false; // Tắt trạng thái đèn khi dừng camera
   if (zxingReaderCX1) { zxingReaderCX1.reset(); zxingReaderCX1 = null; }
-  document.getElementById("cx1-status").textContent = "⏸️ Đã dừng Đợt " + demSoDot;
-  document.getElementById("btn-tieptuc-cx1").style.display = "block";
-  document.getElementById("btn-dung-cx1").style.display = "none";
+  document.getElementById("cx1-status").textContent = "Đã dừng";
+}
+
 }
 
 function tiepTucCX1() {
@@ -156,8 +155,6 @@ function tiepTucCX1() {
   dangQuetCX1 = true;
   denPinBat = false;
   document.getElementById("cx1-status").textContent = "🟢 Đang quét Đợt " + demSoDot + "...";
-  document.getElementById("btn-tieptuc-cx1").style.display = "none";
-  document.getElementById("btn-dung-cx1").style.display = "block";
   document.getElementById("btn-flash-cx1").style.background = "#6b7280";
   document.getElementById("btn-flash-cx1").textContent = "🔦 Bật Đèn Pin";
 
