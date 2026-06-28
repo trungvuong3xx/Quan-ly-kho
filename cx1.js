@@ -97,10 +97,15 @@ function batDauCX1() {
   btnToggle.className = "btn btn-red btn-full";
 
   try {
-    zxingReaderCX1 = new ZXing.BrowserMultiFormatReader();
-    zxingReaderCX1.decodeFromVideoDevice(undefined, "cx1-reader", (result, err) => {
-      khiQuetDuocMa(result);
-    });
+    const hints = new Map();
+hints.set(ZXing.DecodeHintType.POSSIBLE_FORMATS, [ZXing.BarcodeFormat.QR_CODE]);
+hints.set(ZXing.DecodeHintType.TRY_HARDER, true);
+zxingReaderCX1 = new ZXing.BrowserMultiFormatReader(hints);
+zxingReaderCX1.decodeFromConstraints(
+  { video: { facingMode: "environment", width: { ideal: 1280 }, height: { ideal: 720 } } },
+  "cx1-reader",
+  (result, err) => { khiQuetDuocMa(result); }
+);
   } catch(e) {
     alert("Lỗi camera: " + e);
     dungCX1();
@@ -121,10 +126,15 @@ function tiepTucCX1() {
   document.getElementById("btn-flash-cx1").style.background = "#6b7280";
   document.getElementById("btn-flash-cx1").textContent = "🔦 Bật Đèn Pin";
   try {
-    zxingReaderCX1 = new ZXing.BrowserMultiFormatReader();
-    zxingReaderCX1.decodeFromVideoDevice(undefined, "cx1-reader", (result, err) => {
-      khiQuetDuocMa(result);
-    });
+    const hints = new Map();
+hints.set(ZXing.DecodeHintType.POSSIBLE_FORMATS, [ZXing.BarcodeFormat.QR_CODE]);
+hints.set(ZXing.DecodeHintType.TRY_HARDER, true);
+zxingReaderCX1 = new ZXing.BrowserMultiFormatReader(hints);
+zxingReaderCX1.decodeFromConstraints(
+  { video: { facingMode: "environment", width: { ideal: 1280 }, height: { ideal: 720 } } },
+  "cx1-reader",
+  (result, err) => { khiQuetDuocMa(result); }
+);
   } catch(e) {
     alert("Lỗi camera: " + e);
     dungCX1();
@@ -258,10 +268,15 @@ function quetTiepCX1() {
   btnToggle.className = "btn btn-red btn-full";
 
   try {
-    zxingReaderCX1 = new ZXing.BrowserMultiFormatReader();
-    zxingReaderCX1.decodeFromVideoDevice(undefined, "cx1-reader", (result, err) => {
-      khiQuetDuocMa(result);
-    });
+    const hints = new Map();
+hints.set(ZXing.DecodeHintType.POSSIBLE_FORMATS, [ZXing.BarcodeFormat.QR_CODE]);
+hints.set(ZXing.DecodeHintType.TRY_HARDER, true);
+zxingReaderCX1 = new ZXing.BrowserMultiFormatReader(hints);
+zxingReaderCX1.decodeFromConstraints(
+  { video: { facingMode: "environment", width: { ideal: 1280 }, height: { ideal: 720 } } },
+  "cx1-reader",
+  (result, err) => { khiQuetDuocMa(result); }
+);
   } catch(e) {
     alert("Lỗi camera: " + e);
     dungCX1();
