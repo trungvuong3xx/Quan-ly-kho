@@ -1,1 +1,1 @@
-# Qu-n-l-kho
+# Quan-ly-kho
