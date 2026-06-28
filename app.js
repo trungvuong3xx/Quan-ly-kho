@@ -28,10 +28,17 @@ function chuyenTrang(id, el) {
   document.getElementById(id).classList.add("active");
   el.classList.add("active");
   if (id !== "quetQR") dungQuet();
+  if (id !== "kiemKe" && typeof dungKiemKe === "function" && typeof dangQuetKK !== "undefined" && dangQuetKK) {
+    dungKiemKe();
+  }
+  if (id !== "chiFor" && typeof dungCX1 === "function" && typeof dangQuetCX1 !== "undefined" && dangQuetCX1) {
+    dungCX1();
+  }
 }
 
 function showLoading(show) {
-  document.getElementById("overlay-loading").style.display = show ? "flex" : "none";
+  const el = document.getElementById("overlay-loading");
+  if (el) el.style.display = show ? "flex" : "none";
 }
 
 async function timMSP() {
@@ -44,13 +51,21 @@ async function timMSP() {
   document.getElementById("card-qr").style.display = "none";
   document.getElementById("qr-grid").innerHTML = "";
 
-  if (!msp) { alert("Vui lòng nhập mã MSP!"); input.focus(); return; }
+  if (!msp) {
+    alert("Vui lòng nhập mã MSP!");
+    input.focus();
+    return;
+  }
 
   showLoading(true);
   const info = await callAPI({ action: "getInfo", msp });
   showLoading(false);
 
-  if (!info.success) { alert(info.error || info.message || "Không tìm thấy MSP!"); input.focus(); return; }
+  if (!info.success) {
+    alert(info.error || info.message || "Không tìm thấy MSP!");
+    input.focus();
+    return;
+  }
 
   infoMSP = { msp, ten: info.ten || msp, mau: info.mau || "" };
   document.getElementById("t-ten").textContent = infoMSP.ten;
@@ -60,6 +75,7 @@ async function timMSP() {
 
 async function taoQR() {
   if (!infoMSP) return;
+
   const sl = parseInt(document.getElementById("sl-qr").value, 10) || 20;
   showLoading(true);
   const ids = await callAPI({ action: "taoNhieuID", soLuong: sl });
@@ -69,6 +85,7 @@ async function taoQR() {
 
   const grid = document.getElementById("qr-grid");
   grid.innerHTML = "";
+
   ids.forEach(id => {
     const qrData = id + "|" + infoMSP.msp;
     const nd = document.createElement("div");
@@ -86,21 +103,29 @@ async function taoQR() {
       </div>
     `;
     grid.appendChild(nd);
-    new QRCode(document.getElementById("qr-" + id), { text: qrData, width: 56, height: 56, correctLevel: QRCode.CorrectLevel.M });
+
+    new QRCode(document.getElementById("qr-" + id), {
+      text: qrData,
+      width: 56,
+      height: 56,
+      correctLevel: QRCode.CorrectLevel.M
+    });
   });
+
   document.getElementById("card-qr").style.display = "block";
 }
 
 function batDauQuet() {
   ngayChon = document.getElementById("chon-ngay").value;
   loaiChon = document.getElementById("chon-loai").value;
+
   if (!ngayChon) { alert("⚠️ Vui lòng chọn ngày!"); return; }
   if (!loaiChon) { alert("⚠️ Vui lòng chọn loại!"); return; }
 
   document.getElementById("form-chon").style.display = "none";
   document.getElementById("cam-box").style.display = "block";
   document.getElementById("btn-stop").style.display = "block";
-  document.getElementById("scanner-status").textContent = "🟢 " + loaiChon + " | " + ngayChon;
+  document.getElementById("scanner-status").textContent = "🟢 Đang quét — " + loaiChon + " | " + ngayChon;
   dangXuLy = false;
 
   try {
@@ -108,17 +133,20 @@ function batDauQuet() {
     zxingReader.decodeFromVideoDevice(undefined, "reader", async (result, err) => {
       if (!result || dangXuLy) return;
       dangXuLy = true;
-      try {
-        const text = result.getText();
-        const parts = text.split("|");
-        const id = (parts[0] || "").trim();
-        const msp = (parts[1] || "").trim();
-        if (!id || !msp) { showCanhBao("QR không hợp lệ"); setTimeout(() => { dangXuLy = false; }, 1500); return; }
-        await hienOverlay({ id, msp });
-      } catch(e) {
-        showCanhBao("Lỗi đọc QR");
-        setTimeout(() => { dangXuLy = false; }, 1500);
+
+      const text = result.getText();
+      const parts = text.split("|");
+      const id = (parts[0] || "").trim();
+      const msp = (parts[1] || "").trim();
+
+      if (!id || !msp) {
+        showCanhBao("QR không hợp lệ");
+        setTimeout(() => { dangXuLy = false; }, 1200);
+        return;
       }
+
+      // KÍNH DÂNG BỆ HẠ: BẬT NGAY OVERLAY LẬP TỨC KHÔNG ĐỢI MẠNG LÀM TRỄ
+      hienOverlayLapTuc(id, msp);
     });
   } catch(e) {
     alert("Lỗi camera: " + e);
@@ -136,47 +164,78 @@ function dungQuet() {
   document.getElementById("canh-bao").style.display = "none";
 }
 
-async function hienOverlay(data) {
-  // Hiện overlay loading ngay
-  document.getElementById("overlay").classList.add("show");
-  document.getElementById("overlay-content").style.display = "none";
-  document.getElementById("overlay-spinner").style.display = "flex";
+// HÀM MỚI TỐI ƯU TỐC ĐỘ: BẬT BẢNG TRONG CHỚP MẮT
+function hienOverlayLapTuc(id, msp) {
+  // 1. Khởi tạo đối tượng tạm thời để bệ hạ gõ số kg ngay được luôn
+  qrDangQuet = {
+    id: id,
+    msp: msp,
+    ten: "Đang tải tên...",
+    mau: "Đang tải màu...",
+    cheDo: "luuMoi"
+  };
 
-  const info = await callAPI({ action: "kiemTraQR", id: data.id, msp: data.msp, loai: loaiChon });
-
-  if (info.error) {
-    document.getElementById("overlay").classList.remove("show");
-    showCanhBao(info.error);
-    setTimeout(() => { dangXuLy = false; }, 1800);
-    return;
-  }
-
-  qrDangQuet = { id: data.id, msp: data.msp, ten: info.ten || "—", mau: info.mau || "—", cheDo: info.cheDo || "luuMoi" };
-
-  document.getElementById("q-id").textContent = data.id;
-  document.getElementById("q-msp").textContent = data.msp;
-  document.getElementById("q-ten").textContent = qrDangQuet.ten;
-  document.getElementById("q-mau").textContent = qrDangQuet.mau;
+  // 2. Gán nhanh thông tin cơ bản lên màn hình
+  document.getElementById("q-id").textContent = id;
+  document.getElementById("q-msp").textContent = msp;
+  document.getElementById("q-ten").textContent = "⏳ Đang tải...";
+  document.getElementById("q-mau").textContent = "⏳ Đang tải...";
   document.getElementById("q-loai").textContent = loaiChon;
-  document.getElementById("q-ton").textContent = formatKg(info.ton) + " kg";
+  document.getElementById("q-ngay").textContent = ngayChon;
+  
+  // Các thông số phụ đặt trạng thái chờ tải ngầm
+  document.getElementById("q-da-nhap").textContent = "⏳";
+  document.getElementById("q-da-xuat").textContent = "⏳";
+  document.getElementById("q-ton").textContent = "⏳";
 
   const kgInput = document.getElementById("q-kg");
   const btnLuu = document.getElementById("btn-luu");
   kgInput.value = "";
-  kgInput.placeholder = "Nhập số kg...";
-  btnLuu.textContent = "Lưu & quét tiếp";
+  kgInput.placeholder = "Đang kiểm tra tồn kho...";
+  btnLuu.textContent = "💾 Lưu & quét tiếp";
 
-  if (info.cheDo === "capNhatNhap") {
-    kgInput.value = formatKg(info.kgNhap);
-    btnLuu.textContent = "Cập nhật kg";
-  } else if (!isNhap(loaiChon)) {
-    kgInput.placeholder = "Tồn: " + formatKg(info.ton) + " kg";
-  }
-
+  // 3. Đập bảng hiển thị lên luôn lập tức (Tốn chưa tới 0.05 giây)
   document.getElementById("msg-quet").classList.remove("show");
-  document.getElementById("overlay-spinner").style.display = "none";
-  document.getElementById("overlay-content").style.display = "block";
+  document.getElementById("overlay").classList.add("show");
   kgInput.focus();
+
+  // 4. CHẠY NGẦM: Bắt đầu gọi mạng lên Google Sheet lấy dữ liệu chi tiết
+  callAPI({
+    action: "kiemTraQR",
+    id: id,
+    msp: msp,
+    loai: loaiChon
+  }).then(info => {
+    // Nếu trong quá trình tải ngầm bệ hạ đã bấm đóng bảng thì hủy cập nhật
+    if (!qrDangQuet || qrDangQuet.id !== id) return;
+
+    if (info.error) {
+      showCanhBao(info.error);
+      dongOverlay();
+      return;
+    }
+
+    // Cập nhật lại dữ liệu chuẩn từ Google Sheet trả về vào biến hệ thống
+    qrDangQuet.ten = info.ten || "—";
+    qrDangQuet.mau = info.mau || "—";
+    qrDangQuet.cheDo = info.cheDo || "luuMoi";
+
+    // Điền mượt mà dữ liệu vào giao diện mà không làm đứng màn hình
+    document.getElementById("q-ten").textContent = qrDangQuet.ten;
+    document.getElementById("q-mau").textContent = qrDangQuet.mau;
+    document.getElementById("q-da-nhap").textContent = formatKg(info.tongNhap);
+    document.getElementById("q-da-xuat").textContent = formatKg(info.tongXuat);
+    document.getElementById("q-ton").textContent = formatKg(info.ton);
+
+    if (info.cheDo === "capNhatNhap") {
+      kgInput.value = formatKg(info.kgNhap);
+      btnLuu.textContent = "💾 Cập nhật kg nhập";
+    } else if (!isNhap(loaiChon)) {
+      kgInput.placeholder = "Tồn: " + formatKg(info.ton) + " kg";
+    }
+  }).catch(err => {
+    console.log("Lỗi tải thông tin ngầm:", err);
+  });
 }
 
 function dongOverlay() {
@@ -187,30 +246,42 @@ function dongOverlay() {
 
 function showCanhBao(text) {
   const el = document.getElementById("canh-bao");
-  el.textContent = text;
-  el.style.display = "block";
-  setTimeout(() => { el.style.display = "none"; }, 2200);
+  if (el) {
+    el.textContent = text;
+    el.style.display = "block";
+    setTimeout(() => { el.style.display = "none"; }, 2200);
+  }
 }
 
 async function luuGiaoDich() {
   if (!qrDangQuet) return;
+
   const kg = document.getElementById("q-kg").value;
-  if (!kg || parseFloat(kg) <= 0) { showMsg("⚠️ Nhập số kg hợp lệ!", false); return; }
+  if (!kg || parseFloat(kg) <= 0) {
+    showMsg("⚠️ Nhập số kg hợp lệ!", false);
+    return;
+  }
 
   const btn = document.getElementById("btn-luu");
   btn.disabled = true;
-  btn.textContent = "Đang lưu...";
 
   const r = await callAPI({
     action: "luuGiaoDich",
-    id: qrDangQuet.id, msp: qrDangQuet.msp, ten: qrDangQuet.ten, mau: qrDangQuet.mau,
-    ngay: ngayChon, loai: loaiChon, kg
+    id: qrDangQuet.id,
+    msp: qrDangQuet.msp,
+    ten: qrDangQuet.ten,
+    mau: qrDangQuet.mau,
+    ngay: ngayChon,
+    loai: loaiChon,
+    kg
   });
 
   btn.disabled = false;
-  btn.textContent = "Lưu & quét tiếp";
 
-  if (r.error) { showMsg("❌ " + r.error, false); return; }
+  if (r.error) {
+    showMsg("❌ " + r.error, false);
+    return;
+  }
 
   showMsg("✅ Đã lưu " + formatKg(r.kgGoc) + " kg!", true);
   setTimeout(() => dongOverlay(), 800);
@@ -236,8 +307,7 @@ document.addEventListener("click", e => {
 
 function showMsg(text, ok) {
   const el = document.getElementById("msg-quet");
-  if (el) { el.textContent = text; el.className = "msg show " + (ok ? "ok" : "err"); }
-}
+  if (el) { el.textContent = text; el.className = "msg show " + (ok ? "ok" : "err"); }\n}
 
 window.onload = function() {
   const today = new Date().toISOString().split("T")[0];
