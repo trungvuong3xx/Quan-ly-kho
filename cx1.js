@@ -222,11 +222,12 @@ if (!tongDotCuaPhien[keyDot]) {
   
   const trTongDot = document.createElement("tr");
   trTongDot.innerHTML = `
-    <td style="padding:10px;font-weight:700;color:#eab308;background:rgba(255,255,255,.02)">TỔNG</td>
-<td style="padding:10px;background:rgba(255,255,255,.02)"></td>
-<td style="padding:10px;text-align:center;font-weight:700;color:#eab308;background:rgba(255,255,255,.02)">${tongQRAll}</td>
-<td style="padding:10px;text-align:right;font-weight:700;color:#eab308;background:rgba(255,255,255,.02)">${tongKGAll.toFixed(1)}</td>
-  `;
+  <td style="padding:10px;font-weight:700;color:#eab308;background:rgba(255,255,255,.02)">TỔNG</td>
+  <td style="padding:10px;background:rgba(255,255,255,.02)"></td>
+  <td style="padding:10px;background:rgba(255,255,255,.02)"></td>
+  <td style="padding:10px;text-align:center;font-weight:700;color:#eab308;background:rgba(255,255,255,.02)">${tongQRAll}</td>
+  <td style="padding:10px;text-align:right;font-weight:700;color:#eab308;background:rgba(255,255,255,.02)">${tongKGAll.toFixed(1)}</td>
+`;
   tbodyDot.appendChild(trTongDot);
 
   const tbodyGom = document.getElementById("cx1-tbody-gom");
