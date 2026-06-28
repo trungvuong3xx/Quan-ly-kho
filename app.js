@@ -28,7 +28,7 @@ function chuyenTrang(id, el) {
   document.getElementById(id).classList.add("active");
   el.classList.add("active");
   if (id !== "quetQR") dungQuet();
-}s
+}
 
 async function timMSP() {
   const input = document.getElementById("msp-tao");
