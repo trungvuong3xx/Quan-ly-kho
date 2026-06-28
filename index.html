@@ -93,6 +93,7 @@
 
     <div id="cam-box" style="display:none">
       <video id="reader" autoplay playsinline muted style="width:100%;border-radius:8px;background:#000;margin-top:12px;"></video>
+      <button id="toggle-quet-nhanh" class="btn btn-full" style="background:#334155;margin-top:10px" onclick="toggleQuetNhanh()">Nhập Kg: TẮT</button>
       <div class="scanner-status" id="scanner-status"></div>
       <button class="btn btn-red btn-full" id="btn-stop" onclick="dungQuet()" style="display:none">⛔ Dừng quét</button>
     </div>
@@ -185,21 +186,16 @@
   </div>
 </div>
 
-<!-- Loading toàn trang -->
 <div id="overlay-loading" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:99999;justify-content:center;align-items:center;">
   <div style="width:40px;height:40px;border:3px solid #334155;border-top-color:#3b82f6;border-radius:50%;animation:spin .7s linear infinite;"></div>
 </div>
 
 <div class="overlay" id="overlay">
   <div class="overlay-card">
-
-    <!-- Spinner chờ API -->
-    <div id="overlay-spinner" style="display:none;justify-content:center;align-items:center;padding:40px;">
-      <div style="width:36px;height:36px;border:3px solid #334155;border-top-color:#3b82f6;border-radius:50%;animation:spin .7s linear infinite;"></div>
+    <div id="overlay-spinner" style="display:none;justify-content:center;padding:20px;">
+      <div style="width:28px;height:28px;border:3px solid #334155;border-top-color:#3b82f6;border-radius:50%;animation:spin .7s linear infinite;"></div>
     </div>
-
-    <!-- Nội dung sau khi có data -->
-    <div id="overlay-content" style="display:none">
+    <div id="overlay-content">
       <div class="overlay-title">Thông tin QR</div>
       <div class="irow"><span class="ilabel">ID</span><span class="ivalue" id="q-id"></span></div>
       <div class="irow"><span class="ilabel">MSP</span><span class="ivalue" id="q-msp"></span></div>
@@ -213,7 +209,6 @@
       <button class="btn btn-full" style="background:#475569;margin-top:8px" onclick="dongOverlay()">Bỏ qua</button>
       <div class="msg" id="msg-quet"></div>
     </div>
-
   </div>
 </div>
 

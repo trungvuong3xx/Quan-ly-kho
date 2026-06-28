@@ -11,6 +11,7 @@ let dangXuLy = false;
 let ngayChon = null;
 let loaiChon = null;
 let qrDangQuet = null;
+let quetNhanh = false; // toggle quét nhanh
 
 function formatKg(value) {
   const num = Number(value || 0);
@@ -34,24 +35,31 @@ function showLoading(show) {
   document.getElementById("overlay-loading").style.display = show ? "flex" : "none";
 }
 
+function toggleQuetNhanh() {
+  quetNhanh = !quetNhanh;
+  const btn = document.getElementById("toggle-quet-nhanh");
+  if (quetNhanh) {
+    btn.style.background = "linear-gradient(135deg,#16a34a,#22c55e)";
+    btn.textContent = "⚡ Quét nhanh: BẬT";
+  } else {
+    btn.style.background = "#334155";
+    btn.textContent = "⚡ Quét nhanh: TẮT";
+  }
+}
+
 async function timMSP() {
   const input = document.getElementById("msp-tao");
   const msp = input.value.trim();
   const infoBox = document.getElementById("info-tao");
-
   infoMSP = null;
   infoBox.classList.remove("show");
   document.getElementById("card-qr").style.display = "none";
   document.getElementById("qr-grid").innerHTML = "";
-
   if (!msp) { alert("Vui lòng nhập mã MSP!"); input.focus(); return; }
-
   showLoading(true);
   const info = await callAPI({ action: "getInfo", msp });
   showLoading(false);
-
   if (!info.success) { alert(info.error || info.message || "Không tìm thấy MSP!"); input.focus(); return; }
-
   infoMSP = { msp, ten: info.ten || msp, mau: info.mau || "" };
   document.getElementById("t-ten").textContent = infoMSP.ten;
   document.getElementById("t-mau").textContent = infoMSP.mau || "-";
@@ -64,9 +72,7 @@ async function taoQR() {
   showLoading(true);
   const ids = await callAPI({ action: "taoNhieuID", soLuong: sl });
   showLoading(false);
-
   if (ids.error) { alert("❌ " + ids.error); return; }
-
   const grid = document.getElementById("qr-grid");
   grid.innerHTML = "";
   ids.forEach(id => {
@@ -97,6 +103,17 @@ function batDauQuet() {
   if (!ngayChon) { alert("⚠️ Vui lòng chọn ngày!"); return; }
   if (!loaiChon) { alert("⚠️ Vui lòng chọn loại!"); return; }
 
+  // Mặc định quét nhanh nếu là Xuất
+  quetNhanh = !isNhap(loaiChon);
+  const btn = document.getElementById("toggle-quet-nhanh");
+  if (quetNhanh) {
+    btn.style.background = "linear-gradient(135deg,#16a34a,#22c55e)";
+    btn.textContent = "⚡ Quét nhanh: BẬT";
+  } else {
+    btn.style.background = "#334155";
+    btn.textContent = "⚡ Quét nhanh: TẮT";
+  }
+
   document.getElementById("form-chon").style.display = "none";
   document.getElementById("cam-box").style.display = "block";
   document.getElementById("btn-stop").style.display = "block";
@@ -114,7 +131,13 @@ function batDauQuet() {
         const id = (parts[0] || "").trim();
         const msp = (parts[1] || "").trim();
         if (!id || !msp) { showCanhBao("QR không hợp lệ"); setTimeout(() => { dangXuLy = false; }, 1500); return; }
-        await hienOverlay({ id, msp });
+
+        if (quetNhanh) {
+          // Quét nhanh: lưu luôn không popup
+          await luuNhanh({ id, msp });
+        } else {
+          await hienOverlay({ id, msp });
+        }
       } catch(e) {
         showCanhBao("Lỗi đọc QR");
         setTimeout(() => { dangXuLy = false; }, 1500);
@@ -124,6 +147,36 @@ function batDauQuet() {
     alert("Lỗi camera: " + e);
     dungQuet();
   }
+}
+
+// Lưu nhanh không cần nhập kg
+async function luuNhanh(data) {
+  // Hiện cảnh báo nhỏ đang lưu
+  showCanhBao("💾 Đang lưu " + data.id + "...");
+
+  // Lấy thông tin MSP ngầm
+  const info = await callAPI({ action: "kiemTraQR", id: data.id, msp: data.msp, loai: loaiChon });
+
+  if (info.error) {
+    showCanhBao("❌ " + info.error);
+    setTimeout(() => { dangXuLy = false; }, 1800);
+    return;
+  }
+
+  const r = await callAPI({
+    action: "luuGiaoDich",
+    id: data.id, msp: data.msp,
+    ten: info.ten || "—", mau: info.mau || "—",
+    ngay: ngayChon, loai: loaiChon,
+    kg: 0 // kg = 0 khi quét nhanh
+  });
+
+  if (r.error) {
+    showCanhBao("❌ " + r.error);
+  } else {
+    showCanhBao("✅ Đã lưu " + data.id);
+  }
+  setTimeout(() => { dangXuLy = false; }, 1000);
 }
 
 function dungQuet() {
@@ -137,12 +190,26 @@ function dungQuet() {
 }
 
 async function hienOverlay(data) {
-  // Hiện overlay loading ngay
-  document.getElementById("overlay").classList.add("show");
-  document.getElementById("overlay-content").style.display = "none";
+  // Hiện overlay NGAY với thông tin từ QR
+  document.getElementById("q-id").textContent = data.id;
+  document.getElementById("q-msp").textContent = data.msp;
+  document.getElementById("q-ten").textContent = "...";
+  document.getElementById("q-mau").textContent = "...";
+  document.getElementById("q-loai").textContent = loaiChon;
+  document.getElementById("q-ton").textContent = "...";
+  document.getElementById("q-kg").value = "";
+  document.getElementById("q-kg").placeholder = "Nhập số kg...";
+  document.getElementById("btn-luu").textContent = "Lưu & quét tiếp";
+  document.getElementById("msg-quet").classList.remove("show");
   document.getElementById("overlay-spinner").style.display = "flex";
+  document.getElementById("overlay-content").style.display = "block";
+  document.getElementById("overlay").classList.add("show");
+  document.getElementById("q-kg").focus();
 
+  // Gọi API ngầm lấy thêm thông tin
   const info = await callAPI({ action: "kiemTraQR", id: data.id, msp: data.msp, loai: loaiChon });
+
+  document.getElementById("overlay-spinner").style.display = "none";
 
   if (info.error) {
     document.getElementById("overlay").classList.remove("show");
@@ -153,30 +220,16 @@ async function hienOverlay(data) {
 
   qrDangQuet = { id: data.id, msp: data.msp, ten: info.ten || "—", mau: info.mau || "—", cheDo: info.cheDo || "luuMoi" };
 
-  document.getElementById("q-id").textContent = data.id;
-  document.getElementById("q-msp").textContent = data.msp;
   document.getElementById("q-ten").textContent = qrDangQuet.ten;
   document.getElementById("q-mau").textContent = qrDangQuet.mau;
-  document.getElementById("q-loai").textContent = loaiChon;
   document.getElementById("q-ton").textContent = formatKg(info.ton) + " kg";
 
-  const kgInput = document.getElementById("q-kg");
-  const btnLuu = document.getElementById("btn-luu");
-  kgInput.value = "";
-  kgInput.placeholder = "Nhập số kg...";
-  btnLuu.textContent = "Lưu & quét tiếp";
-
   if (info.cheDo === "capNhatNhap") {
-    kgInput.value = formatKg(info.kgNhap);
-    btnLuu.textContent = "Cập nhật kg";
+    document.getElementById("q-kg").value = formatKg(info.kgNhap);
+    document.getElementById("btn-luu").textContent = "Cập nhật kg";
   } else if (!isNhap(loaiChon)) {
-    kgInput.placeholder = "Tồn: " + formatKg(info.ton) + " kg";
+    document.getElementById("q-kg").placeholder = "Tồn: " + formatKg(info.ton) + " kg";
   }
-
-  document.getElementById("msg-quet").classList.remove("show");
-  document.getElementById("overlay-spinner").style.display = "none";
-  document.getElementById("overlay-content").style.display = "block";
-  kgInput.focus();
 }
 
 function dongOverlay() {
@@ -189,7 +242,7 @@ function showCanhBao(text) {
   const el = document.getElementById("canh-bao");
   el.textContent = text;
   el.style.display = "block";
-  setTimeout(() => { el.style.display = "none"; }, 2200);
+  setTimeout(() => { el.style.display = "none"; }, 2000);
 }
 
 async function luuGiaoDich() {
@@ -211,7 +264,6 @@ async function luuGiaoDich() {
   btn.textContent = "Lưu & quét tiếp";
 
   if (r.error) { showMsg("❌ " + r.error, false); return; }
-
   showMsg("✅ Đã lưu " + formatKg(r.kgGoc) + " kg!", true);
   setTimeout(() => dongOverlay(), 800);
 }
@@ -252,3 +304,4 @@ window.batDauQuet = batDauQuet;
 window.dungQuet = dungQuet;
 window.dongOverlay = dongOverlay;
 window.luuGiaoDich = luuGiaoDich;
+window.toggleQuetNhanh = toggleQuetNhanh;
