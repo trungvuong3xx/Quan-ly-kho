@@ -181,10 +181,10 @@ function hienKetQuaCX1() {
     tongQRAll += 1;
     tongKGAll += r.kg;
 
-    const keyDot = r.msp + "|" + r.qc;
-    if (!tongDotCuaPhien[keyDot]) {
-      tongDotCuaPhien[keyDot] = { msp: r.msp, qc: r.qc, soLuong: 0, tongKG: 0 };
-    }
+    const keyDot = r.dotQuet + "|" + r.msp + "|" + r.qc;
+if (!tongDotCuaPhien[keyDot]) {
+  tongDotCuaPhien[keyDot] = { dot: r.dotQuet, msp: r.msp, qc: r.qc, soLuong: 0, tongKG: 0 };
+}
     tongDotCuaPhien[keyDot].soLuong += 1;
     tongDotCuaPhien[keyDot].tongKG += r.kg;
 
@@ -201,11 +201,12 @@ function hienKetQuaCX1() {
   Object.values(tongDotCuaPhien).forEach(item => {
     const tr = document.createElement("tr");
     tr.innerHTML = `
-      <td style="padding:10px;border-bottom:1px solid rgba(255,255,255,.06)">${item.msp}</td>
-      <td style="padding:10px;border-bottom:1px solid rgba(255,255,255,.06)">${item.qc}</td>
-      <td style="padding:10px;border-bottom:1px solid rgba(255,255,255,.06);text-align:center">${item.soLuong}</td>
-      <td style="padding:10px;border-bottom:1px solid rgba(255,255,255,.06);text-align:right;font-weight:700;color:#22c55e">${item.tongKG.toFixed(2)}</td>
-    `;
+  <td style="padding:10px;border-bottom:1px solid rgba(255,255,255,.06);color:#eab308;font-weight:700">Đợt ${item.dot}</td>
+  <td style="padding:10px;border-bottom:1px solid rgba(255,255,255,.06)">${item.msp}</td>
+  <td style="padding:10px;border-bottom:1px solid rgba(255,255,255,.06)">${item.qc}</td>
+  <td style="padding:10px;border-bottom:1px solid rgba(255,255,255,.06);text-align:center">${item.soLuong}</td>
+  <td style="padding:10px;border-bottom:1px solid rgba(255,255,255,.06);text-align:right;font-weight:700;color:#22c55e">${item.tongKG.toFixed(2)}</td>
+`;
     tbodyDot.appendChild(tr);
   });
   
