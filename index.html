@@ -185,23 +185,35 @@
   </div>
 </div>
 
+<!-- Loading toàn trang -->
+<div id="overlay-loading" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:99999;justify-content:center;align-items:center;">
+  <div style="width:40px;height:40px;border:3px solid #334155;border-top-color:#3b82f6;border-radius:50%;animation:spin .7s linear infinite;"></div>
+</div>
+
 <div class="overlay" id="overlay">
   <div class="overlay-card">
-    <div class="overlay-title"> Thông tin QR</div>
-    <div class="irow"><span class="ilabel">ID</span><span class="ivalue" id="q-id"></span></div>
-    <div class="irow"><span class="ilabel">MSP</span><span class="ivalue" id="q-msp"></span></div>
-    <div class="irow"><span class="ilabel">Tên</span><span class="ivalue" id="q-ten"></span></div>
-    <div class="irow"><span class="ilabel">Màu</span><span class="ivalue" id="q-mau"></span></div>
-    <div class="irow"><span class="ilabel">Ngày</span><span class="ivalue" id="q-ngay"></span></div>
-    <div class="irow"><span class="ilabel">Loại</span><span class="ivalue" id="q-loai"></span></div>
-    <div class="irow stock-row"><span class="ilabel">Đã nhập</span><span class="ivalue" id="q-da-nhap">0</span></div>
-    <div class="irow stock-row"><span class="ilabel">Đã xuất</span><span class="ivalue" id="q-da-xuat">0</span></div>
-    <div class="irow stock-row stock-ton"><span class="ilabel">Tồn</span><span class="ivalue" id="q-ton">0</span></div>
-    <label>Số kg</label>
-    <input type="number" id="q-kg" placeholder="Nhập số kg..." min="0" step="0.1">
-    <button class="btn btn-green btn-full" id="btn-luu" onclick="luuGiaoDich()">Lưu & quét tiếp</button>
-    <button class="btn btn-full" style="background:#888;margin-top:8px" onclick="dongOverlay()">Bỏ qua & quét tiếp</button>
-    <div class="msg" id="msg-quet"></div>
+
+    <!-- Spinner chờ API -->
+    <div id="overlay-spinner" style="display:none;justify-content:center;align-items:center;padding:40px;">
+      <div style="width:36px;height:36px;border:3px solid #334155;border-top-color:#3b82f6;border-radius:50%;animation:spin .7s linear infinite;"></div>
+    </div>
+
+    <!-- Nội dung sau khi có data -->
+    <div id="overlay-content" style="display:none">
+      <div class="overlay-title">Thông tin QR</div>
+      <div class="irow"><span class="ilabel">ID</span><span class="ivalue" id="q-id"></span></div>
+      <div class="irow"><span class="ilabel">MSP</span><span class="ivalue" id="q-msp"></span></div>
+      <div class="irow"><span class="ilabel">Tên</span><span class="ivalue" id="q-ten"></span></div>
+      <div class="irow"><span class="ilabel">Màu</span><span class="ivalue" id="q-mau"></span></div>
+      <div class="irow"><span class="ilabel">Loại</span><span class="ivalue" id="q-loai"></span></div>
+      <div class="irow stock-ton"><span class="ilabel">Tồn</span><span class="ivalue" id="q-ton"></span></div>
+      <label>Số kg</label>
+      <input type="number" id="q-kg" placeholder="Nhập số kg..." min="0" step="0.1">
+      <button class="btn btn-green btn-full" id="btn-luu" onclick="luuGiaoDich()">Lưu & quét tiếp</button>
+      <button class="btn btn-full" style="background:#475569;margin-top:8px" onclick="dongOverlay()">Bỏ qua</button>
+      <div class="msg" id="msg-quet"></div>
+    </div>
+
   </div>
 </div>
 

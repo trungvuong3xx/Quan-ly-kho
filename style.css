@@ -551,3 +551,5 @@ select:focus {
 .bnav-btn.active { color: #3b82f6; }
 
 .page { padding-bottom: 80px; }
+
+@keyframes spin { to { transform: rotate(360deg); } }
