@@ -10,11 +10,25 @@
 </head>
 <body>
 
-<div class="nav">
-  <button class="nav-btn active" onclick="chuyenTrang('taoQR', this)">🖨️ Tạo QR</button>
-  <button class="nav-btn" onclick="chuyenTrang('quetQR', this)">📷 Quét QR</button>
-  <button class="nav-btn" onclick="chuyenTrang('kiemKe', this)">📋 Kiểm kê</button>
-  <button class="nav-btn" onclick="chuyenTrang('chiFor', this)">📦 Chỉ FOR</button>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+
+<div class="bottom-nav">
+  <button class="bnav-btn active" onclick="chuyenTrang('taoQR', this)">
+    <i class="ti ti-qrcode" aria-hidden="true"></i>
+    <span>Tạo QR</span>
+  </button>
+  <button class="bnav-btn" onclick="chuyenTrang('quetQR', this)">
+    <i class="ti ti-scan" aria-hidden="true"></i>
+    <span>Quét QR</span>
+  </button>
+  <button class="bnav-btn" onclick="chuyenTrang('kiemKe', this)">
+    <i class="ti ti-clipboard-list" aria-hidden="true"></i>
+    <span>Kiểm kê</span>
+  </button>
+  <button class="bnav-btn" onclick="chuyenTrang('chiFor', this)">
+    <i class="ti ti-package" aria-hidden="true"></i>
+    <span>Chỉ FOR</span>
+  </button>
 </div>
 
 <div class="canh-bao" id="canh-bao"></div>

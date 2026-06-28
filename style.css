@@ -24,37 +24,6 @@ body {
   min-height: 100vh;
 }
 
-.nav {
-  position: sticky;
-  top: 0;
-  z-index: 999;
-  display: flex;
-  gap: 10px;
-  padding: 14px;
-  background: rgba(2, 6, 23, .85);
-  backdrop-filter: blur(16px);
-  border-bottom: 1px solid var(--border);
-}
-
-.nav-btn {
-  flex: 1;
-  border: none;
-  padding: 12px;
-  border-radius: 14px;
-  background: #1e293b;
-  color: var(--sub);
-  cursor: pointer;
-  font-size: 14px;
-  font-weight: 600;
-  transition: .25s;
-}
-
-.nav-btn.active {
-  background: linear-gradient(135deg, #2563eb, #3b82f6);
-  color: #fff;
-  box-shadow: 0 0 20px rgba(59, 130, 246, .35);
-}
-
 .page {
   display: none;
   max-width: 600px;
@@ -550,3 +519,35 @@ select:focus {
   background: #2563eb !important;
   color: white !important;
 }
+
+.bottom-nav {
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  z-index: 999;
+  display: flex;
+  background: rgba(2,6,23,.95);
+  backdrop-filter: blur(16px);
+  border-top: 0.5px solid rgba(255,255,255,.08);
+  padding: 8px 0 16px;
+}
+
+.bnav-btn {
+  flex: 1;
+  background: none;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 4px;
+  color: #94a3b8;
+  font-family: Inter, sans-serif;
+  transition: color .2s;
+}
+
+.bnav-btn i { font-size: 22px; }
+.bnav-btn span { font-size: 10px; font-weight: 600; }
+.bnav-btn.active { color: #3b82f6; }
+
+.page { padding-bottom: 80px; }

@@ -24,11 +24,11 @@ function isNhap(loai) {
 
 function chuyenTrang(id, el) {
   document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
-  document.querySelectorAll(".nav-btn").forEach(b => b.classList.remove("active"));
+  document.querySelectorAll(".bnav-btn").forEach(b => b.classList.remove("active"));
   document.getElementById(id).classList.add("active");
   el.classList.add("active");
   if (id !== "quetQR") dungQuet();
-}
+}s
 
 async function timMSP() {
   const input = document.getElementById("msp-tao");
@@ -198,11 +198,11 @@ async function hienOverlay(data) {
   const btnLuu = document.getElementById("btn-luu");
   kgInput.value = "";
   kgInput.placeholder = "Nhập số kg...";
-  btnLuu.textContent = "💾 Lưu & quét tiếp";
+  btnLuu.textContent = "Lưu & quét tiếp";
 
   if (info.cheDo === "capNhatNhap") {
     kgInput.value = formatKg(info.kgNhap);
-    btnLuu.textContent = "💾 Cập nhật kg nhập";
+    btnLuu.textContent = "Cập nhật kg nhập";
   } else if (!isNhap(loaiChon)) {
     kgInput.placeholder = "Tồn: " + formatKg(info.ton) + " kg";
   }
@@ -282,7 +282,7 @@ document.addEventListener("click", e => {
   if (e.target.classList.contains("custom-option")) {
     loaiDaChon = e.target.dataset.value;
     document.getElementById("chon-loai").value = loaiDaChon; // Gán vào ô input ẩn để gửi dữ liệu
-    btn.innerHTML = loaiDaChon + '<span style="font-size:12px;color:#94a3b8;margin-left:auto">▼</span>'; // Thay đổi nội dung chữ hiển thị trên nút bấm
+    btn.innerHTML = loaiDaChon + '<span style="font-size:12px;color:#94a3b8;margin-left:auto"></span>'; // Thay đổi nội dung chữ hiển thị trên nút bấm
     
     // Đổi trạng thái màu sắc lựa chọn active
     document.querySelectorAll(".custom-option").forEach(opt => opt.classList.remove("active"));
