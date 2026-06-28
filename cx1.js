@@ -205,7 +205,7 @@ if (!tongDotCuaPhien[keyDot]) {
   <td style="padding:10px;border-bottom:1px solid rgba(255,255,255,.06)">${item.msp}</td>
   <td style="padding:10px;border-bottom:1px solid rgba(255,255,255,.06)">${item.qc}</td>
   <td style="padding:10px;border-bottom:1px solid rgba(255,255,255,.06);text-align:center">${item.soLuong}</td>
-  <td style="padding:10px;border-bottom:1px solid rgba(255,255,255,.06);text-align:right;font-weight:700;color:#22c55e">${item.tongKG.toFixed(2)}</td>
+  <td style="padding:10px;border-bottom:1px solid rgba(255,255,255,.06);text-align:right;font-weight:700;color:#22c55e">${item.tongKG.toFixed(1)}</td>
 `;
     tbodyDot.appendChild(tr);
   });
@@ -214,7 +214,7 @@ if (!tongDotCuaPhien[keyDot]) {
   trTongDot.innerHTML = `
     <td colspan="2" style="padding:10px;font-weight:700;color:#eab308;background:rgba(255,255,255,.02)">TỔNG</td>
     <td style="padding:10px;text-align:center;font-weight:700;color:#eab308;background:rgba(255,255,255,.02)">${tongQRAll}</td>
-    <td style="padding:10px;text-align:right;font-weight:700;color:#eab308;background:rgba(255,255,255,.02)">${tongKGAll.toFixed(2)}</td>
+    <td style="padding:10px;text-align:right;font-weight:700;color:#eab308;background:rgba(255,255,255,.02)">${tongKGAll.toFixed(1)}</td>
   `;
   tbodyDot.appendChild(trTongDot);
 
@@ -226,7 +226,7 @@ if (!tongDotCuaPhien[keyDot]) {
       <td style="padding:10px;border-bottom:1px solid rgba(255,255,255,.06)">${item.msp}</td>
       <td style="padding:10px;border-bottom:1px solid rgba(255,255,255,.06)">${item.qc}</td>
       <td style="padding:10px;border-bottom:1px solid rgba(255,255,255,.06);text-align:center;font-weight:700">${item.soLuong}</td>
-      <td style="padding:10px;border-bottom:1px solid rgba(255,255,255,.06);text-align:right;font-weight:700;color:#22c55e">${item.tongKG.toFixed(2)}</td>
+      <td style="padding:10px;border-bottom:1px solid rgba(255,255,255,.06);text-align:right;font-weight:700;color:#22c55e">${item.tongKG.toFixed(1)}</td>
     `;
     tbodyGom.appendChild(tr);
   });
@@ -235,7 +235,7 @@ if (!tongDotCuaPhien[keyDot]) {
   trTongGom.innerHTML = `
     <td colspan="2" style="padding:10px;font-weight:700;color:#3b82f6;background:rgba(255,255,255,.02)">TỔNG</td>
     <td style="padding:10px;text-align:center;font-weight:700;color:#3b82f6;background:rgba(255,255,255,.02)">${tongQRAll}</td>
-    <td style="padding:10px;text-align:right;font-weight:700;color:#3b82f6;background:rgba(255,255,255,.02)">${tongKGAll.toFixed(2)}</td>
+    <td style="padding:10px;text-align:right;font-weight:700;color:#3b82f6;background:rgba(255,255,255,.02)">${tongKGAll.toFixed(1)}</td>
   `;
   tbodyGom.appendChild(trTongGom);
 
