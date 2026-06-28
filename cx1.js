@@ -201,7 +201,7 @@ if (!tongDotCuaPhien[keyDot]) {
   Object.values(tongDotCuaPhien).forEach(item => {
     const tr = document.createElement("tr");
     tr.innerHTML = `
-  <td style="padding:10px;border-bottom:1px solid rgba(255,255,255,.06);color:#eab308;font-weight:700">Đợt ${item.dot}</td>
+  <td style="padding:10px;border-bottom:1px solid rgba(255,255,255,.06);color:#eab308;font-weight:700"> ${item.dot}</td>
   <td style="padding:10px;border-bottom:1px solid rgba(255,255,255,.06)">${item.msp}</td>
   <td style="padding:10px;border-bottom:1px solid rgba(255,255,255,.06)">${item.qc}</td>
   <td style="padding:10px;border-bottom:1px solid rgba(255,255,255,.06);text-align:center">${item.soLuong}</td>
