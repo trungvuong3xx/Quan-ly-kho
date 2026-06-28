@@ -254,7 +254,7 @@ function quetTiepCX1() {
   document.getElementById("cx1-status").textContent = "🟢 Đang quét Đợt " + demSoDot + "...";
 
   const btnToggle = document.getElementById("btn-dung-tieptuc-cx1");
-  btnToggle.textContent = "⏸️ Dừng quét";
+  btnToggle.textContent = "Dừng quét";
   btnToggle.className = "btn btn-red btn-full";
 
   try {
