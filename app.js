@@ -24,21 +24,10 @@ function isNhap(loai) {
 
 function chuyenTrang(id, el) {
   document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
-  document.querySelectorAll(".bnav-btn").forEach(b => b.classList.remove("active"));
+  document.querySelectorAll(".nav-btn").forEach(b => b.classList.remove("active"));
   document.getElementById(id).classList.add("active");
   el.classList.add("active");
   if (id !== "quetQR") dungQuet();
-  if (id !== "kiemKe" && typeof dungKiemKe === "function" && typeof dangQuetKK !== "undefined" && dangQuetKK) {
-    dungKiemKe();
-  }
-  if (id !== "chiFor" && typeof dungCX1 === "function" && typeof dangQuetCX1 !== "undefined" && dangQuetCX1) {
-    dungCX1();
-  }
-}
-
-function showLoading(show) {
-  const el = document.getElementById("overlay-loading");
-  if (el) el.style.display = show ? "flex" : "none";
 }
 
 async function timMSP() {
@@ -57,9 +46,7 @@ async function timMSP() {
     return;
   }
 
-  showLoading(true);
   const info = await callAPI({ action: "getInfo", msp });
-  showLoading(false);
 
   if (!info.success) {
     alert(info.error || info.message || "Không tìm thấy MSP!");
@@ -77,9 +64,7 @@ async function taoQR() {
   if (!infoMSP) return;
 
   const sl = parseInt(document.getElementById("sl-qr").value, 10) || 20;
-  showLoading(true);
   const ids = await callAPI({ action: "taoNhieuID", soLuong: sl });
-  showLoading(false);
 
   if (ids.error) { alert("❌ " + ids.error); return; }
 
@@ -145,7 +130,7 @@ function batDauQuet() {
         return;
       }
 
-      // KÍNH DÂNG BỆ HẠ: BẬT NGAY OVERLAY LẬP TỨC KHÔNG ĐỢI MẠNG LÀM TRỄ
+      // HIỂN THỊ OVERLAY LẬP TỨC TRONG 0.05S KHÔNG ĐỢI MẠNG
       hienOverlayLapTuc(id, msp);
     });
   } catch(e) {
@@ -164,9 +149,7 @@ function dungQuet() {
   document.getElementById("canh-bao").style.display = "none";
 }
 
-// HÀM MỚI TỐI ƯU TỐC ĐỘ: BẬT BẢNG TRONG CHỚP MẮT
 function hienOverlayLapTuc(id, msp) {
-  // 1. Khởi tạo đối tượng tạm thời để bệ hạ gõ số kg ngay được luôn
   qrDangQuet = {
     id: id,
     msp: msp,
@@ -175,7 +158,6 @@ function hienOverlayLapTuc(id, msp) {
     cheDo: "luuMoi"
   };
 
-  // 2. Gán nhanh thông tin cơ bản lên màn hình
   document.getElementById("q-id").textContent = id;
   document.getElementById("q-msp").textContent = msp;
   document.getElementById("q-ten").textContent = "⏳ Đang tải...";
@@ -183,7 +165,6 @@ function hienOverlayLapTuc(id, msp) {
   document.getElementById("q-loai").textContent = loaiChon;
   document.getElementById("q-ngay").textContent = ngayChon;
   
-  // Các thông số phụ đặt trạng thái chờ tải ngầm
   document.getElementById("q-da-nhap").textContent = "⏳";
   document.getElementById("q-da-xuat").textContent = "⏳";
   document.getElementById("q-ton").textContent = "⏳";
@@ -194,19 +175,17 @@ function hienOverlayLapTuc(id, msp) {
   kgInput.placeholder = "Đang kiểm tra tồn kho...";
   btnLuu.textContent = "💾 Lưu & quét tiếp";
 
-  // 3. Đập bảng hiển thị lên luôn lập tức (Tốn chưa tới 0.05 giây)
   document.getElementById("msg-quet").classList.remove("show");
   document.getElementById("overlay").classList.add("show");
   kgInput.focus();
 
-  // 4. CHẠY NGẦM: Bắt đầu gọi mạng lên Google Sheet lấy dữ liệu chi tiết
+  // Tải dữ liệu phụ ngầm từ Google Sheet
   callAPI({
     action: "kiemTraQR",
     id: id,
     msp: msp,
     loai: loaiChon
   }).then(info => {
-    // Nếu trong quá trình tải ngầm bệ hạ đã bấm đóng bảng thì hủy cập nhật
     if (!qrDangQuet || qrDangQuet.id !== id) return;
 
     if (info.error) {
@@ -215,12 +194,10 @@ function hienOverlayLapTuc(id, msp) {
       return;
     }
 
-    // Cập nhật lại dữ liệu chuẩn từ Google Sheet trả về vào biến hệ thống
     qrDangQuet.ten = info.ten || "—";
     qrDangQuet.mau = info.mau || "—";
     qrDangQuet.cheDo = info.cheDo || "luuMoi";
 
-    // Điền mượt mà dữ liệu vào giao diện mà không làm đứng màn hình
     document.getElementById("q-ten").textContent = qrDangQuet.ten;
     document.getElementById("q-mau").textContent = qrDangQuet.mau;
     document.getElementById("q-da-nhap").textContent = formatKg(info.tongNhap);
@@ -307,7 +284,11 @@ document.addEventListener("click", e => {
 
 function showMsg(text, ok) {
   const el = document.getElementById("msg-quet");
-  if (el) { el.textContent = text; el.className = "msg show " + (ok ? "ok" : "err"); }\n}
+  if (el) {
+    el.textContent = text;
+    el.className = "msg show " + (ok ? "ok" : "err");
+  }
+}
 
 window.onload = function() {
   const today = new Date().toISOString().split("T")[0];
