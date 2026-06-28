@@ -40,10 +40,10 @@ function toggleQuetNhanh() {
   const btn = document.getElementById("toggle-quet-nhanh");
   if (quetNhanh) {
     btn.style.background = "linear-gradient(135deg,#16a34a,#22c55e)";
-    btn.textContent = "⚡ Quét nhanh: BẬT";
+    btn.textContent = "Nhập KG: BẬT";
   } else {
     btn.style.background = "#334155";
-    btn.textContent = "⚡ Quét nhanh: TẮT";
+    btn.textContent = "Nhập KG: TẮT";
   }
 }
 
@@ -100,18 +100,18 @@ async function taoQR() {
 function batDauQuet() {
   ngayChon = document.getElementById("chon-ngay").value;
   loaiChon = document.getElementById("chon-loai").value;
-  if (!ngayChon) { alert("⚠️ Vui lòng chọn ngày!"); return; }
-  if (!loaiChon) { alert("⚠️ Vui lòng chọn loại!"); return; }
+  if (!ngayChon) { alert("Chọn ngày giùm cái"); return; }
+  if (!loaiChon) { alert("Chưa chọn loại kìa"); return; }
 
   // Mặc định quét nhanh nếu là Xuất
   quetNhanh = !isNhap(loaiChon);
   const btn = document.getElementById("toggle-quet-nhanh");
   if (quetNhanh) {
     btn.style.background = "linear-gradient(135deg,#16a34a,#22c55e)";
-    btn.textContent = "⚡ Quét nhanh: BẬT";
+    btn.textContent = "Nhập KG: BẬT";
   } else {
     btn.style.background = "#334155";
-    btn.textContent = "⚡ Quét nhanh: TẮT";
+    btn.textContent = "Nhập KG: TẮT";
   }
 
   document.getElementById("form-chon").style.display = "none";
