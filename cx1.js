@@ -4,35 +4,26 @@ let dangQuetCX1 = false;
 let phienCX1 = []; 
 let demSoDot = 0;   
 let denPinBat = false;
+let ngayCX1 = null;
 
 function phatTiengBip() {
-  // Rung nhẹ
   if (navigator.vibrate) navigator.vibrate(50);
-
-  // Tiếng bíp to và chuyên nghiệp hơn
   try {
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    
     const oscillator = audioCtx.createOscillator();
     const gainNode = audioCtx.createGain();
     const compressor = audioCtx.createDynamicsCompressor();
-
     oscillator.connect(gainNode);
     gainNode.connect(compressor);
     compressor.connect(audioCtx.destination);
-
     oscillator.type = "square";
     oscillator.frequency.setValueAtTime(1800, audioCtx.currentTime);
     oscillator.frequency.exponentialRampToValueAtTime(900, audioCtx.currentTime + 0.08);
-
     gainNode.gain.setValueAtTime(1.5, audioCtx.currentTime);
     gainNode.gain.exponentialRampToValueAtTime(0.00001, audioCtx.currentTime + 0.18);
-
     oscillator.start(audioCtx.currentTime);
     oscillator.stop(audioCtx.currentTime + 0.18);
-  } catch (e) {
-    console.log("Lỗi âm thanh: " + e);
-  }
+  } catch (e) {}
 }
 
 async function toggleFlashCX1() {
@@ -42,23 +33,13 @@ async function toggleFlashCX1() {
     if (!stream) return;
     const track = stream.getVideoTracks()[0];
     const capabilities = track.getCapabilities();
-    if (!capabilities.torch) {
-      alert("Thiết bị hoặc trình duyệt này không hỗ trợ bật đèn pin trực tiếp.");
-      return;
-    }
+    if (!capabilities.torch) { alert("Thiết bị không hỗ trợ đèn pin."); return; }
     denPinBat = !denPinBat;
     await track.applyConstraints({ advanced: [{ torch: denPinBat }] });
     const btnFlash = document.getElementById("btn-flash-cx1");
-    if (denPinBat) {
-      btnFlash.style.background = "#eab308";
-      btnFlash.textContent = "🔦 Tắt";
-    } else {
-      btnFlash.style.background = "#6b7280";
-      btnFlash.textContent = "🔦 Bật";
-    }
-  } catch (err) {
-    console.log("Lỗi điều khiển đèn pin: ", err);
-  }
+    btnFlash.style.background = denPinBat ? "#eab308" : "#6b7280";
+    btnFlash.textContent = denPinBat ? "🔦 Tắt" : "🔦 Bật";
+  } catch (err) {}
 }
 
 function xuLyDuLieuQR(text) {
@@ -71,9 +52,7 @@ function xuLyDuLieuQR(text) {
   const matchKG = dongQCKG.match(/[\d.]+$/); 
   const kg = matchKG ? parseFloat(matchKG[0]) : 0; 
   let qc = dongQCKG;
-  if (matchKG) {
-    qc = dongQCKG.substring(0, dongQCKG.lastIndexOf(matchKG[0])).trim();
-  }
+  if (matchKG) qc = dongQCKG.substring(0, dongQCKG.lastIndexOf(matchKG[0])).trim();
   if (qc.endsWith("-")) qc = qc.slice(0, -1).trim(); 
   if (!id || !msp) return null;
   return { id, msp, qc, kg };
@@ -83,24 +62,23 @@ function khiQuetDuocMa(result) {
   if (!result || !dangQuetCX1) return;
   const data = xuLyDuLieuQR(result.getText());
   if (!data) return;
-
-  // Kiểm tra trùng cả ID lẫn KG
   const trung = phienCX1.find(r => r.id === data.id && r.kg === data.kg);
   if (trung) {
     showCanhBaoCX1("⚠️ Mã " + data.id + " + KG " + data.kg + " đã quét rồi!");
     return;
   }
-
   phatTiengBip();
-  const thoiGian = new Date();
   phienCX1.push({ 
     id: data.id, msp: data.msp, qc: data.qc, 
-    kg: data.kg, thoiGian, dotQuet: demSoDot 
+    kg: data.kg, thoiGian: new Date(), dotQuet: demSoDot 
   });
   document.getElementById("cx1-dem").textContent = "Đã quét: " + phienCX1.length + " mã";
 }
 
 function batDauCX1() {
+  ngayCX1 = document.getElementById("cx1-ngay").value;
+  if (!ngayCX1) { alert("⚠️ Vui lòng chọn ngày!"); return; }
+
   phienCX1 = [];
   demSoDot = 1; 
   dangQuetCX1 = true;
@@ -114,14 +92,13 @@ function batDauCX1() {
   document.getElementById("btn-flash-cx1").style.background = "#6b7280";
   document.getElementById("btn-flash-cx1").textContent = "🔦 Bật Đèn Pin";
 
-  // Reset nút dừng/tiếp tục
   const btnToggle = document.getElementById("btn-dung-tieptuc-cx1");
   btnToggle.textContent = "Dừng quét";
   btnToggle.className = "btn btn-red btn-full";
 
   try {
     zxingReaderCX1 = new ZXing.BrowserMultiFormatReader();
-    zxingReaderCX1.decodeFromVideoDevice(undefined, "cx1-reader", async (result, err) => {
+    zxingReaderCX1.decodeFromVideoDevice(undefined, "cx1-reader", (result, err) => {
       khiQuetDuocMa(result);
     });
   } catch(e) {
@@ -142,11 +119,10 @@ function tiepTucCX1() {
   denPinBat = false;
   document.getElementById("cx1-status").textContent = "🟢 Đang quét Đợt " + demSoDot + "...";
   document.getElementById("btn-flash-cx1").style.background = "#6b7280";
-  document.getElementById("btn-flash-cx1").textContent = "🔦 Bật";
-
+  document.getElementById("btn-flash-cx1").textContent = "🔦 Bật Đèn Pin";
   try {
     zxingReaderCX1 = new ZXing.BrowserMultiFormatReader();
-    zxingReaderCX1.decodeFromVideoDevice(undefined, "cx1-reader", async (result, err) => {
+    zxingReaderCX1.decodeFromVideoDevice(undefined, "cx1-reader", (result, err) => {
       khiQuetDuocMa(result);
     });
   } catch(e) {
@@ -171,11 +147,14 @@ function toggleDungTiepTuc() {
 async function ketThucCX1() {
   dungCX1();
 
+  // Hiện kết quả NGAY, lưu sheet chạy ngầm
+  hienKetQuaCX1();
+
+  // Lưu sheet ngầm
   if (phienCX1.length > 0) {
-    document.getElementById("cx1-status").textContent = "⏳ Đang lưu...";
     try {
       const URL_API = "https://script.google.com/macros/s/AKfycbzk7afcuHDOTnL6QSIQ0ZgT-CSiIDNZ8h5S8_IkGXahc7PQRvqZKpLpjkBphioXAyzDKQ/exec"; 
-      await fetch(URL_API, {
+      fetch(URL_API, {
         method: "POST",
         mode: "no-cors",
         headers: { "Content-Type": "application/json" },
@@ -183,16 +162,16 @@ async function ketThucCX1() {
           action: "luuCX1",
           data: phienCX1.map(r => ({
             id: r.id, msp: r.msp, qc: r.qc, kg: r.kg,
+            ngay: ngayCX1,
             thoiGian: r.thoiGian.toISOString()
           }))
         })
       });
-      document.getElementById("cx1-status").textContent = "✅ Đã đồng bộ Sheet!";
-    } catch (err) {
-      document.getElementById("cx1-status").textContent = "❌ Lỗi mạng: " + err.message;
-    }
+    } catch (err) {}
   }
+}
 
+function hienKetQuaCX1() {
   let tongDotCuaPhien = {}; 
   let tongGomLoaiMa = {};   
   let tongQRAll = 0;
@@ -202,9 +181,9 @@ async function ketThucCX1() {
     tongQRAll += 1;
     tongKGAll += r.kg;
 
-    const keyDot = "Dot_" + r.dotQuet + "|" + r.msp + "|" + r.qc;
+    const keyDot = r.msp + "|" + r.qc;
     if (!tongDotCuaPhien[keyDot]) {
-      tongDotCuaPhien[keyDot] = { dot: r.dotQuet, msp: r.msp, qc: r.qc, soLuong: 0, tongKG: 0 };
+      tongDotCuaPhien[keyDot] = { msp: r.msp, qc: r.qc, soLuong: 0, tongKG: 0 };
     }
     tongDotCuaPhien[keyDot].soLuong += 1;
     tongDotCuaPhien[keyDot].tongKG += r.kg;
@@ -222,7 +201,6 @@ async function ketThucCX1() {
   Object.values(tongDotCuaPhien).forEach(item => {
     const tr = document.createElement("tr");
     tr.innerHTML = `
-      <td style="padding:10px;border-bottom:1px solid rgba(255,255,255,.06);font-weight:700;color:#eab308">Đợt ${item.dot}</td>
       <td style="padding:10px;border-bottom:1px solid rgba(255,255,255,.06)">${item.msp}</td>
       <td style="padding:10px;border-bottom:1px solid rgba(255,255,255,.06)">${item.qc}</td>
       <td style="padding:10px;border-bottom:1px solid rgba(255,255,255,.06);text-align:center">${item.soLuong}</td>
@@ -233,7 +211,7 @@ async function ketThucCX1() {
   
   const trTongDot = document.createElement("tr");
   trTongDot.innerHTML = `
-    <td colspan="3" style="padding:10px;font-weight:700;color:#eab308;background:rgba(255,255,255,.02)">TỔNG</td>
+    <td colspan="2" style="padding:10px;font-weight:700;color:#eab308;background:rgba(255,255,255,.02)">TỔNG</td>
     <td style="padding:10px;text-align:center;font-weight:700;color:#eab308;background:rgba(255,255,255,.02)">${tongQRAll}</td>
     <td style="padding:10px;text-align:right;font-weight:700;color:#eab308;background:rgba(255,255,255,.02)">${tongKGAll.toFixed(2)}</td>
   `;
@@ -264,7 +242,34 @@ async function ketThucCX1() {
   document.getElementById("cx1-ketqua").style.display = "block";
 }
 
-function quetLaiCX1() {
+function quetTiepCX1() {
+  // Giữ nguyên dữ liệu cũ, mở camera quét tiếp
+  demSoDot += 1;
+  dangQuetCX1 = true;
+  denPinBat = false;
+
+  document.getElementById("cx1-ketqua").style.display = "none";
+  document.getElementById("cx1-cam").style.display = "block";
+  document.getElementById("cx1-status").textContent = "🟢 Đang quét Đợt " + demSoDot + "...";
+
+  const btnToggle = document.getElementById("btn-dung-tieptuc-cx1");
+  btnToggle.textContent = "⏸️ Dừng quét";
+  btnToggle.className = "btn btn-red btn-full";
+
+  try {
+    zxingReaderCX1 = new ZXing.BrowserMultiFormatReader();
+    zxingReaderCX1.decodeFromVideoDevice(undefined, "cx1-reader", (result, err) => {
+      khiQuetDuocMa(result);
+    });
+  } catch(e) {
+    alert("Lỗi camera: " + e);
+    dungCX1();
+  }
+}
+
+function quetMoiCX1() {
+  phienCX1 = [];
+  demSoDot = 0;
   document.getElementById("cx1-ketqua").style.display = "none";
   document.getElementById("cx1-form").style.display = "block";
 }
@@ -275,3 +280,9 @@ function showCanhBaoCX1(text) {
   el.style.display = "block";
   setTimeout(() => { el.style.display = "none"; }, 2000);
 }
+
+window.addEventListener("load", function() {
+  const today = new Date().toISOString().split("T")[0];
+  const ngayInput = document.getElementById("cx1-ngay");
+  if (ngayInput) ngayInput.value = today;
+});
