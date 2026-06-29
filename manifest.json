@@ -1,7 +1,8 @@
 {
   "name": "Quản lý Kho",
   "short_name": "Kho",
-  "start_url": "/",
+  "start_url": "/Quan-ly-kho/",
+  "scope": "/Quan-ly-kho/",
   "display": "standalone",
   "background_color": "#020617",
   "theme_color": "#020617",
