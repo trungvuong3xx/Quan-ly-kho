@@ -6,7 +6,7 @@
   --primary: #3b82f6;
   --success: #22c55e;
   --danger: #ef4444;
-  --text: #f8fafc;
+  --text: #cbd5e1; /* Hạ tông xám sáng để chữ dịu mắt, giảm lóa */
   --sub: #94a3b8;
   --border: rgba(255, 255, 255, .08);
 }
@@ -15,7 +15,7 @@
 
 body {
   font-family: Inter, Segoe UI, Arial, sans-serif;
-  background: #0a0e1a;
+  background: #060a13; /* Nền tối mịn màng và sâu hơn */
   color: var(--text);
   min-height: 100vh;
   position: relative;
@@ -26,10 +26,10 @@ body::before {
   position: fixed;
   inset: 0;
   background-image:
-    linear-gradient(rgba(59,130,246,.06) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(59,130,246,.06) 1px, transparent 1px),
-    linear-gradient(rgba(59,130,246,.03) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(59,130,246,.03) 1px, transparent 1px);
+    linear-gradient(rgba(59,130,246,.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(59,130,246,.04) 1px, transparent 1px),
+    linear-gradient(rgba(59,130,246,.02) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(59,130,246,.02) 1px, transparent 1px);
   background-size: 80px 80px, 80px 80px, 20px 20px, 20px 20px;
   z-index: 0;
   pointer-events: none;
@@ -39,7 +39,8 @@ body::after {
   content: '';
   position: fixed;
   inset: 0;
-  background: radial-gradient(ellipse at top, rgba(30,58,138,.5) 0%, rgba(10,14,26,.8) 60%, rgba(2,6,23,.95) 100%);
+  /* Luồng sáng gradient mượt hơn, không bị tụ sáng quá gắt làm lóa chữ */
+  background: radial-gradient(circle at 50% -20%, rgba(59, 130, 246, 0.18) 0%, rgba(10, 14, 26, 0) 50%), #060a13;
   z-index: 0;
   pointer-events: none;
 }
@@ -56,13 +57,14 @@ body::after {
 .page.active { display: block; }
 
 .card {
-  background: rgba(255,255,255,.05);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border-radius: 20px;
-  padding: 24px;
-  margin-bottom: 18px;
-  border: 0.5px solid rgba(255,255,255,.1);
+  background: rgba(30, 41, 59, 0.4); /* Kính mờ cao cấp và trầm hơn */
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border-radius: 24px; /* Tăng độ bo góc mềm mại kiểu iOS */
+  padding: 28px;
+  margin-bottom: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
 }
 
 h3 { margin-bottom: 18px; color: white; font-size: 18px; font-weight: 700; }
@@ -80,39 +82,42 @@ label {
 
 .row { display: flex; gap: 10px; align-items: center; }
 .row input[type=text] { flex: 1; }
-.row .btn { min-width: 85px; height: 48px; flex-shrink: 0; }
+.row .btn { min-width: 85px; height: 52px; flex-shrink: 0; }
 
 input[type=text], input[type=number] {
   width: 100%;
-  height: 48px;
-  padding: 0 14px;
-  border-radius: 14px;
-  border: 0.5px solid rgba(255,255,255,.12);
-  background: rgba(255,255,255,.07);
-  color: white;
+  height: 52px; /* Tăng chiều cao để bấm dễ dàng hơn */
+  padding: 0 16px;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(15, 23, 42, 0.6);
+  color: #f1f5f9;
   font-size: 15px;
+  transition: all 0.2s ease;
 }
 
 input:focus {
   outline: none;
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59,130,246,.2);
+  border-color: rgba(59, 130, 246, 0.6);
+  background: rgba(15, 23, 42, 0.8);
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.15);
 }
 
 input[type=date] {
   width: 100%;
-  height: 48px;
-  padding: 0 14px;
-  padding-right: 14px; 
-  border-radius: 14px;
-  border: 0.5px solid rgba(255,255,255,.12);
-  background: rgba(255,255,255,.07);
-  color: white;
+  height: 52px;
+  padding: 0 16px;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(15, 23, 42, 0.6);
+  color: #f1f5f9;
   font-size: 15px;
+  transition: all 0.2s ease;
+  /* Đã loại bỏ appearance: none hoàn toàn để hiện lại icon lịch trên di động */
 }
 
 input[type=date]::-webkit-calendar-picker-indicator {
-  filter: invert(1) opacity(0.5);
+  filter: invert(1) opacity(0.6);
   cursor: pointer;
   padding: 0;
   margin-right: 4px;
@@ -120,56 +125,71 @@ input[type=date]::-webkit-calendar-picker-indicator {
 
 select {
   width: 100%;
-  height: 48px;
-  padding: 0 40px 0 14px;
-  border-radius: 14px;
-  border: 0.5px solid rgba(255,255,255,.12);
-  background: rgba(255,255,255,.07);
-  color: white;
+  height: 52px;
+  padding: 0 40px 0 16px;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(15, 23, 42, 0.6);
+  color: #f1f5f9;
   font-size: 15px;
   margin-top: 4px;
   outline: none;
-  appearance: none;
-  -webkit-appearance: none;
+  transition: all 0.2s ease;
 }
 
 select:focus {
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59,130,246,.2);
+  border-color: rgba(59, 130, 246, 0.6);
+  background: rgba(15, 23, 42, 0.8);
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.15);
 }
 
 .btn {
   border: none;
-  border-radius: 14px;
+  border-radius: 16px;
   color: white;
-  font-weight: 700;
+  font-weight: 600;
   cursor: pointer;
-  transition: .2s;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  height: 50px;
+  height: 52px;
 }
 
-.btn:hover { transform: translateY(-2px); }
-
+/* HIỆU ỨNG NÚT BẤM ĐÃ ĐƯỢC TẮT SÁNG XUNG QUANH */
 .btn-blue {
-  background: linear-gradient(135deg, #1d4ed8, #3b82f6);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15); 
+  background: #2563eb; /* Sử dụng màu phẳng hiện đại, tinh tế */
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15); /* Bóng đổ đen bình thường, không rực màu */
 }
 
 .btn-blue:hover {
+  background: #1d4ed8;
+  transform: translateY(-1px);
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.25);
 }
 
+.btn-blue:active {
+  transform: translateY(1px); /* Hiệu ứng nhấn nút lún xuống cực thật */
+}
+
 .btn-green {
-  background: linear-gradient(135deg, #16a34a, #22c55e);
+  background: #16a34a;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
 }
 
+.btn-green:hover {
+  background: #15803d;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.25);
+}
+
 .btn-red {
-  background: linear-gradient(135deg, #dc2626, #ef4444);
-  box-shadow: 0 4px 16px rgba(239,68,68,.3);
+  background: #dc2626;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+}
+
+.btn-red:hover {
+  background: #b91c1c;
 }
 
 .btn-full {
@@ -186,10 +206,10 @@ select:focus {
 .info-box {
   display: none;
   margin-top: 14px;
-  background: rgba(255,255,255,.05);
+  background: rgba(255,255,255,.03);
   border-radius: 16px;
   padding: 14px;
-  border: 0.5px solid rgba(59,130,246,.2);
+  border: 1px solid rgba(59,130,246,.15);
 }
 .info-box.show { display: block; }
 
@@ -248,17 +268,19 @@ select:focus {
 
 .btn-print {
   width: 100%; padding: 14px; margin-top: 18px;
-  border: none; border-radius: 14px;
-  background: rgba(255,255,255,.1);
+  border: none; border-radius: 16px;
+  background: rgba(255,255,255,.08);
   color: white; font-weight: 700; cursor: pointer;
+  transition: background 0.2s;
 }
+.btn-print:hover { background: rgba(255,255,255,.15); }
 
 #reader {
   width: 100%; min-height: 320px;
-  border-radius: 20px; overflow: hidden;
+  border-radius: 24px; overflow: hidden;
   background: black;
-  border: 1.5px solid rgba(59,130,246,.5);
-  box-shadow: 0 0 20px rgba(59,130,246,.2);
+  border: 1.5px solid rgba(59,130,246,.4);
+  box-shadow: 0 0 20px rgba(59,130,246,.1);
 }
 
 .scanner-status { text-align: center; margin-top: 12px; color: #94a3b8; }
@@ -317,10 +339,10 @@ select:focus {
 }
 
 .fake-select {
-  height: 48px; display: flex; align-items: center;
-  padding: 0 14px; border-radius: 14px;
-  border: 0.5px solid rgba(255,255,255,.12);
-  background: rgba(255,255,255,.07);
+  height: 52px; display: flex; align-items: center;
+  padding: 0 16px; border-radius: 16px;
+  border: 1px solid rgba(255,255,255,.12);
+  background: rgba(15, 23, 42, 0.6);
   cursor: pointer; color: white; font-size: 15px;
 }
 
@@ -328,7 +350,7 @@ select:focus {
 
 .loai-item {
   padding: 14px; margin-bottom: 8px;
-  border-radius: 12px;
+  border-radius: 14px;
   background: rgba(255,255,255,.05);
   color: white; font-weight: 600; cursor: pointer; transition: .2s;
 }
@@ -340,10 +362,10 @@ select:focus {
 .custom-select { position: relative; width: 100%; margin-top: 4px; }
 
 .custom-select-btn {
-  width: 100%; height: 48px; padding: 0 14px;
-  border-radius: 14px;
-  border: 0.5px solid rgba(255,255,255,.12);
-  background: rgba(255,255,255,.07);
+  width: 100%; height: 52px; padding: 0 16px;
+  border-radius: 16px;
+  border: 1px solid rgba(255,255,255,.12);
+  background: rgba(15, 23, 42, 0.6);
   color: white; font-size: 15px;
   text-align: left; cursor: pointer;
   display: flex; align-items: center; justify-content: space-between;
@@ -355,7 +377,7 @@ select:focus {
   background: rgba(10,14,26,.98) !important;
   backdrop-filter: blur(20px);
   border: 0.5px solid rgba(255,255,255,.12) !important;
-  border-radius: 14px !important;
+  border-radius: 16px !important;
   overflow: hidden; max-height: 280px; overflow-y: auto;
   z-index: 99999 !important;
   box-shadow: 0 10px 30px rgba(0,0,0,.5);
