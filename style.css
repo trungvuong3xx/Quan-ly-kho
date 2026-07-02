@@ -6,7 +6,7 @@
   --primary: #3b82f6;
   --success: #22c55e;
   --danger: #ef4444;
-  --text: #cbd5e1; /* Hạ tông chữ sang xám sáng giúp dịu mắt */
+  --text: #cbd5e1; /* Giảm nhẹ độ sáng chữ tổng thể để dịu mắt, tránh chói lóa */
   --sub: #94a3b8;
   --border: rgba(255, 255, 255, .08);
 }
@@ -15,7 +15,7 @@
 
 body {
   font-family: Inter, Segoe UI, Arial, sans-serif;
-  background: #060a13; /* Nền tối sâu và sang trọng hơn */
+  background: #060a13; /* Làm nền tối sâu hơn để làm nổi bật các khung bên trên */
   color: var(--text);
   min-height: 100vh;
   position: relative;
@@ -39,8 +39,7 @@ body::after {
   content: '';
   position: fixed;
   inset: 0;
-  /* Đã làm mượt hiệu ứng ánh sáng nền để không bị chói chữ */
-  background: radial-gradient(circle at 50% -20%, rgba(59, 130, 246, 0.18) 0%, rgba(10, 14, 26, 0) 50%), #060a13;
+  background: radial-gradient(circle at 50% -20%, rgba(59, 130, 246, 0.15) 0%, rgba(10, 14, 26, 0) 60%);
   z-index: 0;
   pointer-events: none;
 }
@@ -56,15 +55,18 @@ body::after {
 
 .page.active { display: block; }
 
+/* 1. KHUNG CHỨC NĂNG PHÍA TRÊN: NỔI BẬT KHỎI NỀN */
 .card {
-  background: rgba(30, 41, 59, 0.4); /* Hiệu ứng kính mờ mịn màng */
+  background: rgba(30, 41, 59, 0.7); /* Tăng độ đục của kính để không bị chìm vào nền */
   backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);
-  border-radius: 24px; /* Bo góc mượt mà kiểu hiện đại */
+  border-radius: 24px; /* Bo góc mềm mại, hiện đại hơn */
   padding: 28px;
   margin-bottom: 20px;
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  /* Đường viền phản quang phía trên giúp định hình khối rõ rệt */
+  border: 1px solid rgba(255, 255, 255, 0.12); 
+  /* Đổ bóng đổ mạnh mẽ tạo cảm giác khung đang nổi lơ lửng */
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.1);
 }
 
 h3 { margin-bottom: 18px; color: white; font-size: 18px; font-weight: 700; }
@@ -86,7 +88,7 @@ label {
 
 input[type=text], input[type=number] {
   width: 100%;
-  height: 52px;
+  height: 52px; /* Tăng nhẹ chiều cao tạo cảm giác thoáng đãng */
   padding: 0 16px;
   border-radius: 16px;
   border: 1px solid rgba(255, 255, 255, 0.08);
@@ -103,7 +105,7 @@ input:focus {
   box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.15);
 }
 
-/* TỐI ƯU RIÊNG CHO ANDROID: NÚT LỊCH KHÔNG BỊ SÁT VIỀN */
+/* KHẮC PHỤC TRIỆT ĐỂ LỖI MŨI TÊN SÁT VIỀN TRÊN ANDROID */
 input[type=date] {
   width: 100%;
   height: 52px;
@@ -114,29 +116,23 @@ input[type=date] {
   color: #f1f5f9;
   font-size: 15px;
   transition: all 0.2s ease;
-
-  /* 1. Ẩn hoàn toàn nút mũi tên mặc định bị lỗi của Android/iOS */
+  
   appearance: none;
   -webkit-appearance: none;
   -moz-appearance: none;
 
-  /* 2. Tự chèn icon hình lịch đẹp mắt bằng SVG vào bên trong */
+  /* Thay bằng icon lịch SVG tùy biến, đặt cách lề phải 16px chuẩn xác */
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='rgba(255,255,255,0.5)' stroke-width='2'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M6 5V3m12 2V3M4 11h16M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z' /%3E%3C/svg%3E");
   background-repeat: no-repeat;
-  background-position: right 16px center; /* Cài đặt icon cách viền phải đúng 16px cực kỳ cân đối */
+  background-position: right 16px center;
   background-size: 20px 20px;
 }
 
-/* Ẩn các icon thừa thãi khác nếu trình duyệt cố tình tự sinh ra */
 input[type=date]::-webkit-calendar-picker-indicator {
   position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  width: 100%;
-  height: 100%;
-  opacity: 0; /* Cho ẩn đi nhưng người dùng chạm vào bất cứ đâu trong ô vẫn mở được bảng lịch */
+  top: 0; left: 0; right: 0; bottom: 0;
+  width: 100%; height: 100%;
+  opacity: 0;
   cursor: pointer;
 }
 
@@ -173,36 +169,36 @@ select:focus {
   height: 52px;
 }
 
-/* TOÀN BỘ NÚT BẤM ĐÃ ĐƯỢC TẮT HIỆU ỨNG PHÁT SÁNG CHÓI */
+/* NÚT BẤM PHẲNG HIỆN ĐẠI - ĐÃ TẮT HÀO QUANG PHÁT SÁNG */
 .btn-blue {
-  background: #2563eb; /* Sử dụng màu phẳng solid cao cấp */
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15); /* Đổ bóng thường, không rực lóa */
+  background: #2563eb;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
 
 .btn-blue:hover {
   background: #1d4ed8;
   transform: translateY(-1px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.25);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
 }
 
 .btn-blue:active {
-  transform: translateY(1px); /* Hiệu ứng nhấn lún xuống rất chân thực */
+  transform: translateY(1px);
 }
 
 .btn-green {
   background: #16a34a;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
 
 .btn-green:hover {
   background: #15803d;
   transform: translateY(-1px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.25);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
 }
 
 .btn-red {
   background: #dc2626;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
 
 .btn-red:hover {
@@ -223,10 +219,10 @@ select:focus {
 .info-box {
   display: none;
   margin-top: 14px;
-  background: rgba(255,255,255,.03);
+  background: rgba(15, 23, 42, 0.6);
   border-radius: 16px;
   padding: 14px;
-  border: 1px solid rgba(59,130,246,.15);
+  border: 1px solid rgba(59,130,246,.2);
 }
 .info-box.show { display: block; }
 
@@ -417,26 +413,30 @@ select:focus {
 .custom-option:last-child { border-bottom: none; }
 .custom-option:hover, .custom-option.active { background: #2563eb !important; color: white !important; }
 
-/* Bottom Nav */
+/* 2. THANH NAV PHÍA DƯỚI: NỔI KHỐI ĐẬM NÉT */
 .bottom-nav {
   position: fixed; bottom: 0; left: 0; right: 0;
   z-index: 999; display: flex;
-  background: rgba(2,6,23,.92);
-  backdrop-filter: blur(20px);
-  border-top: 0.5px solid rgba(255,255,255,.06);
-  padding: 8px 0 20px;
+  background: rgba(15, 23, 42, 0.95); /* Đổi sang nền đục màu sẫm để tách khỏi body */
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  /* Đường viền phản quang trắng mờ phía trên để tách dải cắt rõ rệt */
+  border-top: 1px solid rgba(255, 255, 255, 0.1); 
+  padding: 10px 0 24px;
+  /* Đổ bóng ngược lên phía trên tạo chiều sâu nâng lên */
+  box-shadow: 0 -8px 25px rgba(0, 0, 0, 0.4); 
 }
 
 .bnav-btn {
   flex: 1; background: none; border: none; cursor: pointer;
   display: flex; flex-direction: column; align-items: center;
-  gap: 4px; padding: 6px 4px; color: #475569;
+  gap: 4px; padding: 6px 4px; color: #64748b;
   font-family: Inter, sans-serif; transition: color .2s;
 }
 .bnav-btn i { font-size: 22px; }
 .bnav-btn span { font-size: 10px; font-weight: 600; }
 .bnav-btn.active { color: #3b82f6; }
 
-.page { padding-bottom: 88px; }
+.page { padding-bottom: 96px; }
 
 @keyframes spin { to { transform: rotate(360deg); } }
