@@ -6,7 +6,7 @@
   --primary: #3b82f6;
   --success: #22c55e;
   --danger: #ef4444;
-  --text: #cbd5e1; /* Hạ tông xám sáng để chữ dịu mắt, giảm lóa */
+  --text: #cbd5e1; /* Hạ tông chữ sang xám sáng giúp dịu mắt */
   --sub: #94a3b8;
   --border: rgba(255, 255, 255, .08);
 }
@@ -15,7 +15,7 @@
 
 body {
   font-family: Inter, Segoe UI, Arial, sans-serif;
-  background: #060a13; /* Nền tối mịn màng và sâu hơn */
+  background: #060a13; /* Nền tối sâu và sang trọng hơn */
   color: var(--text);
   min-height: 100vh;
   position: relative;
@@ -39,7 +39,7 @@ body::after {
   content: '';
   position: fixed;
   inset: 0;
-  /* Luồng sáng gradient mượt hơn, không bị tụ sáng quá gắt làm lóa chữ */
+  /* Đã làm mượt hiệu ứng ánh sáng nền để không bị chói chữ */
   background: radial-gradient(circle at 50% -20%, rgba(59, 130, 246, 0.18) 0%, rgba(10, 14, 26, 0) 50%), #060a13;
   z-index: 0;
   pointer-events: none;
@@ -57,10 +57,10 @@ body::after {
 .page.active { display: block; }
 
 .card {
-  background: rgba(30, 41, 59, 0.4); /* Kính mờ cao cấp và trầm hơn */
+  background: rgba(30, 41, 59, 0.4); /* Hiệu ứng kính mờ mịn màng */
   backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);
-  border-radius: 24px; /* Tăng độ bo góc mềm mại kiểu iOS */
+  border-radius: 24px; /* Bo góc mượt mà kiểu hiện đại */
   padding: 28px;
   margin-bottom: 20px;
   border: 1px solid rgba(255, 255, 255, 0.05);
@@ -86,7 +86,7 @@ label {
 
 input[type=text], input[type=number] {
   width: 100%;
-  height: 52px; /* Tăng chiều cao để bấm dễ dàng hơn */
+  height: 52px;
   padding: 0 16px;
   border-radius: 16px;
   border: 1px solid rgba(255, 255, 255, 0.08);
@@ -103,24 +103,24 @@ input:focus {
   box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.15);
 }
 
+/* TỐI ƯU RIÊNG CHO ANDROID: NÚT LỊCH KHÔNG BỊ SÁT VIỀN */
 input[type=date] {
   width: 100%;
   height: 52px;
-  padding: 0 16px;
+  padding: 0 36px 0 16px; /* Đặt padding bên phải là 36px để ép icon lịch dạt vào trong cân đối */
   border-radius: 16px;
   border: 1px solid rgba(255, 255, 255, 0.08);
   background: rgba(15, 23, 42, 0.6);
   color: #f1f5f9;
   font-size: 15px;
   transition: all 0.2s ease;
-  /* Đã loại bỏ appearance: none hoàn toàn để hiện lại icon lịch trên di động */
 }
 
 input[type=date]::-webkit-calendar-picker-indicator {
   filter: invert(1) opacity(0.6);
   cursor: pointer;
   padding: 0;
-  margin-right: 4px;
+  margin-right: 0;
 }
 
 select {
@@ -156,10 +156,10 @@ select:focus {
   height: 52px;
 }
 
-/* HIỆU ỨNG NÚT BẤM ĐÃ ĐƯỢC TẮT SÁNG XUNG QUANH */
+/* TOÀN BỘ NÚT BẤM ĐÃ ĐƯỢC TẮT HIỆU ỨNG PHÁT SÁNG CHÓI */
 .btn-blue {
-  background: #2563eb; /* Sử dụng màu phẳng hiện đại, tinh tế */
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15); /* Bóng đổ đen bình thường, không rực màu */
+  background: #2563eb; /* Sử dụng màu phẳng solid cao cấp */
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15); /* Đổ bóng thường, không rực lóa */
 }
 
 .btn-blue:hover {
@@ -169,7 +169,7 @@ select:focus {
 }
 
 .btn-blue:active {
-  transform: translateY(1px); /* Hiệu ứng nhấn nút lún xuống cực thật */
+  transform: translateY(1px); /* Hiệu ứng nhấn lún xuống rất chân thực */
 }
 
 .btn-green {
