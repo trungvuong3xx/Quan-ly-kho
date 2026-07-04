@@ -2,224 +2,1219 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Quản lý Kho</title>
-  <link rel="stylesheet" href="style.css?v=20260623-sieucap">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover, user-scalable=no">
+
+  <title>VL Warehouse</title>
+
+  <meta
+    name="theme-color"
+    content="#020617">
+
+  <meta
+    name="apple-mobile-web-app-capable"
+    content="yes">
+
+  <meta
+    name="apple-mobile-web-app-status-bar-style"
+    content="black-translucent">
+
+  <meta
+    name="mobile-web-app-capable"
+    content="yes">
+
+  <meta
+    name="apple-mobile-web-app-title"
+    content="VL Warehouse">
+
+  <link
+    rel="manifest"
+    href="manifest.json">
+
+  <link
+    rel="icon"
+    href="icon-192.png">
+
+  <link
+    rel="apple-touch-icon"
+    href="icon-192.png">
+
+  <link
+    rel="preconnect"
+    href="https://fonts.googleapis.com">
+
+  <link
+    rel="preconnect"
+    href="https://fonts.gstatic.com"
+    crossorigin>
+
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+    rel="stylesheet">
+
+  <link
+    rel="stylesheet"
+    href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+
+  <link
+    rel="stylesheet"
+    href="style.css?v=20260704-v2">
+
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
   <script src="https://cdn.jsdelivr.net/npm/@zxing/library@0.19.1/umd/index.min.js"></script>
-<link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#020617">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<link rel="apple-touch-icon" href="icon-192.png">
-<script>
-  if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('/Quan-ly-kho/sw.js');
-  }
-</script>
+
+  <script>
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("/Quan-ly-kho/sw.js");
+    }
+  </script>
+
 </head>
 <body>
 
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<div class="app-bg"></div>
+
+<div class="app-wrapper">
 
 <div class="bottom-nav">
-  <button class="bnav-btn active" onclick="chuyenTrang('taoQR', this)">
-    <i class="ti ti-qrcode" aria-hidden="true"></i>
-    <span>Tạo QR</span>
-  </button>
-  <button class="bnav-btn" onclick="chuyenTrang('quetQR', this)">
-    <i class="ti ti-scan" aria-hidden="true"></i>
-    <span>Quét QR</span>
-  </button>
-  <button class="bnav-btn" onclick="chuyenTrang('kiemKe', this)">
-    <i class="ti ti-clipboard-list" aria-hidden="true"></i>
-    <span>Kiểm kê</span>
-  </button>
-  <button class="bnav-btn" onclick="chuyenTrang('chiFor', this)">
-    <i class="ti ti-package" aria-hidden="true"></i>
-    <span>Chỉ FOR</span>
-  </button>
+
+<button
+class="bnav-btn active"
+onclick="chuyenTrang('taoQR', this)">
+
+<i class="ti ti-qrcode"></i>
+
+<span>Tạo QR</span>
+
+</button>
+
+<button
+class="bnav-btn"
+onclick="chuyenTrang('quetQR', this)">
+
+<i class="ti ti-scan"></i>
+
+<span>Quét QR</span>
+
+</button>
+
+<button
+class="bnav-btn"
+onclick="chuyenTrang('kiemKe', this)">
+
+<i class="ti ti-clipboard-list"></i>
+
+<span>Kiểm kê</span>
+
+</button>
+
+<button
+class="bnav-btn"
+onclick="chuyenTrang('chiFor', this)">
+
+<i class="ti ti-package"></i>
+
+<span>Chỉ FOR</span>
+
+</button>
+
 </div>
 
-<div class="canh-bao" id="canh-bao"></div>
+<div
+class="canh-bao"
+id="canh-bao">
+</div>
+<header class="app-header">
+
+<div class="logo-group">
+
+<div class="logo">
+
+VL
+
+</div>
+
+<div>
+
+<h1>
+
+VL Warehouse
+
+</h1>
+
+<p>
+
+Warehouse Management
+
+</p>
+
+</div>
+
+</div>
+
+<div class="header-right">
+
+<div class="online-dot"></div>
+
+<span>
+
+ONLINE
+
+</span>
+
+</div>
+
+</header>
 
 <div id="taoQR" class="page active">
+
   <div class="card">
-    <h3> Tạo QR</h3>
+
+    <div class="card-header">
+
+      <div>
+
+        <h3>
+          <i class="ti ti-qrcode"></i>
+          Tạo QR
+        </h3>
+
+        <p class="card-desc">
+          Tìm sản phẩm và tạo mã QR để in.
+        </p>
+
+      </div>
+
+    </div>
+
     <label>MSP</label>
+
     <div class="row">
-      <input type="text" id="msp-tao" placeholder="Nhập MSP..." onkeydown="if(event.key==='Enter') timMSP()">
-      <button class="btn btn-blue" onclick="timMSP()">Tìm</button>
+
+      <input
+        type="text"
+        id="msp-tao"
+        placeholder="Nhập MSP..."
+        autocomplete="off"
+        onkeydown="if(event.key==='Enter') timMSP()">
+
+      <button
+        class="btn btn-blue"
+        onclick="timMSP()">
+
+        <i class="ti ti-search"></i>
+
+      </button>
+
     </div>
-    <div class="info-box" id="info-tao">
-      <div class="irow"><span class="ilabel">Tên</span><span class="ivalue" id="t-ten"></span></div>
-      <div class="irow"><span class="ilabel">Màu</span><span class="ivalue" id="t-mau"></span></div>
-      <label>Số lượng QR</label>
-      <input type="number" id="sl-qr" value="20" min="1" max="100">
-      <button class="btn btn-green btn-full" onclick="taoQR()"> Tạo QR</button>
+
+    <div
+      class="info-box"
+      id="info-tao">
+
+      <div class="irow">
+
+        <span class="ilabel">
+
+          Tên
+
+        </span>
+
+        <span
+          class="ivalue"
+          id="t-ten">
+
+        </span>
+
+      </div>
+
+      <div class="irow">
+
+        <span class="ilabel">
+
+          Màu
+
+        </span>
+
+        <span
+          class="ivalue"
+          id="t-mau">
+
+        </span>
+
+      </div>
+
+      <label>
+
+        Số lượng QR
+
+      </label>
+
+      <input
+        type="number"
+        id="sl-qr"
+        value="20"
+        min="1"
+        max="100">
+
+      <button
+        class="btn btn-green btn-full"
+        onclick="taoQR()">
+
+        <i class="ti ti-qrcode"></i>
+
+        <span>
+
+          Tạo QR
+
+        </span>
+
+      </button>
+
     </div>
+
   </div>
-  <div class="card" id="card-qr" style="display:none">
-    <h3>Danh sách QR</h3>
-    <div class="qr-grid" id="qr-grid"></div>
-    <button class="btn-print" onclick="window.print()">🖨️ In QR</button>
+
+  <div
+    class="card"
+    id="card-qr"
+    style="display:none">
+
+    <div class="card-header">
+
+      <div>
+
+        <h3>
+
+          <i class="ti ti-layout-grid"></i>
+
+          Danh sách QR
+
+        </h3>
+
+        <p class="card-desc">
+
+          Chọn để tải hoặc in hàng loạt.
+
+        </p>
+
+      </div>
+
+    </div>
+
+    <div
+      class="qr-grid"
+      id="qr-grid">
+
+    </div>
+
+    <button
+      class="btn btn-blue btn-full"
+      onclick="window.print()">
+
+      <i class="ti ti-printer"></i>
+
+      <span>
+
+        In QR
+
+      </span>
+
+    </button>
+
   </div>
+
 </div>
 
 <div id="quetQR" class="page">
+
   <div class="card">
-    <h3> Quét QR</h3>
 
-    <div id="form-chon">
-      <label>Ngày</label>
-      <input type="date" id="chon-ngay">
-      
-      <label>Loại</label>
-      <div class="custom-select">
-        <button type="button" id="chon-loai-btn" class="custom-select-btn">
-  -- Chọn loại --
-</button>
+    <div class="card-header">
 
-        <div id="chon-loai-list" class="custom-select-list">
-          <div class="group-title">📥 Nhập</div>
-          <div class="custom-option" data-value="Nhập SX">Nhập SX</div>
-          <div class="custom-option" data-value="Nhập Trả">Nhập Trả</div>
-          <div class="custom-option" data-value="Nhập For">Nhập For</div>
+      <div>
 
-          <div class="group-title">📤 Xuất</div>
-          <div class="custom-option" data-value="Xuất SX">Xuất SX</div>
-          <div class="custom-option" data-value="Xuất Trả">Xuất Trả</div>
-          <div class="custom-option" data-value="Xuất Gia Công">Xuất Gia Công</div>
-          <div class="custom-option" data-value="Xuất Phế">Xuất Phế</div>
-          <div class="custom-option" data-value="Xuất Bán">Xuất Bán</div>
-          <div class="custom-option" data-value="Bình Thuận">Bình Thuận</div>
-          <div class="custom-option" data-value="Xuất For">Xuất For</div>
-        </div>
+        <h3>
+
+          <i class="ti ti-scan"></i>
+
+          Quét QR
+
+        </h3>
+
+        <p class="card-desc">
+
+          Chọn ngày và loại giao dịch trước khi quét.
+
+        </p>
+
       </div>
 
-      <input type="hidden" id="chon-loai">
-      <button class="btn btn-blue btn-full" onclick="batDauQuet()">Quét</button>
     </div>
 
-    <div id="cam-box" style="display:none">
-      <video id="reader" autoplay playsinline muted style="width:100%;border-radius:8px;background:#000;margin-top:12px;"></video>
-      <button id="toggle-quet-nhanh" class="btn btn-full" style="background:#334155;margin-top:10px" onclick="toggleQuetNhanh()">Nhập Kg: TẮT</button>
-      <div class="scanner-status" id="scanner-status"></div>
-      <button class="btn btn-red btn-full" id="btn-stop" onclick="dungQuet()" style="display:none">⛔ Dừng quét</button>
+    <div id="form-chon">
+
+      <label>Ngày</label>
+
+      <input
+        type="date"
+        id="chon-ngay">
+
+      <label>Loại giao dịch</label>
+
+      <div class="custom-select">
+
+        <button
+          type="button"
+          id="chon-loai-btn"
+          class="custom-select-btn">
+
+          -- Chọn loại --
+
+        </button>
+
+        <div
+          id="chon-loai-list"
+          class="custom-select-list">
+
+          <div class="group-title">
+
+            📥 NHẬP
+
+          </div>
+
+          <div class="custom-option" data-value="Nhập SX">
+            Nhập SX
+          </div>
+
+          <div class="custom-option" data-value="Nhập Trả">
+            Nhập Trả
+          </div>
+
+          <div class="custom-option" data-value="Nhập For">
+            Nhập For
+          </div>
+
+          <div class="group-title">
+
+            📤 XUẤT
+
+          </div>
+
+          <div class="custom-option" data-value="Xuất SX">
+            Xuất SX
+          </div>
+
+          <div class="custom-option" data-value="Xuất Trả">
+            Xuất Trả
+          </div>
+
+          <div class="custom-option" data-value="Xuất Gia Công">
+            Xuất Gia Công
+          </div>
+
+          <div class="custom-option" data-value="Xuất Phế">
+            Xuất Phế
+          </div>
+
+          <div class="custom-option" data-value="Xuất Bán">
+            Xuất Bán
+          </div>
+
+          <div class="custom-option" data-value="Bình Thuận">
+            Bình Thuận
+          </div>
+
+          <div class="custom-option" data-value="Xuất For">
+            Xuất For
+          </div>
+
+        </div>
+
+      </div>
+
+      <input
+        type="hidden"
+        id="chon-loai">
+
+      <button
+        class="btn btn-blue btn-full"
+        onclick="batDauQuet()">
+
+        <i class="ti ti-player-play"></i>
+
+        <span>
+
+          Bắt đầu quét
+
+        </span>
+
+      </button>
+
     </div>
+
+    <div
+      id="cam-box"
+      style="display:none;">
+
+      <div class="video-wrapper">
+
+        <video
+          id="reader"
+          autoplay
+          playsinline
+          muted>
+
+        </video>
+
+        <div class="scan-frame">
+
+          <span class="corner tl"></span>
+          <span class="corner tr"></span>
+          <span class="corner bl"></span>
+          <span class="corner br"></span>
+
+          <div class="scan-line"></div>
+
+        </div>
+
+      </div>
+
+      <div
+        id="scanner-status"
+        class="scanner-status">
+
+      </div>
+
+      <div class="row mt15">
+
+        <button
+
+          id="toggle-quet-nhanh"
+
+          class="btn"
+
+          style="background:#334155"
+
+          onclick="toggleQuetNhanh()">
+
+          <i class="ti ti-scale"></i>
+
+          <span>
+
+            Nhập Kg: TẮT
+
+          </span>
+
+        </button>
+
+      </div>
+
+      <button
+
+        id="btn-stop"
+
+        class="btn btn-red btn-full"
+
+        style="display:none"
+
+        onclick="dungQuet()">
+
+        <i class="ti ti-player-stop"></i>
+
+        <span>
+
+          Dừng quét
+
+        </span>
+
+      </button>
+
+    </div>
+
   </div>
+
 </div>
 
 <div id="kiemKe" class="page">
+
   <div class="card">
-    <h3> Kiểm Kê</h3>
-    <div id="kk-form">
-      <label>Ngày</label>
-      <input type="date" id="kk-ngay">
-      <button class="btn btn-blue btn-full" onclick="batDauKiemKe()">Quét</button>
-    </div>
-    <div id="kk-cam" style="display:none">
-      <video id="kk-reader" autoplay playsinline muted style="width:100%;border-radius:20px;background:#000;margin-top:12px;border:2px solid #3b82f6;"></video>
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:12px;">
-        <div id="kk-dem" style="color:#22c55e;font-weight:700;font-size:16px;">Đã quét: 0 mã</div>
-        <div id="kk-status" class="scanner-status" style="margin:0;"></div>
+
+    <div class="card-header">
+
+      <div>
+
+        <h3>
+
+          <i class="ti ti-clipboard-list"></i>
+
+          Kiểm kê
+
+        </h3>
+
+        <p class="card-desc">
+
+          Quét mã để kiểm tra tồn kho và đối chiếu dữ liệu.
+
+        </p>
+
       </div>
-      <button class="btn btn-red btn-full" onclick="dungKiemKe()"> Dừng & Lưu</button>
+
     </div>
+
+    <div class="video-wrapper">
+
+      <video
+        id="video-kiemke"
+        playsinline
+        autoplay
+        muted>
+
+      </video>
+
+      <div class="scan-frame">
+
+        <span class="corner tl"></span>
+        <span class="corner tr"></span>
+        <span class="corner bl"></span>
+        <span class="corner br"></span>
+
+        <div class="scan-line"></div>
+
+      </div>
+
+    </div>
+
+    <div
+      id="kiemke-status"
+      class="scanner-status">
+
+      Đưa QR vào giữa khung hình
+
+    </div>
+
+    <div class="row mt20">
+
+      <button
+        class="btn btn-blue"
+        onclick="batDauKiemKe()">
+
+        <i class="ti ti-player-play"></i>
+
+        <span>
+
+          Bắt đầu
+
+        </span>
+
+      </button>
+
+      <button
+        class="btn btn-red"
+        onclick="dungKiemKe()">
+
+        <i class="ti ti-player-stop"></i>
+
+        <span>
+
+          Dừng
+
+        </span>
+
+      </button>
+
+    </div>
+
   </div>
+
+  <div
+    id="kk-info"
+    class="card"
+    style="display:none;">
+
+    <div class="card-header">
+
+      <h3>
+
+        <i class="ti ti-package"></i>
+
+        Thông tin sản phẩm
+
+      </h3>
+
+    </div>
+
+    <div class="info-box show">
+
+      <div class="irow">
+
+        <span class="ilabel">
+
+          MSP
+
+        </span>
+
+        <span
+          id="kk-msp"
+          class="ivalue">
+
+        </span>
+
+      </div>
+
+      <div class="irow">
+
+        <span class="ilabel">
+
+          Tên hàng
+
+        </span>
+
+        <span
+          id="kk-ten"
+          class="ivalue">
+
+        </span>
+
+      </div>
+
+      <div class="irow">
+
+        <span class="ilabel">
+
+          Màu
+
+        </span>
+
+        <span
+          id="kk-mau"
+          class="ivalue">
+
+        </span>
+
+      </div>
+
+      <div class="irow">
+
+        <span class="ilabel">
+
+          Khối lượng
+
+        </span>
+
+        <span
+          id="kk-kg"
+          class="ivalue">
+
+        </span>
+
+      </div>
+
+      <div class="irow">
+
+        <span class="ilabel">
+
+          Tồn kho
+
+        </span>
+
+        <span
+          id="kk-ton"
+          class="ivalue stock-ok">
+
+        </span>
+
+      </div>
+
+    </div>
+
+  </div>
+
 </div>
 
 <div id="chiFor" class="page">
+
   <div id="cx1-form" class="card">
-  <h3>Chỉ For</h3>
-  <label>Ngày</label>
-  <input type="date" id="cx1-ngay">
-  <button class="btn btn-blue btn-full" onclick="batDauCX1()">Quét</button>
-</div>
 
-  <div id="cx1-cam" class="card" style="display:none">
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px">
-      <span id="cx1-status" style="font-weight:700">🟢 Đang quét Đợt 1...</span>
-      <span id="cx1-dem" class="badge">Đã quét: 0 mã</span>
+    <div class="card-header">
+
+      <div>
+
+        <h3>
+
+          <i class="ti ti-package"></i>
+
+          Chỉ FOR
+
+        </h3>
+
+        <p class="card-desc">
+
+          Quét các bao FOR và tổng hợp theo đợt.
+
+        </p>
+
+      </div>
+
     </div>
-    <div class="video-container" style="position:relative; width:100%; padding-bottom:75%; background:#000; border-radius:8px; overflow:hidden; margin-bottom:15px">
-      <video id="cx1-reader" style="position:absolute; width:100%; height:100%; object-fit:cover"></video>
-    </div>
-    
-    <div style="display:flex; flex-direction:column; gap:10px; width:100%;">
-      <button id="btn-flash-cx1" class="btn btn-full" style="background:#6b7280; color:#fff;" onclick="toggleFlashCX1()">🔦 Bật/Tắt</button>
-      <button id="btn-dung-tieptuc-cx1" class="btn btn-red btn-full" onclick="toggleDungTiepTuc()">Dừng quét</button>
-      <button class="btn btn-green btn-full" onclick="ketThucCX1()">Kết Thúc</button>
-    </div>
+
+    <label>
+
+      Ngày
+
+    </label>
+
+    <input
+      type="date"
+      id="cx1-ngay">
+
+    <button
+      class="btn btn-blue btn-full"
+      onclick="batDauCX1()">
+
+      <i class="ti ti-player-play"></i>
+
+      <span>
+
+        Bắt đầu quét
+
+      </span>
+
+    </button>
+
   </div>
 
-  <div id="cx1-ketqua" class="card" style="display:none">
-    <h3 style="color:#22c55e; text-align:center; margin-bottom:20px;">王</h3>
-    
-    <div style="margin-bottom: 30px;">
-      <h4 style="color:#eab308; margin-bottom:10px;">CHI TIẾT</h4>
-      <div style="overflow-x:auto;">
-        <table style="width:100%; border-collapse:collapse; background:rgba(255,255,255,.02); font-size:14px;">
-          <thead>
-            <tr style="background:rgba(255,255,255,.05)">
-              <th style="padding:10px; border-bottom:2px solid rgba(255,255,255,.1); text-align:left">Đợt</th>
-              <th style="padding:10px; border-bottom:2px solid rgba(255,255,255,.1); text-align:left">MSP</th>
-              <th style="padding:10px; border-bottom:2px solid rgba(255,255,255,.1); text-align:left">QC</th>
-              <th style="padding:10px; border-bottom:2px solid rgba(255,255,255,.1); text-align:center">Bao</th>
-              <th style="padding:10px; border-bottom:2px solid rgba(255,255,255,.1); text-align:right">KG</th>
-            </tr>
-          </thead>
-          <tbody id="cx1-tbody-dot"></tbody>
-        </table>
+  <div
+    id="cx1-cam"
+    class="card"
+    style="display:none">
+
+    <div class="scanner-toolbar">
+
+      <div class="scanner-status-wrap">
+
+        <span
+          id="cx1-status"
+          class="scanner-status">
+
+          🟢 Đang quét Đợt 1...
+
+        </span>
+
       </div>
+
+      <span
+        id="cx1-dem"
+        class="badge">
+
+        Đã quét: 0 mã
+
+      </span>
+
     </div>
 
-    <div style="margin-bottom: 20px;">
-      <h4 style="color:#3b82f6; margin-bottom:10px;">TỔNG HỢP</h4>
-      <div style="overflow-x:auto;">
-        <table style="width:100%; border-collapse:collapse; background:rgba(255,255,255,.02); font-size:14px;">
-          <thead>
-            <tr style="background:rgba(255,255,255,.05)">
-              <th style="padding:10px; border-bottom:2px solid rgba(255,255,255,.1); text-align:left">MSP</th>
-              <th style="padding:10px; border-bottom:2px solid rgba(255,255,255,.1); text-align:left">QC</th>
-              <th style="padding:10px; border-bottom:2px solid rgba(255,255,255,.1); text-align:center">Bao</th>
-              <th style="padding:10px; border-bottom:2px solid rgba(255,255,255,.1); text-align:right">KG</th>
-            </tr>
-          </thead>
-          <tbody id="cx1-tbody-gom"></tbody>
-        </table>
+    <div class="video-wrapper">
+
+      <video
+        id="cx1-reader"
+        autoplay
+        playsinline
+        muted>
+
+      </video>
+
+      <div class="scan-frame">
+
+        <span class="corner tl"></span>
+        <span class="corner tr"></span>
+        <span class="corner bl"></span>
+        <span class="corner br"></span>
+
+        <div class="scan-line"></div>
+
       </div>
+
     </div>
 
-    <button class="btn btn-green btn-full" onclick="quetTiepCX1()">Quét tiếp</button>
-<button class="btn btn-blue btn-full" onclick="quetMoiCX1()">Quét mới</button>
+    <div class="btn-group">
+
+      <button
+        id="btn-flash-cx1"
+        class="btn btn-gray btn-full"
+        onclick="toggleFlashCX1()">
+
+        <i class="ti ti-bulb"></i>
+
+        <span>
+
+          Đèn Flash
+
+        </span>
+
+      </button>
+
+      <button
+        id="btn-dung-tieptuc-cx1"
+        class="btn btn-red btn-full"
+        onclick="toggleDungTiepTuc()">
+
+        <i class="ti ti-player-pause"></i>
+
+        <span>
+
+          Dừng quét
+
+        </span>
+
+      </button>
+
+      <button
+        class="btn btn-green btn-full"
+        onclick="ketThucCX1()">
+
+        <i class="ti ti-check"></i>
+
+        <span>
+
+          Kết thúc
+
+        </span>
+
+      </button>
+
+    </div>
+
   </div>
+
+  <div
+    id="cx1-ketqua"
+    class="card"
+    style="display:none">
+
+    <div class="card-header center">
+
+      <h3 class="success-title">
+
+        王
+
+      </h3>
+
+      <p class="card-desc">
+
+        Tổng hợp dữ liệu sau khi quét
+
+      </p>
+
+    </div>
+
+    <div class="table-section">
+
+      <h4 class="table-title warning">
+
+        CHI TIẾT
+
+      </h4>
+
+      <div class="table-wrapper">
+
+        <table class="data-table">
+
+          <thead>
+
+            <tr>
+
+              <th>Đợt</th>
+
+              <th>MSP</th>
+
+              <th>QC</th>
+
+              <th>Bao</th>
+
+              <th>KG</th>
+
+            </tr>
+
+          </thead>
+
+          <tbody id="cx1-tbody-dot">
+
+          </tbody>
+
+        </table>
+
+      </div>
+
+    </div>
+
+    <div class="table-section">
+
+      <h4 class="table-title primary">
+
+        TỔNG HỢP
+
+      </h4>
+
+      <div class="table-wrapper">
+
+        <table class="data-table">
+
+          <thead>
+
+            <tr>
+
+              <th>MSP</th>
+
+              <th>QC</th>
+
+              <th>Bao</th>
+
+              <th>KG</th>
+
+            </tr>
+
+          </thead>
+
+          <tbody id="cx1-tbody-gom">
+
+          </tbody>
+
+        </table>
+
+      </div>
+
+    </div>
+
+    <button
+      class="btn btn-green btn-full"
+      onclick="quetTiepCX1()">
+
+      <i class="ti ti-refresh"></i>
+
+      <span>
+
+        Quét tiếp
+
+      </span>
+
+    </button>
+
+    <button
+      class="btn btn-blue btn-full"
+      onclick="quetMoiCX1()">
+
+      <i class="ti ti-rotate-2"></i>
+
+      <span>
+
+        Quét mới
+
+      </span>
+
+    </button>
+
+  </div>
+
 </div>
 
-<div id="overlay-loading" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:99999;justify-content:center;align-items:center;">
-  <div style="width:40px;height:40px;border:3px solid #334155;border-top-color:#3b82f6;border-radius:50%;animation:spin .7s linear infinite;"></div>
+<!-- Loading Overlay -->
+
+<div id="overlay-loading" class="loading-overlay">
+
+  <div class="loading-spinner"></div>
+
 </div>
 
-<div class="overlay" id="overlay">
+
+<!-- Overlay -->
+
+<div
+  class="overlay"
+  id="overlay">
+
   <div class="overlay-card">
-    <div id="overlay-spinner" style="display:none;justify-content:center;padding:20px;">
-      <div style="width:28px;height:28px;border:3px solid #334155;border-top-color:#3b82f6;border-radius:50%;animation:spin .7s linear infinite;"></div>
+
+    <div
+      id="overlay-spinner"
+      class="overlay-spinner">
+
+      <div class="loading-spinner small"></div>
+
     </div>
+
     <div id="overlay-content">
-      <div class="overlay-title">Thông tin QR</div>
-      <div class="irow"><span class="ilabel">ID</span><span class="ivalue" id="q-id"></span></div>
-      <div class="irow"><span class="ilabel">MSP</span><span class="ivalue" id="q-msp"></span></div>
-      <div class="irow"><span class="ilabel">Tên</span><span class="ivalue" id="q-ten"></span></div>
-      <div class="irow"><span class="ilabel">Màu</span><span class="ivalue" id="q-mau"></span></div>
-      <div class="irow"><span class="ilabel">Loại</span><span class="ivalue" id="q-loai"></span></div>
-      <div class="irow stock-ton"><span class="ilabel">Tồn</span><span class="ivalue" id="q-ton"></span></div>
-      <label>Số kg</label>
-      <input type="number" id="q-kg" placeholder="Nhập số kg..." min="0" step="0.1">
-      <button class="btn btn-green btn-full" id="btn-luu" onclick="luuGiaoDich()">Lưu & quét tiếp</button>
-      <button class="btn btn-full" style="background:#475569;margin-top:8px" onclick="dongOverlay()">Bỏ qua</button>
-      <div class="msg" id="msg-quet"></div>
+
+      <div class="overlay-header">
+
+        <h3 class="overlay-title">
+
+          <i class="ti ti-qrcode"></i>
+
+          Thông tin QR
+
+        </h3>
+
+      </div>
+
+      <div class="info-box show">
+
+        <div class="irow">
+
+          <span class="ilabel">
+
+            ID
+
+          </span>
+
+          <span
+            class="ivalue"
+            id="q-id">
+
+          </span>
+
+        </div>
+
+        <div class="irow">
+
+          <span class="ilabel">
+
+            MSP
+
+          </span>
+
+          <span
+            class="ivalue"
+            id="q-msp">
+
+          </span>
+
+        </div>
+
+        <div class="irow">
+
+          <span class="ilabel">
+
+            Tên
+
+          </span>
+
+          <span
+            class="ivalue"
+            id="q-ten">
+
+          </span>
+
+        </div>
+
+        <div class="irow">
+
+          <span class="ilabel">
+
+            Màu
+
+          </span>
+
+          <span
+            class="ivalue"
+            id="q-mau">
+
+          </span>
+
+        </div>
+
+        <div class="irow">
+
+          <span class="ilabel">
+
+            Loại
+
+          </span>
+
+          <span
+            class="ivalue"
+            id="q-loai">
+
+          </span>
+
+        </div>
+
+        <div class="irow stock-ton">
+
+          <span class="ilabel">
+
+            Tồn kho
+
+          </span>
+
+          <span
+            class="ivalue"
+            id="q-ton">
+
+          </span>
+
+        </div>
+
+      </div>
+
+      <label>
+
+        Khối lượng (KG)
+
+      </label>
+
+      <input
+        type="number"
+        id="q-kg"
+        min="0"
+        step="0.1"
+        placeholder="Nhập số kg...">
+
+      <div class="btn-group">
+
+        <button
+          id="btn-luu"
+          class="btn btn-green btn-full"
+          onclick="luuGiaoDich()">
+
+          <i class="ti ti-device-floppy"></i>
+
+          <span>
+
+            Lưu &amp; Quét tiếp
+
+          </span>
+
+        </button>
+
+        <button
+          class="btn btn-gray btn-full"
+          onclick="dongOverlay()">
+
+          <i class="ti ti-x"></i>
+
+          <span>
+
+            Bỏ qua
+
+          </span>
+
+        </button>
+
+      </div>
+
+      <div
+        id="msg-quet"
+        class="msg">
+
+      </div>
+
     </div>
+
   </div>
+
 </div>
 
 <script src="app.js?v=20260623-sieucap"></script>
