@@ -2,21 +2,21 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Quản lý Kho</title>
-  <link rel="stylesheet" href="style.css?v=20260704-fixed">
+  <link rel="stylesheet" href="style.css?v=20260623-sieucap">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@zxing/library@0.19.1/umd/index.min.js"></script>
-  <link rel="manifest" href="manifest.json">
-  <meta name="theme-color" content="#020617">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <link rel="apple-touch-icon" href="icon-192.png">
-  <script>
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/Quan-ly-kho/sw.js');
-    }
-  </script>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#020617">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="apple-touch-icon" href="icon-192.png">
+<script>
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/Quan-ly-kho/sw.js');
+  }
+</script>
 </head>
 <body>
 
@@ -45,7 +45,7 @@
 
 <div id="taoQR" class="page active">
   <div class="card">
-    <h3>Tạo QR</h3>
+    <h3> Tạo QR</h3>
     <label>MSP</label>
     <div class="row">
       <input type="text" id="msp-tao" placeholder="Nhập MSP..." onkeydown="if(event.key==='Enter') timMSP()">
@@ -68,7 +68,7 @@
 
 <div id="quetQR" class="page">
   <div class="card">
-    <h3>Quét QR</h3>
+    <h3> Quét QR</h3>
 
     <div id="form-chon">
       <label>Ngày</label>
@@ -77,8 +77,8 @@
       <label>Loại</label>
       <div class="custom-select">
         <button type="button" id="chon-loai-btn" class="custom-select-btn">
-          -- Chọn loại --
-        </button>
+  -- Chọn loại --
+</button>
 
         <div id="chon-loai-list" class="custom-select-list">
           <div class="group-title">📥 Nhập</div>
@@ -102,8 +102,8 @@
     </div>
 
     <div id="cam-box" style="display:none">
-      <video id="reader" autoplay playsinline muted></video>
-      <button id="toggle-quet-nhanh" class="btn btn-full btn-gray" style="margin-top:12px" onclick="toggleQuetNhanh()">Nhập Kg: TẮT</button>
+      <video id="reader" autoplay playsinline muted style="width:100%;border-radius:8px;background:#000;margin-top:12px;"></video>
+      <button id="toggle-quet-nhanh" class="btn btn-full" style="background:#334155;margin-top:10px" onclick="toggleQuetNhanh()">Nhập Kg: TẮT</button>
       <div class="scanner-status" id="scanner-status"></div>
       <button class="btn btn-red btn-full" id="btn-stop" onclick="dungQuet()" style="display:none">⛔ Dừng quét</button>
     </div>
@@ -112,61 +112,61 @@
 
 <div id="kiemKe" class="page">
   <div class="card">
-    <h3>Kiểm Kê</h3>
+    <h3> Kiểm Kê</h3>
     <div id="kk-form">
       <label>Ngày</label>
       <input type="date" id="kk-ngay">
       <button class="btn btn-blue btn-full" onclick="batDauKiemKe()">Quét</button>
     </div>
     <div id="kk-cam" style="display:none">
-      <video id="kk-reader" autoplay playsinline muted></video>
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:14px;">
+      <video id="kk-reader" autoplay playsinline muted style="width:100%;border-radius:20px;background:#000;margin-top:12px;border:2px solid #3b82f6;"></video>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:12px;">
         <div id="kk-dem" style="color:#22c55e;font-weight:700;font-size:16px;">Đã quét: 0 mã</div>
         <div id="kk-status" class="scanner-status" style="margin:0;"></div>
       </div>
-      <button class="btn btn-red btn-full" onclick="dungKiemKe()">Dừng & Lưu</button>
+      <button class="btn btn-red btn-full" onclick="dungKiemKe()"> Dừng & Lưu</button>
     </div>
   </div>
 </div>
 
 <div id="chiFor" class="page">
   <div id="cx1-form" class="card">
-    <h3>Chỉ For</h3>
-    <label>Ngày</label>
-    <input type="date" id="cx1-ngay">
-    <button class="btn btn-blue btn-full" onclick="batDauCX1()">Quét</button>
-  </div>
+  <h3>Chỉ For</h3>
+  <label>Ngày</label>
+  <input type="date" id="cx1-ngay">
+  <button class="btn btn-blue btn-full" onclick="batDauCX1()">Quét</button>
+</div>
 
   <div id="cx1-cam" class="card" style="display:none">
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px">
-      <span id="cx1-status" style="font-weight:700; color:#3b82f6;">🟢 Đang quét Đợt 1...</span>
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px">
+      <span id="cx1-status" style="font-weight:700">🟢 Đang quét Đợt 1...</span>
       <span id="cx1-dem" class="badge">Đã quét: 0 mã</span>
     </div>
-    <div class="video-container">
-      <video id="cx1-reader" autoplay playsinline muted></video>
+    <div class="video-container" style="position:relative; width:100%; padding-bottom:75%; background:#000; border-radius:8px; overflow:hidden; margin-bottom:15px">
+      <video id="cx1-reader" style="position:absolute; width:100%; height:100%; object-fit:cover"></video>
     </div>
     
     <div style="display:flex; flex-direction:column; gap:10px; width:100%;">
-      <button id="btn-flash-cx1" class="btn btn-full btn-gray" style="margin-top:0 !important;" onclick="toggleFlashCX1()"> An Toàn / Đèn Pin</button>
-      <button id="btn-dung-tieptuc-cx1" class="btn btn-red btn-full" style="margin-top:0 !important;" onclick="toggleDungTiepTucCX1()">Dừng quét</button>
-      <button class="btn btn-green btn-full" style="margin-top:0 !important;" onclick="ketThucCX1()">Kết Thúc</button>
+      <button id="btn-flash-cx1" class="btn btn-full" style="background:#6b7280; color:#fff;" onclick="toggleFlashCX1()">🔦 Bật/Tắt</button>
+      <button id="btn-dung-tieptuc-cx1" class="btn btn-red btn-full" onclick="toggleDungTiepTuc()">Dừng quét</button>
+      <button class="btn btn-green btn-full" onclick="ketThucCX1()">Kết Thúc</button>
     </div>
   </div>
 
   <div id="cx1-ketqua" class="card" style="display:none">
     <h3 style="color:#22c55e; text-align:center; margin-bottom:20px;">王</h3>
     
-    <div style="margin-bottom: 24px;">
-      <h4 style="color:#eab308; margin-bottom:10px; font-size:14px; font-weight:700;">CHI TIẾT MÃ ĐỢT BỆ HẠ</h4>
+    <div style="margin-bottom: 30px;">
+      <h4 style="color:#eab308; margin-bottom:10px;">CHI TIẾT</h4>
       <div style="overflow-x:auto;">
-        <table>
+        <table style="width:100%; border-collapse:collapse; background:rgba(255,255,255,.02); font-size:14px;">
           <thead>
-            <tr>
-              <th>Đợt</th>
-              <th>MSP</th>
-              <th>QC</th>
-              <th style="text-align:center">Bao</th>
-              <th style="text-align:right">KG</th>
+            <tr style="background:rgba(255,255,255,.05)">
+              <th style="padding:10px; border-bottom:2px solid rgba(255,255,255,.1); text-align:left">Đợt</th>
+              <th style="padding:10px; border-bottom:2px solid rgba(255,255,255,.1); text-align:left">MSP</th>
+              <th style="padding:10px; border-bottom:2px solid rgba(255,255,255,.1); text-align:left">QC</th>
+              <th style="padding:10px; border-bottom:2px solid rgba(255,255,255,.1); text-align:center">Bao</th>
+              <th style="padding:10px; border-bottom:2px solid rgba(255,255,255,.1); text-align:right">KG</th>
             </tr>
           </thead>
           <tbody id="cx1-tbody-dot"></tbody>
@@ -175,15 +175,15 @@
     </div>
 
     <div style="margin-bottom: 20px;">
-      <h4 style="color:#3b82f6; margin-bottom:10px; font-size:14px; font-weight:700;">BẢNG GOM DỮ LIỆU ĐỢT</h4>
+      <h4 style="color:#3b82f6; margin-bottom:10px;">TỔNG HỢP</h4>
       <div style="overflow-x:auto;">
-        <table>
+        <table style="width:100%; border-collapse:collapse; background:rgba(255,255,255,.02); font-size:14px;">
           <thead>
-            <tr>
-              <th>MSP</th>
-              <th>QC</th>
-              <th style="text-align:center">Bao</th>
-              <th style="text-align:right">KG</th>
+            <tr style="background:rgba(255,255,255,.05)">
+              <th style="padding:10px; border-bottom:2px solid rgba(255,255,255,.1); text-align:left">MSP</th>
+              <th style="padding:10px; border-bottom:2px solid rgba(255,255,255,.1); text-align:left">QC</th>
+              <th style="padding:10px; border-bottom:2px solid rgba(255,255,255,.1); text-align:center">Bao</th>
+              <th style="padding:10px; border-bottom:2px solid rgba(255,255,255,.1); text-align:right">KG</th>
             </tr>
           </thead>
           <tbody id="cx1-tbody-gom"></tbody>
@@ -192,7 +192,7 @@
     </div>
 
     <button class="btn btn-green btn-full" onclick="quetTiepCX1()">Quét tiếp</button>
-    <button class="btn btn-blue btn-full" onclick="quetMoiCX1()">Quét mới</button>
+<button class="btn btn-blue btn-full" onclick="quetMoiCX1()">Quét mới</button>
   </div>
 </div>
 
@@ -216,14 +216,14 @@
       <label>Số kg</label>
       <input type="number" id="q-kg" placeholder="Nhập số kg..." min="0" step="0.1">
       <button class="btn btn-green btn-full" id="btn-luu" onclick="luuGiaoDich()">Lưu & quét tiếp</button>
-      <button class="btn btn-full btn-gray" style="margin-top:8px" onclick="dongOverlay()">Bỏ qua</button>
+      <button class="btn btn-full" style="background:#475569;margin-top:8px" onclick="dongOverlay()">Bỏ qua</button>
       <div class="msg" id="msg-quet"></div>
     </div>
   </div>
 </div>
 
-<script src="app.js?v=20260704"></script>
-<script src="kiemke.js?v=20260704"></script>
-<script src="cx1.js?v=20260704"></script>
+<script src="app.js?v=20260623-sieucap"></script>
+<script src="kiemke.js"></script>
+<script src="cx1.js?v=20260623-sieucap"></script>
 </body>
 </html>
