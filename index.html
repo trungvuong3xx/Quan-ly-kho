@@ -1,256 +1,236 @@
 <!DOCTYPE html>
-<html>
+<html lang="vi">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
   <title>Quản lý Kho</title>
-  <link rel="stylesheet" href="style.css?v=20260704">
+  <link rel="stylesheet" href="style.css?v=2026-sieucapv2">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@zxing/library@0.19.1/umd/index.min.js"></script>
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#0a0e1a">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <link rel="apple-touch-icon" href="icon-192.png">
-  <script>if('serviceWorker' in navigator) navigator.serviceWorker.register('/Quan-ly-kho/sw.js');</script>
 </head>
 <body>
 
+<div class="bg-grid"></div>
+<div class="bg-glow"></div>
 <div class="canh-bao" id="canh-bao"></div>
 
-<!-- ═══ TẠO QR ═══ -->
-<div id="taoQR" class="page active">
-  <h2 class="page-title">Tạo QR</h2>
-  <div class="card">
-    <label>Mã MSP</label>
-    <div class="input-row">
-      <input type="text" id="msp-tao" placeholder="Nhập mã MSP..." onkeydown="if(event.key==='Enter') timMSP()">
-      <button class="btn-icon" onclick="timMSP()"><i class="ti ti-search" aria-hidden="true"></i></button>
-    </div>
-    <div class="info-box" id="info-tao">
-      <div class="irow"><span class="ilabel">Tên</span><span class="ivalue" id="t-ten"></span></div>
-      <div class="irow"><span class="ilabel">Màu</span><span class="ivalue" id="t-mau"></span></div>
-      <label>Số lượng</label>
-      <div class="qty-row">
-        <button class="qty-btn" onclick="document.getElementById('sl-qr').stepDown()">−</button>
-        <input type="number" id="sl-qr" value="20" min="1" max="100" style="text-align:center">
-        <button class="qty-btn qty-btn-plus" onclick="document.getElementById('sl-qr').stepUp()">+</button>
-      </div>
-      <button class="btn-primary" onclick="taoQR()"><i class="ti ti-qrcode" aria-hidden="true"></i> Tạo QR</button>
-    </div>
-  </div>
-  <div class="card" id="card-qr" style="display:none">
-    <div class="card-header">
-      <span class="card-title">Danh sách QR</span>
-      <button class="btn-text" onclick="window.print()"><i class="ti ti-printer" aria-hidden="true"></i> In</button>
-    </div>
-    <div class="qr-grid" id="qr-grid"></div>
-  </div>
-</div>
+<div class="content">
 
-<!-- ═══ QUÉT QR ═══ -->
-<div id="quetQR" class="page">
-  <h2 class="page-title">Quét QR</h2>
-  <div class="card" id="form-chon-card">
-    <div id="form-chon">
-      <label>Ngày</label>
-      <input type="date" id="chon-ngay">
-      <label>Loại</label>
-      <div class="custom-select">
-        <button type="button" id="chon-loai-btn" class="custom-select-btn">-- Chọn loại --</button>
-        <div id="chon-loai-list" class="custom-select-list">
-          <div class="group-title">Nhập</div>
-          <div class="custom-option" data-value="Nhập SX">Nhập SX</div>
-          <div class="custom-option" data-value="Nhập Trả">Nhập Trả</div>
-          <div class="custom-option" data-value="Nhập For">Nhập For</div>
-          <div class="group-title">Xuất</div>
-          <div class="custom-option" data-value="Xuất SX">Xuất SX</div>
-          <div class="custom-option" data-value="Xuất Trả">Xuất Trả</div>
-          <div class="custom-option" data-value="Xuất Gia Công">Xuất Gia Công</div>
-          <div class="custom-option" data-value="Xuất Phế">Xuất Phế</div>
-          <div class="custom-option" data-value="Xuất Bán">Xuất Bán</div>
-          <div class="custom-option" data-value="Bình Thuận">Bình Thuận</div>
-          <div class="custom-option" data-value="Xuất For">Xuất For</div>
+  <div id="taoQR" class="page active">
+    <h2 class="page-title">Tạo QR hàng loạt</h2>
+    <p class="page-subtitle">Quản lý và in ấn nhãn mã vạch</p>
+    
+    <div class="card">
+      <div class="input-group">
+        <label>Mã MSP</label>
+        <div style="display:flex; gap:8px;">
+          <input type="text" id="msp-tao" placeholder="Nhập MSP..." onkeydown="if(event.key==='Enter') timMSP()" style="flex:1;">
+          <button class="btn-main" onclick="timMSP()" style="width:48px;"><i class="ti ti-search"></i></button>
         </div>
       </div>
-      <input type="hidden" id="chon-loai">
-      <button class="btn-primary" onclick="batDauQuet()"><i class="ti ti-scan" aria-hidden="true"></i> Bắt đầu quét</button>
+      
+      <div class="info-box" id="info-tao">
+        <div class="info-item"><span class="ilabel">Tên sản phẩm</span><span class="ivalue" id="t-ten">-</span></div>
+        <div class="info-item"><span class="ilabel">Màu sắc</span><span class="ivalue" id="t-mau">-</span></div>
+      </div>
+
+      <div class="input-group" style="margin-top:14px;">
+        <label>Số lượng tem cần in</label>
+        <input type="number" id="sl-qr" value="20" min="1">
+      </div>
+      
+      <button class="btn-main" onclick="taoQR()"><i class="ti ti-printer"></i> Tạo & In Mã QR</button>
+    </div>
+
+    <div class="card" id="card-qr" style="display:none; background:white; color:black;">
+      <div class="print-grid" id="qr-grid"></div>
     </div>
   </div>
 
-  <div id="cam-box" style="display:none">
-    <div class="scan-card">
-      <div class="scan-status" id="scanner-status">🟢 Đang quét...</div>
-      <div class="scan-viewport">
-        <video id="reader" autoplay playsinline muted></video>
-        <div class="scan-frame">
-          <div class="sf-tl"></div><div class="sf-tr"></div>
-          <div class="sf-bl"></div><div class="sf-br"></div>
+  <div id="quetQR" class="page">
+    <h2 class="page-title">Quét QR Giao Dịch</h2>
+    <p class="page-subtitle">Nhập xuất kho tức thời</p>
+    
+    <div class="card" id="form-chon">
+      <div class="input-group">
+        <label>Ngày làm việc</label>
+        <input type="date" id="chon-ngay">
+      </div>
+      <div class="input-group">
+        <label>Loại giao dịch</label>
+        <div class="custom-select">
+          <button class="custom-select-btn" id="chon-loai-btn">Chọn loại... <span>▼</span></button>
+          <input type="hidden" id="chon-loai">
+          <div class="custom-select-list" id="chon-loai-list">
+            <div class="custom-option" data-value="Nhập Kế Hoạch">Nhập Kế Hoạch</div>
+            <div class="custom-option" data-value="Nhập Phát Sinh">Nhập Phát Sinh</div>
+            <div class="custom-option" data-value="Xuất Định Mức">Xuất Định Mức</div>
+            <div class="custom-option" data-value="Xuất Phát Sinh">Xuất Phát Sinh</div>
+            <div class="custom-option" data-value="Xuất Trả Bán Thành Phẩm">Xuất Trả Bán Thành Phẩm</div>
+          </div>
         </div>
       </div>
-      <p class="scan-hint">Đưa mã QR vào khung — tự động nhận diện</p>
-      <div class="scan-actions">
-        <button id="toggle-quet-nhanh" class="btn-outline" onclick="toggleQuetNhanh()">
-          <i class="ti ti-bolt" aria-hidden="true"></i> Quét nhanh: TẮT
-        </button>
-        <button class="btn-danger" id="btn-stop" onclick="dungQuet()">
-          <i class="ti ti-square" aria-hidden="true"></i> Dừng
-        </button>
-      </div>
+      <button class="btn-main" onclick="batDauQuet()"><i class="ti ti-camera"></i> Mở Camera Quét</button>
     </div>
-  </div>
-</div>
 
-<!-- ═══ KIỂM KÊ ═══ -->
-<div id="kiemKe" class="page">
-  <h2 class="page-title">Kiểm kê</h2>
-  <div class="card">
-    <div id="kk-form">
-      <label>Ngày kiểm kê</label>
-      <input type="date" id="kk-ngay">
-      <button class="btn-primary" onclick="batDauKiemKe()"><i class="ti ti-clipboard-check" aria-hidden="true"></i> Bắt đầu kiểm kê</button>
+    <div class="card" id="cam-box" style="display:none;">
+      <div class="scanner-status" id="scanner-status"></div>
+      <div class="video-container">
+        <video id="reader"></video>
+        <div class="scanner-laser"></div>
+      </div>
+      <button class="btn-red" onclick="dungQuet()" style="margin-top:14px;"><i class="ti ti-player-stop"></i> Dừng Quét</button>
     </div>
   </div>
-  <div id="kk-cam" style="display:none">
-    <div class="scan-card">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
-        <span id="kk-dem" class="kk-count">Đã quét: 0 mã</span>
-        <span id="kk-status" style="color:#64748b;font-size:12px"></span>
+
+  <div id="kiemKe" class="page">
+    <h2 class="page-title">Kiểm Kê Kho</h2>
+    <p class="page-subtitle">Rà soát đối chiếu số lượng thực tế</p>
+    
+    <div class="card" id="kk-form">
+      <div class="input-group">
+        <label>Ngày kiểm kê</label>
+        <input type="date" id="kk-ngay">
       </div>
-      <div class="scan-viewport">
-        <video id="kk-reader" autoplay playsinline muted></video>
-        <div class="scan-frame">
-          <div class="sf-tl"></div><div class="sf-tr"></div>
-          <div class="sf-bl"></div><div class="sf-br"></div>
+      <button class="btn-main" onclick="batDauKiemKe()"><i class="ti ti-scan"></i> Bắt đầu quét kiểm kê</button>
+    </div>
+
+    <div class="card" id="kk-cam" style="display:none;">
+      <div class="scanner-status" id="kk-status">🟢 Đang quét...</div>
+      <div class="video-container">
+        <video id="kk-reader"></video>
+        <div class="scanner-laser"></div>
+      </div>
+      <div id="kk-dem" style="text-align:center; margin-top:12px; font-weight:600; color:#3b82f6; font-size:14px;">Đã quét: 0 mã</div>
+      <button class="btn-red" onclick="dungKiemKe()" style="margin-top:14px;"><i class="ti ti-player-stop"></i> Hoàn tất kiểm kê</button>
+    </div>
+  </div>
+
+  <div id="chiFor" class="page">
+    <h2 class="page-title">Chỉ FOR</h2>
+    <p class="page-subtitle">Quản lý lệnh và đợt Chỉ đóng gói</p>
+    
+    <div class="card" id="cx1-form">
+      <div class="input-group">
+        <label>Ngày đóng gói Chỉ</label>
+        <input type="date" id="cx1-ngay">
+      </div>
+      <button class="btn-main" onclick="batDauCX1()"><i class="ti ti-box"></i> Vào phiên quét Chỉ FOR</button>
+      
+      <div class="for-list">
+        <div class="for-item">
+          <div class="for-id">FOR-2026-02-005</div>
+          <div class="for-row">
+            <div><div class="for-name">Đóng gói đợt mới</div><div class="for-meta">Hôm nay</div></div>
+            <span class="badge badge-green">Đang chạy</span>
+          </div>
+        </div>
+        <div class="for-item" style="opacity: 0.6;">
+          <div class="for-id">FOR-2026-02-004</div>
+          <div class="for-row">
+            <div><div class="for-name">Nhập kho hoàn tất</div><div class="for-meta">07/02/2026</div></div>
+            <span class="badge badge-blue">Chờ duyệt</span>
+          </div>
         </div>
       </div>
-      <button class="btn-danger" style="margin-top:14px;width:100%" onclick="dungKiemKe()">
-        <i class="ti ti-square" aria-hidden="true"></i> Dừng & Lưu
-      </button>
+    </div>
+
+    <div class="card" id="cx1-cam" style="display:none;">
+      <div class="scanner-status" id="cx1-status">🟢 Đang quét...</div>
+      <div class="video-container">
+        <video id="cx1-reader"></video>
+        <div class="scanner-laser"></div>
+      </div>
+      <div style="display:flex; gap:10px; margin-top:14px;">
+        <button class="btn-ghost" id="btn-flash-cx1" onclick="toggleFlashCX1()" style="flex:1;"><i class="ti ti-flashlight"></i> Đèn Pin</button>
+        <button class="btn-red" id="btn-dung-tieptuc-cx1" onclick="toggleDungTiepTucCX1()" style="flex:1;">Dừng quét</button>
+      </div>
+    </div>
+
+    <div id="cx1-ketqua" style="display:none; margin-top:14px;">
+      <div class="card" style="padding:12px;">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <span style="color:#64748b; font-size:13px;">Mã Đợt Vừa Lưu</span>
+          <span id="cx1-ma-dot-hien-tai" style="font-weight:700; color:#22c55e; font-size:14px;">-</span>
+        </div>
+      </div>
+      
+      <div class="card" style="padding:0; overflow:hidden;">
+        <div style="padding:12px 16px; border-bottom:1px solid rgba(255,255,255,.06); font-weight:700; font-size:13px; color:#94a3b8;">BẢNG GOM DỮ LIỆU ĐỢT</div>
+        <div style="overflow-x:auto;">
+          <table style="width:100%; border-collapse:collapse; font-size:13px;">
+            <thead>
+              <tr style="background:rgba(255,255,255,.02); text-align:left;">
+                <th style="padding:10px; color:#64748b; font-weight:500;">MSP</th>
+                <th style="padding:10px; color:#64748b; font-weight:500;">Quy cách</th>
+                <th style="padding:10px; color:#64748b; font-weight:500; text-align:center;">SL</th>
+                <th style="padding:10px; color:#64748b; font-weight:500; text-align:right;">Tổng KG</th>
+              </tr>
+            </thead>
+            <tbody id="cx1-tbody-gom"></tbody>
+          </table>
+        </div>
+      </div>
+      <button class="btn-main" onclick="quetMoiCX1()"><i class="ti ti-refresh"></i> Làm Mới Phiên</button>
     </div>
   </div>
 </div>
 
-<!-- ═══ CHỈ FOR ═══ -->
-<div id="chiFor" class="page">
-  <h2 class="page-title">Chỉ FOR</h2>
-
-  <div id="cx1-form" class="card">
-    <label>Ngày</label>
-    <input type="date" id="cx1-ngay">
-    <button class="btn-primary" onclick="batDauCX1()"><i class="ti ti-scan" aria-hidden="true"></i> Bắt đầu</button>
-  </div>
-
-  <div id="cx1-cam" class="scan-card" style="display:none">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
-      <span id="cx1-status" class="scan-status-inline">Đang quét Đợt 1...</span>
-      <span id="cx1-dem" class="kk-count">Đã quét: 0 mã</span>
+<div class="overlay" id="overlay">
+  <div class="overlay-box">
+    <div class="overlay-header">
+      <h3>Thông tin mã QR</h3>
+      <button class="close-btn" onclick="dongOverlay()">×</button>
     </div>
-    <div class="scan-viewport" style="margin-bottom:12px">
-      <video id="cx1-reader" autoplay playsinline muted></video>
-      <div class="scan-frame">
-        <div class="sf-tl"></div><div class="sf-tr"></div>
-        <div class="sf-bl"></div><div class="sf-br"></div>
-      </div>
+    <div class="info-grid" style="background: rgba(255,255,255,.02); border-radius:12px; padding: 2px 12px;">
+      <div class="info-item"><span class="ilabel">ID</span><span class="ivalue" id="q-id"></span></div>
+      <div class="info-item"><span class="ilabel">MSP</span><span class="ivalue" id="q-msp"></span></div>
+      <div class="info-item"><span class="ilabel">Tên</span><span class="ivalue" id="q-ten"></span></div>
+      <div class="info-item"><span class="ilabel">Màu</span><span class="ivalue" id="q-mau"></span></div>
+      <div class="info-item"><span class="ilabel">Loại</span><span class="ivalue badge-loai" id="q-loai" style="color:#3b82f6; font-weight:700;"></span></div>
+      <div class="info-item"><span class="ilabel">Tồn</span><span class="ivalue ton-val" id="q-ton" style="color:#22c55e; font-weight:700;"></span></div>
     </div>
-    <div style="display:flex;flex-direction:column;gap:10px">
-      <button id="btn-flash-cx1" class="btn-outline" onclick="toggleFlashCX1()">
-        <i class="ti ti-bulb" aria-hidden="true"></i> Đèn pin
-      </button>
-      <div style="display:flex;gap:10px">
-        <button id="btn-dung-tieptuc-cx1" class="btn-danger" style="flex:1" onclick="toggleDungTiepTuc()">Dừng quét</button>
-        <button class="btn-success" style="flex:1;margin-top:0" onclick="ketThucCX1()"><i class="ti ti-check" aria-hidden="true"></i> Kết thúc</button>
-      </div>
+    <div class="input-group" style="margin-top:14px;">
+      <label>Số kg giao dịch</label>
+      <input type="number" id="q-kg" placeholder="Nhập số kg..." min="0" step="0.1">
     </div>
-  </div>
-
-  <div id="cx1-ketqua" class="card" style="display:none">
-    <div class="result-header">
-      <i class="ti ti-chart-bar" style="font-size:20px;color:#3b82f6" aria-hidden="true"></i>
-      <span>Kết quả phiên</span>
-    </div>
-    <div class="result-section">
-      <div class="result-section-title" style="color:#eab308">Chi tiết</div>
-      <div style="overflow-x:auto">
-        <table class="result-table">
-          <thead><tr>
-            <th>Đợt</th><th>MSP</th><th>QC</th>
-            <th style="text-align:center">Bao</th>
-            <th style="text-align:right">KG</th>
-          </tr></thead>
-          <tbody id="cx1-tbody-dot"></tbody>
-        </table>
-      </div>
-    </div>
-    <div class="result-section">
-      <div class="result-section-title" style="color:#3b82f6">Tổng hợp</div>
-      <div style="overflow-x:auto">
-        <table class="result-table">
-          <thead><tr>
-            <th>MSP</th><th>QC</th>
-            <th style="text-align:center">Bao</th>
-            <th style="text-align:right">KG</th>
-          </tr></thead>
-          <tbody id="cx1-tbody-gom"></tbody>
-        </table>
-      </div>
-    </div>
-    <div style="display:flex;gap:10px;margin-top:4px">
-      <button class="btn-success" style="flex:1" onclick="quetTiepCX1()"><i class="ti ti-refresh" aria-hidden="true"></i> Quét tiếp</button>
-      <button class="btn-outline" style="flex:1;margin-top:0" onclick="quetMoiCX1()"><i class="ti ti-plus" aria-hidden="true"></i> Quét mới</button>
-    </div>
+    <button class="btn-success" id="btn-luu" onclick="luuGiaoDich()"><i class="ti ti-device-floppy"></i> Lưu & quét tiếp</button>
+    <button class="btn-ghost" onclick="dongOverlay()" style="margin-top:8px;">Bỏ qua</button>
+    <div class="msg" id="msg-quet"></div>
   </div>
 </div>
 
-<!-- ═══ OVERLAY LOADING ═══ -->
-<div id="overlay-loading" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:99999;justify-content:center;align-items:center;">
+<div class="overlay-loading" id="overlay-loading" style="display:none;">
   <div class="spinner"></div>
 </div>
 
-<!-- ═══ OVERLAY NHẬP KG ═══ -->
-<div class="overlay" id="overlay">
-  <div class="overlay-card">
-    <div id="overlay-spinner" style="display:none;justify-content:center;padding:24px;">
-      <div class="spinner"></div>
-    </div>
-    <div id="overlay-content">
-      <div class="overlay-title">Thông tin QR</div>
-      <div class="info-grid">
-        <div class="info-item"><span class="ilabel">ID</span><span class="ivalue" id="q-id"></span></div>
-        <div class="info-item"><span class="ilabel">MSP</span><span class="ivalue" id="q-msp"></span></div>
-        <div class="info-item"><span class="ilabel">Tên</span><span class="ivalue" id="q-ten"></span></div>
-        <div class="info-item"><span class="ilabel">Màu</span><span class="ivalue" id="q-mau"></span></div>
-        <div class="info-item"><span class="ilabel">Loại</span><span class="ivalue badge-loai" id="q-loai"></span></div>
-        <div class="info-item"><span class="ilabel">Tồn</span><span class="ivalue ton-val" id="q-ton"></span></div>
-      </div>
-      <label>Số kg</label>
-      <input type="number" id="q-kg" placeholder="Nhập số kg..." min="0" step="0.1">
-      <button class="btn-success" id="btn-luu" onclick="luuGiaoDich()"><i class="ti ti-device-floppy" aria-hidden="true"></i> Lưu & quét tiếp</button>
-      <button class="btn-ghost" onclick="dongOverlay()">Bỏ qua & quét tiếp</button>
-      <div class="msg" id="msg-quet"></div>
-    </div>
-  </div>
-</div>
-
-<!-- ═══ BOTTOM NAV ═══ -->
 <nav class="bottom-nav">
   <button class="bnav-btn active" onclick="chuyenTrang('taoQR', this)">
-    <i class="ti ti-qrcode" aria-hidden="true"></i><span>Tạo QR</span>
+    <i class="ti ti-qrcode"></i><span>Tạo QR</span>
   </button>
   <button class="bnav-btn" onclick="chuyenTrang('quetQR', this)">
-    <i class="ti ti-scan" aria-hidden="true"></i><span>Quét QR</span>
+    <i class="ti ti-scan"></i><span>Quét QR</span>
   </button>
   <button class="bnav-btn" onclick="chuyenTrang('kiemKe', this)">
-    <i class="ti ti-clipboard-list" aria-hidden="true"></i><span>Kiểm kê</span>
+    <i class="ti ti-clipboard-list"></i><span>Kiểm kê</span>
   </button>
   <button class="bnav-btn" onclick="chuyenTrang('chiFor', this)">
-    <i class="ti ti-package" aria-hidden="true"></i><span>Chỉ FOR</span>
+    <i class="ti ti-package"></i><span>Chỉ FOR</span>
   </button>
 </nav>
 
-<script src="app.js?v=20260704"></script>
+<script src="app.js"></script>
 <script src="kiemke.js"></script>
-<script src="cx1.js?v=20260704"></script>
+<script src="cx1.js"></script>
+<script>
+  if('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/Quan-ly-kho/sw.js').then(() => {
+      console.log("Service Worker đăng ký thành công!");
+    });
+  }
+</script>
 </body>
 </html>
