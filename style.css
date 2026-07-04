@@ -420,16 +420,19 @@ transform:none;
 
 }
 
-.btn-blue{
-
-    background:linear-gradient(135deg,#2563eb,#3b82f6);
-
+.btn-blue {
+    background: linear-gradient(135deg, #2563eb, #3b82f6);
 }
 
-.btn-green{
+.btn-green {
+    background: linear-gradient(135deg, #16a34a, #22c55e);
+}
 
-    background:linear-gradient(135deg,#16a34a,#22c55e);
-
+.btn-gray { 
+    background: #334155; 
+}
+.btn-gray:hover { 
+    background: #475569; 
 }
 
 .btn-red{
