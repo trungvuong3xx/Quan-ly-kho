@@ -30,51 +30,30 @@ function phatTiengBip() {
 function phatAmThanhSung(ctx) {
   try {
     const now = ctx.currentTime;
-    const thoiLuong = 0.35;
-
-    // Tiếng "crack" chính: white noise, lọc quét từ sáng (crack) xuống đục (đuôi tiếng nổ)
-    const soMau = Math.floor(ctx.sampleRate * thoiLuong);
-    const bufferOn = ctx.createBuffer(1, soMau, ctx.sampleRate);
-    const data = bufferOn.getChannelData(0);
-    for (let i = 0; i < soMau; i++) data[i] = Math.random() * 2 - 1;
-
-    const noise = ctx.createBufferSource();
-    noise.buffer = bufferOn;
-
-    const locNoise = ctx.createBiquadFilter();
-    locNoise.type = "lowpass";
-    locNoise.frequency.setValueAtTime(6500, now);
-    locNoise.frequency.exponentialRampToValueAtTime(180, now + thoiLuong);
-
-    const gainNoise = ctx.createGain();
-    gainNoise.gain.setValueAtTime(1.4, now);
-    gainNoise.gain.exponentialRampToValueAtTime(0.001, now + thoiLuong);
-
-    // Lớp "thùm" trầm cho có lực, tắt nhanh hơn tiếng crack
-    const thump = ctx.createOscillator();
-    thump.type = "triangle";
-    thump.frequency.setValueAtTime(120, now);
-    thump.frequency.exponentialRampToValueAtTime(40, now + 0.15);
-
-    const gainThump = ctx.createGain();
-    gainThump.gain.setValueAtTime(1.2, now);
-    gainThump.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
-
     const compressor = ctx.createDynamicsCompressor();
-
-    noise.connect(locNoise);
-    locNoise.connect(gainNoise);
-    gainNoise.connect(compressor);
-
-    thump.connect(gainThump);
-    gainThump.connect(compressor);
-
     compressor.connect(ctx.destination);
 
-    noise.start(now);
-    noise.stop(now + thoiLuong);
-    thump.start(now);
-    thump.stop(now + 0.2);
+    // Tiếng beep 2 tông kiểu máy quét kho: tông 1 rồi tông 2 cao hơn, liền nhau
+    const taoBeep = (tanSo, batDau, thoiLuong, bienDo) => {
+      const osc = ctx.createOscillator();
+      osc.type = "square";
+      osc.frequency.setValueAtTime(tanSo, batDau);
+
+      const gain = ctx.createGain();
+      gain.gain.setValueAtTime(0, batDau);
+      gain.gain.linearRampToValueAtTime(bienDo, batDau + 0.005);
+      gain.gain.setValueAtTime(bienDo, batDau + thoiLuong - 0.02);
+      gain.gain.linearRampToValueAtTime(0, batDau + thoiLuong);
+
+      osc.connect(gain);
+      gain.connect(compressor);
+
+      osc.start(batDau);
+      osc.stop(batDau + thoiLuong);
+    };
+
+    taoBeep(1800, now, 0.07, 0.5);
+    taoBeep(2600, now + 0.08, 0.09, 0.5);
   } catch (e) {
     console.error("Lỗi tạo âm thanh súng:", e);
   }
