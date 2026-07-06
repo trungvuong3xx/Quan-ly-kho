@@ -125,7 +125,17 @@ function khiQuetDuocMa(result) {
 function luuPhienDoDangCX1() {
   try {
     localStorage.setItem("cx1_phien_dodang", JSON.stringify({
-      phienCX1, demSoDot, ngayCX1, capNhat: new Date().toISOString()
+      phienCX1, demSoDot, ngayCX1, trangThai: "quet", capNhat: new Date().toISOString()
+    }));
+  } catch (e) {}
+}
+
+// Lưu lại dạng "đã kết thúc, chờ xử lý" — giữ nguyên dữ liệu để xem lại kết quả
+// sau khi thoát ra Trang chủ hoặc tắt hẳn app rồi mở lại
+function luuKetQuaCX1() {
+  try {
+    localStorage.setItem("cx1_phien_dodang", JSON.stringify({
+      phienCX1, demSoDot, ngayCX1, trangThai: "ketqua", capNhat: new Date().toISOString()
     }));
   } catch (e) {}
 }
@@ -249,7 +259,7 @@ async function guiLenSheetCX1(rows) {
 
 async function ketThucCX1() {
   dungCX1();
-  xoaPhienDoDangCX1();
+  luuKetQuaCX1();
 
   // Hiện kết quả NGAY, lưu sheet chạy ngầm
   hienKetQuaCX1();
@@ -435,7 +445,24 @@ function tiepTucPhienChiFor() {
   try { state = JSON.parse(localStorage.getItem("cx1_phien_dodang")); } catch (e) {}
   if (!state) return;
   if (typeof diToiTab === "function") diToiTab("chiFor");
-  khoiPhucCX1(state);
+  if (state.trangThai === "ketqua") {
+    khoiPhucKetQuaCX1(state);
+  } else {
+    khoiPhucCX1(state);
+  }
+}
+
+// Khôi phục lại màn hình KẾT QUẢ (không mở camera) — dùng khi phiên đã
+// bấm "Kết Thúc" rồi mới thoát ra Trang chủ, hoặc tắt hẳn app rồi mở lại
+function khoiPhucKetQuaCX1(state) {
+  phienCX1 = state.phienCX1.map(r => ({ ...r, thoiGian: new Date(r.thoiGian) }));
+  demSoDot = state.demSoDot || 1;
+  ngayCX1 = state.ngayCX1;
+  dangQuetCX1 = false;
+
+  document.getElementById("cx1-form").style.display = "none";
+  document.getElementById("cx1-cam").style.display = "none";
+  hienKetQuaCX1();
 }
 
 function huyPhienChiFor() {

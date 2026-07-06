@@ -343,12 +343,16 @@ function capNhatTrangChu() {
     const gioCapNhat = state.capNhat
       ? new Date(state.capNhat).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" })
       : "—";
+    const laKetQua = state.trangThai === "ketqua";
     noidung.innerHTML = `
       <div class="irow"><span class="ilabel">Loại</span><span class="ivalue">Chỉ For</span></div>
+      <div class="irow"><span class="ilabel">Trạng thái</span><span class="ivalue">${laKetQua ? "Đã hoàn tất — chờ xử lý" : "Đang quét dở dang"}</span></div>
       <div class="irow"><span class="ilabel">Ngày</span><span class="ivalue">${state.ngayCX1 || "—"}</span></div>
       <div class="irow"><span class="ilabel">Đã quét</span><span class="ivalue">${state.phienCX1.length} mã</span></div>
       <div class="irow"><span class="ilabel">Cập nhật lúc</span><span class="ivalue">${gioCapNhat}</span></div>
     `;
+    const btnTiepTuc = card.querySelector(".btn-green");
+    if (btnTiepTuc) btnTiepTuc.textContent = laKetQua ? "Xem kết quả" : "Tiếp tục";
     card.style.display = "block";
   } else {
     card.style.display = "none";
