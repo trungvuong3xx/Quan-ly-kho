@@ -14,9 +14,21 @@ function phatTiengBip() {
     if (!sharedAudioCtx) {
       sharedAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
     }
-    if (sharedAudioCtx.state === "suspended") sharedAudioCtx.resume();
-
     const ctx = sharedAudioCtx;
+    if (ctx.state === "suspended") {
+      // Nhiều trình duyệt (đặc biệt Safari/iOS) tạm khoá AudioContext cho tới khi
+      // được "mở khoá" — phải resume() xong rồi mới phát, nếu không sẽ im lặng
+      ctx.resume().then(() => phatAmThanhSung(ctx)).catch(err => console.error("Không resume được AudioContext:", err));
+    } else {
+      phatAmThanhSung(ctx);
+    }
+  } catch (e) {
+    console.error("Lỗi khởi tạo âm thanh:", e);
+  }
+}
+
+function phatAmThanhSung(ctx) {
+  try {
     const now = ctx.currentTime;
     const thoiLuong = 0.35;
 
@@ -63,7 +75,9 @@ function phatTiengBip() {
     noise.stop(now + thoiLuong);
     thump.start(now);
     thump.stop(now + 0.2);
-  } catch (e) {}
+  } catch (e) {
+    console.error("Lỗi tạo âm thanh súng:", e);
+  }
 }
 
 async function toggleFlashCX1() {
