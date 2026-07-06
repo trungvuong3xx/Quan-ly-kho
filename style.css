@@ -1,49 +1,56 @@
-@import url('https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap');
 
 /* ============================================================
-   THEME: "Manifest" — kraft-tag / packing-slip industrial look
-   Signature: cards read as shipping tags — a punched hole at the
-   top-left corner and a torn/perforated rule under the header,
-   like a label pulled off a crate.
+   THEME: "Freight Ledger" — deep forest-green ledger book,
+   brass-ink numerals, manifest / bill-of-lading authority.
+   Signature: a brass hairline + small waxed corner tick on
+   every card, like a stamped page in a shipping ledger; totals
+   get a double brass rule underneath, as in an old account book.
    ============================================================ */
 
 :root {
-  --paper: #efe7d6;       /* kraft background */
-  --paper-deep: #e3d7bb;  /* background depth / vignette */
-  --card: #fbf8f0;        /* tag / card surface */
-  --ink: #241f18;         /* primary text, stamped-ink black */
-  --ink-soft: #6e6354;    /* secondary text */
-  --ink-faint: #9a8f7c;   /* placeholders, disabled */
-  --line: rgba(36, 31, 24, .18);
-  --line-soft: rgba(36, 31, 24, .1);
-  --accent: #c15a20;      /* safety-orange stamp ink — primary actions */
-  --accent-deep: #9c4517;
-  --success: #3f6b45;     /* rubber-stamp green */
-  --success-bg: rgba(63, 107, 69, .12);
-  --danger: #a33528;      /* rubber-stamp red */
-  --danger-bg: rgba(163, 53, 40, .12);
-  --cargo: #35566f;       /* denim-blue, informational */
-  --cargo-bg: rgba(53, 86, 111, .1);
-  --chip: rgba(36, 31, 24, .06);
+  --bg: #0f1c17;          /* deep forest-green, ledger cover */
+  --bg-deep: #0a1410;     /* vignette depth */
+  --card: #16241e;        /* ledger page surface */
+  --card-raised: #1b2b23; /* slightly lighter panel (inputs) */
+  --cream: #ede6d6;       /* primary ink on the page */
+  --cream-soft: #a8a190;  /* secondary / muted ink */
+  --cream-faint: #6f6a5c; /* placeholders, disabled */
+  --line: rgba(237, 230, 214, .16);
+  --line-soft: rgba(237, 230, 214, .09);
+  --brass: #c9a227;       /* primary accent — brass ink */
+  --brass-deep: #a8850f;
+  --brass-bg: rgba(201, 162, 39, .12);
+  --success: #4f9a63;     /* ledger green, credit ink */
+  --success-bg: rgba(79, 154, 99, .14);
+  --danger: #c1604a;      /* ledger red, debit ink */
+  --danger-bg: rgba(193, 96, 74, .14);
+  --steel: #6f97a8;       /* informational, steel-blue ink */
+  --steel-bg: rgba(111, 151, 168, .12);
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
 body {
   font-family: 'IBM Plex Sans', Inter, Segoe UI, Arial, sans-serif;
-  background: var(--paper);
-  color: var(--ink);
+  background: var(--bg);
+  color: var(--cream);
   min-height: 100vh;
   position: relative;
 }
 
-/* Subtle kraft-paper grain instead of a blueprint grid */
+/* Faint ruled-ledger-paper lines instead of a blueprint grid */
 body::before {
   content: '';
   position: fixed;
   inset: 0;
-  background-image:
-    repeating-linear-gradient(115deg, rgba(36,31,24,.025) 0px, rgba(36,31,24,.025) 1px, transparent 1px, transparent 3px);
+  background-image: repeating-linear-gradient(
+    to bottom,
+    rgba(237, 230, 214, .035) 0px,
+    rgba(237, 230, 214, .035) 1px,
+    transparent 1px,
+    transparent 34px
+  );
   z-index: 0;
   pointer-events: none;
 }
@@ -52,7 +59,7 @@ body::after {
   content: '';
   position: fixed;
   inset: 0;
-  background: radial-gradient(circle at 50% -10%, rgba(193, 90, 32, .10) 0%, rgba(239, 231, 214, 0) 45%), var(--paper);
+  background: radial-gradient(circle at 50% -10%, rgba(201, 162, 39, .09) 0%, rgba(15, 28, 23, 0) 45%), var(--bg);
   z-index: 0;
   pointer-events: none;
 }
@@ -68,49 +75,49 @@ body::after {
 
 .page.active { display: block; }
 
-/* Card = shipping tag: punched hole + torn perforation under the title */
+/* Card = ledger page: brass top rule + a small waxed corner tick */
 .card {
   position: relative;
   background: var(--card);
-  border-radius: 6px;
-  padding: 28px 24px 24px;
+  border-radius: 4px;
+  padding: 26px 22px 22px;
   margin-bottom: 20px;
-  margin-top: 6px;
+  margin-top: 4px;
   border: 1px solid var(--line-soft);
-  box-shadow: 0 1px 0 rgba(255,255,255,.6) inset, 0 8px 20px rgba(36,31,24,.08);
+  border-top: 2px solid var(--brass);
+  box-shadow: 0 10px 26px rgba(0, 0, 0, .35);
 }
 
-.card::before {
+.card::after {
   content: '';
   position: absolute;
-  top: -6px; left: 22px;
-  width: 12px; height: 12px;
-  background: var(--paper);
-  border: 1px solid var(--line);
-  border-radius: 50%;
-  box-shadow: 0 1px 2px rgba(36,31,24,.15);
+  top: 0; right: 18px;
+  width: 8px; height: 14px;
+  background: var(--brass);
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 78%, 0 100%);
+  opacity: .85;
 }
 
 h3 {
-  margin-bottom: 16px;
-  padding-bottom: 14px;
-  color: var(--ink);
-  font-family: 'Oswald', sans-serif;
-  font-size: 19px;
+  margin-bottom: 18px;
+  padding-bottom: 12px;
+  color: var(--cream);
+  font-family: 'Fraunces', Georgia, serif;
+  font-size: 21px;
   font-weight: 600;
-  letter-spacing: .3px;
-  text-transform: uppercase;
-  border-bottom: 1.5px dashed var(--line);
+  letter-spacing: .2px;
+  border-bottom: 1px solid var(--brass);
+  box-shadow: 0 3px 0 -2px var(--line);
 }
 
 label {
   display: block;
   margin-top: 14px;
   margin-bottom: 6px;
-  color: var(--ink-soft);
+  color: var(--cream-soft);
   font-size: 11px;
   font-weight: 600;
-  letter-spacing: .8px;
+  letter-spacing: .9px;
   text-transform: uppercase;
   font-family: 'IBM Plex Mono', monospace;
 }
@@ -123,21 +130,21 @@ input[type=text], input[type=number] {
   width: 100%;
   height: 52px;
   padding: 0 16px;
-  border-radius: 6px;
-  border: 1.5px solid var(--line);
-  background: #fff;
-  color: var(--ink);
+  border-radius: 4px;
+  border: 1px solid var(--line);
+  background: var(--card-raised);
+  color: var(--cream);
   font-size: 15px;
   font-family: 'IBM Plex Mono', monospace;
   transition: all 0.15s ease;
 }
 
-input::placeholder { color: var(--ink-faint); font-family: 'IBM Plex Sans', sans-serif; }
+input::placeholder { color: var(--cream-faint); font-family: 'IBM Plex Sans', sans-serif; }
 
 input:focus {
   outline: none;
-  border-color: var(--accent);
-  box-shadow: 0 0 0 3px rgba(193, 90, 32, 0.15);
+  border-color: var(--brass);
+  box-shadow: 0 0 0 3px rgba(201, 162, 39, 0.18);
 }
 
 /* Ngày (date input) */
@@ -145,10 +152,10 @@ input[type=date] {
   width: 100%;
   height: 52px;
   padding: 0 44px 0 16px;
-  border-radius: 6px;
-  border: 1.5px solid var(--line);
-  background-color: #fff;
-  color: var(--ink);
+  border-radius: 4px;
+  border: 1px solid var(--line);
+  background-color: var(--card-raised);
+  color: var(--cream);
   font-size: 15px;
   font-family: 'IBM Plex Mono', monospace;
   transition: all 0.15s ease;
@@ -157,7 +164,7 @@ input[type=date] {
   -webkit-appearance: none;
   -moz-appearance: none;
 
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='rgba(36,31,24,0.55)' stroke-width='2'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M6 5V3m12 2V3M4 11h16M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z' /%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='rgba(237,230,214,0.55)' stroke-width='2'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M6 5V3m12 2V3M4 11h16M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z' /%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: right 16px center;
   background-size: 20px 20px;
@@ -175,10 +182,10 @@ select {
   width: 100%;
   height: 52px;
   padding: 0 40px 0 16px;
-  border-radius: 6px;
-  border: 1.5px solid var(--line);
-  background: #fff;
-  color: var(--ink);
+  border-radius: 4px;
+  border: 1px solid var(--line);
+  background: var(--card-raised);
+  color: var(--cream);
   font-size: 15px;
   margin-top: 4px;
   outline: none;
@@ -186,18 +193,17 @@ select {
 }
 
 select:focus {
-  border-color: var(--accent);
-  box-shadow: 0 0 0 3px rgba(193, 90, 32, 0.15);
+  border-color: var(--brass);
+  box-shadow: 0 0 0 3px rgba(201, 162, 39, 0.18);
 }
 
 .btn {
   border: none;
-  border-radius: 6px;
-  color: #fff;
+  border-radius: 4px;
+  color: var(--bg);
   font-weight: 700;
   font-size: 14px;
   letter-spacing: .4px;
-  text-transform: uppercase;
   cursor: pointer;
   transition: all 0.15s ease;
   display: inline-flex;
@@ -206,27 +212,29 @@ select:focus {
   height: 52px;
 }
 
-/* Buttons read like stamped tickets: flat ink color + pressed feedback */
+/* Primary ledger action = brass ink stamp */
 .btn-blue {
-  background: var(--accent);
-  box-shadow: 0 2px 0 var(--accent-deep);
+  background: var(--brass);
+  box-shadow: 0 2px 0 var(--brass-deep);
 }
-.btn-blue:hover { background: #ab5019; }
-.btn-blue:active { transform: translateY(2px); box-shadow: 0 0 0 var(--accent-deep); }
+.btn-blue:hover { background: #d9b13a; }
+.btn-blue:active { transform: translateY(2px); box-shadow: 0 0 0 var(--brass-deep); }
 
 .btn-green {
   background: var(--success);
-  box-shadow: 0 2px 0 #2c4d31;
+  color: #0c1a10;
+  box-shadow: 0 2px 0 #356b42;
 }
-.btn-green:hover { background: #365c3b; }
-.btn-green:active { transform: translateY(2px); box-shadow: 0 0 0 #2c4d31; }
+.btn-green:hover { background: #5aab6e; }
+.btn-green:active { transform: translateY(2px); box-shadow: 0 0 0 #356b42; }
 
 .btn-red {
   background: var(--danger);
-  box-shadow: 0 2px 0 #832a20;
+  color: #1a0d09;
+  box-shadow: 0 2px 0 #8f4232;
 }
-.btn-red:hover { background: #8f2e22; }
-.btn-red:active { transform: translateY(2px); box-shadow: 0 0 0 #832a20; }
+.btn-red:hover { background: #cd6f5a; }
+.btn-red:active { transform: translateY(2px); box-shadow: 0 0 0 #8f4232; }
 
 .btn-full {
   display: flex !important;
@@ -234,7 +242,7 @@ select:focus {
   padding: 15px !important;
   margin-top: 12px !important;
   font-size: 15px !important;
-  border-radius: 6px !important;
+  border-radius: 4px !important;
 }
 
 .btn:disabled { opacity: .5; cursor: not-allowed; }
@@ -242,10 +250,11 @@ select:focus {
 .info-box {
   display: none;
   margin-top: 14px;
-  background: var(--chip);
-  border-radius: 6px;
+  background: rgba(237, 230, 214, .03);
+  border-radius: 4px;
   padding: 14px;
-  border: 1px dashed var(--line);
+  border: 1px solid var(--line-soft);
+  border-left: 2px solid var(--brass);
 }
 .info-box.show { display: block; }
 
@@ -256,12 +265,12 @@ select:focus {
   border-bottom: 1px dotted var(--line);
 }
 .irow:last-child { border-bottom: none; }
-.ilabel { color: var(--ink-soft); font-family: 'IBM Plex Mono', monospace; font-size: 13px; }
-.ivalue { color: var(--ink); font-weight: 700; }
-.stock-row .ivalue { color: var(--cargo); }
+.ilabel { color: var(--cream-soft); font-family: 'IBM Plex Mono', monospace; font-size: 13px; }
+.ivalue { color: var(--cream); font-weight: 700; font-family: 'IBM Plex Mono', monospace; }
+.stock-row .ivalue { color: var(--steel); }
 .stock-ton .ivalue { color: var(--success); }
 
-/* QR Form */
+/* QR Form — kept white on print stock, unaffected by ledger theme */
 .qr-grid { display: grid; grid-template-columns: 1fr; gap: 6px; }
 
 .qr-item {
@@ -304,28 +313,28 @@ select:focus {
 
 .btn-print {
   width: 100%; padding: 14px; margin-top: 18px;
-  border: 1.5px dashed var(--line);
-  border-radius: 6px;
+  border: 1px solid var(--brass);
+  border-radius: 4px;
   background: transparent;
-  color: var(--ink); font-weight: 700; font-family: 'Oswald', sans-serif;
-  letter-spacing: .5px; text-transform: uppercase;
+  color: var(--brass); font-weight: 700; font-family: 'Fraunces', serif;
+  letter-spacing: .3px;
   cursor: pointer;
   transition: background 0.15s;
 }
-.btn-print:hover { background: var(--chip); }
+.btn-print:hover { background: var(--brass-bg); }
 
 #reader {
   width: 100%; min-height: 320px;
-  border-radius: 8px; overflow: hidden;
+  border-radius: 6px; overflow: hidden;
   background: black;
-  border: 1.5px solid var(--accent);
+  border: 1.5px solid var(--brass);
 }
 
-.scanner-status { text-align: center; margin-top: 12px; color: var(--ink-soft); font-family: 'IBM Plex Mono', monospace; font-size: 13px; }
+.scanner-status { text-align: center; margin-top: 12px; color: var(--cream-soft); font-family: 'IBM Plex Mono', monospace; font-size: 13px; }
 
 .overlay {
   display: none; position: fixed; inset: 0;
-  background: rgba(36, 31, 24, .55);
+  background: rgba(10, 20, 16, .65);
   z-index: 9999;
   justify-content: center; align-items: flex-end;
 }
@@ -334,20 +343,20 @@ select:focus {
 .overlay-card {
   width: 100%; max-width: 600px;
   background: var(--card);
-  border-radius: 14px 14px 0 0;
+  border-radius: 10px 10px 0 0;
   padding: 24px;
-  border-top: 3px solid var(--accent);
+  border-top: 2px solid var(--brass);
   animation: slideUp .2s ease;
 }
 
 .overlay-title {
-  font-size: 16px; font-weight: 600; margin-bottom: 18px;
-  font-family: 'Oswald', sans-serif; text-transform: uppercase; letter-spacing: .4px;
+  font-size: 18px; font-weight: 600; margin-bottom: 18px;
+  font-family: 'Fraunces', serif;
 }
 
 @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
 
-.msg { display: none; margin-top: 12px; padding: 12px; border-radius: 6px; text-align: center; font-weight: 600; }
+.msg { display: none; margin-top: 12px; padding: 12px; border-radius: 4px; text-align: center; font-weight: 600; }
 .msg.show { display: block; }
 .msg.ok { background: var(--success-bg); color: var(--success); }
 .msg.err { background: var(--danger-bg); color: var(--danger); }
@@ -356,10 +365,10 @@ select:focus {
   display: none; position: fixed; top: 80px;
   left: 50%; transform: translateX(-50%);
   background: var(--danger);
-  color: #fff; padding: 12px 24px;
-  border-radius: 6px; font-size: 14px; font-weight: 700;
+  color: #1a0d09; padding: 12px 24px;
+  border-radius: 4px; font-size: 14px; font-weight: 700;
   z-index: 99999;
-  box-shadow: 0 4px 14px rgba(163,53,40,.35);
+  box-shadow: 0 4px 14px rgba(0,0,0,.4);
   white-space: nowrap;
 }
 
@@ -379,21 +388,21 @@ select:focus {
 
 .fake-select {
   height: 52px; display: flex; align-items: center;
-  padding: 0 16px; border-radius: 6px;
-  border: 1.5px solid var(--line);
-  background: #fff;
-  cursor: pointer; color: var(--ink); font-size: 15px;
+  padding: 0 16px; border-radius: 4px;
+  border: 1px solid var(--line);
+  background: var(--card-raised);
+  cursor: pointer; color: var(--cream); font-size: 15px;
 }
 
-.loai-group { margin-top: 18px; margin-bottom: 8px; color: var(--ink-soft); font-size: 12px; font-weight: 700; font-family: 'IBM Plex Mono', monospace; text-transform: uppercase; }
+.loai-group { margin-top: 18px; margin-bottom: 8px; color: var(--cream-soft); font-size: 12px; font-weight: 700; font-family: 'IBM Plex Mono', monospace; text-transform: uppercase; }
 
 .loai-item {
   padding: 14px; margin-bottom: 8px;
-  border-radius: 6px;
-  background: var(--chip);
-  color: var(--ink); font-weight: 600; cursor: pointer; transition: .15s;
+  border-radius: 4px;
+  background: rgba(237, 230, 214, .04);
+  color: var(--cream); font-weight: 600; cursor: pointer; transition: .15s;
 }
-.loai-item:hover { background: var(--line-soft); }
+.loai-item:hover { background: rgba(237, 230, 214, .08); }
 
 #overlay-loai .overlay-card { max-height: 80vh; overflow-y: auto; }
 
@@ -402,10 +411,10 @@ select:focus {
 
 .custom-select-btn {
   width: 100%; height: 52px; padding: 0 16px;
-  border-radius: 6px;
-  border: 1.5px solid var(--line);
-  background: #fff;
-  color: var(--ink); font-size: 15px;
+  border-radius: 4px;
+  border: 1px solid var(--line);
+  background: var(--card-raised);
+  color: var(--cream); font-size: 15px;
   text-align: left; cursor: pointer;
   display: flex; align-items: center; justify-content: space-between;
 }
@@ -414,38 +423,39 @@ select:focus {
   display: none; position: absolute; top: 100%;
   left: 0; right: 0; margin-top: 6px;
   background: var(--card) !important;
-  border: 1.5px solid var(--line) !important;
-  border-radius: 8px !important;
+  border: 1px solid var(--line) !important;
+  border-top: 2px solid var(--brass) !important;
+  border-radius: 6px !important;
   overflow: hidden; max-height: 280px; overflow-y: auto;
   z-index: 99999 !important;
-  box-shadow: 0 10px 26px rgba(36,31,24,.18);
+  box-shadow: 0 10px 30px rgba(0,0,0,.5);
   padding: 5px 0;
 }
 .custom-select-list.show { display: block !important; }
 
 .group-title {
   padding: 10px 14px; font-size: 11px; font-weight: 700;
-  color: var(--accent);
-  background: var(--chip);
+  color: var(--brass);
+  background: rgba(237, 230, 214, .03);
   border-bottom: 1px solid var(--line-soft);
   font-family: 'IBM Plex Mono', monospace;
   letter-spacing: .6px; text-transform: uppercase;
 }
 
 .custom-option {
-  padding: 14px; color: var(--ink); cursor: pointer; transition: .15s;
+  padding: 14px; color: var(--cream); cursor: pointer; transition: .15s;
   border-bottom: 1px dotted var(--line-soft);
   background: transparent;
 }
 .custom-option:last-child { border-bottom: none; }
-.custom-option:hover, .custom-option.active { background: var(--accent) !important; color: #fff !important; }
+.custom-option:hover, .custom-option.active { background: var(--brass) !important; color: var(--bg) !important; }
 
-/* Bottom Nav — a strip of stamped tabs */
+/* Bottom Nav — ledger spine with brass tab indicator */
 .bottom-nav {
   position: fixed; bottom: 0; left: 0; right: 0;
   z-index: 999; display: flex;
   background: var(--card);
-  border-top: 1.5px dashed var(--line);
+  border-top: 1px solid var(--line);
   padding: 8px 0 20px;
 }
 
@@ -453,20 +463,20 @@ select:focus {
   flex: 1; background: none; border: none; cursor: pointer;
   position: relative;
   display: flex; flex-direction: column; align-items: center;
-  gap: 4px; padding: 6px 4px 10px; color: var(--ink-faint);
+  gap: 4px; padding: 6px 4px 10px; color: var(--cream-faint);
   font-family: 'IBM Plex Sans', sans-serif; transition: color .15s;
 }
 .bnav-btn i { font-size: 21px; }
 .bnav-btn span { font-size: 10px; font-weight: 600; letter-spacing: .2px; text-transform: uppercase; }
-.bnav-btn.active { color: var(--accent); }
+.bnav-btn.active { color: var(--brass); }
 .bnav-btn.active::after {
   content: '';
   position: absolute;
   bottom: 0; left: 50%;
   transform: translateX(-50%);
-  width: 22px; height: 3px;
-  background: var(--accent);
-  border-radius: 2px;
+  width: 24px; height: 2px;
+  background: var(--brass);
+  box-shadow: 0 3px 0 -1.4px var(--brass);
 }
 
 .page { padding-bottom: 88px; }
