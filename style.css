@@ -27,6 +27,7 @@
   --danger-bg: rgba(193, 96, 74, .14);
   --steel: #6f97a8;       /* informational, steel-blue ink */
   --steel-bg: rgba(111, 151, 168, .12);
+  --neutral: #3a4a3f;     /* off/inactive toggle state */
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }

@@ -1,8 +1,12 @@
 const API = "https://script.google.com/macros/s/AKfycbzXjzccld3X04iJgIpEvKm01in0QT0i7tkjar_oJ6K5-sBGdm9xibe7Mu4UB3mWtha5-w/exec";
 
 async function callAPI(body) {
-  const res = await fetch(API, { method: "POST", body: JSON.stringify(body), redirect: "follow" });
-  return res.json();
+  try {
+    const res = await fetch(API, { method: "POST", body: JSON.stringify(body), redirect: "follow" });
+    return await res.json();
+  } catch (err) {
+    return { error: "Mất kết nối mạng, vui lòng thử lại." };
+  }
 }
 
 let infoMSP = null;
@@ -35,16 +39,22 @@ function showLoading(show) {
   document.getElementById("overlay-loading").style.display = show ? "flex" : "none";
 }
 
-function toggleQuetNhanh() {
-  quetNhanh = !quetNhanh;
+function capNhatNutQuetNhanh() {
   const btn = document.getElementById("toggle-quet-nhanh");
   if (quetNhanh) {
-    btn.style.background = "linear-gradient(135deg,#16a34a,#22c55e)";
-    btn.textContent = "Nhập KG: BẬT";
+    btn.style.background = "var(--success)";
+    btn.style.color = "var(--bg)";
+    btn.textContent = "Quét nhanh: BẬT";
   } else {
-    btn.style.background = "#334155";
-    btn.textContent = "Nhập KG: TẮT";
+    btn.style.background = "var(--neutral)";
+    btn.style.color = "var(--cream)";
+    btn.textContent = "Quét nhanh: TẮT";
   }
+}
+
+function toggleQuetNhanh() {
+  quetNhanh = !quetNhanh;
+  capNhatNutQuetNhanh();
 }
 
 async function timMSP() {
@@ -72,7 +82,7 @@ async function taoQR() {
   showLoading(true);
   const ids = await callAPI({ action: "taoNhieuID", soLuong: sl });
   showLoading(false);
-  if (ids.error) { alert("❌ " + ids.error); return; }
+  if (ids.error) { alert(ids.error); return; }
   const grid = document.getElementById("qr-grid");
   grid.innerHTML = "";
   ids.forEach(id => {
@@ -100,24 +110,17 @@ async function taoQR() {
 function batDauQuet() {
   ngayChon = document.getElementById("chon-ngay").value;
   loaiChon = document.getElementById("chon-loai").value;
-  if (!ngayChon) { alert("Chọn ngày giùm cái"); return; }
-  if (!loaiChon) { alert("Chưa chọn loại kìa"); return; }
+  if (!ngayChon) { alert("⚠️ Vui lòng chọn ngày!"); return; }
+  if (!loaiChon) { alert("⚠️ Vui lòng chọn loại!"); return; }
 
   // Mặc định quét nhanh nếu là Xuất
   quetNhanh = !isNhap(loaiChon);
-  const btn = document.getElementById("toggle-quet-nhanh");
-  if (quetNhanh) {
-    btn.style.background = "linear-gradient(135deg,#16a34a,#22c55e)";
-    btn.textContent = "Nhập KG: BẬT";
-  } else {
-    btn.style.background = "#334155";
-    btn.textContent = "Nhập KG: TẮT";
-  }
+  capNhatNutQuetNhanh();
 
   document.getElementById("form-chon").style.display = "none";
   document.getElementById("cam-box").style.display = "block";
   document.getElementById("btn-stop").style.display = "block";
-  document.getElementById("scanner-status").textContent = "🟢 " + loaiChon + " | " + ngayChon;
+  document.getElementById("scanner-status").textContent = "" + loaiChon + " | " + ngayChon;
   dangXuLy = false;
 
   try {
@@ -158,7 +161,7 @@ async function luuNhanh(data) {
   const info = await callAPI({ action: "kiemTraQR", id: data.id, msp: data.msp, loai: loaiChon });
 
   if (info.error) {
-    showCanhBao("❌ " + info.error);
+    showCanhBao(info.error);
     setTimeout(() => { dangXuLy = false; }, 1800);
     return;
   }
@@ -172,9 +175,9 @@ async function luuNhanh(data) {
   });
 
   if (r.error) {
-    showCanhBao("❌ " + r.error);
+    showCanhBao(r.error);
   } else {
-    showCanhBao("✅ Đã lưu " + data.id);
+    showCanhBao("Đã lưu " + data.id);
   }
   setTimeout(() => { dangXuLy = false; }, 1000);
 }
@@ -248,7 +251,7 @@ function showCanhBao(text) {
 async function luuGiaoDich() {
   if (!qrDangQuet) return;
   const kg = document.getElementById("q-kg").value;
-  if (!kg || parseFloat(kg) <= 0) { showMsg("⚠️ Nhập số kg hợp lệ!", false); return; }
+  if (!kg || parseFloat(kg) <= 0) { showMsg("Nhập số kg hợp lệ", false); return; }
 
   const btn = document.getElementById("btn-luu");
   btn.disabled = true;
@@ -263,8 +266,8 @@ async function luuGiaoDich() {
   btn.disabled = false;
   btn.textContent = "Lưu & quét tiếp";
 
-  if (r.error) { showMsg("❌ " + r.error, false); return; }
-  showMsg("✅ Đã lưu " + formatKg(r.kgGoc) + " kg!", true);
+  if (r.error) { showMsg(r.error, false); return; }
+  showMsg("Đã lưu " + formatKg(r.kgGoc) + " kg", true);
   setTimeout(() => dongOverlay(), 800);
 }
 
@@ -277,7 +280,7 @@ document.addEventListener("click", e => {
   if (e.target.classList.contains("custom-option")) {
     loaiDaChon = e.target.dataset.value;
     document.getElementById("chon-loai").value = loaiDaChon;
-    btn.innerHTML = loaiDaChon + '<span style="font-size:12px;color:#94a3b8;margin-left:auto">▼</span>';
+    btn.innerHTML = loaiDaChon + '<span style="font-size:12px;color:var(--cream-soft);margin-left:auto">▼</span>';
     document.querySelectorAll(".custom-option").forEach(opt => opt.classList.remove("active"));
     e.target.classList.add("active");
     list.classList.remove("show");

@@ -16,7 +16,7 @@ function batDauKiemKe() {
   document.getElementById("kk-form").style.display = "none";
   document.getElementById("kk-cam").style.display = "block";
   document.getElementById("kk-dem").textContent = "Đã quét: 0 mã";
-  document.getElementById("kk-status").textContent = "🟢 Đang quét...";
+  document.getElementById("kk-status").textContent = "Đang quét...";
 
   try {
     zxingReaderKK = new ZXing.BrowserMultiFormatReader();
@@ -30,7 +30,7 @@ function batDauKiemKe() {
 
       // Kiểm tra trùng
       if (dsQuetKiemKe.includes(id)) {
-        showCanhBaoKK("⚠️ Mã " + id + " đã quét rồi!");
+        showCanhBaoKK("Mã " + id + " đã quét rồi");
         return;
       }
 
@@ -64,11 +64,11 @@ async function dungKiemKe() {
 
   // Ghi nốt batch còn lại
   if (batch.length > 0) {
-    document.getElementById("kk-status").textContent = "⏳ Đang lưu...";
+    document.getElementById("kk-status").textContent = "Đang lưu...";
     await ghiBatch();
   }
 
-  document.getElementById("kk-status").textContent = "✅ Hoàn tất — " + dsQuetKiemKe.length + " mã";
+  document.getElementById("kk-status").textContent = "Hoàn tất — " + dsQuetKiemKe.length + " mã";
   document.getElementById("kk-form").style.display = "block";
   document.getElementById("kk-cam").style.display = "none";
 }

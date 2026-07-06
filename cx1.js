@@ -6,23 +6,28 @@ let demSoDot = 0;
 let denPinBat = false;
 let ngayCX1 = null;
 
+let sharedAudioCtx = null;
+
 function phatTiengBip() {
   if (navigator.vibrate) navigator.vibrate(50);
   try {
-    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    const oscillator = audioCtx.createOscillator();
-    const gainNode = audioCtx.createGain();
-    const compressor = audioCtx.createDynamicsCompressor();
+    if (!sharedAudioCtx) {
+      sharedAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    if (sharedAudioCtx.state === "suspended") sharedAudioCtx.resume();
+    const oscillator = sharedAudioCtx.createOscillator();
+    const gainNode = sharedAudioCtx.createGain();
+    const compressor = sharedAudioCtx.createDynamicsCompressor();
     oscillator.connect(gainNode);
     gainNode.connect(compressor);
-    compressor.connect(audioCtx.destination);
+    compressor.connect(sharedAudioCtx.destination);
     oscillator.type = "square";
-    oscillator.frequency.setValueAtTime(1800, audioCtx.currentTime);
-    oscillator.frequency.exponentialRampToValueAtTime(900, audioCtx.currentTime + 0.08);
-    gainNode.gain.setValueAtTime(1.5, audioCtx.currentTime);
-    gainNode.gain.exponentialRampToValueAtTime(0.00001, audioCtx.currentTime + 0.18);
-    oscillator.start(audioCtx.currentTime);
-    oscillator.stop(audioCtx.currentTime + 0.18);
+    oscillator.frequency.setValueAtTime(1800, sharedAudioCtx.currentTime);
+    oscillator.frequency.exponentialRampToValueAtTime(900, sharedAudioCtx.currentTime + 0.08);
+    gainNode.gain.setValueAtTime(1.5, sharedAudioCtx.currentTime);
+    gainNode.gain.exponentialRampToValueAtTime(0.00001, sharedAudioCtx.currentTime + 0.18);
+    oscillator.start(sharedAudioCtx.currentTime);
+    oscillator.stop(sharedAudioCtx.currentTime + 0.18);
   } catch (e) {}
 }
 
@@ -37,8 +42,9 @@ async function toggleFlashCX1() {
     denPinBat = !denPinBat;
     await track.applyConstraints({ advanced: [{ torch: denPinBat }] });
     const btnFlash = document.getElementById("btn-flash-cx1");
-    btnFlash.style.background = denPinBat ? "#eab308" : "#6b7280";
-    btnFlash.textContent = denPinBat ? "🔦 Tắt" : "🔦 Bật";
+    btnFlash.style.background = denPinBat ? "var(--brass)" : "var(--neutral)";
+    btnFlash.style.color = denPinBat ? "var(--bg)" : "var(--cream)";
+    btnFlash.textContent = denPinBat ? "Tắt đèn" : "Bật đèn";
   } catch (err) {}
 }
 
@@ -58,13 +64,19 @@ function xuLyDuLieuQR(text) {
   return { id, msp, qc, kg };
 }
 
+let lanCanhBaoCuoi = 0;
+
 function khiQuetDuocMa(result) {
   if (!result || !dangQuetCX1) return;
   const data = xuLyDuLieuQR(result.getText());
   if (!data) return;
   const trung = phienCX1.find(r => r.id === data.id && r.kg === data.kg);
   if (trung) {
-    showCanhBaoCX1("⚠️ Mã " + data.id + " + KG " + data.kg + " đã quét rồi!");
+    const now = Date.now();
+    if (now - lanCanhBaoCuoi > 1500) {
+      showCanhBaoCX1("Mã " + data.id + " + KG " + data.kg + " đã quét rồi");
+      lanCanhBaoCuoi = now;
+    }
     return;
   }
   phatTiengBip();
@@ -88,9 +100,10 @@ function batDauCX1() {
   document.getElementById("cx1-cam").style.display = "block";
   document.getElementById("cx1-ketqua").style.display = "none";
   document.getElementById("cx1-dem").textContent = "Đã quét: 0 mã";
-  document.getElementById("cx1-status").textContent = "🟢 Đang quét Đợt 1...";
-  document.getElementById("btn-flash-cx1").style.background = "#6b7280";
-  document.getElementById("btn-flash-cx1").textContent = "🔦 Bật Đèn Pin";
+  document.getElementById("cx1-status").textContent = "Đang quét Đợt 1...";
+  document.getElementById("btn-flash-cx1").style.background = "var(--neutral)";
+  document.getElementById("btn-flash-cx1").style.color = "var(--cream)";
+  document.getElementById("btn-flash-cx1").textContent = "Bật đèn pin";
 
   const btnToggle = document.getElementById("btn-dung-tieptuc-cx1");
   btnToggle.textContent = "Dừng quét";
@@ -122,9 +135,10 @@ function tiepTucCX1() {
   demSoDot += 1; 
   dangQuetCX1 = true;
   denPinBat = false;
-  document.getElementById("cx1-status").textContent = "🟢 Đang quét Đợt " + demSoDot + "...";
-  document.getElementById("btn-flash-cx1").style.background = "#6b7280";
-  document.getElementById("btn-flash-cx1").textContent = "🔦 Bật Đèn Pin";
+  document.getElementById("cx1-status").textContent = "Đang quét Đợt " + demSoDot + "...";
+  document.getElementById("btn-flash-cx1").style.background = "var(--neutral)";
+  document.getElementById("btn-flash-cx1").style.color = "var(--cream)";
+  document.getElementById("btn-flash-cx1").textContent = "Bật đèn pin";
   try {
     const hints = new Map();
 hints.set(ZXing.DecodeHintType.POSSIBLE_FORMATS, [ZXing.BarcodeFormat.QR_CODE]);
@@ -154,30 +168,48 @@ function toggleDungTiepTuc() {
   }
 }
 
+function docPendingCX1() {
+  try {
+    const raw = localStorage.getItem("cx1_pending_saves");
+    return raw ? JSON.parse(raw) : [];
+  } catch (e) { return []; }
+}
+
+function luuPendingCX1(list) {
+  try { localStorage.setItem("cx1_pending_saves", JSON.stringify(list)); } catch (e) {}
+}
+
+async function guiLenSheetCX1(rows) {
+  const URL_API = "https://script.google.com/macros/s/AKfycbzk7afcuHDOTnL6QSIQ0ZgT-CSiIDNZ8h5S8_IkGXahc7PQRvqZKpLpjkBphioXAyzDKQ/exec";
+  await fetch(URL_API, {
+    method: "POST",
+    mode: "no-cors",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ action: "luuCX1", data: rows })
+  });
+}
+
 async function ketThucCX1() {
   dungCX1();
 
   // Hiện kết quả NGAY, lưu sheet chạy ngầm
   hienKetQuaCX1();
 
-  // Lưu sheet ngầm
+  // Lưu sheet ngầm — nếu mất mạng thì giữ tạm trên máy để gửi lại sau
   if (phienCX1.length > 0) {
+    const rows = phienCX1.map(r => ({
+      id: r.id, msp: r.msp, qc: r.qc, kg: r.kg,
+      ngay: ngayCX1,
+      thoiGian: r.thoiGian.toISOString()
+    }));
     try {
-      const URL_API = "https://script.google.com/macros/s/AKfycbzk7afcuHDOTnL6QSIQ0ZgT-CSiIDNZ8h5S8_IkGXahc7PQRvqZKpLpjkBphioXAyzDKQ/exec"; 
-      fetch(URL_API, {
-        method: "POST",
-        mode: "no-cors",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          action: "luuCX1",
-          data: phienCX1.map(r => ({
-            id: r.id, msp: r.msp, qc: r.qc, kg: r.kg,
-            ngay: ngayCX1,
-            thoiGian: r.thoiGian.toISOString()
-          }))
-        })
-      });
-    } catch (err) {}
+      await guiLenSheetCX1(rows);
+    } catch (err) {
+      const pending = docPendingCX1();
+      pending.push(...rows);
+      luuPendingCX1(pending);
+      showCanhBaoCX1("Mất mạng — đã lưu tạm trên máy, sẽ tự gửi lại sau");
+    }
   }
 }
 
@@ -211,22 +243,22 @@ if (!tongDotCuaPhien[keyDot]) {
   Object.values(tongDotCuaPhien).forEach(item => {
     const tr = document.createElement("tr");
     tr.innerHTML = `
-  <td style="padding:10px;border-bottom:1px solid rgba(255,255,255,.06);color:#eab308;font-weight:700"> ${item.dot}</td>
-  <td style="padding:10px;border-bottom:1px solid rgba(255,255,255,.06)">${item.msp}</td>
-  <td style="padding:10px;border-bottom:1px solid rgba(255,255,255,.06)">${item.qc}</td>
-  <td style="padding:10px;border-bottom:1px solid rgba(255,255,255,.06);text-align:center">${item.soLuong}</td>
-  <td style="padding:10px;border-bottom:1px solid rgba(255,255,255,.06);text-align:right;font-weight:700;color:#22c55e">${item.tongKG.toFixed(1)}</td>
+  <td style="padding:10px;border-bottom:1px solid rgba(237,230,214,.1);color:var(--brass);font-weight:700"> ${item.dot}</td>
+  <td style="padding:10px;border-bottom:1px solid rgba(237,230,214,.1)">${item.msp}</td>
+  <td style="padding:10px;border-bottom:1px solid rgba(237,230,214,.1)">${item.qc}</td>
+  <td style="padding:10px;border-bottom:1px solid rgba(237,230,214,.1);text-align:center">${item.soLuong}</td>
+  <td style="padding:10px;border-bottom:1px solid rgba(237,230,214,.1);text-align:right;font-weight:700;color:var(--success)">${item.tongKG.toFixed(1)}</td>
 `;
     tbodyDot.appendChild(tr);
   });
   
   const trTongDot = document.createElement("tr");
   trTongDot.innerHTML = `
-  <td style="padding:10px;font-weight:700;color:#eab308;background:rgba(255,255,255,.02)">TỔNG</td>
-  <td style="padding:10px;background:rgba(255,255,255,.02)"></td>
-  <td style="padding:10px;background:rgba(255,255,255,.02)"></td>
-  <td style="padding:10px;text-align:center;font-weight:700;color:#eab308;background:rgba(255,255,255,.02)">${tongQRAll}</td>
-  <td style="padding:10px;text-align:right;font-weight:700;color:#eab308;background:rgba(255,255,255,.02)">${tongKGAll.toFixed(1)}</td>
+  <td style="padding:10px;font-weight:700;color:var(--brass);background:rgba(237,230,214,.03)">TỔNG</td>
+  <td style="padding:10px;background:rgba(237,230,214,.03)"></td>
+  <td style="padding:10px;background:rgba(237,230,214,.03)"></td>
+  <td style="padding:10px;text-align:center;font-weight:700;color:var(--brass);background:rgba(237,230,214,.03)">${tongQRAll}</td>
+  <td style="padding:10px;text-align:right;font-weight:700;color:var(--brass);background:rgba(237,230,214,.03)">${tongKGAll.toFixed(1)}</td>
 `;
   tbodyDot.appendChild(trTongDot);
 
@@ -235,19 +267,19 @@ if (!tongDotCuaPhien[keyDot]) {
   Object.values(tongGomLoaiMa).forEach(item => {
     const tr = document.createElement("tr");
     tr.innerHTML = `
-      <td style="padding:10px;border-bottom:1px solid rgba(255,255,255,.06)">${item.msp}</td>
-      <td style="padding:10px;border-bottom:1px solid rgba(255,255,255,.06)">${item.qc}</td>
-      <td style="padding:10px;border-bottom:1px solid rgba(255,255,255,.06);text-align:center;font-weight:700">${item.soLuong}</td>
-      <td style="padding:10px;border-bottom:1px solid rgba(255,255,255,.06);text-align:right;font-weight:700;color:#22c55e">${item.tongKG.toFixed(1)}</td>
+      <td style="padding:10px;border-bottom:1px solid rgba(237,230,214,.1)">${item.msp}</td>
+      <td style="padding:10px;border-bottom:1px solid rgba(237,230,214,.1)">${item.qc}</td>
+      <td style="padding:10px;border-bottom:1px solid rgba(237,230,214,.1);text-align:center;font-weight:700">${item.soLuong}</td>
+      <td style="padding:10px;border-bottom:1px solid rgba(237,230,214,.1);text-align:right;font-weight:700;color:var(--success)">${item.tongKG.toFixed(1)}</td>
     `;
     tbodyGom.appendChild(tr);
   });
   
   const trTongGom = document.createElement("tr");
   trTongGom.innerHTML = `
-    <td colspan="2" style="padding:10px;font-weight:700;color:#3b82f6;background:rgba(255,255,255,.02)">TỔNG</td>
-    <td style="padding:10px;text-align:center;font-weight:700;color:#3b82f6;background:rgba(255,255,255,.02)">${tongQRAll}</td>
-    <td style="padding:10px;text-align:right;font-weight:700;color:#3b82f6;background:rgba(255,255,255,.02)">${tongKGAll.toFixed(1)}</td>
+    <td colspan="2" style="padding:10px;font-weight:700;color:var(--steel);background:rgba(237,230,214,.03)">TỔNG</td>
+    <td style="padding:10px;text-align:center;font-weight:700;color:var(--steel);background:rgba(237,230,214,.03)">${tongQRAll}</td>
+    <td style="padding:10px;text-align:right;font-weight:700;color:var(--steel);background:rgba(237,230,214,.03)">${tongKGAll.toFixed(1)}</td>
   `;
   tbodyGom.appendChild(trTongGom);
 
@@ -263,7 +295,7 @@ function quetTiepCX1() {
 
   document.getElementById("cx1-ketqua").style.display = "none";
   document.getElementById("cx1-cam").style.display = "block";
-  document.getElementById("cx1-status").textContent = "🟢 Đang quét Đợt " + demSoDot + "...";
+  document.getElementById("cx1-status").textContent = "Đang quét Đợt " + demSoDot + "...";
 
   const btnToggle = document.getElementById("btn-dung-tieptuc-cx1");
   btnToggle.textContent = "Dừng quét";
@@ -303,4 +335,15 @@ window.addEventListener("load", function() {
   const today = new Date().toISOString().split("T")[0];
   const ngayInput = document.getElementById("cx1-ngay");
   if (ngayInput) ngayInput.value = today;
+});
+
+window.addEventListener("load", async function() {
+  const pending = docPendingCX1();
+  if (pending.length === 0) return;
+  try {
+    await guiLenSheetCX1(pending);
+    luuPendingCX1([]);
+  } catch (e) {
+    // vẫn còn offline, giữ nguyên để thử lại lần tới
+  }
 });
