@@ -43,6 +43,27 @@ function diToiTab(id) {
 }
 window.diToiTab = diToiTab;
 
+// ── Chặn nút Back, hỏi xác nhận trước khi thoát app ─────────
+history.pushState({ chanThoat: true }, "", location.href);
+
+window.addEventListener("popstate", function() {
+  const el = document.getElementById("overlay-thoat");
+  if (el) el.classList.add("show");
+});
+
+function khongThoatApp() {
+  document.getElementById("overlay-thoat").classList.remove("show");
+  history.pushState({ chanThoat: true }, "", location.href);
+}
+
+function xacNhanThoatApp() {
+  document.getElementById("overlay-thoat").classList.remove("show");
+  history.back();
+}
+
+window.khongThoatApp = khongThoatApp;
+window.xacNhanThoatApp = xacNhanThoatApp;
+
 function showLoading(show) {
   document.getElementById("overlay-loading").style.display = show ? "flex" : "none";
 }
