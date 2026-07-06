@@ -23,19 +23,23 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
 
 <div class="bottom-nav">
-  <button class="bnav-btn active" onclick="chuyenTrang('taoQR', this)">
+  <button class="bnav-btn active" data-page="trangChu" onclick="chuyenTrang('trangChu', this)">
+    <i class="ti ti-home" aria-hidden="true"></i>
+    <span>Trang chủ</span>
+  </button>
+  <button class="bnav-btn" data-page="taoQR" onclick="chuyenTrang('taoQR', this)">
     <i class="ti ti-qrcode" aria-hidden="true"></i>
     <span>Tạo QR</span>
   </button>
-  <button class="bnav-btn" onclick="chuyenTrang('quetQR', this)">
+  <button class="bnav-btn" data-page="quetQR" onclick="chuyenTrang('quetQR', this)">
     <i class="ti ti-scan" aria-hidden="true"></i>
     <span>Quét QR</span>
   </button>
-  <button class="bnav-btn" onclick="chuyenTrang('kiemKe', this)">
+  <button class="bnav-btn" data-page="kiemKe" onclick="chuyenTrang('kiemKe', this)">
     <i class="ti ti-clipboard-list" aria-hidden="true"></i>
     <span>Kiểm kê</span>
   </button>
-  <button class="bnav-btn" onclick="chuyenTrang('chiFor', this)">
+  <button class="bnav-btn" data-page="chiFor" onclick="chuyenTrang('chiFor', this)">
     <i class="ti ti-package" aria-hidden="true"></i>
     <span>Chỉ FOR</span>
   </button>
@@ -44,7 +48,27 @@
 <div class="canh-bao" id="canh-bao"></div>
 <div class="mang-status" id="mang-status"></div>
 
-<div id="taoQR" class="page active">
+<div id="trangChu" class="page active">
+  <div class="card" id="phien-dodang-card" style="display:none">
+    <h3>Phiên dở dang</h3>
+    <div id="phien-dodang-noidung"></div>
+    <div style="display:flex; gap:10px; margin-top:14px;">
+      <button class="btn btn-green" style="flex:1" onclick="tiepTucPhienChiFor()">Tiếp tục</button>
+      <button class="btn btn-red" style="flex:1" onclick="huyPhienChiFor()">Huỷ bỏ</button>
+    </div>
+  </div>
+  <div class="card">
+    <h3>Quản Lý Kho</h3>
+    <div class="trangchu-grid">
+      <button class="btn btn-blue" onclick="diToiTab('taoQR')">Tạo QR</button>
+      <button class="btn btn-blue" onclick="diToiTab('quetQR')">Quét QR</button>
+      <button class="btn btn-blue" onclick="diToiTab('kiemKe')">Kiểm kê</button>
+      <button class="btn btn-blue" onclick="diToiTab('chiFor')">Chỉ For</button>
+    </div>
+  </div>
+</div>
+
+<div id="taoQR" class="page">
   <div class="card">
     <h3>Tạo QR</h3>
     <label>MSP</label>

@@ -33,7 +33,15 @@ function chuyenTrang(id, el) {
   document.getElementById(id).classList.add("active");
   el.classList.add("active");
   if (id !== "quetQR") dungQuet();
+  if (id === "trangChu" && typeof capNhatTrangChu === "function") capNhatTrangChu();
 }
+
+// Điều hướng tới 1 tab từ nơi khác ngoài bottom-nav (nút tắt ở Trang chủ, banner tiếp tục...)
+function diToiTab(id) {
+  const btn = document.querySelector('.bnav-btn[data-page="' + id + '"]');
+  if (btn) chuyenTrang(id, btn);
+}
+window.diToiTab = diToiTab;
 
 function showLoading(show) {
   document.getElementById("overlay-loading").style.display = show ? "flex" : "none";
@@ -298,7 +306,34 @@ window.onload = function() {
   const today = new Date().toISOString().split("T")[0];
   const ngayInput = document.getElementById("chon-ngay");
   if (ngayInput) ngayInput.value = today;
+  capNhatTrangChu();
 };
+
+// ── Trang chủ: hiện phiên dở dang (hiện hỗ trợ Chỉ For) ────
+function capNhatTrangChu() {
+  const card = document.getElementById("phien-dodang-card");
+  const noidung = document.getElementById("phien-dodang-noidung");
+  if (!card || !noidung) return;
+
+  let state = null;
+  try { state = JSON.parse(localStorage.getItem("cx1_phien_dodang")); } catch (e) {}
+
+  if (state && Array.isArray(state.phienCX1) && state.phienCX1.length > 0) {
+    const gioCapNhat = state.capNhat
+      ? new Date(state.capNhat).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" })
+      : "—";
+    noidung.innerHTML = `
+      <div class="irow"><span class="ilabel">Loại</span><span class="ivalue">Chỉ For</span></div>
+      <div class="irow"><span class="ilabel">Ngày</span><span class="ivalue">${state.ngayCX1 || "—"}</span></div>
+      <div class="irow"><span class="ilabel">Đã quét</span><span class="ivalue">${state.phienCX1.length} mã</span></div>
+      <div class="irow"><span class="ilabel">Cập nhật lúc</span><span class="ivalue">${gioCapNhat}</span></div>
+    `;
+    card.style.display = "block";
+  } else {
+    card.style.display = "none";
+  }
+}
+window.capNhatTrangChu = capNhatTrangChu;
 
 window.timMSP = timMSP;
 window.taoQR = taoQR;

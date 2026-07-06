@@ -1,4 +1,4 @@
-const CACHE_NAME = 'quan-ly-kho-v2026-freight-ledger-v3'; 
+const CACHE_NAME = 'quan-ly-kho-v2026-trangchu-v4'; 
 const urlsToCache = [
   '/Quan-ly-kho/',
   '/Quan-ly-kho/index.html',

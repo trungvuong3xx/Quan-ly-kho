@@ -91,11 +91,35 @@ function khiQuetDuocMa(result) {
     kg: data.kg, thoiGian: new Date(), dotQuet: demSoDot 
   });
   document.getElementById("cx1-dem").textContent = "Đã quét: " + phienCX1.length + " mã";
+  luuPhienDoDangCX1();
+}
+
+function luuPhienDoDangCX1() {
+  try {
+    localStorage.setItem("cx1_phien_dodang", JSON.stringify({
+      phienCX1, demSoDot, ngayCX1, capNhat: new Date().toISOString()
+    }));
+  } catch (e) {}
+}
+
+function xoaPhienDoDangCX1() {
+  try { localStorage.removeItem("cx1_phien_dodang"); } catch (e) {}
 }
 
 function batDauCX1() {
   ngayCX1 = document.getElementById("cx1-ngay").value;
-  if (!ngayCX1) { alert("⚠️ Vui lòng chọn ngày!"); return; }
+  if (!ngayCX1) { alert("Vui lòng chọn ngày!"); return; }
+
+  let phienCu = null;
+  try { phienCu = JSON.parse(localStorage.getItem("cx1_phien_dodang")); } catch (e) {}
+  if (phienCu && Array.isArray(phienCu.phienCX1) && phienCu.phienCX1.length > 0) {
+    const tiepTuc = confirm(
+      "Bạn đang có phiên Chỉ For dở dang (" + phienCu.phienCX1.length + " mã, ngày " + phienCu.ngayCX1 + ").\n" +
+      "Bấm OK để tiếp tục phiên đó, hoặc Cancel để xoá và bắt đầu phiên mới."
+    );
+    if (tiepTuc) { khoiPhucCX1(phienCu); return; }
+    xoaPhienDoDangCX1();
+  }
 
   phienCX1 = [];
   demSoDot = 1; 
@@ -197,6 +221,7 @@ async function guiLenSheetCX1(rows) {
 
 async function ketThucCX1() {
   dungCX1();
+  xoaPhienDoDangCX1();
 
   // Hiện kết quả NGAY, lưu sheet chạy ngầm
   hienKetQuaCX1();
@@ -327,6 +352,7 @@ zxingReaderCX1.decodeFromConstraints(
 function quetMoiCX1() {
   phienCX1 = [];
   demSoDot = 0;
+  xoaPhienDoDangCX1();
   document.getElementById("cx1-ketqua").style.display = "none";
   document.getElementById("cx1-form").style.display = "block";
 }
@@ -336,6 +362,57 @@ function showCanhBaoCX1(text) {
   el.textContent = text;
   el.style.display = "block";
   setTimeout(() => { el.style.display = "none"; }, 2000);
+}
+
+// Khôi phục lại 1 phiên Chỉ For đã lưu (từ banner "Phiên dở dang" ở Trang chủ,
+// hoặc khi bấm Quét mà đang có phiên cũ chưa xử lý)
+function khoiPhucCX1(state) {
+  phienCX1 = state.phienCX1.map(r => ({ ...r, thoiGian: new Date(r.thoiGian) }));
+  demSoDot = state.demSoDot || 1;
+  ngayCX1 = state.ngayCX1;
+  dangQuetCX1 = true;
+  denPinBat = false;
+
+  document.getElementById("cx1-form").style.display = "none";
+  document.getElementById("cx1-cam").style.display = "block";
+  document.getElementById("cx1-ketqua").style.display = "none";
+  document.getElementById("cx1-dem").textContent = "Đã quét: " + phienCX1.length + " mã";
+  document.getElementById("cx1-status").textContent = "Đang quét Đợt " + demSoDot + "...";
+  document.getElementById("btn-flash-cx1").style.background = "var(--neutral)";
+  document.getElementById("btn-flash-cx1").style.color = "var(--cream)";
+  document.getElementById("btn-flash-cx1").textContent = "Bật đèn pin";
+
+  const btnToggle = document.getElementById("btn-dung-tieptuc-cx1");
+  btnToggle.textContent = "Dừng quét";
+  btnToggle.className = "btn btn-red btn-full";
+
+  try {
+    const hints = new Map();
+    hints.set(ZXing.DecodeHintType.POSSIBLE_FORMATS, [ZXing.BarcodeFormat.QR_CODE]);
+    hints.set(ZXing.DecodeHintType.TRY_HARDER, true);
+    zxingReaderCX1 = new ZXing.BrowserMultiFormatReader(hints);
+    zxingReaderCX1.decodeFromConstraints(
+      { video: { facingMode: "environment", width: { ideal: 1280 }, height: { ideal: 720 } } },
+      "cx1-reader",
+      (result, err) => { khiQuetDuocMa(result); }
+    );
+  } catch (e) {
+    alert("Lỗi camera: " + e);
+    dungCX1();
+  }
+}
+
+function tiepTucPhienChiFor() {
+  let state = null;
+  try { state = JSON.parse(localStorage.getItem("cx1_phien_dodang")); } catch (e) {}
+  if (!state) return;
+  if (typeof diToiTab === "function") diToiTab("chiFor");
+  khoiPhucCX1(state);
+}
+
+function huyPhienChiFor() {
+  xoaPhienDoDangCX1();
+  if (typeof capNhatTrangChu === "function") capNhatTrangChu();
 }
 
 window.addEventListener("load", function() {
