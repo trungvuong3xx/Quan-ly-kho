@@ -77,6 +77,12 @@ function khiQuetDuocMa(result) {
       showCanhBaoCX1("Mã " + data.id + " + KG " + data.kg + " đã quét rồi");
       lanCanhBaoCuoi = now;
     }
+    if (navigator.vibrate) navigator.vibrate([80, 60, 80]);
+    const vc = document.querySelector("#cx1-cam .video-container");
+    if (vc) {
+      vc.classList.add("canh-bao-trung");
+      setTimeout(() => vc.classList.remove("canh-bao-trung"), 500);
+    }
     return;
   }
   phatTiengBip();
@@ -210,6 +216,7 @@ async function ketThucCX1() {
       luuPendingCX1(pending);
       showCanhBaoCX1("Mất mạng — đã lưu tạm trên máy, sẽ tự gửi lại sau");
     }
+    if (typeof capNhatTrangThaiMang === "function") capNhatTrangThaiMang();
   }
 }
 
@@ -346,4 +353,34 @@ window.addEventListener("load", async function() {
   } catch (e) {
     // vẫn còn offline, giữ nguyên để thử lại lần tới
   }
+  if (typeof capNhatTrangThaiMang === "function") capNhatTrangThaiMang();
 });
+
+window.addEventListener("online", async function() {
+  const pending = docPendingCX1();
+  if (pending.length === 0) return;
+  try {
+    await guiLenSheetCX1(pending);
+    luuPendingCX1([]);
+  } catch (e) {}
+  if (typeof capNhatTrangThaiMang === "function") capNhatTrangThaiMang();
+});
+
+function xuatCSVCX1() {
+  if (phienCX1.length === 0) { alert("Chưa có dữ liệu để xuất"); return; }
+  const header = ["Dot", "MSP", "QC", "KG", "ThoiGian"];
+  const rows = phienCX1.map(r => [r.dotQuet, r.msp, r.qc, r.kg, r.thoiGian.toISOString()]);
+  const escapeCSV = v => `"${String(v).replace(/"/g, '""')}"`;
+  const csv = [header, ...rows].map(row => row.map(escapeCSV).join(",")).join("\r\n");
+  const bom = "\uFEFF"; // giúp Excel đọc đúng tiếng Việt có dấu
+  const blob = new Blob([bom + csv], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  const ngay = ngayCX1 || new Date().toISOString().split("T")[0];
+  a.href = url;
+  a.download = "chi-for-" + ngay + ".csv";
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}

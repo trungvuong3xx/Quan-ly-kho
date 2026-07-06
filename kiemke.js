@@ -31,6 +31,12 @@ function batDauKiemKe() {
       // Kiểm tra trùng
       if (dsQuetKiemKe.includes(id)) {
         showCanhBaoKK("Mã " + id + " đã quét rồi");
+        if (navigator.vibrate) navigator.vibrate([80, 60, 80]);
+        const v = document.getElementById("kk-reader");
+        if (v) {
+          v.classList.add("canh-bao-trung");
+          setTimeout(() => v.classList.remove("canh-bao-trung"), 500);
+        }
         return;
       }
 
@@ -77,7 +83,29 @@ async function ghiBatch() {
   if (batch.length === 0) return;
   const data = [...batch];
   batch = [];
-  await callAPI({ action: "luuKiemKe", data });
+  const r = await callAPI({ action: "luuKiemKe", data });
+  if (r && r.error) {
+    const pending = docPendingKK();
+    pending.push(...data);
+    luuPendingKK(pending);
+  }
+  if (typeof capNhatTrangThaiMang === "function") capNhatTrangThaiMang();
+}
+
+function docPendingKK() {
+  try { return JSON.parse(localStorage.getItem("kk_pending_saves") || "[]"); } catch (e) { return []; }
+}
+
+function luuPendingKK(list) {
+  try { localStorage.setItem("kk_pending_saves", JSON.stringify(list)); } catch (e) {}
+}
+
+async function thuLaiPendingKK() {
+  const pending = docPendingKK();
+  if (pending.length === 0) return;
+  const r = await callAPI({ action: "luuKiemKe", data: pending });
+  if (r && !r.error) luuPendingKK([]);
+  if (typeof capNhatTrangThaiMang === "function") capNhatTrangThaiMang();
 }
 
 function showCanhBaoKK(text) {
@@ -94,3 +122,6 @@ window.addEventListener("load", function() {
     kkNgay.value = today;
   }
 });
+
+window.addEventListener("load", thuLaiPendingKK);
+window.addEventListener("online", thuLaiPendingKK);

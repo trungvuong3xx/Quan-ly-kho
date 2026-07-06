@@ -308,3 +308,32 @@ window.dungQuet = dungQuet;
 window.dongOverlay = dongOverlay;
 window.luuGiaoDich = luuGiaoDich;
 window.toggleQuetNhanh = toggleQuetNhanh;
+
+// ── Trạng thái mạng (dùng chung cho kiểm kê + Chỉ For) ──────
+function demPendingMang() {
+  let tong = 0;
+  try { tong += JSON.parse(localStorage.getItem("cx1_pending_saves") || "[]").length; } catch (e) {}
+  try { tong += JSON.parse(localStorage.getItem("kk_pending_saves") || "[]").length; } catch (e) {}
+  return tong;
+}
+
+function capNhatTrangThaiMang() {
+  const el = document.getElementById("mang-status");
+  if (!el) return;
+  const soCho = demPendingMang();
+  if (!navigator.onLine) {
+    el.textContent = soCho > 0 ? ("Mất mạng — " + soCho + " mục chờ gửi") : "Mất mạng";
+    el.className = "mang-status show err";
+  } else if (soCho > 0) {
+    el.textContent = "Đang gửi lại " + soCho + " mục...";
+    el.className = "mang-status show warn";
+  } else {
+    el.className = "mang-status";
+  }
+}
+
+window.addEventListener("online", capNhatTrangThaiMang);
+window.addEventListener("offline", capNhatTrangThaiMang);
+window.addEventListener("load", capNhatTrangThaiMang);
+setInterval(capNhatTrangThaiMang, 4000);
+window.capNhatTrangThaiMang = capNhatTrangThaiMang;
