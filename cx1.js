@@ -9,25 +9,60 @@ let ngayCX1 = null;
 let sharedAudioCtx = null;
 
 function phatTiengBip() {
-  if (navigator.vibrate) navigator.vibrate(50);
+  if (navigator.vibrate) navigator.vibrate(80);
   try {
     if (!sharedAudioCtx) {
       sharedAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
     }
     if (sharedAudioCtx.state === "suspended") sharedAudioCtx.resume();
-    const oscillator = sharedAudioCtx.createOscillator();
-    const gainNode = sharedAudioCtx.createGain();
-    const compressor = sharedAudioCtx.createDynamicsCompressor();
-    oscillator.connect(gainNode);
-    gainNode.connect(compressor);
-    compressor.connect(sharedAudioCtx.destination);
-    oscillator.type = "square";
-    oscillator.frequency.setValueAtTime(1800, sharedAudioCtx.currentTime);
-    oscillator.frequency.exponentialRampToValueAtTime(900, sharedAudioCtx.currentTime + 0.08);
-    gainNode.gain.setValueAtTime(1.5, sharedAudioCtx.currentTime);
-    gainNode.gain.exponentialRampToValueAtTime(0.00001, sharedAudioCtx.currentTime + 0.18);
-    oscillator.start(sharedAudioCtx.currentTime);
-    oscillator.stop(sharedAudioCtx.currentTime + 0.18);
+
+    const ctx = sharedAudioCtx;
+    const now = ctx.currentTime;
+    const thoiLuong = 0.35;
+
+    // Tiếng "crack" chính: white noise, lọc quét từ sáng (crack) xuống đục (đuôi tiếng nổ)
+    const soMau = Math.floor(ctx.sampleRate * thoiLuong);
+    const bufferOn = ctx.createBuffer(1, soMau, ctx.sampleRate);
+    const data = bufferOn.getChannelData(0);
+    for (let i = 0; i < soMau; i++) data[i] = Math.random() * 2 - 1;
+
+    const noise = ctx.createBufferSource();
+    noise.buffer = bufferOn;
+
+    const locNoise = ctx.createBiquadFilter();
+    locNoise.type = "lowpass";
+    locNoise.frequency.setValueAtTime(6500, now);
+    locNoise.frequency.exponentialRampToValueAtTime(180, now + thoiLuong);
+
+    const gainNoise = ctx.createGain();
+    gainNoise.gain.setValueAtTime(1.4, now);
+    gainNoise.gain.exponentialRampToValueAtTime(0.001, now + thoiLuong);
+
+    // Lớp "thùm" trầm cho có lực, tắt nhanh hơn tiếng crack
+    const thump = ctx.createOscillator();
+    thump.type = "triangle";
+    thump.frequency.setValueAtTime(120, now);
+    thump.frequency.exponentialRampToValueAtTime(40, now + 0.15);
+
+    const gainThump = ctx.createGain();
+    gainThump.gain.setValueAtTime(1.2, now);
+    gainThump.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
+
+    const compressor = ctx.createDynamicsCompressor();
+
+    noise.connect(locNoise);
+    locNoise.connect(gainNoise);
+    gainNoise.connect(compressor);
+
+    thump.connect(gainThump);
+    gainThump.connect(compressor);
+
+    compressor.connect(ctx.destination);
+
+    noise.start(now);
+    noise.stop(now + thoiLuong);
+    thump.start(now);
+    thump.stop(now + 0.2);
   } catch (e) {}
 }
 
