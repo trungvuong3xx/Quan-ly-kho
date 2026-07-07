@@ -43,6 +43,13 @@ function diToiTab(id) {
 }
 window.diToiTab = diToiTab;
 
+// Điều hướng tới 1 trang KHÔNG có nút riêng trên bottom-nav (vd: Lịch sử, chi tiết lịch sử)
+function chuyenTrangKhongNav(id) {
+  document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
+  document.getElementById(id).classList.add("active");
+}
+window.chuyenTrangKhongNav = chuyenTrangKhongNav;
+
 // ── Chặn nút Back, hỏi xác nhận trước khi thoát app ─────────
 history.pushState({ chanThoat: true }, "", location.href);
 
@@ -58,6 +65,9 @@ function khongThoatApp() {
 
 function xacNhanThoatApp() {
   document.getElementById("overlay-thoat").classList.remove("show");
+  window.close();
+  // Nếu trình duyệt chặn window.close() (ví dụ app được mở từ 1 trang khác),
+  // thử lùi lịch sử — lúc này mới thật sự thoát ra ngoài app.
   history.back();
 }
 
@@ -328,6 +338,7 @@ window.onload = function() {
   const ngayInput = document.getElementById("chon-ngay");
   if (ngayInput) ngayInput.value = today;
   capNhatTrangChu();
+  if (typeof donDepLichSuCX1 === "function") donDepLichSuCX1();
 };
 
 // ── Trang chủ: hiện phiên dở dang (hiện hỗ trợ Chỉ For) ────
@@ -343,16 +354,12 @@ function capNhatTrangChu() {
     const gioCapNhat = state.capNhat
       ? new Date(state.capNhat).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" })
       : "—";
-    const laKetQua = state.trangThai === "ketqua";
     noidung.innerHTML = `
       <div class="irow"><span class="ilabel">Loại</span><span class="ivalue">Chỉ For</span></div>
-      <div class="irow"><span class="ilabel">Trạng thái</span><span class="ivalue">${laKetQua ? "Đã hoàn tất — chờ xử lý" : "Đang quét dở dang"}</span></div>
       <div class="irow"><span class="ilabel">Ngày</span><span class="ivalue">${state.ngayCX1 || "—"}</span></div>
       <div class="irow"><span class="ilabel">Đã quét</span><span class="ivalue">${state.phienCX1.length} mã</span></div>
       <div class="irow"><span class="ilabel">Cập nhật lúc</span><span class="ivalue">${gioCapNhat}</span></div>
     `;
-    const btnTiepTuc = card.querySelector(".btn-green");
-    if (btnTiepTuc) btnTiepTuc.textContent = laKetQua ? "Xem kết quả" : "Tiếp tục";
     card.style.display = "block";
   } else {
     card.style.display = "none";

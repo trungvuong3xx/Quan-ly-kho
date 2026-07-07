@@ -6,6 +6,13 @@ let demSoDot = 0;
 let denPinBat = false;
 let ngayCX1 = null;
 
+// Theo dõi phiên hiện tại để nối vào Lịch sử + tránh gửi trùng khi "tiếp tục" 1 phiên cũ
+let idPhienHienTai = null;
+let soLuongDaGuiHienTai = 0;
+
+const CX1_LICHSU_KEY = "cx1_lich_su";
+const CX1_LICHSU_SO_NGAY_GIU = 3;
+
 let sharedAudioCtx = null;
 
 function phatTiengBip() {
@@ -30,30 +37,51 @@ function phatTiengBip() {
 function phatAmThanhSung(ctx) {
   try {
     const now = ctx.currentTime;
+    const thoiLuong = 0.35;
+
+    // Tiếng "crack" chính: white noise, lọc quét từ sáng (crack) xuống đục (đuôi tiếng nổ)
+    const soMau = Math.floor(ctx.sampleRate * thoiLuong);
+    const bufferOn = ctx.createBuffer(1, soMau, ctx.sampleRate);
+    const data = bufferOn.getChannelData(0);
+    for (let i = 0; i < soMau; i++) data[i] = Math.random() * 2 - 1;
+
+    const noise = ctx.createBufferSource();
+    noise.buffer = bufferOn;
+
+    const locNoise = ctx.createBiquadFilter();
+    locNoise.type = "lowpass";
+    locNoise.frequency.setValueAtTime(6500, now);
+    locNoise.frequency.exponentialRampToValueAtTime(180, now + thoiLuong);
+
+    const gainNoise = ctx.createGain();
+    gainNoise.gain.setValueAtTime(1.4, now);
+    gainNoise.gain.exponentialRampToValueAtTime(0.001, now + thoiLuong);
+
+    // Lớp "thùm" trầm cho có lực, tắt nhanh hơn tiếng crack
+    const thump = ctx.createOscillator();
+    thump.type = "triangle";
+    thump.frequency.setValueAtTime(120, now);
+    thump.frequency.exponentialRampToValueAtTime(40, now + 0.15);
+
+    const gainThump = ctx.createGain();
+    gainThump.gain.setValueAtTime(1.2, now);
+    gainThump.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
+
     const compressor = ctx.createDynamicsCompressor();
+
+    noise.connect(locNoise);
+    locNoise.connect(gainNoise);
+    gainNoise.connect(compressor);
+
+    thump.connect(gainThump);
+    gainThump.connect(compressor);
+
     compressor.connect(ctx.destination);
 
-    // Tiếng beep 2 tông kiểu máy quét kho: tông 1 rồi tông 2 cao hơn, liền nhau
-    const taoBeep = (tanSo, batDau, thoiLuong, bienDo) => {
-      const osc = ctx.createOscillator();
-      osc.type = "square";
-      osc.frequency.setValueAtTime(tanSo, batDau);
-
-      const gain = ctx.createGain();
-      gain.gain.setValueAtTime(0, batDau);
-      gain.gain.linearRampToValueAtTime(bienDo, batDau + 0.005);
-      gain.gain.setValueAtTime(bienDo, batDau + thoiLuong - 0.02);
-      gain.gain.linearRampToValueAtTime(0, batDau + thoiLuong);
-
-      osc.connect(gain);
-      gain.connect(compressor);
-
-      osc.start(batDau);
-      osc.stop(batDau + thoiLuong);
-    };
-
-    taoBeep(1800, now, 0.07, 0.5);
-    taoBeep(2600, now + 0.08, 0.09, 0.5);
+    noise.start(now);
+    noise.stop(now + thoiLuong);
+    thump.start(now);
+    thump.stop(now + 0.2);
   } catch (e) {
     console.error("Lỗi tạo âm thanh súng:", e);
   }
@@ -125,17 +153,8 @@ function khiQuetDuocMa(result) {
 function luuPhienDoDangCX1() {
   try {
     localStorage.setItem("cx1_phien_dodang", JSON.stringify({
-      phienCX1, demSoDot, ngayCX1, trangThai: "quet", capNhat: new Date().toISOString()
-    }));
-  } catch (e) {}
-}
-
-// Lưu lại dạng "đã kết thúc, chờ xử lý" — giữ nguyên dữ liệu để xem lại kết quả
-// sau khi thoát ra Trang chủ hoặc tắt hẳn app rồi mở lại
-function luuKetQuaCX1() {
-  try {
-    localStorage.setItem("cx1_phien_dodang", JSON.stringify({
-      phienCX1, demSoDot, ngayCX1, trangThai: "ketqua", capNhat: new Date().toISOString()
+      phienCX1, demSoDot, ngayCX1, capNhat: new Date().toISOString(),
+      idPhienHienTai, soLuongDaGuiHienTai
     }));
   } catch (e) {}
 }
@@ -163,6 +182,8 @@ function batDauCX1() {
   demSoDot = 1; 
   dangQuetCX1 = true;
   denPinBat = false;
+  idPhienHienTai = Date.now() + "-" + Math.random().toString(36).slice(2);
+  soLuongDaGuiHienTai = 0;
 
   document.getElementById("cx1-form").style.display = "none";
   document.getElementById("cx1-cam").style.display = "block";
@@ -259,44 +280,51 @@ async function guiLenSheetCX1(rows) {
 
 async function ketThucCX1() {
   dungCX1();
-  luuKetQuaCX1();
+  xoaPhienDoDangCX1();
 
   // Hiện kết quả NGAY, lưu sheet chạy ngầm
   hienKetQuaCX1();
 
-  // Lưu sheet ngầm — nếu mất mạng thì giữ tạm trên máy để gửi lại sau
-  if (phienCX1.length > 0) {
-    const rows = phienCX1.map(r => ({
+  // Chỉ gửi phần mã MỚI thêm kể từ lần gửi trước (tránh gửi trùng khi "tiếp tục" 1 phiên cũ)
+  const moiBoSung = phienCX1.slice(soLuongDaGuiHienTai);
+  if (moiBoSung.length > 0) {
+    const rows = moiBoSung.map(r => ({
       id: r.id, msp: r.msp, qc: r.qc, kg: r.kg,
       ngay: ngayCX1,
       thoiGian: r.thoiGian.toISOString()
     }));
     try {
       await guiLenSheetCX1(rows);
+      soLuongDaGuiHienTai = phienCX1.length;
     } catch (err) {
       const pending = docPendingCX1();
       pending.push(...rows);
       luuPendingCX1(pending);
       showCanhBaoCX1("Mất mạng — đã lưu tạm trên máy, sẽ tự gửi lại sau");
+      // Coi như đã "xử lý" phần này để không gửi trùng lần sau — phần chưa gửi
+      // thật sự vẫn nằm an toàn trong hàng đợi pending, sẽ tự gửi khi có mạng
+      soLuongDaGuiHienTai = phienCX1.length;
     }
     if (typeof capNhatTrangThaiMang === "function") capNhatTrangThaiMang();
   }
+
+  luuVaoLichSuCX1();
 }
 
-function hienKetQuaCX1() {
-  let tongDotCuaPhien = {}; 
-  let tongGomLoaiMa = {};   
+function taoHangKetQuaCX1(danhSach) {
+  let tongDotCuaPhien = {};
+  let tongGomLoaiMa = {};
   let tongQRAll = 0;
   let tongKGAll = 0;
 
-  phienCX1.forEach(r => {
+  danhSach.forEach(r => {
     tongQRAll += 1;
     tongKGAll += r.kg;
 
     const keyDot = r.dotQuet + "|" + r.msp + "|" + r.qc;
-if (!tongDotCuaPhien[keyDot]) {
-  tongDotCuaPhien[keyDot] = { dot: r.dotQuet, msp: r.msp, qc: r.qc, soLuong: 0, tongKG: 0 };
-}
+    if (!tongDotCuaPhien[keyDot]) {
+      tongDotCuaPhien[keyDot] = { dot: r.dotQuet, msp: r.msp, qc: r.qc, soLuong: 0, tongKG: 0 };
+    }
     tongDotCuaPhien[keyDot].soLuong += 1;
     tongDotCuaPhien[keyDot].tongKG += r.kg;
 
@@ -308,50 +336,50 @@ if (!tongDotCuaPhien[keyDot]) {
     tongGomLoaiMa[keyGom].tongKG += r.kg;
   });
 
-  const tbodyDot = document.getElementById("cx1-tbody-dot");
-  tbodyDot.innerHTML = "";
+  let hangDot = "";
   Object.values(tongDotCuaPhien).forEach(item => {
-    const tr = document.createElement("tr");
-    tr.innerHTML = `
-  <td style="padding:10px;border-bottom:1px solid rgba(237,230,214,.1);color:var(--brass);font-weight:700"> ${item.dot}</td>
-  <td style="padding:10px;border-bottom:1px solid rgba(237,230,214,.1)">${item.msp}</td>
-  <td style="padding:10px;border-bottom:1px solid rgba(237,230,214,.1)">${item.qc}</td>
-  <td style="padding:10px;border-bottom:1px solid rgba(237,230,214,.1);text-align:center">${item.soLuong}</td>
-  <td style="padding:10px;border-bottom:1px solid rgba(237,230,214,.1);text-align:right;font-weight:700;color:var(--success)">${item.tongKG.toFixed(1)}</td>
-`;
-    tbodyDot.appendChild(tr);
+    hangDot += `
+  <tr>
+    <td style="padding:10px;border-bottom:1px solid rgba(237,230,214,.1);color:var(--brass);font-weight:700"> ${item.dot}</td>
+    <td style="padding:10px;border-bottom:1px solid rgba(237,230,214,.1)">${item.msp}</td>
+    <td style="padding:10px;border-bottom:1px solid rgba(237,230,214,.1)">${item.qc}</td>
+    <td style="padding:10px;border-bottom:1px solid rgba(237,230,214,.1);text-align:center">${item.soLuong}</td>
+    <td style="padding:10px;border-bottom:1px solid rgba(237,230,214,.1);text-align:right;font-weight:700;color:var(--success)">${item.tongKG.toFixed(1)}</td>
+  </tr>`;
   });
-  
-  const trTongDot = document.createElement("tr");
-  trTongDot.innerHTML = `
-  <td style="padding:10px;font-weight:700;color:var(--brass);background:rgba(237,230,214,.03)">TỔNG</td>
-  <td style="padding:10px;background:rgba(237,230,214,.03)"></td>
-  <td style="padding:10px;background:rgba(237,230,214,.03)"></td>
-  <td style="padding:10px;text-align:center;font-weight:700;color:var(--brass);background:rgba(237,230,214,.03)">${tongQRAll}</td>
-  <td style="padding:10px;text-align:right;font-weight:700;color:var(--brass);background:rgba(237,230,214,.03)">${tongKGAll.toFixed(1)}</td>
-`;
-  tbodyDot.appendChild(trTongDot);
+  hangDot += `
+  <tr>
+    <td style="padding:10px;font-weight:700;color:var(--brass);background:rgba(237,230,214,.03)">TỔNG</td>
+    <td style="padding:10px;background:rgba(237,230,214,.03)"></td>
+    <td style="padding:10px;background:rgba(237,230,214,.03)"></td>
+    <td style="padding:10px;text-align:center;font-weight:700;color:var(--brass);background:rgba(237,230,214,.03)">${tongQRAll}</td>
+    <td style="padding:10px;text-align:right;font-weight:700;color:var(--brass);background:rgba(237,230,214,.03)">${tongKGAll.toFixed(1)}</td>
+  </tr>`;
 
-  const tbodyGom = document.getElementById("cx1-tbody-gom");
-  tbodyGom.innerHTML = "";
+  let hangGom = "";
   Object.values(tongGomLoaiMa).forEach(item => {
-    const tr = document.createElement("tr");
-    tr.innerHTML = `
-      <td style="padding:10px;border-bottom:1px solid rgba(237,230,214,.1)">${item.msp}</td>
-      <td style="padding:10px;border-bottom:1px solid rgba(237,230,214,.1)">${item.qc}</td>
-      <td style="padding:10px;border-bottom:1px solid rgba(237,230,214,.1);text-align:center;font-weight:700">${item.soLuong}</td>
-      <td style="padding:10px;border-bottom:1px solid rgba(237,230,214,.1);text-align:right;font-weight:700;color:var(--success)">${item.tongKG.toFixed(1)}</td>
-    `;
-    tbodyGom.appendChild(tr);
+    hangGom += `
+  <tr>
+    <td style="padding:10px;border-bottom:1px solid rgba(237,230,214,.1)">${item.msp}</td>
+    <td style="padding:10px;border-bottom:1px solid rgba(237,230,214,.1)">${item.qc}</td>
+    <td style="padding:10px;border-bottom:1px solid rgba(237,230,214,.1);text-align:center;font-weight:700">${item.soLuong}</td>
+    <td style="padding:10px;border-bottom:1px solid rgba(237,230,214,.1);text-align:right;font-weight:700;color:var(--success)">${item.tongKG.toFixed(1)}</td>
+  </tr>`;
   });
-  
-  const trTongGom = document.createElement("tr");
-  trTongGom.innerHTML = `
+  hangGom += `
+  <tr>
     <td colspan="2" style="padding:10px;font-weight:700;color:var(--steel);background:rgba(237,230,214,.03)">TỔNG</td>
     <td style="padding:10px;text-align:center;font-weight:700;color:var(--steel);background:rgba(237,230,214,.03)">${tongQRAll}</td>
     <td style="padding:10px;text-align:right;font-weight:700;color:var(--steel);background:rgba(237,230,214,.03)">${tongKGAll.toFixed(1)}</td>
-  `;
-  tbodyGom.appendChild(trTongGom);
+  </tr>`;
+
+  return { hangDot, hangGom };
+}
+
+function hienKetQuaCX1() {
+  const { hangDot, hangGom } = taoHangKetQuaCX1(phienCX1);
+  document.getElementById("cx1-tbody-dot").innerHTML = hangDot;
+  document.getElementById("cx1-tbody-gom").innerHTML = hangGom;
 
   document.getElementById("cx1-cam").style.display = "none";
   document.getElementById("cx1-ketqua").style.display = "block";
@@ -390,6 +418,8 @@ zxingReaderCX1.decodeFromConstraints(
 function quetMoiCX1() {
   phienCX1 = [];
   demSoDot = 0;
+  idPhienHienTai = null;
+  soLuongDaGuiHienTai = 0;
   xoaPhienDoDangCX1();
   document.getElementById("cx1-ketqua").style.display = "none";
   document.getElementById("cx1-form").style.display = "block";
@@ -408,6 +438,9 @@ function khoiPhucCX1(state) {
   phienCX1 = state.phienCX1.map(r => ({ ...r, thoiGian: new Date(r.thoiGian) }));
   demSoDot = state.demSoDot || 1;
   ngayCX1 = state.ngayCX1;
+  idPhienHienTai = state.idPhienHienTai || (Date.now() + "-" + Math.random().toString(36).slice(2));
+  soLuongDaGuiHienTai = state.soLuongDaGuiHienTai !== undefined ? state.soLuongDaGuiHienTai
+    : (state.soLuongDaGui !== undefined ? state.soLuongDaGui : 0);
   dangQuetCX1 = true;
   denPinBat = false;
 
@@ -445,24 +478,7 @@ function tiepTucPhienChiFor() {
   try { state = JSON.parse(localStorage.getItem("cx1_phien_dodang")); } catch (e) {}
   if (!state) return;
   if (typeof diToiTab === "function") diToiTab("chiFor");
-  if (state.trangThai === "ketqua") {
-    khoiPhucKetQuaCX1(state);
-  } else {
-    khoiPhucCX1(state);
-  }
-}
-
-// Khôi phục lại màn hình KẾT QUẢ (không mở camera) — dùng khi phiên đã
-// bấm "Kết Thúc" rồi mới thoát ra Trang chủ, hoặc tắt hẳn app rồi mở lại
-function khoiPhucKetQuaCX1(state) {
-  phienCX1 = state.phienCX1.map(r => ({ ...r, thoiGian: new Date(r.thoiGian) }));
-  demSoDot = state.demSoDot || 1;
-  ngayCX1 = state.ngayCX1;
-  dangQuetCX1 = false;
-
-  document.getElementById("cx1-form").style.display = "none";
-  document.getElementById("cx1-cam").style.display = "none";
-  hienKetQuaCX1();
+  khoiPhucCX1(state);
 }
 
 function huyPhienChiFor() {
@@ -516,3 +532,106 @@ function xuatCSVCX1() {
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
 }
+
+// ── Lịch sử Chỉ For (lưu 3 ngày gần nhất, xem lại + tiếp tục quét) ─────
+let dangXemLichSuId = null;
+
+function docLichSuCX1() {
+  let list = [];
+  try { list = JSON.parse(localStorage.getItem(CX1_LICHSU_KEY)) || []; } catch (e) { list = []; }
+  const homNay = new Date();
+  homNay.setHours(0, 0, 0, 0);
+  return list.filter(s => {
+    if (!s.ngay) return false;
+    const ngayPhien = new Date(s.ngay + "T00:00:00");
+    const soNgayCach = Math.floor((homNay - ngayPhien) / 86400000);
+    return soNgayCach >= 0 && soNgayCach < CX1_LICHSU_SO_NGAY_GIU;
+  });
+}
+
+function luuLichSuCX1(list) {
+  try { localStorage.setItem(CX1_LICHSU_KEY, JSON.stringify(list)); } catch (e) {}
+}
+
+function donDepLichSuCX1() {
+  luuLichSuCX1(docLichSuCX1());
+}
+
+function luuVaoLichSuCX1() {
+  if (phienCX1.length === 0 || !idPhienHienTai) return;
+  const list = docLichSuCX1();
+  const idx = list.findIndex(s => s.idPhien === idPhienHienTai);
+  const banGhi = {
+    idPhien: idPhienHienTai,
+    ngay: ngayCX1,
+    capNhatLuc: new Date().toISOString(),
+    phienCX1: phienCX1,
+    demSoDot: demSoDot,
+    soLuongDaGui: soLuongDaGuiHienTai
+  };
+  if (idx >= 0) list[idx] = banGhi; else list.push(banGhi);
+  luuLichSuCX1(list);
+  if (typeof renderLichSuCX1 === "function") renderLichSuCX1();
+}
+
+function moLichSuCX1() {
+  renderLichSuCX1();
+  if (typeof chuyenTrangKhongNav === "function") chuyenTrangKhongNav("lichSu");
+}
+window.moLichSuCX1 = moLichSuCX1;
+
+function renderLichSuCX1() {
+  const container = document.getElementById("lichsu-list");
+  if (!container) return;
+  const list = docLichSuCX1().slice().sort((a, b) => new Date(b.capNhatLuc) - new Date(a.capNhatLuc));
+
+  if (list.length === 0) {
+    container.innerHTML = '<div style="text-align:center;color:var(--cream-soft);padding:20px 0;">Chưa có phiên nào trong ' + CX1_LICHSU_SO_NGAY_GIU + ' ngày qua</div>';
+    return;
+  }
+
+  container.innerHTML = list.map(function (s) {
+    const tongKg = s.phienCX1.reduce(function (t, r) { return t + r.kg; }, 0).toFixed(1);
+    const gio = new Date(s.capNhatLuc).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" });
+    return '<div class="irow" style="cursor:pointer" onclick="xemChiTietLichSuCX1(\'' + s.idPhien + '\')">'
+      + '<span class="ilabel">' + s.ngay + ' · ' + gio + '</span>'
+      + '<span class="ivalue">' + s.phienCX1.length + ' mã · ' + tongKg + ' kg</span>'
+      + '</div>';
+  }).join("");
+}
+window.renderLichSuCX1 = renderLichSuCX1;
+
+function xemChiTietLichSuCX1(idPhien) {
+  const list = docLichSuCX1();
+  const entry = list.find(s => s.idPhien === idPhien);
+  if (!entry) return;
+
+  dangXemLichSuId = idPhien;
+  const { hangDot, hangGom } = taoHangKetQuaCX1(entry.phienCX1);
+  document.getElementById("lichsu-tbody-dot").innerHTML = hangDot;
+  document.getElementById("lichsu-tbody-gom").innerHTML = hangGom;
+  document.getElementById("lichsu-chitiet-tieude").textContent = "Chỉ For — " + entry.ngay;
+
+  if (typeof chuyenTrangKhongNav === "function") chuyenTrangKhongNav("lichsuChiTiet");
+}
+window.xemChiTietLichSuCX1 = xemChiTietLichSuCX1;
+
+function tiepTucLichSuCX1(idPhien) {
+  const list = docLichSuCX1();
+  const entry = list.find(s => s.idPhien === idPhien);
+  if (!entry) return;
+
+  if (typeof diToiTab === "function") diToiTab("chiFor");
+  khoiPhucCX1({
+    phienCX1: entry.phienCX1,
+    demSoDot: entry.demSoDot,
+    ngayCX1: entry.ngay,
+    idPhienHienTai: entry.idPhien,
+    soLuongDaGuiHienTai: entry.soLuongDaGui
+  });
+}
+
+function tiepTucTuChiTietLichSu() {
+  if (dangXemLichSuId) tiepTucLichSuCX1(dangXemLichSuId);
+}
+window.tiepTucTuChiTietLichSu = tiepTucTuChiTietLichSu;

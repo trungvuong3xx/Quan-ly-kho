@@ -66,6 +66,62 @@
       <button class="btn btn-blue" onclick="diToiTab('chiFor')">Chỉ For</button>
     </div>
   </div>
+  <div class="card">
+    <h3>Lịch Sử</h3>
+    <button class="btn btn-full" style="background:var(--neutral);color:var(--cream);" onclick="moLichSuCX1()">Xem lịch sử Chỉ For</button>
+  </div>
+</div>
+
+<div id="lichSu" class="page">
+  <div class="card">
+    <h3>Lịch Sử Chỉ For</h3>
+    <div id="lichsu-list"></div>
+    <button class="btn btn-full" style="background:var(--neutral);color:var(--cream);margin-top:14px" onclick="diToiTab('trangChu')">← Trang chủ</button>
+  </div>
+</div>
+
+<div id="lichsuChiTiet" class="page">
+  <div class="card">
+    <h3 id="lichsu-chitiet-tieude">Chi tiết phiên</h3>
+
+    <div style="margin-bottom: 30px;">
+      <h4 style="color:#c9a227; margin-bottom:10px;">CHI TIẾT</h4>
+      <div style="overflow-x:auto;">
+        <table style="width:100%; border-collapse:collapse; background:rgba(237,230,214,.03); font-size:14px;">
+          <thead>
+            <tr style="background:rgba(237,230,214,.06)">
+              <th style="padding:10px; border-bottom:2px solid rgba(237,230,214,.18); text-align:left">Đợt</th>
+              <th style="padding:10px; border-bottom:2px solid rgba(237,230,214,.18); text-align:left">MSP</th>
+              <th style="padding:10px; border-bottom:2px solid rgba(237,230,214,.18); text-align:left">QC</th>
+              <th style="padding:10px; border-bottom:2px solid rgba(237,230,214,.18); text-align:center">Bao</th>
+              <th style="padding:10px; border-bottom:2px solid rgba(237,230,214,.18); text-align:right">KG</th>
+            </tr>
+          </thead>
+          <tbody id="lichsu-tbody-dot"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div style="margin-bottom: 20px;">
+      <h4 style="color:#6f97a8; margin-bottom:10px;">TỔNG HỢP</h4>
+      <div style="overflow-x:auto;">
+        <table style="width:100%; border-collapse:collapse; background:rgba(237,230,214,.03); font-size:14px;">
+          <thead>
+            <tr style="background:rgba(237,230,214,.06)">
+              <th style="padding:10px; border-bottom:2px solid rgba(237,230,214,.18); text-align:left">MSP</th>
+              <th style="padding:10px; border-bottom:2px solid rgba(237,230,214,.18); text-align:left">QC</th>
+              <th style="padding:10px; border-bottom:2px solid rgba(237,230,214,.18); text-align:center">Bao</th>
+              <th style="padding:10px; border-bottom:2px solid rgba(237,230,214,.18); text-align:right">KG</th>
+            </tr>
+          </thead>
+          <tbody id="lichsu-tbody-gom"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <button class="btn btn-green btn-full" onclick="tiepTucTuChiTietLichSu()">Tiếp tục quét</button>
+    <button class="btn btn-full" style="background:var(--neutral);color:var(--cream);" onclick="chuyenTrangKhongNav('lichSu')">← Lịch sử</button>
+  </div>
 </div>
 
 <div id="taoQR" class="page">
