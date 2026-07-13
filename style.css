@@ -417,6 +417,39 @@ select:focus {
   .qr-item + .qr-item { page-break-before: always; }
 }
 
+.tk-ten-wrap { position: relative; }
+
+.tk-dropdown {
+  display: none;
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  margin-top: 6px;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-top: 2px solid var(--brass);
+  border-radius: 6px;
+  max-height: 240px;
+  overflow-y: auto;
+  z-index: 60;
+  box-shadow: 0 10px 30px rgba(0,0,0,.5);
+}
+.tk-dropdown.show { display: block; }
+
+.tk-dropdown-item {
+  padding: 12px 14px;
+  color: var(--cream);
+  font-size: 14px;
+  cursor: pointer;
+  border-bottom: 1px dotted var(--line-soft);
+}
+.tk-dropdown-item:last-child { border-bottom: none; }
+.tk-dropdown-item:hover, .tk-dropdown-item.active {
+  background: var(--brass);
+  color: var(--bg);
+}
+
 .tk-hint {
   color: var(--cream-soft);
   font-size: 13px;

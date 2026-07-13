@@ -13,10 +13,20 @@ let tkTokenClient = null;
 let tkAccessToken = null;
 let tkTokenExpiryMs = 0;
 let tkEmail = null;
+let tkListCache = null;
+let tkFilteredList = [];
+let tkActiveIndex = -1;
 
 function tkSheetName() {
-  const d = new Date();
+  const val = document.getElementById("tk-ngay").value;
+  const d = val ? new Date(val) : new Date();
   return String(d.getMonth() + 1);
+}
+
+function tkSo(val) {
+  if (val === "" || val === "-" || val === null || val === undefined) return 0;
+  const n = Number(val);
+  return isNaN(n) ? 0 : n;
 }
 
 function tkBoDau(str) {
@@ -61,6 +71,7 @@ async function tkDangNhap() {
     await tkLayThongTinTaiKhoan();
     tkCapNhatUIDangNhap();
     tkClearKetQua();
+    tkTaiDanhSachLIST();
   } catch (err) {
     tkBaoLoi("Đăng nhập thất bại: " + err.message);
   } finally {
@@ -87,6 +98,8 @@ function tkDangXuat() {
   tkAccessToken = null;
   tkTokenExpiryMs = 0;
   tkEmail = null;
+  tkListCache = null;
+  tkDongDropdown();
   tkCapNhatUIDangNhap();
   tkClearKetQua();
 }
@@ -163,10 +176,11 @@ async function tkTimTonKho() {
     const sheetName = tkSheetName();
     const qBoDau = tkBoDau(query).toUpperCase();
 
-    const listRows = await tkGoiSheets("'" + TK_LIST_SHEET + "'!A2:B2000");
-    const ungVien = listRows
-      .filter(r => r[0] && r[1] && tkBoDau(String(r[0])).toUpperCase().includes(qBoDau))
-      .map(r => ({ ten: String(r[0]).trim(), msp: String(r[1]).trim() }))
+    const listData = await tkTaiDanhSachLIST();
+    if (!listData) { tkBaoLoi("Không tải được sheet LIST."); return; }
+
+    const ungVien = listData
+      .filter(item => tkBoDau(item.ten).toUpperCase().includes(qBoDau))
       .slice(0, 15);
 
     if (ungVien.length === 0) {
@@ -212,8 +226,8 @@ async function tkTimTonKho() {
       const row = (valueRanges[idx] && valueRanges[idx].values && valueRanges[idx].values[0]) || [];
       return {
         ten: c.ten, msp: c.msp, kho: c.kho,
-        baoDau: row[0] || 0, kgDau: row[1] || 0,
-        baoCuoi: row[2] || 0, kgCuoi: row[3] || 0
+        baoDau: tkSo(row[0]), kgDau: tkSo(row[1]),
+        baoCuoi: tkSo(row[2]), kgCuoi: tkSo(row[3])
       };
     });
 
@@ -240,6 +254,110 @@ function tkHienKetQua(ketQua) {
   `).join("");
 }
 
+async function tkTaiDanhSachLIST() {
+  if (tkListCache) return tkListCache;
+  try {
+    const rows = await tkGoiSheets("'" + TK_LIST_SHEET + "'!A2:B2000");
+    tkListCache = rows
+      .filter(r => r[0] && r[1])
+      .map(r => ({ ten: String(r[0]).trim(), msp: String(r[1]).trim() }));
+  } catch (e) {
+    tkListCache = null;
+  }
+  return tkListCache;
+}
+
+function tkDongDropdown() {
+  tkFilteredList = [];
+  tkActiveIndex = -1;
+  const el = document.getElementById("tk-dropdown");
+  el.classList.remove("show");
+  el.innerHTML = "";
+}
+
+function tkRenderDropdown() {
+  const el = document.getElementById("tk-dropdown");
+  if (tkFilteredList.length === 0) {
+    el.classList.remove("show");
+    el.innerHTML = "";
+    return;
+  }
+  el.innerHTML = tkFilteredList.map((item, idx) =>
+    '<div class="tk-dropdown-item' + (idx === tkActiveIndex ? ' active' : '') + '" data-idx="' + idx + '">' +
+    item.ten.replace(/</g, "&lt;") + '</div>'
+  ).join("");
+  el.classList.add("show");
+
+  Array.from(el.children).forEach(child => {
+    child.addEventListener("mousedown", e => {
+      e.preventDefault();
+      const idx = parseInt(child.getAttribute("data-idx"), 10);
+      tkChonGoiY(tkFilteredList[idx]);
+    });
+  });
+}
+
+async function tkOnInputTen() {
+  const query = document.getElementById("tk-ten").value.trim();
+  if (!query) { tkDongDropdown(); return; }
+
+  const list = await tkTaiDanhSachLIST();
+  if (!list) { tkDongDropdown(); return; }
+
+  const qBoDau = tkBoDau(query).toUpperCase();
+  tkFilteredList = list.filter(item => tkBoDau(item.ten).toUpperCase().includes(qBoDau)).slice(0, 30);
+  tkActiveIndex = -1;
+  tkRenderDropdown();
+}
+
+function tkOnKeydownTen(e) {
+  if (e.key === "ArrowDown") {
+    if (!tkFilteredList.length) return;
+    e.preventDefault();
+    tkActiveIndex = Math.min(tkActiveIndex + 1, tkFilteredList.length - 1);
+    tkRenderDropdown();
+  } else if (e.key === "ArrowUp") {
+    if (!tkFilteredList.length) return;
+    e.preventDefault();
+    tkActiveIndex = Math.max(tkActiveIndex - 1, 0);
+    tkRenderDropdown();
+  } else if (e.key === "Enter") {
+    e.preventDefault();
+    if (tkFilteredList.length) tkChonGoiY(tkFilteredList[tkActiveIndex >= 0 ? tkActiveIndex : 0]);
+    else tkTimTonKho();
+  } else if (e.key === "Escape") {
+    tkDongDropdown();
+  }
+}
+
+function tkChonGoiY(item) {
+  document.getElementById("tk-ten").value = item.ten;
+  tkDongDropdown();
+  tkTimTonKho();
+}
+
+document.addEventListener("click", e => {
+  const wrap = document.querySelector(".tk-ten-wrap");
+  if (wrap && !wrap.contains(e.target)) tkDongDropdown();
+});
+
+function tkDoiNgay() {
+  tkClearKetQua();
+}
+
+(function tkKhoiTaoNgay() {
+  const el = document.getElementById("tk-ngay");
+  if (el && !el.value) {
+    const d = new Date();
+    const m = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    el.value = d.getFullYear() + "-" + m + "-" + day;
+  }
+})();
+
+window.tkOnInputTen = tkOnInputTen;
+window.tkOnKeydownTen = tkOnKeydownTen;
+window.tkDoiNgay = tkDoiNgay;
 window.tkDangNhap = tkDangNhap;
 window.tkDangXuat = tkDangXuat;
 window.tkTimTonKho = tkTimTonKho;

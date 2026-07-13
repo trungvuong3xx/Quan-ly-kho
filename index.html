@@ -100,9 +100,16 @@
         <button class="tk-dangxuat" onclick="tkDangXuat()">Đăng xuất</button>
       </div>
 
+      <label>Ngày</label>
+      <input type="date" id="tk-ngay" onchange="tkDoiNgay()">
+
       <label>Tên sản phẩm</label>
       <div class="row">
-        <input type="text" id="tk-ten" placeholder="Nhập tên để tra tồn" onkeydown="if(event.key==='Enter') tkTimTonKho()">
+        <div class="tk-ten-wrap" style="flex:1">
+          <input type="text" id="tk-ten" placeholder="Nhập tên để tra tồn" autocomplete="off"
+            oninput="tkOnInputTen()" onkeydown="tkOnKeydownTen(event)">
+          <div id="tk-dropdown" class="tk-dropdown"></div>
+        </div>
         <button class="btn btn-blue" onclick="tkTimTonKho()">Tìm</button>
       </div>
 
