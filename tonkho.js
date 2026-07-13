@@ -123,7 +123,7 @@ function tkBaoLoi(text) {
 async function tkGoiSheets(range) {
   const token = await tkLayToken();
   const url = "https://sheets.googleapis.com/v4/spreadsheets/" + TK_SPREADSHEET_ID +
-    "/values/" + encodeURIComponent(range);
+    "/values/" + encodeURIComponent(range) + "?valueRenderOption=UNFORMATTED_VALUE";
   let res = await fetch(url, { headers: { Authorization: "Bearer " + token } });
 
   if (res.status === 401) {
