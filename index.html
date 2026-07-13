@@ -7,6 +7,7 @@
   <link rel="stylesheet" href="style.css?v=20260623-sieucap">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@zxing/library@0.19.1/umd/index.min.js"></script>
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#0f1c17">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -64,6 +65,7 @@
       <button class="btn btn-blue" onclick="diToiTab('quetQR')">Quét QR</button>
       <button class="btn btn-blue" onclick="diToiTab('kiemKe')">Kiểm kê</button>
       <button class="btn btn-blue" onclick="diToiTab('chiFor')">Chỉ For</button>
+      <button class="btn btn-blue" style="grid-column: span 2;" onclick="chuyenTrangKhongNav('tonKho')">Tồn kho</button>
     </div>
   </div>
   <div class="card">
@@ -76,6 +78,41 @@
   <div class="card">
     <h3>Lịch Sử Chỉ For</h3>
     <div id="lichsu-list"></div>
+    <button class="btn btn-full" style="background:var(--neutral);color:var(--cream);margin-top:14px" onclick="diToiTab('trangChu')">← Trang chủ</button>
+  </div>
+</div>
+
+<div id="tonKho" class="page">
+  <div class="card">
+    <h3>Tồn Kho</h3>
+
+    <div id="tk-chua-dang-nhap" style="display:block">
+      <div class="tk-hint">Cần đăng nhập bằng tài khoản Google được cấp quyền xem file tồn kho.</div>
+      <button class="btn btn-blue btn-full" onclick="tkDangNhap()">Đăng nhập bằng Google</button>
+      <div id="tk-login-loading" style="display:none;justify-content:center;padding:16px;">
+        <div style="width:24px;height:24px;border:3px solid #2a3a32;border-top-color:#c9a227;border-radius:50%;animation:spin .7s linear infinite;"></div>
+      </div>
+    </div>
+
+    <div id="tk-da-dang-nhap" style="display:none">
+      <div class="tk-taikhoan">
+        <span id="tk-email"></span>
+        <button class="tk-dangxuat" onclick="tkDangXuat()">Đăng xuất</button>
+      </div>
+
+      <label>Tên sản phẩm</label>
+      <div class="row">
+        <input type="text" id="tk-ten" placeholder="Nhập tên để tra tồn" onkeydown="if(event.key==='Enter') tkTimTonKho()">
+        <button class="btn btn-blue" onclick="tkTimTonKho()">Tìm</button>
+      </div>
+
+      <div id="tk-loading" style="display:none;justify-content:center;padding:20px;">
+        <div style="width:28px;height:28px;border:3px solid #2a3a32;border-top-color:#c9a227;border-radius:50%;animation:spin .7s linear infinite;"></div>
+      </div>
+
+      <div id="tk-ket-qua"></div>
+    </div>
+
     <button class="btn btn-full" style="background:var(--neutral);color:var(--cream);margin-top:14px" onclick="diToiTab('trangChu')">← Trang chủ</button>
   </div>
 </div>
@@ -121,42 +158,6 @@
 
     <button class="btn btn-green btn-full" onclick="tiepTucTuChiTietLichSu()">Tiếp tục quét</button>
     <button class="btn btn-full" style="background:var(--neutral);color:var(--cream);" onclick="chuyenTrangKhongNav('lichSu')">← Lịch sử</button>
-  </div>
-</div>
-
-<!-- KIỂM TRA TỒN KHO -->
-<div class="card">
-  <h3>Kiểm Tra Tồn Kho</h3>
-  <button class="btn btn-full" style="background:var(--neutral);color:var(--cream);" onclick="moKiemTraTon()">
-    <i class="ti ti-search" aria-hidden="true"></i> Tra tồn kho
-  </button>
-</div>
-
-<!-- TRANG TRA TỒN KHO -->
-<div id="kiemTraTon" class="page" style="display:none">
-  <!-- Google Sign In -->
-  <div id="ktt-login" class="card" style="text-align:center">
-    <h3>Kiểm Tra Tồn Kho</h3>
-    <p style="color:var(--sub);font-size:13px;margin:10px 0 20px">Đăng nhập để tra cứu</p>
-    <div id="g_id_onload"
-      data-client_id="779029500304-c4cuj67lgq23b9oj0fp40pfhuche7km6.apps.googleusercontent.com"
-      data-callback="onGoogleLogin"
-      data-auto_prompt="false">
-    </div>
-    <div class="g_id_signin" data-type="standard" data-size="large" data-theme="outline" data-text="sign_in_with" data-shape="rectangular" data-logo_alignment="left"></div>
-  </div>
-
-  <!-- Sau khi login -->
-  <div id="ktt-main" style="display:none">
-    <div class="card">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
-        <h3 style="margin:0">Tồn Kho</h3>
-        <button class="btn-text" onclick="dangXuatKTT()">Đăng xuất</button>
-      </div>
-      <input type="text" id="ktt-search" placeholder="Tìm theo tên..." oninput="timKiemTon(this.value)">
-    </div>
-    <div id="ktt-results"></div>
-    <button class="btn btn-full" style="background:var(--neutral);color:var(--cream);margin-top:8px" onclick="dongKiemTraTon()">← Trang chủ</button>
   </div>
 </div>
 
@@ -353,7 +354,6 @@
 <script src="app.js?v=20260623-sieucap"></script>
 <script src="kiemke.js"></script>
 <script src="cx1.js?v=20260623-sieucap"></script>
-<script src="https://accounts.google.com/gsi/client" async defer></script>
 <script src="tonkho.js"></script>
 </body>
 </html>

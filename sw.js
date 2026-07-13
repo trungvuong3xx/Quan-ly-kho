@@ -1,4 +1,4 @@
-const CACHE_NAME = 'quan-ly-kho-v2026-mau-status-bar-v10'; 
+const CACHE_NAME = 'quan-ly-kho-v2026-ton-kho-v11';
 const urlsToCache = [
   '/Quan-ly-kho/',
   '/Quan-ly-kho/index.html',
@@ -6,6 +6,7 @@ const urlsToCache = [
   '/Quan-ly-kho/app.js',
   '/Quan-ly-kho/kiemke.js',
   '/Quan-ly-kho/cx1.js',
+  '/Quan-ly-kho/tonkho.js',
   '/Quan-ly-kho/manifest.json',
   'https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css',
   'https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js',
