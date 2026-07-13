@@ -60,12 +60,22 @@
   </div>
   <div class="card">
     <h3>Quản Lý Kho</h3>
+
+    <div id="tk-taikhoan-trangchu" class="tk-taikhoan" style="display:none">
+      <span id="tk-email"></span>
+      <button class="tk-dangxuat" onclick="tkDangXuat()">Đăng xuất</button>
+    </div>
+
     <div class="trangchu-grid">
       <button class="btn btn-blue" onclick="diToiTab('taoQR')">Tạo QR</button>
       <button class="btn btn-blue" onclick="diToiTab('quetQR')">Quét QR</button>
       <button class="btn btn-blue" onclick="diToiTab('kiemKe')">Kiểm kê</button>
       <button class="btn btn-blue" onclick="diToiTab('chiFor')">Chỉ For</button>
-      <button class="btn btn-blue" style="grid-column: span 2;" onclick="chuyenTrangKhongNav('tonKho')">Tồn kho</button>
+      <button class="btn btn-blue" id="btn-ton-kho" style="grid-column: span 2; display:none" onclick="chuyenTrangKhongNav('tonKho')">Tồn kho</button>
+      <button class="btn btn-blue" id="btn-dang-nhap-gg" style="grid-column: span 2;" onclick="tkDangNhap()">Đăng nhập Google</button>
+    </div>
+    <div id="tk-login-loading" style="display:none;justify-content:center;padding:16px;">
+      <div style="width:24px;height:24px;border:3px solid #2a3a32;border-top-color:#c9a227;border-radius:50%;animation:spin .7s linear infinite;"></div>
     </div>
   </div>
   <div class="card">
@@ -86,39 +96,24 @@
   <div class="card">
     <h3>Tồn Kho</h3>
 
-    <div id="tk-chua-dang-nhap" style="display:block">
-      <div class="tk-hint">Cần đăng nhập bằng tài khoản Google được cấp quyền xem file tồn kho.</div>
-      <button class="btn btn-blue btn-full" onclick="tkDangNhap()">Đăng nhập bằng Google</button>
-      <div id="tk-login-loading" style="display:none;justify-content:center;padding:16px;">
-        <div style="width:24px;height:24px;border:3px solid #2a3a32;border-top-color:#c9a227;border-radius:50%;animation:spin .7s linear infinite;"></div>
+    <label>Ngày</label>
+    <input type="date" id="tk-ngay" onchange="tkDoiNgay()">
+
+    <label>Tên sản phẩm</label>
+    <div class="row">
+      <div class="tk-ten-wrap" style="flex:1">
+        <input type="text" id="tk-ten" placeholder="Nhập tên để tra tồn" autocomplete="off"
+          oninput="tkOnInputTen()" onkeydown="tkOnKeydownTen(event)">
+        <div id="tk-dropdown" class="tk-dropdown"></div>
       </div>
+      <button class="btn btn-blue" onclick="tkTimTonKho()">Tìm</button>
     </div>
 
-    <div id="tk-da-dang-nhap" style="display:none">
-      <div class="tk-taikhoan">
-        <span id="tk-email"></span>
-        <button class="tk-dangxuat" onclick="tkDangXuat()">Đăng xuất</button>
-      </div>
-
-      <label>Ngày</label>
-      <input type="date" id="tk-ngay" onchange="tkDoiNgay()">
-
-      <label>Tên sản phẩm</label>
-      <div class="row">
-        <div class="tk-ten-wrap" style="flex:1">
-          <input type="text" id="tk-ten" placeholder="Nhập tên để tra tồn" autocomplete="off"
-            oninput="tkOnInputTen()" onkeydown="tkOnKeydownTen(event)">
-          <div id="tk-dropdown" class="tk-dropdown"></div>
-        </div>
-        <button class="btn btn-blue" onclick="tkTimTonKho()">Tìm</button>
-      </div>
-
-      <div id="tk-loading" style="display:none;justify-content:center;padding:20px;">
-        <div style="width:28px;height:28px;border:3px solid #2a3a32;border-top-color:#c9a227;border-radius:50%;animation:spin .7s linear infinite;"></div>
-      </div>
-
-      <div id="tk-ket-qua"></div>
+    <div id="tk-loading" style="display:none;justify-content:center;padding:20px;">
+      <div style="width:28px;height:28px;border:3px solid #2a3a32;border-top-color:#c9a227;border-radius:50%;animation:spin .7s linear infinite;"></div>
     </div>
+
+    <div id="tk-ket-qua"></div>
 
     <button class="btn btn-full" style="background:var(--neutral);color:var(--cream);margin-top:14px" onclick="diToiTab('trangChu')">← Trang chủ</button>
   </div>

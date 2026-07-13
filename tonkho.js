@@ -9,6 +9,8 @@ const TK_MSP_COL_INDEX = 6; // cột G trong sheet tháng (0-based: A=0...G=6)
 const TK_VUNG_THUONG_RANGES = [[6, 543], [637, 644]];
 const TK_VUNG_FOR_RANGES = [[544, 630]];
 
+const TK_STORAGE_KEY = "tk_google_auth";
+
 let tkTokenClient = null;
 let tkAccessToken = null;
 let tkTokenExpiryMs = 0;
@@ -25,6 +27,7 @@ function tkSheetName() {
 
 function tkSo(val) {
   if (val === "" || val === "-" || val === null || val === undefined) return 0;
+  if (typeof val === "string") val = val.replace(/,/g, ""); // bỏ dấu phẩy ngăn cách hàng nghìn, vd "1,234.5" -> "1234.5"
   const n = Number(val);
   return isNaN(n) ? 0 : n;
 }
@@ -53,6 +56,7 @@ function tkYeuCauToken(prompt) {
       if (resp.error) { reject(new Error(resp.error)); return; }
       tkAccessToken = resp.access_token;
       tkTokenExpiryMs = Date.now() + (Number(resp.expires_in || 3600) * 1000) - 60000;
+      tkLuuPhien();
       resolve(tkAccessToken);
     };
     tkTokenClient.requestAccessToken({ prompt: prompt });
@@ -86,9 +90,73 @@ async function tkLayThongTinTaiKhoan() {
     });
     const data = await res.json();
     tkEmail = data.email || null;
+    tkLuuPhien();
   } catch (e) {
     tkEmail = null;
   }
+}
+
+function tkLuuPhien() {
+  try {
+    localStorage.setItem(TK_STORAGE_KEY, JSON.stringify({
+      token: tkAccessToken,
+      expiry: tkTokenExpiryMs,
+      email: tkEmail
+    }));
+  } catch (e) {}
+}
+
+function tkXoaPhienLuu() {
+  try { localStorage.removeItem(TK_STORAGE_KEY); } catch (e) {}
+}
+
+function tkChoGoogleSanSang(timeoutMs) {
+  return new Promise(resolve => {
+    const batDau = Date.now();
+    (function kiemTra() {
+      if (typeof google !== "undefined" && google.accounts && google.accounts.oauth2) { resolve(true); return; }
+      if (Date.now() - batDau > timeoutMs) { resolve(false); return; }
+      setTimeout(kiemTra, 200);
+    })();
+  });
+}
+
+// Khôi phục đăng nhập đã lưu từ lần trước (nếu có), chạy khi mở app
+async function tkKhoiPhucPhien() {
+  let luu = null;
+  try { luu = JSON.parse(localStorage.getItem(TK_STORAGE_KEY) || "null"); } catch (e) {}
+
+  if (!luu || !luu.token) { tkCapNhatUIDangNhap(); return; }
+
+  tkAccessToken = luu.token;
+  tkTokenExpiryMs = luu.expiry || 0;
+  tkEmail = luu.email || null;
+
+  if (Date.now() < tkTokenExpiryMs) {
+    // Token còn hạn, dùng luôn, không cần hỏi gì
+    tkCapNhatUIDangNhap();
+    return;
+  }
+
+  // Token hết hạn: thử âm thầm xin token mới, không hiện popup đăng nhập
+  const sanSang = await tkChoGoogleSanSang(5000);
+  if (sanSang) {
+    try {
+      await tkYeuCauToken("");
+      await tkLayThongTinTaiKhoan();
+    } catch (e) {
+      tkAccessToken = null;
+      tkTokenExpiryMs = 0;
+      tkEmail = null;
+      tkXoaPhienLuu();
+    }
+  } else {
+    // Không tải kịp thư viện đăng nhập Google, coi như phải đăng nhập lại thủ công
+    tkAccessToken = null;
+    tkTokenExpiryMs = 0;
+    tkEmail = null;
+  }
+  tkCapNhatUIDangNhap();
 }
 
 function tkDangXuat() {
@@ -99,6 +167,7 @@ function tkDangXuat() {
   tkTokenExpiryMs = 0;
   tkEmail = null;
   tkListCache = null;
+  tkXoaPhienLuu();
   tkDongDropdown();
   tkCapNhatUIDangNhap();
   tkClearKetQua();
@@ -106,9 +175,24 @@ function tkDangXuat() {
 
 function tkCapNhatUIDangNhap() {
   const dangNhap = !!tkAccessToken;
-  document.getElementById("tk-chua-dang-nhap").style.display = dangNhap ? "none" : "block";
-  document.getElementById("tk-da-dang-nhap").style.display = dangNhap ? "block" : "none";
-  if (dangNhap) document.getElementById("tk-email").textContent = tkEmail || "Đã đăng nhập";
+
+  const btnTonKho = document.getElementById("btn-ton-kho");
+  const btnDangNhap = document.getElementById("btn-dang-nhap-gg");
+  const taiKhoanBox = document.getElementById("tk-taikhoan-trangchu");
+  const emailEl = document.getElementById("tk-email");
+
+  if (btnTonKho) btnTonKho.style.display = dangNhap ? "block" : "none";
+  if (btnDangNhap) btnDangNhap.style.display = dangNhap ? "none" : "block";
+  if (taiKhoanBox) taiKhoanBox.style.display = dangNhap ? "flex" : "none";
+  if (emailEl) emailEl.textContent = tkEmail || "Đã đăng nhập";
+
+  // Mất đăng nhập trong lúc đang ở trang Tồn kho -> đưa về Trang chủ
+  if (!dangNhap) {
+    const trangTonKho = document.getElementById("tonKho");
+    if (trangTonKho && trangTonKho.classList.contains("active") && typeof diToiTab === "function") {
+      diToiTab("trangChu");
+    }
+  }
 }
 
 function tkClearKetQua() {
@@ -342,6 +426,8 @@ document.addEventListener("click", e => {
 });
 
 function tkDoiNgay() {
+  const el = document.getElementById("tk-ngay");
+  if (el) el.blur();
   tkClearKetQua();
 }
 
@@ -354,6 +440,8 @@ function tkDoiNgay() {
     el.value = d.getFullYear() + "-" + m + "-" + day;
   }
 })();
+
+tkKhoiPhucPhien();
 
 window.tkOnInputTen = tkOnInputTen;
 window.tkOnKeydownTen = tkOnKeydownTen;
