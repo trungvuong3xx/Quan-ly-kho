@@ -423,6 +423,9 @@ function tkChonGoiY(item) {
 document.addEventListener("click", e => {
   const wrap = document.querySelector(".tk-ten-wrap");
   if (wrap && !wrap.contains(e.target)) tkDongDropdown();
+
+  const ngayEl = document.getElementById("tk-ngay");
+  if (ngayEl && e.target !== ngayEl) ngayEl.blur();
 });
 
 function tkDoiNgay() {
