@@ -16,6 +16,7 @@ let tkAccessToken = null;
 let tkTokenExpiryMs = 0;
 let tkEmail = null;
 let tkListCache = null;
+let tkListPromise = null;
 let tkFilteredList = [];
 let tkActiveIndex = -1;
 
@@ -37,6 +38,57 @@ function tkBoDau(str) {
     .replace(/[\u0300-\u036f]/g, "")
     .replace(/đ/g, "d")
     .replace(/Đ/g, "D");
+}
+
+// Chuẩn hoá để so khớp: bỏ dấu, viết hoa, gộp khoảng trắng thừa
+function tkChuanHoa(str) {
+  return tkBoDau(str).toUpperCase().replace(/\s+/g, " ").trim();
+}
+
+function tkLevenshtein(a, b) {
+  const m = a.length, n = b.length;
+  if (m === 0) return n;
+  if (n === 0) return m;
+  const dp = new Array(n + 1);
+  for (let j = 0; j <= n; j++) dp[j] = j;
+  for (let i = 1; i <= m; i++) {
+    let prev = dp[0];
+    dp[0] = i;
+    for (let j = 1; j <= n; j++) {
+      const tmp = dp[j];
+      dp[j] = a[i - 1] === b[j - 1] ? prev : 1 + Math.min(prev, dp[j - 1], dp[j]);
+      prev = tmp;
+    }
+  }
+  return dp[n];
+}
+
+// Từ khoá ngắn cho phép lệch 1 ký tự, dài hơn 8 ký tự cho phép lệch 2
+function tkNguongGanDung(doDai) {
+  return doDai <= 8 ? 1 : 2;
+}
+
+// Kiểm tra q có xuất hiện gần đúng trong chuoi không (chuoi, q đã tkChuanHoa)
+function tkKhopGanDung(chuoi, q) {
+  if (q.length < 3) return false; // từ khoá quá ngắn thì không dò gần đúng, tránh khớp lung tung
+  const nguong = tkNguongGanDung(q.length);
+  const minLen = Math.max(1, q.length - nguong);
+  const maxLen = Math.min(chuoi.length, q.length + nguong);
+  for (let len = minLen; len <= maxLen; len++) {
+    for (let i = 0; i + len <= chuoi.length; i++) {
+      if (tkLevenshtein(chuoi.substr(i, len), q) <= nguong) return true;
+    }
+  }
+  return false;
+}
+
+// Lọc danh sách theo từ khoá: ưu tiên khớp chính xác, chỉ dò gần đúng khi không có kết quả nào
+function tkLocDanhSach(list, query, gioiHan) {
+  const q = tkChuanHoa(query);
+  const chinhXac = list.filter(item => tkChuanHoa(item.ten).includes(q));
+  if (chinhXac.length > 0) return chinhXac.slice(0, gioiHan);
+  const ganDung = list.filter(item => tkKhopGanDung(tkChuanHoa(item.ten), q));
+  return ganDung.slice(0, gioiHan);
 }
 
 function tkKhoiTaoTokenClient() {
@@ -176,12 +228,12 @@ function tkDangXuat() {
 function tkCapNhatUIDangNhap() {
   const dangNhap = !!tkAccessToken;
 
-  const btnTonKho = document.getElementById("btn-ton-kho");
+  const khuQuanLy = document.getElementById("khu-quan-ly");
   const btnDangNhap = document.getElementById("btn-dang-nhap-gg");
   const taiKhoanBox = document.getElementById("tk-taikhoan-trangchu");
   const emailEl = document.getElementById("tk-email");
 
-  if (btnTonKho) btnTonKho.style.display = dangNhap ? "block" : "none";
+  if (khuQuanLy) khuQuanLy.style.display = dangNhap ? "block" : "none";
   if (btnDangNhap) btnDangNhap.style.display = dangNhap ? "none" : "block";
   if (taiKhoanBox) taiKhoanBox.style.display = dangNhap ? "flex" : "none";
   if (emailEl) emailEl.textContent = tkEmail || "Đã đăng nhập";
@@ -258,14 +310,11 @@ async function tkTimTonKho() {
     await tkLayToken();
 
     const sheetName = tkSheetName();
-    const qBoDau = tkBoDau(query).toUpperCase();
 
     const listData = await tkTaiDanhSachLIST();
     if (!listData) { tkBaoLoi("Không tải được sheet LIST."); return; }
 
-    const ungVien = listData
-      .filter(item => tkBoDau(item.ten).toUpperCase().includes(qBoDau))
-      .slice(0, 15);
+    const ungVien = tkLocDanhSach(listData, query, 15);
 
     if (ungVien.length === 0) {
       tkBaoLoi("Không tìm thấy sản phẩm nào khớp với \"" + query + "\".");
@@ -340,15 +389,22 @@ function tkHienKetQua(ketQua) {
 
 async function tkTaiDanhSachLIST() {
   if (tkListCache) return tkListCache;
-  try {
-    const rows = await tkGoiSheets("'" + TK_LIST_SHEET + "'!A2:B2000");
-    tkListCache = rows
-      .filter(r => r[0] && r[1])
-      .map(r => ({ ten: String(r[0]).trim(), msp: String(r[1]).trim() }));
-  } catch (e) {
-    tkListCache = null;
-  }
-  return tkListCache;
+  if (tkListPromise) return tkListPromise;
+  tkListPromise = (async () => {
+    let ketQua = null;
+    try {
+      const rows = await tkGoiSheets("'" + TK_LIST_SHEET + "'!A2:B2000");
+      ketQua = rows
+        .filter(r => r[0] && r[1])
+        .map(r => ({ ten: String(r[0]).trim(), msp: String(r[1]).trim() }));
+    } catch (e) {
+      ketQua = null;
+    }
+    tkListCache = ketQua;
+    tkListPromise = null;
+    return ketQua;
+  })();
+  return tkListPromise;
 }
 
 function tkDongDropdown() {
@@ -383,13 +439,22 @@ function tkRenderDropdown() {
 
 async function tkOnInputTen() {
   const query = document.getElementById("tk-ten").value.trim();
+  tkCapNhatNutXoa();
   if (!query) { tkDongDropdown(); return; }
+
+  if (!tkListCache) {
+    const el = document.getElementById("tk-dropdown");
+    el.innerHTML = '<div class="tk-dropdown-loading">Đang tải danh sách sản phẩm...</div>';
+    el.classList.add("show");
+  }
 
   const list = await tkTaiDanhSachLIST();
   if (!list) { tkDongDropdown(); return; }
 
-  const qBoDau = tkBoDau(query).toUpperCase();
-  tkFilteredList = list.filter(item => tkBoDau(item.ten).toUpperCase().includes(qBoDau)).slice(0, 30);
+  // Người dùng đã gõ thêm/xoá trong lúc chờ tải xong -> bỏ qua, đợi lần gọi mới nhất xử lý
+  if (document.getElementById("tk-ten").value.trim() !== query) return;
+
+  tkFilteredList = tkLocDanhSach(list, query, 30);
   tkActiveIndex = -1;
   tkRenderDropdown();
 }
@@ -414,8 +479,25 @@ function tkOnKeydownTen(e) {
   }
 }
 
+function tkCapNhatNutXoa() {
+  const input = document.getElementById("tk-ten");
+  const btn = document.getElementById("tk-clear-btn");
+  if (!input || !btn) return;
+  btn.classList.toggle("show", input.value.length > 0);
+}
+
+function tkXoaOTen() {
+  const input = document.getElementById("tk-ten");
+  input.value = "";
+  tkCapNhatNutXoa();
+  tkDongDropdown();
+  input.focus();
+}
+window.tkXoaOTen = tkXoaOTen;
+
 function tkChonGoiY(item) {
   document.getElementById("tk-ten").value = item.ten;
+  tkCapNhatNutXoa();
   tkDongDropdown();
   tkTimTonKho();
 }

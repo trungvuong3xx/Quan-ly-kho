@@ -71,9 +71,16 @@
       <button class="btn btn-blue" onclick="diToiTab('quetQR')">Quét QR</button>
       <button class="btn btn-blue" onclick="diToiTab('kiemKe')">Kiểm kê</button>
       <button class="btn btn-blue" onclick="diToiTab('chiFor')">Chỉ For</button>
-      <button class="btn btn-blue" id="btn-ton-kho" style="grid-column: span 2; display:none" onclick="chuyenTrangKhongNav('tonKho')">Tồn kho</button>
-      <button class="btn btn-blue" id="btn-dang-nhap-gg" style="grid-column: span 2;" onclick="tkDangNhap()">Đăng nhập Google</button>
     </div>
+
+    <div id="khu-quan-ly" style="display:none">
+      <div class="tk-khu-title">Chỉ dành cho quản lý</div>
+      <div class="trangchu-grid">
+        <button class="btn btn-blue" id="btn-ton-kho" style="grid-column: span 2;" onclick="chuyenTrangKhongNav('tonKho')">Tồn kho</button>
+      </div>
+    </div>
+
+    <button class="btn btn-blue btn-full" id="btn-dang-nhap-gg" style="margin-top:14px" onclick="tkDangNhap()">Đăng nhập Google</button>
     <div id="tk-login-loading" style="display:none;justify-content:center;padding:16px;">
       <div style="width:24px;height:24px;border:3px solid #2a3a32;border-top-color:#c9a227;border-radius:50%;animation:spin .7s linear infinite;"></div>
     </div>
@@ -104,6 +111,7 @@
       <div class="tk-ten-wrap" style="flex:1">
         <input type="text" id="tk-ten" placeholder="Nhập tên để tra tồn" autocomplete="off"
           oninput="tkOnInputTen()" onkeydown="tkOnKeydownTen(event)">
+        <button type="button" class="tk-clear-btn" id="tk-clear-btn" onclick="tkXoaOTen()" aria-label="Xoá">✕</button>
         <div id="tk-dropdown" class="tk-dropdown"></div>
       </div>
       <button class="btn btn-blue" onclick="tkTimTonKho()">Tìm</button>

@@ -418,6 +418,45 @@ select:focus {
 }
 
 .tk-ten-wrap { position: relative; }
+.tk-ten-wrap input[type=text] { padding-right: 40px; }
+
+.tk-clear-btn {
+  display: none;
+  position: absolute;
+  top: 50%;
+  right: 8px;
+  transform: translateY(-50%);
+  width: 28px;
+  height: 28px;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--cream-faint);
+  font-size: 15px;
+  cursor: pointer;
+  z-index: 5;
+}
+.tk-clear-btn.show { display: flex; }
+.tk-clear-btn:hover { background: rgba(237, 230, 214, .08); color: var(--cream); }
+
+.tk-dropdown-loading {
+  padding: 12px 14px;
+  color: var(--cream-soft);
+  font-size: 13px;
+  font-style: italic;
+}
+
+.tk-khu-title {
+  color: var(--cream-faint);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  margin: 18px 0 10px;
+  padding-top: 16px;
+  border-top: 1px dashed var(--line-soft);
+}
 
 .tk-dropdown {
   display: none;
