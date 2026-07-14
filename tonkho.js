@@ -229,12 +229,12 @@ function tkCapNhatUIDangNhap() {
   const dangNhap = !!tkAccessToken;
 
   const khuQuanLy = document.getElementById("khu-quan-ly");
-  const btnDangNhap = document.getElementById("btn-dang-nhap-gg");
+  const khuDangNhap = document.getElementById("khu-dang-nhap");
   const taiKhoanBox = document.getElementById("tk-taikhoan-trangchu");
   const emailEl = document.getElementById("tk-email");
 
   if (khuQuanLy) khuQuanLy.style.display = dangNhap ? "block" : "none";
-  if (btnDangNhap) btnDangNhap.style.display = dangNhap ? "none" : "block";
+  if (khuDangNhap) khuDangNhap.style.display = dangNhap ? "none" : "block";
   if (taiKhoanBox) taiKhoanBox.style.display = dangNhap ? "flex" : "none";
   if (emailEl) emailEl.textContent = tkEmail || "Đã đăng nhập";
 
