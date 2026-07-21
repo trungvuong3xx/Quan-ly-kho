@@ -1,4 +1,4 @@
-const API_CX5 = "https://script.google.com/macros/s/AKfycbwrWdGYLI8E0t9Z7ePiecupzFCq2y9g8Iwyb0k81MYc5cpEQyzgJmEBb34gQzZwwrfO/exec";
+const API_CX5 = "URL_WEB_APP_CHUA_DIEN";
 
 const CX5_LICHSU_KEY = "cx5_lich_su";
 const CX5_LICHSU_SO_NGAY_GIU = 3;
@@ -8,6 +8,8 @@ let ngayCX5 = null;
 let idPhienHienTaiC5 = null;
 let seqCX5 = 0;
 let dangKetThucCX5 = false;
+let luotDemCX5 = 0;
+let luotHienTaiCX5 = null;
 
 let mspDataCX5 = [];
 let mspCacheX5 = {};
@@ -15,6 +17,9 @@ let filteredCX5 = [];
 let activeIndexCX5 = -1;
 
 let doiChieuCX5 = {};
+let dangThemQCDoiChieuCX5 = false;
+let filteredThemCX5 = [];
+let activeIndexThemCX5 = -1;
 
 async function callApiCX5(body) {
   const res = await fetch(API_CX5, { method: "POST", body: JSON.stringify(body) });
@@ -33,7 +38,8 @@ function luuPhienDoDangCX5() {
   try {
     localStorage.setItem("cx5_phien_dodang", JSON.stringify({
       phienCX5, ngayCX5, capNhat: new Date().toISOString(),
-      idPhienHienTaiC5, seqCX5, doiChieuCX5, dangKetThucCX5
+      idPhienHienTaiC5, seqCX5, doiChieuCX5, dangKetThucCX5,
+      luotDemCX5, luotHienTaiCX5
     }));
   } catch (e) {}
 }
@@ -93,11 +99,14 @@ async function batDauCX5() {
   idPhienHienTaiC5 = Date.now() + "-" + Math.random().toString(36).slice(2);
   dangKetThucCX5 = false;
   doiChieuCX5 = {};
+  luotDemCX5 = 0;
+  luotHienTaiCX5 = null;
 
   document.getElementById("cx5-form").style.display = "none";
   document.getElementById("cx5-doichieu").style.display = "none";
   document.getElementById("cx5-nhap").style.display = "block";
   document.getElementById("cx5-ngay-hienthi").textContent = ngayCX5;
+  resetKhoaQCCX5();
 
   await taiDanhSachQCX5(ngayCX5, false);
   renderBangChiTietCX5();
@@ -111,15 +120,43 @@ async function khoiPhucCX5(state) {
   seqCX5 = state.seqCX5 || phienCX5.reduce((m, r) => Math.max(m, r.seq), 0);
   doiChieuCX5 = state.doiChieuCX5 || {};
   dangKetThucCX5 = !!state.dangKetThucCX5;
+  luotDemCX5 = state.luotDemCX5 || phienCX5.reduce((m, r) => Math.max(m, r.luot || 0), 0);
+  luotHienTaiCX5 = state.luotHienTaiCX5 || null;
 
   document.getElementById("cx5-form").style.display = "none";
   document.getElementById("cx5-doichieu").style.display = "none";
   document.getElementById("cx5-nhap").style.display = "block";
   document.getElementById("cx5-ngay-hienthi").textContent = ngayCX5;
+  resetKhoaQCCX5();
 
   await taiDanhSachQCX5(ngayCX5, false);
   renderBangChiTietCX5();
   renderBangTongHopCX5();
+}
+
+// ── Khoá/mở ô Quy cách: 1 lượt giữ nguyên quy cách, chỉ đổi số kg ──
+function khoaQCCX5(msp, ten) {
+  document.getElementById("cx5-qc-tim-wrap").style.display = "none";
+  const khoa = document.getElementById("cx5-qc-khoa");
+  khoa.style.display = "flex";
+  document.getElementById("cx5-qc-khoa-ten").textContent = ten + " (" + msp + ")";
+}
+
+function moKhoaQCCX5() {
+  document.getElementById("cx5-qc-khoa").style.display = "none";
+  document.getElementById("cx5-qc-tim-wrap").style.display = "block";
+  const ten = document.getElementById("cx5-ten");
+  ten.value = "";
+  document.getElementById("cx5-msp").value = "";
+  closeDropdownCX5();
+  ten.focus();
+}
+
+function resetKhoaQCCX5() {
+  document.getElementById("cx5-qc-khoa").style.display = "none";
+  document.getElementById("cx5-qc-tim-wrap").style.display = "block";
+  document.getElementById("cx5-ten").value = "";
+  document.getElementById("cx5-msp").value = "";
 }
 
 function onInputCX5() {
@@ -160,6 +197,7 @@ function chonQCX5(item) {
   document.getElementById("cx5-ten").value = item.ten;
   document.getElementById("cx5-msp").value = item.msp;
   closeDropdownCX5();
+  khoaQCCX5(item.msp, item.ten);
   document.getElementById("cx5-kg").focus();
 }
 
@@ -191,16 +229,19 @@ function themDongCX5() {
   if (!msp || !ten) { showCanhBaoCX5("Chưa chọn quy cách hợp lệ"); return; }
   if (!kg || kg <= 0) { showCanhBaoCX5("Nhập số kg hợp lệ"); return; }
 
+  if (!luotHienTaiCX5 || luotHienTaiCX5.msp !== msp || luotHienTaiCX5.ten !== ten) {
+    luotDemCX5 += 1;
+    luotHienTaiCX5 = { msp, ten, id: luotDemCX5 };
+  }
+
   seqCX5 += 1;
-  phienCX5.push({ seq: seqCX5, msp, ten, kg, thoiGian: new Date(), daDongBo: false });
+  phienCX5.push({ seq: seqCX5, msp, ten, kg, luot: luotHienTaiCX5.id, thoiGian: new Date(), daDongBo: false });
   luuPhienDoDangCX5();
   renderBangChiTietCX5();
   renderBangTongHopCX5();
 
   document.getElementById("cx5-kg").value = "";
-  document.getElementById("cx5-ten").value = "";
-  document.getElementById("cx5-msp").value = "";
-  document.getElementById("cx5-ten").focus();
+  document.getElementById("cx5-kg").focus();
 }
 
 function xoaDongCX5(seq) {
@@ -213,38 +254,86 @@ function xoaDongCX5(seq) {
   renderBangTongHopCX5();
 }
 
-function suaDongCX5(seq, inputEl) {
-  const dong = phienCX5.find(r => r.seq === seq);
-  if (!dong) return;
-  if (dong.daDongBo) { inputEl.value = dong.kg; showCanhBaoCX5("Dòng đã đồng bộ, không thể sửa"); return; }
-  const kg = parseFloat(inputEl.value);
-  if (!kg || kg <= 0) { inputEl.value = dong.kg; showCanhBaoCX5("Số kg không hợp lệ"); return; }
-  dong.kg = kg;
-  luuPhienDoDangCX5();
-  renderBangTongHopCX5();
-}
-
 function renderBangChiTietCX5() {
   document.getElementById("cx5-dem").textContent = "Đã nhập: " + phienCX5.length + " dòng";
   const tbody = document.getElementById("cx5-tbody-chitiet");
   if (phienCX5.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--cream-soft);font-style:italic">Chưa có dòng nào</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--cream-soft);font-style:italic">Chưa có dòng nào</td></tr>';
     return;
   }
-  tbody.innerHTML = phienCX5.slice().reverse().map(r => {
-    const kgCell = r.daDongBo
-      ? r.kg
-      : '<input type="number" min="0" step="0.1" value="' + r.kg + '" style="width:70px" onchange="suaDongCX5(' + r.seq + ', this)">';
-    const xoaCell = r.daDongBo
-      ? '<span style="color:var(--success)">✓</span>'
-      : '<button class="cx5-del-btn" onclick="xoaDongCX5(' + r.seq + ')" title="Xoá">✕</button>';
+
+  const luotMap = new Map();
+  const thuTuLuot = [];
+  phienCX5.forEach(r => {
+    if (!luotMap.has(r.luot)) { luotMap.set(r.luot, []); thuTuLuot.push(r.luot); }
+    luotMap.get(r.luot).push(r);
+  });
+
+  tbody.innerHTML = thuTuLuot.slice().reverse().map(lid => {
+    const rows = luotMap.get(lid);
+    const first = rows[0];
+    const bao = rows.length;
+    const kg = Math.round(rows.reduce((s, r) => s + r.kg, 0) * 100) / 100;
     return "<tr>" +
-      "<td>" + r.msp + "</td>" +
-      "<td>" + r.ten + "</td>" +
-      "<td>" + kgCell + "</td>" +
-      "<td>" + xoaCell + "</td>" +
+      "<td>" + lid + "</td>" +
+      "<td>" + first.msp + "</td>" +
+      "<td>" + first.ten + "</td>" +
+      "<td>" + bao + "</td>" +
+      "<td>" + kg + "</td>" +
+      '<td class="cx5-sua-luot" onclick="moSuaLuotCX5(' + lid + ')">✏️</td>' +
       "</tr>";
   }).join("");
+}
+
+// ── Sửa các số kg lẻ trong 1 lượt (mở overlay) ──
+let luotDangSuaCX5 = null;
+
+function moSuaLuotCX5(luotId) {
+  luotDangSuaCX5 = luotId;
+  renderSuaLuotCX5();
+  document.getElementById("cx5-sl-them-kg").value = "";
+  document.getElementById("cx5-overlay-luot").classList.add("show");
+}
+
+function dongSuaLuotCX5() {
+  document.getElementById("cx5-overlay-luot").classList.remove("show");
+  luotDangSuaCX5 = null;
+}
+
+function renderSuaLuotCX5() {
+  const rows = phienCX5.filter(r => r.luot === luotDangSuaCX5);
+  if (rows.length === 0) { dongSuaLuotCX5(); return; }
+  document.getElementById("cx5-sl-ten").textContent = rows[0].msp + " · " + rows[0].ten;
+  const box = document.getElementById("cx5-sl-chitiet");
+  box.innerHTML = rows.map(r => {
+    const xoa = r.daDongBo ? "" : ' <span onclick="xoaDongTrongLuotCX5(' + r.seq + ')">✕</span>';
+    return '<span class="cx5-so-sx' + (r.daDongBo ? " cx5-so-sx-dadongbo" : "") + '">' + r.kg + xoa + '</span>';
+  }).join("");
+}
+
+function xoaDongTrongLuotCX5(seq) {
+  xoaDongCX5(seq);
+  renderSuaLuotCX5();
+}
+
+function themKgVaoLuotCX5() {
+  if (luotDangSuaCX5 == null) return;
+  const rows = phienCX5.filter(r => r.luot === luotDangSuaCX5);
+  if (rows.length === 0) { dongSuaLuotCX5(); return; }
+  const input = document.getElementById("cx5-sl-them-kg");
+  const kg = parseFloat(input.value);
+  if (!kg || kg <= 0) { showCanhBaoCX5("Nhập số kg hợp lệ"); return; }
+
+  const first = rows[0];
+  seqCX5 += 1;
+  phienCX5.push({ seq: seqCX5, msp: first.msp, ten: first.ten, kg, luot: luotDangSuaCX5, thoiGian: new Date(), daDongBo: false });
+  luuPhienDoDangCX5();
+  renderBangChiTietCX5();
+  renderBangTongHopCX5();
+  renderSuaLuotCX5();
+
+  input.value = "";
+  input.focus();
 }
 
 function tomTatCX5() {
@@ -306,13 +395,90 @@ function moDoiChieuCX5() {
   renderDoiChieuCX5();
 }
 
-function themQCDoiChieuCX5() {
-  const ten = prompt("Nhập tên quy cách cần thêm vào đối chiếu:");
-  if (!ten) return;
-  const found = mspDataCX5.find(i => i.ten.trim().toLowerCase() === ten.trim().toLowerCase());
-  if (!found) { showCanhBaoCX5("Không tìm thấy quy cách này"); return; }
-  const key = keyQCX5(found.msp, found.ten);
-  if (!doiChieuCX5[key]) doiChieuCX5[key] = { msp: found.msp, ten: found.ten, sxEntries: [] };
+function moThemQCDoiChieuCX5() {
+  dangThemQCDoiChieuCX5 = true;
+  renderDoiChieuCX5();
+  setTimeout(() => {
+    const el = document.getElementById("cx5-dc-them-ten");
+    if (el) el.focus();
+  }, 0);
+}
+
+function huyThemQCDoiChieuCX5() {
+  dangThemQCDoiChieuCX5 = false;
+  filteredThemCX5 = [];
+  activeIndexThemCX5 = -1;
+  renderDoiChieuCX5();
+}
+
+function onInputThemQCCX5() {
+  document.getElementById("cx5-dc-them-msp").value = "";
+  const q = boDauCX5(document.getElementById("cx5-dc-them-ten").value.trim()).toUpperCase();
+  if (!q) { filteredThemCX5 = []; renderDropdownThemQCCX5(); return; }
+  const daCo = new Set(Object.keys(doiChieuCX5));
+  filteredThemCX5 = mspDataCX5
+    .filter(item => boDauCX5(item.ten).toUpperCase().includes(q) && !daCo.has(keyQCX5(item.msp, item.ten)))
+    .sort((a, b) => (b.count || 0) - (a.count || 0))
+    .slice(0, 50);
+  activeIndexThemCX5 = -1;
+  renderDropdownThemQCCX5();
+}
+
+function renderDropdownThemQCCX5() {
+  const el = document.getElementById("cx5-dc-them-dropdown");
+  if (!el) return;
+  if (filteredThemCX5.length === 0) { el.classList.remove("open"); el.innerHTML = ""; return; }
+  el.innerHTML = filteredThemCX5.map((item, idx) =>
+    '<div class="cx5-dropdown-item' + (idx === activeIndexThemCX5 ? " active" : "") + '" data-idx="' + idx + '">' + item.ten + "</div>"
+  ).join("");
+  el.classList.add("open");
+  Array.from(el.children).forEach(child => {
+    child.addEventListener("mousedown", e => {
+      e.preventDefault();
+      chonQCThemDoiChieuCX5(filteredThemCX5[parseInt(child.getAttribute("data-idx"), 10)]);
+    });
+  });
+}
+
+function closeDropdownThemQCCX5() {
+  filteredThemCX5 = [];
+  activeIndexThemCX5 = -1;
+  const el = document.getElementById("cx5-dc-them-dropdown");
+  if (el) { el.classList.remove("open"); el.innerHTML = ""; }
+}
+
+function chonQCThemDoiChieuCX5(item) {
+  document.getElementById("cx5-dc-them-ten").value = item.ten;
+  document.getElementById("cx5-dc-them-msp").value = item.msp;
+  closeDropdownThemQCCX5();
+}
+
+function onKeydownThemQCCX5(e) {
+  if (e.key === "ArrowDown") {
+    if (!filteredThemCX5.length) return;
+    e.preventDefault();
+    activeIndexThemCX5 = Math.min(activeIndexThemCX5 + 1, filteredThemCX5.length - 1);
+    renderDropdownThemQCCX5();
+  } else if (e.key === "ArrowUp") {
+    if (!filteredThemCX5.length) return;
+    e.preventDefault();
+    activeIndexThemCX5 = Math.max(activeIndexThemCX5 - 1, 0);
+    renderDropdownThemQCCX5();
+  } else if (e.key === "Enter") {
+    e.preventDefault();
+    if (filteredThemCX5.length) chonQCThemDoiChieuCX5(filteredThemCX5[activeIndexThemCX5 >= 0 ? activeIndexThemCX5 : 0]);
+  } else if (e.key === "Escape") {
+    closeDropdownThemQCCX5();
+  }
+}
+
+function xacNhanThemQCDoiChieuCX5() {
+  const msp = document.getElementById("cx5-dc-them-msp").value;
+  const ten = document.getElementById("cx5-dc-them-ten").value.trim();
+  if (!msp || !ten) { showCanhBaoCX5("Chưa chọn quy cách hợp lệ"); return; }
+  const key = keyQCX5(msp, ten);
+  if (!doiChieuCX5[key]) doiChieuCX5[key] = { msp, ten, sxEntries: [] };
+  dangThemQCDoiChieuCX5 = false;
   luuPhienDoDangCX5();
   renderDoiChieuCX5();
 }
@@ -342,19 +508,28 @@ function renderDoiChieuCX5() {
 
   const container = document.getElementById("cx5-doichieu-list");
   const keys = Object.keys(doiChieuCX5);
+  let coTheDongBo = false;
+  let html = "";
+
   if (keys.length === 0) {
-    container.innerHTML = '<div style="text-align:center;color:var(--cream-soft);padding:16px 0">Chưa có quy cách nào</div>';
+    html += '<div style="text-align:center;color:var(--cream-soft);padding:16px 0">Chưa có quy cách nào</div>';
   } else {
-    container.innerHTML = keys.map(key => {
+    html += keys.map(key => {
       const kho = gom[key] || { bao: 0, kg: 0, baoDaDongBo: 0 };
       const dc = doiChieuCX5[key];
       const sxTong = dc.sxEntries.reduce((s, v) => s + v, 0);
       const khop = Math.abs(sxTong - kho.kg) < 1e-9 && kho.kg > 0;
       const conDeDongBo = (kho.bao - (kho.baoDaDongBo || 0)) > 0;
+      if (khop && conDeDongBo) coTheDongBo = true;
 
       const dsSo = dc.sxEntries.map((v, idx) =>
         '<span class="cx5-so-sx">' + v + ' <span onclick="xoaSoSXCX5(\'' + key + '\',' + idx + ')">✕</span></span>'
       ).join("");
+
+      let ketQuaHtml;
+      if (!conDeDongBo) ketQuaHtml = '<div class="cx5-dc-ketqua cx5-dc-khop">Đã đồng bộ đủ</div>';
+      else if (khop) ketQuaHtml = '<div class="cx5-dc-ketqua cx5-dc-khop">Khớp hoàn toàn — sẵn sàng đồng bộ</div>';
+      else ketQuaHtml = '<div class="cx5-dc-ketqua cx5-dc-lech">Lệch: ' + (sxTong - kho.kg).toFixed(1) + '</div>';
 
       return '<div class="cx5-dc-card">' +
         '<div class="cx5-dc-ten">' + dc.ten + ' <span class="cx5-dc-msp">(' + dc.msp + ')</span></div>' +
@@ -368,17 +543,31 @@ function renderDoiChieuCX5() {
         '<div style="margin-top:8px">' + dsSo + '</div>' +
         '<div class="cx5-dc-tong">Tổng SX: <b>' + sxTong.toFixed(1) + '</b></div>' +
         '</div>' +
-        '<div class="cx5-dc-ketqua ' + (khop ? "cx5-dc-khop" : "cx5-dc-lech") + '">' +
-        (khop ? "Khớp hoàn toàn" : "Lệch: " + (sxTong - kho.kg).toFixed(1)) +
-        '</div>' +
-        '<button class="btn btn-green btn-full" ' + (khop && conDeDongBo ? "" : "disabled") +
-        ' onclick="dongBoCX5(\'' + key + '\')">' +
-        (conDeDongBo ? "Đồng bộ" : "Đã đồng bộ đủ") + '</button>' +
+        ketQuaHtml +
         '</div>';
     }).join("");
   }
 
-  container.innerHTML += '<button class="btn btn-full" style="background:var(--neutral);color:var(--cream);margin-top:6px" onclick="themQCDoiChieuCX5()">+ Thêm quy cách</button>';
+  if (dangThemQCDoiChieuCX5) {
+    html += '<div class="cx5-dc-them-row">' +
+      '<label>Thêm quy cách</label>' +
+      '<div class="cx5-ten-wrap">' +
+      '<input type="text" id="cx5-dc-them-ten" placeholder="Gõ để tìm quy cách..." autocomplete="off" oninput="onInputThemQCCX5()" onkeydown="onKeydownThemQCCX5(event)">' +
+      '<div id="cx5-dc-them-dropdown" class="cx5-dropdown"></div>' +
+      '</div>' +
+      '<input type="hidden" id="cx5-dc-them-msp">' +
+      '<div style="display:flex;gap:8px;margin-top:10px">' +
+      '<button class="btn btn-green" style="flex:1" onclick="xacNhanThemQCDoiChieuCX5()">Thêm</button>' +
+      '<button class="btn" style="flex:1;background:var(--neutral);color:var(--cream)" onclick="huyThemQCDoiChieuCX5()">Huỷ</button>' +
+      '</div>' +
+      '</div>';
+  } else {
+    html += '<button class="btn btn-full" style="background:var(--neutral);color:var(--cream)" onclick="moThemQCDoiChieuCX5()">+ Thêm quy cách</button>';
+  }
+
+  html += '<button id="cx5-btn-dongbo-tatca" class="btn btn-blue btn-full" ' + (coTheDongBo ? "" : "disabled") + ' onclick="dongBoTatCaCX5()">Đồng bộ</button>';
+
+  container.innerHTML = html;
 }
 
 function docPendingCX5() {
@@ -389,11 +578,11 @@ function luuPendingCX5(list) {
   try { localStorage.setItem("cx5_pending_saves", JSON.stringify(list)); } catch (e) {}
 }
 
-async function dongBoCX5(key) {
+async function dongBoMotQC_(key) {
   const dc = doiChieuCX5[key];
-  if (!dc) return;
+  if (!dc) return true;
   const chuaDongBo = phienCX5.filter(r => keyQCX5(r.msp, r.ten) === key && !r.daDongBo);
-  if (chuaDongBo.length === 0) { showCanhBaoCX5("Không có dòng nào cần đồng bộ"); return; }
+  if (chuaDongBo.length === 0) return true;
 
   const bao = chuaDongBo.length;
   const kg = chuaDongBo.reduce((s, r) => s + r.kg, 0);
@@ -405,16 +594,41 @@ async function dongBoCX5(key) {
 
   try {
     const r = await callApiCX5({ action: "submitEntryX5", payload });
-    if (!r.success) { showCanhBaoCX5(dc.ten + ": " + r.message); return; }
+    if (!r.success) { showCanhBaoCX5(dc.ten + ": " + r.message); return false; }
     chuaDongBo.forEach(row => { row.daDongBo = true; });
     luuVaoLichSuCX5(dc, kgList, kg);
+    return true;
   } catch (e) {
     const pending = docPendingCX5();
     pending.push(payload);
     luuPendingCX5(pending);
     chuaDongBo.forEach(row => { row.daDongBo = true; });
     luuVaoLichSuCX5(dc, kgList, kg);
-    showCanhBaoCX5("Mất mạng — đã lưu tạm, sẽ tự gửi lại sau");
+    return true;
+  }
+}
+
+async function dongBoTatCaCX5() {
+  const gom = tomTatCX5();
+  const dsCanDongBo = Object.keys(doiChieuCX5).filter(key => {
+    const kho = gom[key];
+    if (!kho) return false;
+    const dc = doiChieuCX5[key];
+    const sxTong = dc.sxEntries.reduce((s, v) => s + v, 0);
+    const khop = Math.abs(sxTong - kho.kg) < 1e-9 && kho.kg > 0;
+    const conDeDongBo = (kho.bao - (kho.baoDaDongBo || 0)) > 0;
+    return khop && conDeDongBo;
+  });
+
+  if (dsCanDongBo.length === 0) { showCanhBaoCX5("Không có quy cách nào đủ điều kiện đồng bộ"); return; }
+
+  const btn = document.getElementById("cx5-btn-dongbo-tatca");
+  if (btn) { btn.disabled = true; btn.textContent = "Đang đồng bộ..."; }
+
+  let thanhCong = 0, thatBai = 0;
+  for (const key of dsCanDongBo) {
+    const ok = await dongBoMotQC_(key);
+    if (ok) thanhCong += 1; else thatBai += 1;
   }
 
   luuPhienDoDangCX5();
@@ -422,6 +636,9 @@ async function dongBoCX5(key) {
   renderBangTongHopCX5();
   renderDoiChieuCX5();
   if (typeof capNhatTrangThaiMang === "function") capNhatTrangThaiMang();
+
+  if (thatBai === 0) showCanhBaoCX5("Đã đồng bộ " + thanhCong + " quy cách");
+  else showCanhBaoCX5("Đồng bộ " + thanhCong + " thành công, " + thatBai + " lỗi");
 }
 
 async function guiLaiPendingCX5() {
@@ -513,14 +730,22 @@ window.huyPhienChiX5 = huyPhienChiX5;
 window.batDauCX5 = batDauCX5;
 window.themDongCX5 = themDongCX5;
 window.xoaDongCX5 = xoaDongCX5;
-window.suaDongCX5 = suaDongCX5;
+window.moKhoaQCCX5 = moKhoaQCCX5;
+window.moSuaLuotCX5 = moSuaLuotCX5;
+window.dongSuaLuotCX5 = dongSuaLuotCX5;
+window.xoaDongTrongLuotCX5 = xoaDongTrongLuotCX5;
+window.themKgVaoLuotCX5 = themKgVaoLuotCX5;
 window.xoayBangCX5 = xoayBangCX5;
 window.ketThucPhienCX5 = ketThucPhienCX5;
 window.dongDoiChieuCX5 = dongDoiChieuCX5;
-window.themQCDoiChieuCX5 = themQCDoiChieuCX5;
+window.moThemQCDoiChieuCX5 = moThemQCDoiChieuCX5;
+window.huyThemQCDoiChieuCX5 = huyThemQCDoiChieuCX5;
+window.onInputThemQCCX5 = onInputThemQCCX5;
+window.onKeydownThemQCCX5 = onKeydownThemQCCX5;
+window.xacNhanThemQCDoiChieuCX5 = xacNhanThemQCDoiChieuCX5;
 window.themSoSXCX5 = themSoSXCX5;
 window.xoaSoSXCX5 = xoaSoSXCX5;
-window.dongBoCX5 = dongBoCX5;
+window.dongBoTatCaCX5 = dongBoTatCaCX5;
 
 window.addEventListener("load", function () {
   const today = new Date().toISOString().split("T")[0];
@@ -534,6 +759,6 @@ window.addEventListener("load", function () {
     tenInput.addEventListener("keydown", onKeydownCX5);
   }
   document.addEventListener("click", e => {
-    if (!e.target.closest(".cx5-ten-wrap")) closeDropdownCX5();
+    if (!e.target.closest(".cx5-ten-wrap")) { closeDropdownCX5(); closeDropdownThemQCCX5(); }
   });
 });
