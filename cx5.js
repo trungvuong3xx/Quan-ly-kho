@@ -1,4 +1,4 @@
-const API_CX5 = "URL_WEB_APP_CHUA_DIEN";
+const API_CX5 = "https://script.google.com/macros/s/AKfycbwrWdGYLI8E0t9Z7ePiecupzFCq2y9g8Iwyb0k81MYc5cpEQyzgJmEBb34gQzZwwrfO/exec";
 
 const CX5_LICHSU_KEY = "cx5_lich_su";
 const CX5_LICHSU_SO_NGAY_GIU = 3;
