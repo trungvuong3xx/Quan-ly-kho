@@ -341,28 +341,50 @@ window.onload = function() {
   if (typeof donDepLichSuCX1 === "function") donDepLichSuCX1();
 };
 
-// ── Trang chủ: hiện phiên dở dang (hiện hỗ trợ Chỉ For) ────
+// ── Trang chủ: hiện phiên dở dang (hỗ trợ cả Chỉ For và Chỉ X5) ────
 function capNhatTrangChu() {
   const card = document.getElementById("phien-dodang-card");
   const noidung = document.getElementById("phien-dodang-noidung");
-  if (!card || !noidung) return;
+  if (card && noidung) {
+    let state = null;
+    try { state = JSON.parse(localStorage.getItem("cx1_phien_dodang")); } catch (e) {}
 
-  let state = null;
-  try { state = JSON.parse(localStorage.getItem("cx1_phien_dodang")); } catch (e) {}
+    if (state && Array.isArray(state.phienCX1) && state.phienCX1.length > 0) {
+      const gioCapNhat = state.capNhat
+        ? new Date(state.capNhat).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" })
+        : "—";
+      noidung.innerHTML = `
+        <div class="irow"><span class="ilabel">Loại</span><span class="ivalue">Chỉ For</span></div>
+        <div class="irow"><span class="ilabel">Ngày</span><span class="ivalue">${state.ngayCX1 || "—"}</span></div>
+        <div class="irow"><span class="ilabel">Đã quét</span><span class="ivalue">${state.phienCX1.length} mã</span></div>
+        <div class="irow"><span class="ilabel">Cập nhật lúc</span><span class="ivalue">${gioCapNhat}</span></div>
+      `;
+      card.style.display = "block";
+    } else {
+      card.style.display = "none";
+    }
+  }
 
-  if (state && Array.isArray(state.phienCX1) && state.phienCX1.length > 0) {
-    const gioCapNhat = state.capNhat
-      ? new Date(state.capNhat).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" })
-      : "—";
-    noidung.innerHTML = `
-      <div class="irow"><span class="ilabel">Loại</span><span class="ivalue">Chỉ For</span></div>
-      <div class="irow"><span class="ilabel">Ngày</span><span class="ivalue">${state.ngayCX1 || "—"}</span></div>
-      <div class="irow"><span class="ilabel">Đã quét</span><span class="ivalue">${state.phienCX1.length} mã</span></div>
-      <div class="irow"><span class="ilabel">Cập nhật lúc</span><span class="ivalue">${gioCapNhat}</span></div>
-    `;
-    card.style.display = "block";
-  } else {
-    card.style.display = "none";
+  const cardX5 = document.getElementById("phien-dodang-card-x5");
+  const noidungX5 = document.getElementById("phien-dodang-noidung-x5");
+  if (cardX5 && noidungX5) {
+    let stateX5 = null;
+    try { stateX5 = JSON.parse(localStorage.getItem("cx5_phien_dodang")); } catch (e) {}
+
+    if (stateX5 && Array.isArray(stateX5.phienCX5) && stateX5.phienCX5.length > 0) {
+      const gioCapNhatX5 = stateX5.capNhat
+        ? new Date(stateX5.capNhat).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" })
+        : "—";
+      noidungX5.innerHTML = `
+        <div class="irow"><span class="ilabel">Loại</span><span class="ivalue">Chỉ X5</span></div>
+        <div class="irow"><span class="ilabel">Ngày</span><span class="ivalue">${stateX5.ngayCX5 || "—"}</span></div>
+        <div class="irow"><span class="ilabel">Đã nhập</span><span class="ivalue">${stateX5.phienCX5.length} dòng</span></div>
+        <div class="irow"><span class="ilabel">Cập nhật lúc</span><span class="ivalue">${gioCapNhatX5}</span></div>
+      `;
+      cardX5.style.display = "block";
+    } else {
+      cardX5.style.display = "none";
+    }
   }
 }
 window.capNhatTrangChu = capNhatTrangChu;
@@ -381,6 +403,7 @@ function demPendingMang() {
   let tong = 0;
   try { tong += JSON.parse(localStorage.getItem("cx1_pending_saves") || "[]").length; } catch (e) {}
   try { tong += JSON.parse(localStorage.getItem("kk_pending_saves") || "[]").length; } catch (e) {}
+  try { tong += JSON.parse(localStorage.getItem("cx5_pending_saves") || "[]").length; } catch (e) {}
   return tong;
 }
 

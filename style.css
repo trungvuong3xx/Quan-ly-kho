@@ -667,3 +667,156 @@ select:focus {
 .page { padding-bottom: 88px; }
 
 @keyframes spin { to { transform: rotate(360deg); } }
+
+/* ============================================================
+   CHỈ X5
+   ============================================================ */
+.cx5-ten-wrap { position: relative; }
+
+.cx5-dropdown {
+  display: none;
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  margin-top: 6px;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-top: 2px solid var(--brass);
+  border-radius: 6px;
+  max-height: 240px;
+  overflow-y: auto;
+  z-index: 60;
+  box-shadow: 0 10px 30px rgba(0,0,0,.5);
+}
+.cx5-dropdown.open { display: block; }
+
+.cx5-dropdown-item {
+  padding: 12px 14px;
+  color: var(--cream);
+  font-size: 14px;
+  cursor: pointer;
+  border-bottom: 1px dotted var(--line-soft);
+}
+.cx5-dropdown-item:last-child { border-bottom: none; }
+.cx5-dropdown-item:hover, .cx5-dropdown-item.active {
+  background: var(--brass);
+  color: var(--bg);
+}
+
+.cx5-badge {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--cream-soft);
+  background: rgba(237, 230, 214, .06);
+  border-radius: 999px;
+  padding: 4px 12px;
+}
+
+.cx5-box {
+  margin-top: 20px;
+  padding-top: 14px;
+  border-top: 1px dashed var(--line-soft);
+}
+
+.cx5-box-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.cx5-box-title {
+  color: var(--cream-faint);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  font-family: 'IBM Plex Mono', monospace;
+}
+
+.cx5-xoay-btn {
+  background: transparent;
+  border: 1px solid var(--line);
+  color: var(--cream-soft);
+  border-radius: 4px;
+  width: 30px; height: 30px;
+  cursor: pointer;
+  font-size: 13px;
+}
+.cx5-xoay-btn:hover { background: rgba(237, 230, 214, .08); color: var(--cream); }
+
+.cx5-scroll { max-height: 260px; overflow-y: auto; border-radius: 4px; }
+
+.cx5-table { width: 100%; border-collapse: collapse; font-size: 13px; font-family: 'IBM Plex Mono', monospace; }
+.cx5-table th {
+  position: sticky; top: 0;
+  background: var(--card);
+  color: var(--cream-soft);
+  text-align: left;
+  padding: 8px 7px;
+  font-weight: 600;
+  border-bottom: 2px solid var(--line);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: .4px;
+}
+.cx5-table td {
+  padding: 8px 7px;
+  border-bottom: 1px dotted var(--line-soft);
+  color: var(--cream);
+}
+.cx5-table input[type=number] {
+  height: 34px;
+  width: 76px;
+  padding: 0 8px;
+  font-size: 13px;
+}
+
+.cx5-del-btn { color: var(--danger); background: none; border: none; cursor: pointer; font-size: 14px; }
+.cx5-del-btn:hover { color: #cd6f5a; }
+
+.cx5-trangthai-ok { color: var(--success); }
+.cx5-trangthai-mot-phan { color: var(--brass); }
+
+.cx5-xoay-view {
+  transform: rotate(90deg);
+  transform-origin: center center;
+  width: 62vh;
+  max-height: 62vw;
+  margin: 32vw auto;
+}
+
+.cx5-dc-card {
+  background: rgba(237, 230, 214, .03);
+  border: 1px solid var(--line-soft);
+  border-left: 2px solid var(--brass);
+  border-radius: 4px;
+  padding: 14px;
+  margin-bottom: 12px;
+}
+.cx5-dc-ten { font-family: 'Fraunces', serif; font-weight: 600; font-size: 15px; color: var(--cream); }
+.cx5-dc-msp { color: var(--cream-soft); font-weight: 400; font-size: 12px; }
+.cx5-dc-kho { display: flex; gap: 16px; margin-top: 8px; font-size: 13px; color: var(--cream-soft); font-family: 'IBM Plex Mono', monospace; }
+.cx5-dc-kho b { color: var(--cream); }
+.cx5-dc-sx-row { display: flex; gap: 8px; }
+.cx5-dc-sx-row input { flex: 1; }
+.cx5-dc-sx-row button { width: 48px; flex-shrink: 0; padding: 0; }
+.cx5-so-sx {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(237, 230, 214, .06);
+  border-radius: 999px;
+  padding: 4px 10px;
+  margin: 3px 5px 3px 0;
+  font-size: 12px;
+  font-family: 'IBM Plex Mono', monospace;
+  color: var(--cream);
+}
+.cx5-so-sx span { cursor: pointer; color: var(--cream-faint); }
+.cx5-so-sx span:hover { color: var(--danger); }
+.cx5-dc-tong { margin-top: 8px; font-family: 'IBM Plex Mono', monospace; font-size: 13px; color: var(--cream-soft); }
+.cx5-dc-ketqua { margin-top: 12px; font-weight: 700; font-family: 'IBM Plex Mono', monospace; }
+.cx5-dc-khop { color: var(--success); }
+.cx5-dc-lech { color: var(--danger); }
