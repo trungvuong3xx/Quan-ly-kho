@@ -518,7 +518,7 @@ function renderDoiChieuCX5() {
       const kho = gom[key] || { bao: 0, kg: 0, baoDaDongBo: 0 };
       const dc = doiChieuCX5[key];
       const sxTong = dc.sxEntries.reduce((s, v) => s + v, 0);
-      const khop = Math.abs(sxTong - kho.kg) < 1e-9 && kho.kg > 0;
+      const khop = Math.round(sxTong * 100) === Math.round(kho.kg * 100) && kho.kg > 0;
       const conDeDongBo = (kho.bao - (kho.baoDaDongBo || 0)) > 0;
       if (khop && conDeDongBo) coTheDongBo = true;
 
@@ -587,9 +587,18 @@ async function dongBoMotQC_(key) {
   const bao = chuaDongBo.length;
   const kg = chuaDongBo.reduce((s, r) => s + r.kg, 0);
   const kgList = chuaDongBo.map(r => r.kg);
+
+  const lotMap = new Map();
+  const lotOrder = [];
+  chuaDongBo.forEach(r => {
+    if (!lotMap.has(r.luot)) { lotMap.set(r.luot, []); lotOrder.push(r.luot); }
+    lotMap.get(r.luot).push(r.kg);
+  });
+  const lots = lotOrder.map(lid => ({ kgList: lotMap.get(lid) }));
+
   const payload = {
     dateStr: ngayCX5, msp: dc.msp, ten: dc.ten,
-    bao: Math.round(bao * 100) / 100, kg: Math.round(kg * 100) / 100, kgList
+    bao: Math.round(bao * 100) / 100, kg: Math.round(kg * 100) / 100, kgList, lots
   };
 
   try {
@@ -615,7 +624,7 @@ async function dongBoTatCaCX5() {
     if (!kho) return false;
     const dc = doiChieuCX5[key];
     const sxTong = dc.sxEntries.reduce((s, v) => s + v, 0);
-    const khop = Math.abs(sxTong - kho.kg) < 1e-9 && kho.kg > 0;
+    const khop = Math.round(sxTong * 100) === Math.round(kho.kg * 100) && kho.kg > 0;
     const conDeDongBo = (kho.bao - (kho.baoDaDongBo || 0)) > 0;
     return khop && conDeDongBo;
   });
