@@ -820,3 +820,16 @@ select:focus {
 .cx5-dc-ketqua { margin-top: 12px; font-weight: 700; font-family: 'IBM Plex Mono', monospace; }
 .cx5-dc-khop { color: var(--success); }
 .cx5-dc-lech { color: var(--danger); }
+
+.cx5-chitiet-kg { display: grid; grid-template-columns: repeat(5, 1fr); gap: 5px; }
+.cx5-chitiet-kg .cx5-so-sx { margin: 0; justify-content: center; }
+.cx5-so-sx-dadongbo { background: var(--success-bg); color: var(--success); }
+
+.cx5-dc-them-row {
+  background: rgba(237, 230, 214, .03);
+  border: 1px solid var(--line-soft);
+  border-left: 2px solid var(--brass);
+  border-radius: 4px;
+  padding: 14px;
+  margin-bottom: 12px;
+}
