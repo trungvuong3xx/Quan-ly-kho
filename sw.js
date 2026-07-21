@@ -6,6 +6,7 @@ const urlsToCache = [
   '/Quan-ly-kho/app.js',
   '/Quan-ly-kho/kiemke.js',
   '/Quan-ly-kho/cx1.js',
+  '/Quan-ly-kho/cx5.js',
   '/Quan-ly-kho/tonkho.js',
   '/Quan-ly-kho/manifest.json',
   'https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css',
