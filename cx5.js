@@ -1,7 +1,7 @@
 const API_CX5 = "https://script.google.com/macros/s/AKfycbwrWdGYLI8E0t9Z7ePiecupzFCq2y9g8Iwyb0k81MYc5cpEQyzgJmEBb34gQzZwwrfO/exec";
 
 const CX5_LICHSU_KEY = "cx5_lich_su";
-const CX5_LICHSU_SO_NGAY_GIU = 3;
+const CX5_LICHSU_SO_NGAY_GIU = 7;
 
 let phienCX5 = [];
 let ngayCX5 = null;
@@ -198,6 +198,11 @@ function chonQCX5(item) {
   document.getElementById("cx5-msp").value = item.msp;
   closeDropdownCX5();
   khoaQCCX5(item.msp, item.ten);
+
+  // Mỗi lần chọn quy cách (kể cả chọn lại đúng QC cũ sau khi bấm "Đổi") là 1 lượt mới
+  luotDemCX5 += 1;
+  luotHienTaiCX5 = { msp: item.msp, ten: item.ten, id: luotDemCX5 };
+
   document.getElementById("cx5-kg").focus();
 }
 
@@ -229,6 +234,8 @@ function themDongCX5() {
   if (!msp || !ten) { showCanhBaoCX5("Chưa chọn quy cách hợp lệ"); return; }
   if (!kg || kg <= 0) { showCanhBaoCX5("Nhập số kg hợp lệ"); return; }
 
+  // Bình thường lượt đã được tạo khi chọn quy cách (chonQCX5). Đây chỉ là lưới an toàn
+  // cho trường hợp hiếm khi chưa có lượt hiện tại (vd lỗi khôi phục phiên).
   if (!luotHienTaiCX5 || luotHienTaiCX5.msp !== msp || luotHienTaiCX5.ten !== ten) {
     luotDemCX5 += 1;
     luotHienTaiCX5 = { msp, ten, id: luotDemCX5 };
