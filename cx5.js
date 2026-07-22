@@ -42,6 +42,7 @@ function luuPhienDoDangCX5() {
       luotDemCX5, luotHienTaiCX5
     }));
   } catch (e) {}
+  luuPhienVaoLichSuCX5();
 }
 
 function xoaPhienDoDangCX5() {
@@ -173,7 +174,13 @@ function onInputCX5() {
 
 function renderDropdownCX5() {
   const el = document.getElementById("cx5-dropdown");
-  if (filteredCX5.length === 0) { el.classList.remove("open"); el.innerHTML = ""; return; }
+  const kgKhu = document.getElementById("cx5-kg-khu");
+  if (filteredCX5.length === 0) {
+    el.classList.remove("open"); el.innerHTML = "";
+    if (kgKhu) kgKhu.style.display = "";
+    return;
+  }
+  if (kgKhu) kgKhu.style.display = "none";
   el.innerHTML = filteredCX5.map((item, idx) =>
     '<div class="cx5-dropdown-item' + (idx === activeIndexCX5 ? " active" : "") + '" data-idx="' + idx + '">' + item.ten + "</div>"
   ).join("");
@@ -191,6 +198,8 @@ function closeDropdownCX5() {
   activeIndexCX5 = -1;
   document.getElementById("cx5-dropdown").classList.remove("open");
   document.getElementById("cx5-dropdown").innerHTML = "";
+  const kgKhu = document.getElementById("cx5-kg-khu");
+  if (kgKhu) kgKhu.style.display = "";
 }
 
 function chonQCX5(item) {
@@ -379,10 +388,39 @@ function renderBangTongHopCX5() {
   }).join("");
 }
 
+// ── Xem rộng (xoay ngang): chuyển hẳn bảng vào overlay toàn màn hình,
+// chỉ 1 bảng được xoay tại 1 thời điểm nên không thể đè lên nhau, và nút
+// đóng luôn nổi cố định trên cùng nên không bao giờ bị che ──
+let cx5XoayMocGoc = null;
+
 function xoayBangCX5(id) {
   const wrap = document.getElementById(id + "-wrap");
-  wrap.classList.toggle("cx5-xoay-view");
+  const overlay = document.getElementById("cx5-overlay-xoay");
+  const content = document.getElementById("cx5-overlay-xoay-content");
+  if (!wrap || !overlay || !content) return;
+
+  const tieude = document.getElementById("cx5-xoay-tieude");
+  if (tieude) tieude.textContent = id === "cx5-bang-chitiet" ? "Chi tiết" : "Tổng hợp";
+
+  cx5XoayMocGoc = document.createComment("cx5-xoay-moc:" + id);
+  wrap.parentNode.insertBefore(cx5XoayMocGoc, wrap);
+  content.appendChild(wrap);
+  overlay.classList.add("show");
 }
+
+function dongXoayCX5() {
+  const overlay = document.getElementById("cx5-overlay-xoay");
+  const content = document.getElementById("cx5-overlay-xoay-content");
+  if (!overlay || !content) return;
+  const wrap = content.firstElementChild;
+  if (wrap && cx5XoayMocGoc && cx5XoayMocGoc.parentNode) {
+    cx5XoayMocGoc.parentNode.insertBefore(wrap, cx5XoayMocGoc);
+    cx5XoayMocGoc.parentNode.removeChild(cx5XoayMocGoc);
+  }
+  cx5XoayMocGoc = null;
+  overlay.classList.remove("show");
+}
+window.dongXoayCX5 = dongXoayCX5;
 
 function ketThucPhienCX5() {
   if (phienCX5.length === 0) { showCanhBaoCX5("Chưa có dữ liệu để kết thúc phiên"); return; }
@@ -433,8 +471,14 @@ function onInputThemQCCX5() {
 
 function renderDropdownThemQCCX5() {
   const el = document.getElementById("cx5-dc-them-dropdown");
+  const actions = document.getElementById("cx5-dc-them-actions");
   if (!el) return;
-  if (filteredThemCX5.length === 0) { el.classList.remove("open"); el.innerHTML = ""; return; }
+  if (filteredThemCX5.length === 0) {
+    el.classList.remove("open"); el.innerHTML = "";
+    if (actions) actions.style.display = "flex";
+    return;
+  }
+  if (actions) actions.style.display = "none";
   el.innerHTML = filteredThemCX5.map((item, idx) =>
     '<div class="cx5-dropdown-item' + (idx === activeIndexThemCX5 ? " active" : "") + '" data-idx="' + idx + '">' + item.ten + "</div>"
   ).join("");
@@ -452,6 +496,8 @@ function closeDropdownThemQCCX5() {
   activeIndexThemCX5 = -1;
   const el = document.getElementById("cx5-dc-them-dropdown");
   if (el) { el.classList.remove("open"); el.innerHTML = ""; }
+  const actions = document.getElementById("cx5-dc-them-actions");
+  if (actions) actions.style.display = "flex";
 }
 
 function chonQCThemDoiChieuCX5(item) {
@@ -563,7 +609,7 @@ function renderDoiChieuCX5() {
       '<div id="cx5-dc-them-dropdown" class="cx5-dropdown"></div>' +
       '</div>' +
       '<input type="hidden" id="cx5-dc-them-msp">' +
-      '<div style="display:flex;gap:8px;margin-top:10px">' +
+      '<div id="cx5-dc-them-actions" style="display:flex;gap:8px;margin-top:10px">' +
       '<button class="btn btn-green" style="flex:1" onclick="xacNhanThemQCDoiChieuCX5()">Thêm</button>' +
       '<button class="btn" style="flex:1;background:var(--neutral);color:var(--cream)" onclick="huyThemQCDoiChieuCX5()">Huỷ</button>' +
       '</div>' +
@@ -612,14 +658,12 @@ async function dongBoMotQC_(key) {
     const r = await callApiCX5({ action: "submitEntryX5", payload });
     if (!r.success) { showCanhBaoCX5(dc.ten + ": " + r.message); return false; }
     chuaDongBo.forEach(row => { row.daDongBo = true; });
-    luuVaoLichSuCX5(dc, kgList, kg);
     return true;
   } catch (e) {
     const pending = docPendingCX5();
     pending.push(payload);
     luuPendingCX5(pending);
     chuaDongBo.forEach(row => { row.daDongBo = true; });
-    luuVaoLichSuCX5(dc, kgList, kg);
     return true;
   }
 }
@@ -697,13 +741,27 @@ function donDepLichSuCX5() {
   luuLichSuCX5(docLichSuCX5());
 }
 
-function luuVaoLichSuCX5(dc, kgList, tongKg) {
+// Lưu/cập nhật (upsert) TOÀN BỘ phiên hiện tại vào Lịch sử, theo idPhien —
+// giống cơ chế luuVaoLichSuCX1() bên Chỉ For, khác với bản cũ (lưu rời từng
+// lần đồng bộ 1 quy cách, làm mất ranh giới giữa các lượt cùng quy cách).
+function luuPhienVaoLichSuCX5() {
+  if (phienCX5.length === 0 || !idPhienHienTaiC5) return;
   const list = docLichSuCX5();
-  list.push({
-    idPhien: idPhienHienTaiC5, ngay: ngayCX5, capNhatLuc: new Date().toISOString(),
-    msp: dc.msp, ten: dc.ten, kgList, tongKg
-  });
+  const idx = list.findIndex(s => s.idPhien === idPhienHienTaiC5);
+  const banGhi = {
+    idPhien: idPhienHienTaiC5,
+    ngay: ngayCX5,
+    capNhatLuc: new Date().toISOString(),
+    phienCX5: phienCX5,
+    seqCX5: seqCX5,
+    doiChieuCX5: doiChieuCX5,
+    dangKetThucCX5: dangKetThucCX5,
+    luotDemCX5: luotDemCX5,
+    luotHienTaiCX5: luotHienTaiCX5
+  };
+  if (idx >= 0) list[idx] = banGhi; else list.push(banGhi);
   luuLichSuCX5(list);
+  if (typeof renderLichSuCX5 === "function") renderLichSuCX5();
 }
 
 function moLichSuCX5() {
@@ -717,16 +775,48 @@ function renderLichSuCX5() {
   if (!container) return;
   const list = docLichSuCX5().slice().sort((a, b) => new Date(b.capNhatLuc) - new Date(a.capNhatLuc));
   if (list.length === 0) {
-    container.innerHTML = '<div style="text-align:center;color:var(--cream-soft);padding:20px 0;">Chưa có lượt đồng bộ nào trong ' + CX5_LICHSU_SO_NGAY_GIU + ' ngày qua</div>';
+    container.innerHTML = '<div style="text-align:center;color:var(--cream-soft);padding:20px 0;">Chưa có phiên nào trong ' + CX5_LICHSU_SO_NGAY_GIU + ' ngày qua</div>';
     return;
   }
   container.innerHTML = list.map(s => {
+    const tongKg = s.phienCX5.reduce((t, r) => t + r.kg, 0);
+    const soLuot = new Set(s.phienCX5.map(r => r.luot)).size;
+    const daXongHet = s.phienCX5.every(r => r.daDongBo);
+    const trangThai = daXongHet
+      ? '<span class="cx5-trangthai-ok">Đã đồng bộ</span>'
+      : '<span class="cx5-trangthai-mot-phan">Chưa xong</span>';
     const gio = new Date(s.capNhatLuc).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" });
-    return '<div class="irow"><span class="ilabel">' + s.ngay + " · " + gio + '</span><span class="ivalue">' +
-      s.ten + " · " + s.tongKg.toFixed(1) + ' kg</span></div>';
+    return '<div class="irow" style="cursor:pointer" onclick="tiepTucLichSuCX5(\'' + s.idPhien + '\')">'
+      + '<span class="ilabel">' + s.ngay + " · " + gio + '</span>'
+      + '<span class="ivalue">' + soLuot + ' lượt · ' + tongKg.toFixed(1) + ' kg · ' + trangThai + '</span>'
+      + '</div>';
   }).join("");
 }
 window.renderLichSuCX5 = renderLichSuCX5;
+
+// Bấm vào 1 phiên trong Lịch sử → mở thẳng màn hình nhập liệu CX5 của phiên
+// đó để sửa/thêm/xoá lượt, y như bấm "Tiếp tục" ở Chỉ For.
+function tiepTucLichSuCX5(idPhien) {
+  const list = docLichSuCX5();
+  const entry = list.find(s => s.idPhien === idPhien);
+  if (!entry) return;
+
+  if (typeof chuyenTrangKhongNav === "function") chuyenTrangKhongNav("chiX5");
+  khoiPhucCX5({
+    phienCX5: entry.phienCX5,
+    ngayCX5: entry.ngay,
+    idPhienHienTaiC5: entry.idPhien,
+    seqCX5: entry.seqCX5,
+    doiChieuCX5: entry.doiChieuCX5,
+    dangKetThucCX5: entry.dangKetThucCX5,
+    luotDemCX5: entry.luotDemCX5,
+    luotHienTaiCX5: entry.luotHienTaiCX5
+  });
+  // Coi phiên vừa mở từ lịch sử là phiên "đang dở dang" hiện tại, để nếu
+  // thoát app giữa chừng thì lần sau vẫn thấy banner tiếp tục đúng phiên này.
+  luuPhienDoDangCX5();
+}
+window.tiepTucLichSuCX5 = tiepTucLichSuCX5;
 
 function tiepTucPhienChiX5() {
   let state = null;

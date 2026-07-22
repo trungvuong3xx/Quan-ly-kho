@@ -494,7 +494,7 @@ select:focus {
   left: 0;
   right: 0;
   margin-top: 6px;
-  background: var(--card);
+  background: rgba(9, 13, 22, .96);
   backdrop-filter: var(--blur);
   -webkit-backdrop-filter: var(--blur);
   border: 1px solid var(--line);
@@ -638,7 +638,7 @@ select:focus {
 .custom-select-list {
   display: none; position: absolute; top: 100%;
   left: 0; right: 0; margin-top: 6px;
-  background: var(--card) !important;
+  background: rgba(9, 13, 22, .96) !important;
   backdrop-filter: var(--blur);
   -webkit-backdrop-filter: var(--blur);
   border: 1px solid var(--line) !important;
@@ -714,7 +714,7 @@ select:focus {
   left: 0;
   right: 0;
   margin-top: 6px;
-  background: var(--card);
+  background: rgba(9, 13, 22, .96);
   backdrop-filter: var(--blur);
   -webkit-backdrop-filter: var(--blur);
   border: 1px solid var(--line);
@@ -815,13 +815,57 @@ select:focus {
 .cx5-trangthai-ok { color: var(--success); }
 .cx5-trangthai-mot-phan { color: var(--brass); }
 
-.cx5-xoay-view {
+/* Xoay ngang bảng CX5 = overlay toàn màn hình riêng, chỉ 1 bảng/lần nên không thể đè nhau,
+   nút đóng nằm ngoài phần tử bị xoay nên luôn bấm được. */
+.cx5-xoay-overlay {
+  display: none;
+  position: fixed; inset: 0;
+  background: rgba(4, 6, 12, .86);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  z-index: 10000;
+}
+.cx5-xoay-overlay.show { display: block; }
+
+#cx5-xoay-dong {
+  position: fixed; top: 16px; right: 16px;
+  z-index: 10002;
+  width: 42px; height: 42px;
+  border-radius: 50%;
+  border: 1px solid var(--line);
+  background: var(--card-raised);
+  color: var(--cream);
+  font-size: 16px;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+}
+
+#cx5-xoay-tieude {
+  position: fixed; top: 24px; left: 18px;
+  z-index: 10002;
+  color: var(--cream-soft);
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+}
+
+.cx5-xoay-scrollzone {
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  overflow: auto;
+}
+
+.cx5-xoay-rotor {
   transform: rotate(90deg);
   transform-origin: center center;
-  width: 62vh;
-  max-height: 62vw;
-  margin: 32vw auto;
+  width: 88vh;
+  max-width: 88vh;
+  flex-shrink: 0;
 }
+.cx5-xoay-rotor .cx5-table th,
+.cx5-xoay-rotor .cx5-table td { font-size: 14px; padding: 10px 8px; }
+.cx5-xoay-rotor .cx5-scroll { max-height: none; overflow: visible; }
 
 .cx5-dc-card {
   background: rgba(255, 255, 255, .03);

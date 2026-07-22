@@ -363,10 +363,12 @@
     </div>
     <input type="hidden" id="cx5-msp">
 
-    <label>Kg</label>
-    <input type="number" id="cx5-kg" min="0" step="0.1" inputmode="decimal" onkeydown="if(event.key==='Enter'){event.preventDefault();themDongCX5()}">
+    <div id="cx5-kg-khu">
+      <label>Kg</label>
+      <input type="number" id="cx5-kg" min="0" step="0.1" inputmode="decimal" onkeydown="if(event.key==='Enter'){event.preventDefault();themDongCX5()}">
 
-    <button class="btn btn-green btn-full" onclick="themDongCX5()">Thêm</button>
+      <button class="btn btn-green btn-full" onclick="themDongCX5()">Thêm</button>
+    </div>
 
     <div class="cx5-box">
       <div class="cx5-box-top">
@@ -448,6 +450,14 @@
       <button class="btn btn-green" style="width:56px;flex-shrink:0" onclick="themKgVaoLuotCX5()">+</button>
     </div>
     <button class="btn btn-full" style="background:var(--neutral);color:var(--cream);margin-top:12px" onclick="dongSuaLuotCX5()">Đóng</button>
+  </div>
+</div>
+
+<div class="cx5-xoay-overlay" id="cx5-overlay-xoay">
+  <button id="cx5-xoay-dong" onclick="dongXoayCX5()" title="Đóng">✕</button>
+  <span id="cx5-xoay-tieude"></span>
+  <div class="cx5-xoay-scrollzone">
+    <div id="cx5-overlay-xoay-content" class="cx5-xoay-rotor"></div>
   </div>
 </div>
 
