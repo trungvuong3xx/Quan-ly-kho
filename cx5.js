@@ -726,7 +726,7 @@ function docLichSuCX5() {
   const homNay = new Date();
   homNay.setHours(0, 0, 0, 0);
   return list.filter(s => {
-    if (!s.ngay) return false;
+    if (!s.ngay || !Array.isArray(s.phienCX5)) return false;
     const ngayPhien = new Date(s.ngay + "T00:00:00");
     const soNgayCach = Math.floor((homNay - ngayPhien) / 86400000);
     return soNgayCach >= 0 && soNgayCach < CX5_LICHSU_SO_NGAY_GIU;
