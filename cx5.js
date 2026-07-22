@@ -1,4 +1,4 @@
-const API_CX5 = "https://script.google.com/macros/s/AKfycbwrWdGYLI8E0t9Z7ePiecupzFCq2y9g8Iwyb0k81MYc5cpEQyzgJmEBb34gQzZwwrfO/exec";
+const API_CX5 = "https://script.google.com/macros/s/AKfycbwu2DJvHZ8dD2EmeD0T14RtQMZp8sXaPEtjqQDCUj_gK--oUl-UgJktD6OwZEbROSuC/exec";
 
 const CX5_LICHSU_KEY = "cx5_lich_su";
 const CX5_LICHSU_SO_NGAY_GIU = 7;
@@ -653,8 +653,6 @@ async function dongBoMotQC_(key) {
     dateStr: ngayCX5, msp: dc.msp, ten: dc.ten,
     bao: Math.round(bao * 100) / 100, kg: Math.round(kg * 100) / 100, kgList, lots
   };
-
-  console.log("[CX5 DEBUG] key=" + key, "chuaDongBo=", JSON.parse(JSON.stringify(chuaDongBo)), "lots=", JSON.parse(JSON.stringify(lots)));
 
   try {
     const r = await callApiCX5({ action: "submitEntryX5", payload });
