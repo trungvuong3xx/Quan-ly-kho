@@ -1,4 +1,4 @@
-const API_CX5 = "https://script.google.com/macros/s/AKfycbwu2DJvHZ8dD2EmeD0T14RtQMZp8sXaPEtjqQDCUj_gK--oUl-UgJktD6OwZEbROSuC/exec";
+const API_CX5 = "https://script.google.com/macros/s/AKfycbz-3OYV-lPIVHrGTzoYvPl-D44ieXB5xWO6hiIVyVLEyL0_Ejij10wNZsRdZJsMjTOB/exec";
 
 const CX5_LICHSU_KEY = "cx5_lich_su";
 const CX5_LICHSU_SO_NGAY_GIU = 7;
