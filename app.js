@@ -23,6 +23,12 @@ function formatKg(value) {
   return Number.isInteger(num) ? String(num) : String(Number(num.toFixed(3)));
 }
 
+function escapeHtml(str) {
+  return String(str == null ? "" : str).replace(/[&<>"']/g, c => ({
+    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+  }[c]));
+}
+
 function isNhap(loai) {
   return String(loai || "").startsWith("Nhập");
 }
@@ -131,9 +137,9 @@ async function taoQR() {
     nd.innerHTML = `
       <div class="qr-label">
         <div class="qr-info">
-          <div class="qr-ten">${infoMSP.ten}</div>
-          <div class="qr-mau">${infoMSP.mau || "—"}</div>
-          <div class="qr-id">${id}</div>
+          <div class="qr-ten">${escapeHtml(infoMSP.ten)}</div>
+          <div class="qr-mau">${escapeHtml(infoMSP.mau || "—")}</div>
+          <div class="qr-id">${escapeHtml(id)}</div>
         </div>
         <div class="qr-code-cell">
           <div class="qr-code-box" id="qr-${id}"></div>

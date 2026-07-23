@@ -1,4 +1,4 @@
-const CACHE_NAME = 'quan-ly-kho-v2026-ton-kho-v27';
+const CACHE_NAME = 'quan-ly-kho-v2026-ton-kho-v28';
 const urlsToCache = [
   '/Quan-ly-kho/',
   '/Quan-ly-kho/index.html',
@@ -37,10 +37,36 @@ self.addEventListener('activate', event => {
   );
 });
 
+const APP_SHELL_EXTENSIONS = ['.html', '.js', '.css', '.json'];
+
+function laFileAppShell(url) {
+  if (url.origin !== self.location.origin) return false;
+  const path = url.pathname;
+  if (path.endsWith('/')) return true; // vd '/Quan-ly-kho/'
+  return APP_SHELL_EXTENSIONS.some(ext => path.endsWith(ext));
+}
+
 self.addEventListener('fetch', event => {
-  event.respondWith(
-    caches.match(event.request, { ignoreSearch: true }).then(response => {
-      return response || fetch(event.request);
-    })
-  );
+  const req = event.request;
+  if (req.method !== 'GET') return; // để các lệnh gọi API (POST) đi thẳng ra mạng, SW không đụng vào
+
+  const url = new URL(req.url);
+
+  if (laFileAppShell(url)) {
+    // Network-first: luôn thử lấy bản mới nhất trên mạng trước, chỉ dùng cache
+    // khi mất mạng. Nhờ vậy sửa index.html/cx5.js/style.css... có hiệu lực ngay
+    // lần mở app kế tiếp (có mạng), không cần nhớ bump CACHE_NAME mỗi lần sửa.
+    event.respondWith(
+      fetch(req).then(res => {
+        const resClone = res.clone();
+        caches.open(CACHE_NAME).then(cache => cache.put(req, resClone));
+        return res;
+      }).catch(() => caches.match(req, { ignoreSearch: true }))
+    );
+  } else {
+    // Cache-first cho thư viện CDN ngoài (ít đổi, ưu tiên tốc độ tải)
+    event.respondWith(
+      caches.match(req, { ignoreSearch: true }).then(res => res || fetch(req))
+    );
+  }
 });

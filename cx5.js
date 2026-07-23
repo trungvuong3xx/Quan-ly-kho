@@ -30,6 +30,14 @@ function boDauCX5(str) {
   return String(str).normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/đ/g, "d").replace(/Đ/g, "D");
 }
 
+// Escape dữ liệu trước khi chèn vào innerHTML (tên quy cách đến từ Sheet — không
+// nên tin tưởng tuyệt đối là an toàn để chèn thẳng vào HTML).
+function escHtmlCX5(str) {
+  return String(str == null ? "" : str).replace(/[&<>"']/g, c => ({
+    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+  }[c]));
+}
+
 function keyQCX5(msp, ten) {
   return msp + "|" + ten;
 }
@@ -49,26 +57,70 @@ function xoaPhienDoDangCX5() {
   try { localStorage.removeItem("cx5_phien_dodang"); } catch (e) {}
 }
 
+// Cache danh sách quy cách xuống localStorage — sống qua cả lần tải lại trang/mở
+// lại app (khác mspCacheX5 chỉ sống trong bộ nhớ, mất khi refresh). Hết hạn sau
+// 4 tiếng để khớp với cache phía Apps Script (CacheService, cũng 4 tiếng).
+const CX5_MSP_CACHE_TTL_MS = 4 * 60 * 60 * 1000;
+
+function docMspCacheLocalCX5(monthKey, boQuaHanSuDung) {
+  try {
+    const raw = localStorage.getItem("cx5_msp_cache_" + monthKey);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (!parsed || !Array.isArray(parsed.data)) return null;
+    if (!boQuaHanSuDung && Date.now() - parsed.savedAt > CX5_MSP_CACHE_TTL_MS) return null;
+    return parsed.data;
+  } catch (e) { return null; }
+}
+
+function luuMspCacheLocalCX5(monthKey, data) {
+  try { localStorage.setItem("cx5_msp_cache_" + monthKey, JSON.stringify({ data, savedAt: Date.now() })); } catch (e) {}
+}
+
+let taiDanhSachTokenCX5 = 0;
+
 async function taiDanhSachQCX5(dateStr, forceRefresh) {
+  const myToken = ++taiDanhSachTokenCX5;
   const monthKey = new Date(dateStr).getMonth() + 1;
   if (!forceRefresh && mspCacheX5[monthKey]) {
     mspDataCX5 = mspCacheX5[monthKey];
     return;
   }
+
+  if (!forceRefresh) {
+    const local = docMspCacheLocalCX5(monthKey, false);
+    if (local) {
+      mspDataCX5 = local;
+      mspCacheX5[monthKey] = local;
+      return;
+    }
+  }
+
   document.getElementById("cx5-ten").placeholder = "Đang tải danh sách...";
   document.getElementById("cx5-ten").disabled = true;
   try {
     const res = await callApiCX5({ action: "khoiTaoForm", dateStr, forceRefresh: !!forceRefresh });
+    if (myToken !== taiDanhSachTokenCX5) return; // đã có lượt gọi mới hơn chen ngang, bỏ kết quả cũ
     if (res.error) { showCanhBaoCX5(res.error); mspDataCX5 = []; }
     else if (!res.exists) { showCanhBaoCX5('Chưa có sheet tháng "' + res.sheetName + '"'); mspDataCX5 = []; }
     else {
       mspDataCX5 = (res.mspList || []).filter(i => i.vung !== "FOR");
       mspCacheX5[monthKey] = mspDataCX5;
+      luuMspCacheLocalCX5(monthKey, mspDataCX5);
     }
   } catch (e) {
-    showCanhBaoCX5("Không tải được danh sách quy cách");
-    mspDataCX5 = [];
+    if (myToken !== taiDanhSachTokenCX5) return;
+    const duPhong = docMspCacheLocalCX5(monthKey, true);
+    if (duPhong) {
+      mspDataCX5 = duPhong;
+      mspCacheX5[monthKey] = duPhong;
+      showCanhBaoCX5("Mất mạng — đang dùng danh sách quy cách đã lưu trước đó");
+    } else {
+      showCanhBaoCX5("Không tải được danh sách quy cách");
+      mspDataCX5 = [];
+    }
   }
+  if (myToken !== taiDanhSachTokenCX5) return;
   document.getElementById("cx5-ten").disabled = false;
   document.getElementById("cx5-ten").placeholder = "Gõ để tìm...";
 }
@@ -192,7 +244,7 @@ function renderDropdownCX5() {
   }
   if (kgKhu) kgKhu.style.display = "none";
   el.innerHTML = filteredCX5.map((item, idx) =>
-    '<div class="cx5-dropdown-item' + (idx === activeIndexCX5 ? " active" : "") + '" data-idx="' + idx + '">' + item.ten + "</div>"
+    '<div class="cx5-dropdown-item' + (idx === activeIndexCX5 ? " active" : "") + '" data-idx="' + idx + '">' + escHtmlCX5(item.ten) + "</div>"
   ).join("");
   el.classList.add("open");
   Array.from(el.children).forEach(child => {
@@ -302,8 +354,8 @@ function renderBangChiTietCX5() {
     const kg = Math.round(rows.reduce((s, r) => s + r.kg, 0) * 100) / 100;
     return "<tr>" +
       "<td>" + lid + "</td>" +
-      "<td>" + first.msp + "</td>" +
-      "<td>" + first.ten + "</td>" +
+      "<td>" + escHtmlCX5(first.msp) + "</td>" +
+      "<td>" + escHtmlCX5(first.ten) + "</td>" +
       "<td>" + bao + "</td>" +
       "<td>" + kg + "</td>" +
       '<td class="cx5-sua-luot" onclick="moSuaLuotCX5(' + lid + ')">✏️</td>' +
@@ -389,8 +441,8 @@ function renderBangTongHopCX5() {
     else if (item.baoDaDongBo === item.bao) trangThai = '<span class="cx5-trangthai-ok">Đã đồng bộ</span>';
     else trangThai = '<span class="cx5-trangthai-mot-phan">Đồng bộ 1 phần</span>';
     return "<tr>" +
-      "<td>" + item.msp + "</td>" +
-      "<td>" + item.ten + "</td>" +
+      "<td>" + escHtmlCX5(item.msp) + "</td>" +
+      "<td>" + escHtmlCX5(item.ten) + "</td>" +
       "<td>" + item.bao + "</td>" +
       "<td>" + item.kg.toFixed(1) + "</td>" +
       "<td>" + trangThai + "</td>" +
@@ -490,7 +542,7 @@ function renderDropdownThemQCCX5() {
   }
   if (actions) actions.style.display = "none";
   el.innerHTML = filteredThemCX5.map((item, idx) =>
-    '<div class="cx5-dropdown-item' + (idx === activeIndexThemCX5 ? " active" : "") + '" data-idx="' + idx + '">' + item.ten + "</div>"
+    '<div class="cx5-dropdown-item' + (idx === activeIndexThemCX5 ? " active" : "") + '" data-idx="' + idx + '">' + escHtmlCX5(item.ten) + "</div>"
   ).join("");
   el.classList.add("open");
   Array.from(el.children).forEach(child => {
@@ -595,7 +647,7 @@ function renderDoiChieuCX5() {
       else ketQuaHtml = '<div class="cx5-dc-ketqua cx5-dc-lech">Lệch: ' + (sxTong - kho.kg).toFixed(1) + '</div>';
 
       return '<div class="cx5-dc-card">' +
-        '<div class="cx5-dc-ten">' + dc.ten + ' <span class="cx5-dc-msp">(' + dc.msp + ')</span></div>' +
+        '<div class="cx5-dc-ten">' + escHtmlCX5(dc.ten) + ' <span class="cx5-dc-msp">(' + escHtmlCX5(dc.msp) + ')</span></div>' +
         '<div class="cx5-dc-kho">Kho — Bao: <b>' + kho.bao + '</b> · Kg: <b>' + kho.kg.toFixed(1) + '</b></div>' +
         '<div style="margin-top:10px">' +
         '<label>SX</label>' +

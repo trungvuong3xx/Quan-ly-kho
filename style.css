@@ -616,6 +616,18 @@ select:focus {
 
 @keyframes spin { to { transform: rotate(360deg); } }
 
+/* Icon loading dùng chung — đồng bộ màu với theme qua CSS variable thay vì mã màu cứng */
+.spinner-loading {
+  border: 3px solid var(--neutral);
+  border-top-color: var(--brass);
+  border-radius: 50%;
+  animation: spin .7s linear infinite;
+  flex-shrink: 0;
+}
+.spinner-loading.sm { width: 24px; height: 24px; }
+.spinner-loading.md { width: 28px; height: 28px; }
+.spinner-loading.lg { width: 40px; height: 40px; }
+
 /* ============================================================
    CHỈ X5
    ============================================================ */
