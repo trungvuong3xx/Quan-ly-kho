@@ -801,7 +801,7 @@ function tiepTucLichSuCX5(idPhien) {
   const entry = list.find(s => s.idPhien === idPhien);
   if (!entry) return;
 
-  if (typeof chuyenTrangKhongNav === "function") chuyenTrangKhongNav("chiX5");
+  if (typeof diToiTab === "function") diToiTab("chiX5");
   khoiPhucCX5({
     phienCX5: entry.phienCX5,
     ngayCX5: entry.ngay,
@@ -822,7 +822,7 @@ function tiepTucPhienChiX5() {
   let state = null;
   try { state = JSON.parse(localStorage.getItem("cx5_phien_dodang")); } catch (e) {}
   if (!state) return;
-  if (typeof chuyenTrangKhongNav === "function") chuyenTrangKhongNav("chiX5");
+  if (typeof diToiTab === "function") diToiTab("chiX5");
   khoiPhucCX5(state);
 }
 window.tiepTucPhienChiX5 = tiepTucPhienChiX5;
