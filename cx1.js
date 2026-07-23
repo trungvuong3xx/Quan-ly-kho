@@ -11,7 +11,7 @@ let idPhienHienTai = null;
 let soLuongDaGuiHienTai = 0;
 
 const CX1_LICHSU_KEY = "cx1_lich_su";
-const CX1_LICHSU_SO_NGAY_GIU = 15;
+const CX1_LICHSU_SO_NGAY_GIU = 30;
 
 let sharedAudioCtx = null;
 
