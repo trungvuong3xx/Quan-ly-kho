@@ -30,6 +30,12 @@ function boDauCX5(str) {
   return String(str).normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/đ/g, "d").replace(/Đ/g, "D");
 }
 
+function parseSoCX5(str) {
+  const cleaned = String(str == null ? "" : str).trim().replace(",", ".");
+  const n = parseFloat(cleaned);
+  return isNaN(n) ? NaN : n;
+}
+
 // Escape dữ liệu trước khi chèn vào innerHTML (tên quy cách đến từ Sheet — không
 // nên tin tưởng tuyệt đối là an toàn để chèn thẳng vào HTML).
 function escHtmlCX5(str) {
@@ -301,7 +307,7 @@ function onKeydownCX5(e) {
 function themDongCX5() {
   const msp = document.getElementById("cx5-msp").value;
   const ten = document.getElementById("cx5-ten").value.trim();
-  const kg = parseFloat(document.getElementById("cx5-kg").value);
+  const kg = parseSoCX5(document.getElementById("cx5-kg").value);
   if (!msp || !ten) { showCanhBaoCX5("Chưa chọn quy cách hợp lệ"); return; }
   if (!kg || kg <= 0) { showCanhBaoCX5("Nhập số kg hợp lệ"); return; }
 
@@ -399,7 +405,7 @@ function themKgVaoLuotCX5() {
   const rows = phienCX5.filter(r => r.luot === luotDangSuaCX5);
   if (rows.length === 0) { dongSuaLuotCX5(); return; }
   const input = document.getElementById("cx5-sl-them-kg");
-  const kg = parseFloat(input.value);
+  const kg = parseSoCX5(input.value);
   if (!kg || kg <= 0) { showCanhBaoCX5("Nhập số kg hợp lệ"); return; }
 
   const first = rows[0];
@@ -599,7 +605,7 @@ function xacNhanThemQCDoiChieuCX5() {
 }
 
 function themSoSXCX5(key, inputEl) {
-  const val = parseFloat(inputEl.value);
+  const val = parseSoCX5(inputEl.value);
   if (!val || val <= 0) return;
   if (!doiChieuCX5[key]) doiChieuCX5[key] = { sxEntries: [] };
   doiChieuCX5[key].sxEntries.push(val);
@@ -652,7 +658,7 @@ function renderDoiChieuCX5() {
         '<div style="margin-top:10px">' +
         '<label>SX</label>' +
         '<div class="cx5-dc-sx-row">' +
-        '<input type="number" min="0" step="0.1" placeholder="Nhập số..." onkeydown="if(event.key===\'Enter\'){event.preventDefault();themSoSXCX5(\'' + key + '\', this)}">' +
+        '<input type="tel" inputmode="decimal" placeholder="Nhập số..." onkeydown="if(event.key===\'Enter\'){event.preventDefault();themSoSXCX5(\'' + key + '\', this)}">' +
         '<button class="btn btn-blue" onclick="themSoSXCX5(\'' + key + '\', this.previousElementSibling)">+</button>' +
         '</div>' +
         '<div style="margin-top:8px">' + dsSo + '</div>' +
