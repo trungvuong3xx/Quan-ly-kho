@@ -1,4 +1,4 @@
-const CACHE_NAME = 'quan-ly-kho-v2026-ton-kho-v28';
+const CACHE_NAME = 'quan-ly-kho-v2026-ton-kho-v29';
 const urlsToCache = [
   '/Quan-ly-kho/',
   '/Quan-ly-kho/index.html',

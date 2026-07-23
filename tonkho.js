@@ -135,6 +135,18 @@ async function tkDangNhap() {
   }
 }
 
+// Bấm nút "Tồn kho" ở Trang chủ: nếu đã đăng nhập (còn hạn) thì vào thẳng,
+// chưa đăng nhập thì mới yêu cầu đăng nhập ngay lúc này — không tự hiện sẵn
+// màn đăng nhập mỗi lần mở app nữa.
+async function tkMoTonKho() {
+  if (tkAccessToken && Date.now() < tkTokenExpiryMs) {
+    chuyenTrangKhongNav("tonKho");
+    return;
+  }
+  await tkDangNhap();
+  if (tkAccessToken) chuyenTrangKhongNav("tonKho");
+}
+
 async function tkLayThongTinTaiKhoan() {
   try {
     const res = await fetch("https://www.googleapis.com/oauth2/v3/userinfo", {
@@ -228,13 +240,9 @@ function tkDangXuat() {
 function tkCapNhatUIDangNhap() {
   const dangNhap = !!tkAccessToken;
 
-  const khuQuanLy = document.getElementById("khu-quan-ly");
-  const khuDangNhap = document.getElementById("khu-dang-nhap");
   const taiKhoanBox = document.getElementById("tk-taikhoan-trangchu");
   const emailEl = document.getElementById("tk-email");
 
-  if (khuQuanLy) khuQuanLy.style.display = dangNhap ? "block" : "none";
-  if (khuDangNhap) khuDangNhap.style.display = dangNhap ? "none" : "block";
   if (taiKhoanBox) taiKhoanBox.style.display = dangNhap ? "flex" : "none";
   if (emailEl) emailEl.textContent = tkEmail || "Đã đăng nhập";
 
@@ -532,5 +540,6 @@ window.tkOnInputTen = tkOnInputTen;
 window.tkOnKeydownTen = tkOnKeydownTen;
 window.tkDoiNgay = tkDoiNgay;
 window.tkDangNhap = tkDangNhap;
+window.tkMoTonKho = tkMoTonKho;
 window.tkDangXuat = tkDangXuat;
 window.tkTimTonKho = tkTimTonKho;
