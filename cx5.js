@@ -652,7 +652,7 @@ function renderDoiChieuCX5() {
         '<div style="margin-top:10px">' +
         '<label>SX</label>' +
         '<div class="cx5-dc-sx-row">' +
-        '<input type="text" inputmode="decimal" readonly class="cx5-sx-input" placeholder="Nhập số..." onkeydown="if(event.key===\'Enter\'){event.preventDefault();themSoSXCX5(\'' + key + '\', this)}">' +
+        '<input type="text" inputmode="none" readonly class="cx5-sx-input" placeholder="Nhập số..." onkeydown="if(event.key===\'Enter\'){event.preventDefault();themSoSXCX5(\'' + key + '\', this)}">' +
         '<button class="btn btn-blue" onclick="themSoSXCX5(\'' + key + '\', this.previousElementSibling)">+</button>' +
         '</div>' +
         '<div style="margin-top:8px">' + dsSo + '</div>' +
@@ -667,7 +667,7 @@ function renderDoiChieuCX5() {
     html += '<div class="cx5-dc-them-row">' +
       '<label>Thêm quy cách</label>' +
       '<div class="cx5-ten-wrap">' +
-      '<input type="text" id="cx5-dc-them-ten" placeholder="Gõ để tìm quy cách..." autocomplete="off" readonly oninput="onInputThemQCCX5()" onkeydown="onKeydownThemQCCX5(event)">' +
+      '<input type="text" id="cx5-dc-them-ten" placeholder="Gõ để tìm quy cách..." autocomplete="off" readonly inputmode="none" oninput="onInputThemQCCX5()" onkeydown="onKeydownThemQCCX5(event)">' +
       '<div id="cx5-dc-them-dropdown" class="cx5-dropdown"></div>' +
       '</div>' +
       '<input type="hidden" id="cx5-dc-them-msp">' +
