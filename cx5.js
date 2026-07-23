@@ -1,7 +1,7 @@
 const API_CX5 = "https://script.google.com/macros/s/AKfycbz-3OYV-lPIVHrGTzoYvPl-D44ieXB5xWO6hiIVyVLEyL0_Ejij10wNZsRdZJsMjTOB/exec";
 
 const CX5_LICHSU_KEY = "cx5_lich_su";
-const CX5_LICHSU_SO_NGAY_GIU = 7;
+const CX5_LICHSU_SO_NGAY_GIU = 30;
 
 let phienCX5 = [];
 let ngayCX5 = null;
