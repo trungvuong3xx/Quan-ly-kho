@@ -658,7 +658,7 @@ function renderDoiChieuCX5() {
         '<div style="margin-top:10px">' +
         '<label>SX</label>' +
         '<div class="cx5-dc-sx-row">' +
-        '<input type="tel" inputmode="decimal" placeholder="Nhập số..." onkeydown="if(event.key===\'Enter\'){event.preventDefault();themSoSXCX5(\'' + key + '\', this)}">' +
+        '<input type="text" inputmode="decimal" placeholder="Nhập số..." onkeydown="if(event.key===\'Enter\'){event.preventDefault();themSoSXCX5(\'' + key + '\', this)}">' +
         '<button class="btn btn-blue" onclick="themSoSXCX5(\'' + key + '\', this.previousElementSibling)">+</button>' +
         '</div>' +
         '<div style="margin-top:8px">' + dsSo + '</div>' +
