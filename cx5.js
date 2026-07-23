@@ -1,4 +1,4 @@
-const API_CX5 = "https://script.google.com/macros/s/AKfycbz-3OYV-lPIVHrGTzoYvPl-D44ieXB5xWO6hiIVyVLEyL0_Ejij10wNZsRdZJsMjTOB/exec";
+const API_CX5 = "https://script.google.com/macros/s/AKfycbzJeVkfapKOzkiZpeZvUWhmn3KEiS4wlYGJv1BSR2TUFnwYYuCkI28oGo6OB0Bjui-P/exec";
 
 const CX5_LICHSU_KEY = "cx5_lich_su";
 const CX5_LICHSU_SO_NGAY_GIU = 30;
@@ -109,7 +109,12 @@ async function batDauCX5() {
   document.getElementById("cx5-ngay-hienthi").textContent = ngayCX5;
   resetKhoaQCCX5();
 
-  await taiDanhSachQCX5(ngayCX5, false);
+  showLoading(true);
+  try {
+    await taiDanhSachQCX5(ngayCX5, false);
+  } finally {
+    showLoading(false);
+  }
   renderBangChiTietCX5();
   renderBangTongHopCX5();
 }
@@ -130,7 +135,12 @@ async function khoiPhucCX5(state) {
   document.getElementById("cx5-ngay-hienthi").textContent = ngayCX5;
   resetKhoaQCCX5();
 
-  await taiDanhSachQCX5(ngayCX5, false);
+  showLoading(true);
+  try {
+    await taiDanhSachQCX5(ngayCX5, false);
+  } finally {
+    showLoading(false);
+  }
   renderBangChiTietCX5();
   renderBangTongHopCX5();
 }
@@ -684,12 +694,16 @@ async function dongBoTatCaCX5() {
 
   const btn = document.getElementById("cx5-btn-dongbo-tatca");
   if (btn) { btn.disabled = true; btn.textContent = "Đang đồng bộ..."; }
+  showLoading(true);
 
   let thanhCong = 0, thatBai = 0;
   for (const key of dsCanDongBo) {
     const ok = await dongBoMotQC_(key);
     if (ok) thanhCong += 1; else thatBai += 1;
   }
+
+  showLoading(false);
+  if (btn) { btn.disabled = false; btn.textContent = "Đồng bộ"; }
 
   luuPhienDoDangCX5();
   renderBangChiTietCX5();
