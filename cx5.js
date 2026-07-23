@@ -30,12 +30,6 @@ function boDauCX5(str) {
   return String(str).normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/đ/g, "d").replace(/Đ/g, "D");
 }
 
-function parseSoCX5(str) {
-  const cleaned = String(str == null ? "" : str).trim().replace(",", ".");
-  const n = parseFloat(cleaned);
-  return isNaN(n) ? NaN : n;
-}
-
 // Escape dữ liệu trước khi chèn vào innerHTML (tên quy cách đến từ Sheet — không
 // nên tin tưởng tuyệt đối là an toàn để chèn thẳng vào HTML).
 function escHtmlCX5(str) {
@@ -307,7 +301,7 @@ function onKeydownCX5(e) {
 function themDongCX5() {
   const msp = document.getElementById("cx5-msp").value;
   const ten = document.getElementById("cx5-ten").value.trim();
-  const kg = parseSoCX5(document.getElementById("cx5-kg").value);
+  const kg = parseFloat(document.getElementById("cx5-kg").value);
   if (!msp || !ten) { showCanhBaoCX5("Chưa chọn quy cách hợp lệ"); return; }
   if (!kg || kg <= 0) { showCanhBaoCX5("Nhập số kg hợp lệ"); return; }
 
@@ -405,7 +399,7 @@ function themKgVaoLuotCX5() {
   const rows = phienCX5.filter(r => r.luot === luotDangSuaCX5);
   if (rows.length === 0) { dongSuaLuotCX5(); return; }
   const input = document.getElementById("cx5-sl-them-kg");
-  const kg = parseSoCX5(input.value);
+  const kg = parseFloat(input.value);
   if (!kg || kg <= 0) { showCanhBaoCX5("Nhập số kg hợp lệ"); return; }
 
   const first = rows[0];
@@ -605,7 +599,7 @@ function xacNhanThemQCDoiChieuCX5() {
 }
 
 function themSoSXCX5(key, inputEl) {
-  const val = parseSoCX5(inputEl.value);
+  const val = parseFloat(inputEl.value);
   if (!val || val <= 0) return;
   if (!doiChieuCX5[key]) doiChieuCX5[key] = { sxEntries: [] };
   doiChieuCX5[key].sxEntries.push(val);
@@ -658,7 +652,7 @@ function renderDoiChieuCX5() {
         '<div style="margin-top:10px">' +
         '<label>SX</label>' +
         '<div class="cx5-dc-sx-row">' +
-        '<input type="text" inputmode="decimal" placeholder="Nhập số..." onkeydown="if(event.key===\'Enter\'){event.preventDefault();themSoSXCX5(\'' + key + '\', this)}">' +
+        '<input type="text" inputmode="decimal" readonly class="cx5-sx-input" placeholder="Nhập số..." onkeydown="if(event.key===\'Enter\'){event.preventDefault();themSoSXCX5(\'' + key + '\', this)}">' +
         '<button class="btn btn-blue" onclick="themSoSXCX5(\'' + key + '\', this.previousElementSibling)">+</button>' +
         '</div>' +
         '<div style="margin-top:8px">' + dsSo + '</div>' +
@@ -673,7 +667,7 @@ function renderDoiChieuCX5() {
     html += '<div class="cx5-dc-them-row">' +
       '<label>Thêm quy cách</label>' +
       '<div class="cx5-ten-wrap">' +
-      '<input type="text" id="cx5-dc-them-ten" placeholder="Gõ để tìm quy cách..." autocomplete="off" oninput="onInputThemQCCX5()" onkeydown="onKeydownThemQCCX5(event)">' +
+      '<input type="text" id="cx5-dc-them-ten" placeholder="Gõ để tìm quy cách..." autocomplete="off" readonly oninput="onInputThemQCCX5()" onkeydown="onKeydownThemQCCX5(event)">' +
       '<div id="cx5-dc-them-dropdown" class="cx5-dropdown"></div>' +
       '</div>' +
       '<input type="hidden" id="cx5-dc-them-msp">' +
@@ -937,6 +931,187 @@ window.addEventListener("load", function () {
     tenInput.addEventListener("keydown", onKeydownCX5);
   }
   document.addEventListener("click", e => {
-    if (!e.target.closest(".cx5-ten-wrap")) { closeDropdownCX5(); closeDropdownThemQCCX5(); }
+    const trongOTimKiem = e.target.closest(".cx5-ten-wrap");
+    const trongBanPhim = e.target.closest(".cx5-bp-panel");
+    if (!trongOTimKiem && !trongBanPhim) { closeDropdownCX5(); closeDropdownThemQCCX5(); }
+    if (banPhimActiveElCX5 && !trongOTimKiem && !trongBanPhim && e.target !== banPhimActiveElCX5) {
+      dongBanPhimCX5();
+    }
   });
 });
+
+const CX5_BP_QC_MAP = { "7": "A", "8": "B", "9": "D", "4": "E", "5": "R", "6": "X", "1": "/", "2": "-" };
+const CX5_BP_DOUBLE_TAP_MS = 300;
+
+let banPhimActiveElCX5 = null;
+let banPhimLoaiCX5 = null;
+let banPhimQCPendingCX5 = null;
+
+(function themBanPhimCX5() {
+  const kgPanel = document.createElement("div");
+  kgPanel.id = "cx5-bp-kg";
+  kgPanel.className = "cx5-bp-panel";
+  kgPanel.innerHTML =
+    '<span class="cx5-bp-close" onclick="dongBanPhimCX5()">Đóng bàn phím ▾</span>' +
+    '<div class="cx5-bp-grid">' +
+    '<div class="cx5-bp-key" onclick="bpKgSoCX5(\'7\')">7</div>' +
+    '<div class="cx5-bp-key" onclick="bpKgSoCX5(\'8\')">8</div>' +
+    '<div class="cx5-bp-key" onclick="bpKgSoCX5(\'9\')">9</div>' +
+    '<div class="cx5-bp-key cx5-bp-key-fn" onclick="bpKgXoaLuiCX5()">⌫</div>' +
+    '<div class="cx5-bp-key" onclick="bpKgSoCX5(\'4\')">4</div>' +
+    '<div class="cx5-bp-key" onclick="bpKgSoCX5(\'5\')">5</div>' +
+    '<div class="cx5-bp-key" onclick="bpKgSoCX5(\'6\')">6</div>' +
+    '<div class="cx5-bp-key cx5-bp-key-fn" onclick="bpKgXoaHetCX5()">C</div>' +
+    '<div class="cx5-bp-key" onclick="bpKgSoCX5(\'1\')">1</div>' +
+    '<div class="cx5-bp-key" onclick="bpKgSoCX5(\'2\')">2</div>' +
+    '<div class="cx5-bp-key" onclick="bpKgSoCX5(\'3\')">3</div>' +
+    '<div class="cx5-bp-key cx5-bp-key-enter" onclick="bpKgEnterCX5()">Enter</div>' +
+    '<div class="cx5-bp-key cx5-bp-key-zero-kg" onclick="bpKgSoCX5(\'0\')">0</div>' +
+    '<div class="cx5-bp-key" onclick="bpKgSoCX5(\'.\')">.</div>' +
+    "</div>";
+  document.body.appendChild(kgPanel);
+
+  const qcPanel = document.createElement("div");
+  qcPanel.id = "cx5-bp-qc";
+  qcPanel.className = "cx5-bp-panel";
+  const key = d => (CX5_BP_QC_MAP[d] ? '<span class="cx5-bp-key-sub">' + CX5_BP_QC_MAP[d] + "</span>" : "");
+  qcPanel.innerHTML =
+    '<span class="cx5-bp-close" onclick="dongBanPhimCX5()">Đóng bàn phím ▾</span>' +
+    '<div class="cx5-bp-grid">' +
+    '<div class="cx5-bp-key" onclick="bpQcSoCX5(\'7\')">7' + key("7") + '</div>' +
+    '<div class="cx5-bp-key" onclick="bpQcSoCX5(\'8\')">8' + key("8") + '</div>' +
+    '<div class="cx5-bp-key" onclick="bpQcSoCX5(\'9\')">9' + key("9") + '</div>' +
+    '<div class="cx5-bp-key cx5-bp-key-fn" onclick="bpQcXoaLuiCX5()">⌫</div>' +
+    '<div class="cx5-bp-key" onclick="bpQcSoCX5(\'4\')">4' + key("4") + '</div>' +
+    '<div class="cx5-bp-key" onclick="bpQcSoCX5(\'5\')">5' + key("5") + '</div>' +
+    '<div class="cx5-bp-key" onclick="bpQcSoCX5(\'6\')">6' + key("6") + '</div>' +
+    '<div class="cx5-bp-key cx5-bp-key-fn" onclick="bpQcXoaHetCX5()">C</div>' +
+    '<div class="cx5-bp-key" onclick="bpQcSoCX5(\'1\')">1' + key("1") + '</div>' +
+    '<div class="cx5-bp-key" onclick="bpQcSoCX5(\'2\')">2' + key("2") + '</div>' +
+    '<div class="cx5-bp-key" onclick="bpQcSoCX5(\'3\')">3</div>' +
+    '<div class="cx5-bp-key cx5-bp-key-enter" onclick="bpQcEnterCX5()">Enter</div>' +
+    '<div class="cx5-bp-key cx5-bp-key-zero" onclick="bpQcSoCX5(\'0\')">0</div>' +
+    "</div>";
+  document.body.appendChild(qcPanel);
+
+  document.addEventListener("focus", function (e) {
+    const el = e.target;
+    if (!el || el.tagName !== "INPUT") return;
+    if (el.id === "cx5-kg" || el.id === "cx5-sl-them-kg" || el.classList.contains("cx5-sx-input")) {
+      moBanPhimCX5(el, "kg");
+    } else if (el.id === "cx5-ten" || el.id === "cx5-dc-them-ten") {
+      moBanPhimCX5(el, "qc");
+    }
+  }, true);
+})();
+
+function moBanPhimCX5(el, loai) {
+  banPhimActiveElCX5 = el;
+  banPhimLoaiCX5 = loai;
+  banPhimQCPendingCX5 = null;
+  document.getElementById("cx5-bp-kg").classList.toggle("show", loai === "kg");
+  document.getElementById("cx5-bp-qc").classList.toggle("show", loai === "qc");
+  setTimeout(() => {
+    if (el && el.scrollIntoView) el.scrollIntoView({ block: "center", behavior: "smooth" });
+  }, 120);
+}
+
+function dongBanPhimCX5() {
+  document.getElementById("cx5-bp-kg").classList.remove("show");
+  document.getElementById("cx5-bp-qc").classList.remove("show");
+  if (banPhimActiveElCX5) banPhimActiveElCX5.blur();
+  banPhimActiveElCX5 = null;
+  banPhimLoaiCX5 = null;
+  banPhimQCPendingCX5 = null;
+}
+window.dongBanPhimCX5 = dongBanPhimCX5;
+
+function bpGiaTriCX5() {
+  return banPhimActiveElCX5 ? banPhimActiveElCX5.value : "";
+}
+
+function bpDatGiaTriCX5(v) {
+  if (!banPhimActiveElCX5) return;
+  banPhimActiveElCX5.value = v;
+}
+
+function bpKgSoCX5(ky) {
+  if (!banPhimActiveElCX5) return;
+  const cur = bpGiaTriCX5();
+  if (ky === "." && cur.includes(".")) return;
+  bpDatGiaTriCX5(cur + ky);
+}
+window.bpKgSoCX5 = bpKgSoCX5;
+
+function bpKgXoaLuiCX5() {
+  if (!banPhimActiveElCX5) return;
+  bpDatGiaTriCX5(bpGiaTriCX5().slice(0, -1));
+}
+window.bpKgXoaLuiCX5 = bpKgXoaLuiCX5;
+
+function bpKgXoaHetCX5() {
+  bpDatGiaTriCX5("");
+}
+window.bpKgXoaHetCX5 = bpKgXoaHetCX5;
+
+function bpKgEnterCX5() {
+  if (!banPhimActiveElCX5) return;
+  const id = banPhimActiveElCX5.id;
+  if (id === "cx5-kg") {
+    themDongCX5();
+  } else if (id === "cx5-sl-them-kg") {
+    themKgVaoLuotCX5();
+  } else if (banPhimActiveElCX5.classList.contains("cx5-sx-input")) {
+    const key = banPhimActiveElCX5.getAttribute("data-key");
+    themSoSXCX5(key, banPhimActiveElCX5);
+  }
+}
+window.bpKgEnterCX5 = bpKgEnterCX5;
+
+function bpQcSoCX5(ky) {
+  if (!banPhimActiveElCX5) return;
+  const now = Date.now();
+
+  if (banPhimQCPendingCX5 && banPhimQCPendingCX5.ky === ky && (now - banPhimQCPendingCX5.time) < CX5_BP_DOUBLE_TAP_MS && CX5_BP_QC_MAP[ky]) {
+    const cur = bpGiaTriCX5();
+    bpDatGiaTriCX5(cur.slice(0, -1) + CX5_BP_QC_MAP[ky]);
+    banPhimQCPendingCX5 = null;
+  } else {
+    bpDatGiaTriCX5(bpGiaTriCX5() + ky);
+    banPhimQCPendingCX5 = { ky, time: now };
+  }
+
+  bpKichHoatLocCX5();
+}
+window.bpQcSoCX5 = bpQcSoCX5;
+
+function bpQcXoaLuiCX5() {
+  if (!banPhimActiveElCX5) return;
+  bpDatGiaTriCX5(bpGiaTriCX5().slice(0, -1));
+  banPhimQCPendingCX5 = null;
+  bpKichHoatLocCX5();
+}
+window.bpQcXoaLuiCX5 = bpQcXoaLuiCX5;
+
+function bpQcXoaHetCX5() {
+  bpDatGiaTriCX5("");
+  banPhimQCPendingCX5 = null;
+  bpKichHoatLocCX5();
+}
+window.bpQcXoaHetCX5 = bpQcXoaHetCX5;
+
+function bpKichHoatLocCX5() {
+  if (!banPhimActiveElCX5) return;
+  if (banPhimActiveElCX5.id === "cx5-ten") onInputCX5();
+  else if (banPhimActiveElCX5.id === "cx5-dc-them-ten") onInputThemQCCX5();
+}
+
+function bpQcEnterCX5() {
+  if (!banPhimActiveElCX5) return;
+  if (banPhimActiveElCX5.id === "cx5-ten") {
+    if (filteredCX5.length) chonQCX5(filteredCX5[activeIndexCX5 >= 0 ? activeIndexCX5 : 0]);
+  } else if (banPhimActiveElCX5.id === "cx5-dc-them-ten") {
+    if (filteredThemCX5.length) chonQCThemDoiChieuCX5(filteredThemCX5[activeIndexThemCX5 >= 0 ? activeIndexThemCX5 : 0]);
+  }
+}
+window.bpQcEnterCX5 = bpQcEnterCX5;
