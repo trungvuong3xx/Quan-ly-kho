@@ -1,0 +1,834 @@
+const CONFIG = {
+  LIST_SHEET_NAME: 'LIST',
+  LIST_COL_TEN: 1,
+  LIST_COL_MSP: 2,
+  LIST_COL_SOLAN_THUONG: 3,
+  LIST_COL_SOLAN_FOR: 4,
+  LIST_START_ROW: 2,
+  MSP_COL_IN_MONTH_SHEET: 7,
+  AF_COL_INDEX: 32
+};
+
+const VUNG_THUONG_RANGES = [[6, 543], [637, 644]];
+const VUNG_FOR_RANGES = [[544, 630]];
+
+const LOAI_RULES = {
+  NHAP_SX:      { offset: 0, suffix: 0, ranges: VUNG_THUONG_RANGES },
+  NHAP_TRA:     { offset: 0, suffix: 1, ranges: VUNG_THUONG_RANGES },
+  NHAP_FOR:     { offset: 0, suffix: 0, ranges: VUNG_FOR_RANGES },
+  XUAT_SX:      { offset: 2, suffix: 0, dynamicVung: true },
+  XUAT_TRA:     { offset: 2, suffix: 1, dynamicVung: true },
+  XUAT_GIACONG: { offset: 2, suffix: 2, dynamicVung: true },
+  XUAT_PHE:     { offset: 2, suffix: 3, dynamicVung: true },
+  XUAT_BAN:     { offset: 2, suffix: 4, dynamicVung: true },
+  XUAT_BT:      { offset: 4, suffix: 0, dynamicVung: true },
+  XUAT_FOR:     { offset: 6, suffix: 0, dynamicVung: true }
+};
+
+function showEntryForm() {
+  const html = HtmlService.createHtmlOutputFromFile('Sidebar')
+    .setTitle('Nhập / Xuất Kho')
+    .setWidth(460);
+  SpreadsheetApp.getUi().showSidebar(html);
+}
+
+function khoiTaoForm(dateStr, forceRefresh) {
+  try {
+    const date = new Date(dateStr);
+    if (isNaN(date.getTime())) {
+      return { exists: false, sheetName: '', error: 'Ngày không hợp lệ', mspList: [] };
+    }
+
+    const sheetName = String(date.getMonth() + 1);
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    const sheet = ss.getSheetByName(sheetName);
+    const exists = !!sheet;
+
+    if (forceRefresh) {
+      try { CacheService.getScriptCache().remove('mspListFull_' + sheetName); } catch (e) {}
+    }
+
+    const mspList = exists ? getMspList(dateStr) : [];
+
+    return { exists: exists, sheetName: sheetName, mspList: mspList };
+  } catch (err) {
+    return { exists: false, sheetName: '', error: err.message, mspList: [] };
+  }
+}
+
+function kiemTraThangSheet(dateStr) {
+  try {
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    const date = new Date(dateStr);
+    if (isNaN(date.getTime())) {
+      return { exists: false, sheetName: '', error: 'Ngày không hợp lệ' };
+    }
+    const sheetName = String(date.getMonth() + 1);
+    const sheet = ss.getSheetByName(sheetName);
+    return { exists: !!sheet, sheetName: sheetName };
+  } catch (err) {
+    return { exists: false, sheetName: '', error: err.message };
+  }
+}
+
+function getMspList(dateStr) {
+  const date0 = new Date(dateStr);
+  const sheetName0 = String(date0.getMonth() + 1);
+  const fullCacheKey = 'mspListFull_' + sheetName0;
+  const fullCache = CacheService.getScriptCache();
+  const cachedFull = fullCache.get(fullCacheKey);
+  if (cachedFull) {
+    try { return JSON.parse(cachedFull); } catch (e) {}
+  }
+
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const listSheet = ss.getSheetByName(CONFIG.LIST_SHEET_NAME);
+  if (!listSheet) throw new Error('Không tìm thấy sheet "' + CONFIG.LIST_SHEET_NAME + '"');
+
+  const lastRow = listSheet.getLastRow();
+  if (lastRow < CONFIG.LIST_START_ROW) return [];
+
+  const numRows = lastRow - CONFIG.LIST_START_ROW + 1;
+  const data = listSheet.getRange(CONFIG.LIST_START_ROW, 1, numRows, 4).getValues();
+
+  const baseList = data
+    .filter(r => r[CONFIG.LIST_COL_TEN - 1] && r[CONFIG.LIST_COL_MSP - 1])
+    .map(r => ({
+      ten: String(r[CONFIG.LIST_COL_TEN - 1]).trim(),
+      msp: String(r[CONFIG.LIST_COL_MSP - 1]).trim(),
+      countThuong: Number(r[CONFIG.LIST_COL_SOLAN_THUONG - 1]) || 0,
+      countFor: Number(r[CONFIG.LIST_COL_SOLAN_FOR - 1]) || 0
+    }));
+
+  const vungSets = getVungSets_(dateStr);
+  const mspInThuong = vungSets.thuong;
+  const mspInFor = vungSets.for;
+
+  const result = [];
+  baseList.forEach(item => {
+    const coThuong = mspInThuong.has(item.msp);
+    const coFor = mspInFor.has(item.msp);
+
+    if (coThuong && coFor) {
+      result.push({ ten: item.ten, msp: item.msp, vung: 'NORMAL', count: item.countThuong });
+      result.push({ ten: item.ten + ' X1', msp: item.msp, vung: 'FOR', count: item.countFor });
+    } else if (coFor) {
+      result.push({ ten: item.ten, msp: item.msp, vung: 'FOR', count: item.countFor });
+    } else {
+      result.push({ ten: item.ten, msp: item.msp, vung: 'NORMAL', count: item.countThuong });
+    }
+  });
+
+  try { fullCache.put(fullCacheKey, JSON.stringify(result), 14400); } catch (e) {}
+
+  return result;
+}
+
+function getVungSets_(dateStr) {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const date = new Date(dateStr);
+  const sheetName = String(date.getMonth() + 1);
+  const cache = CacheService.getScriptCache();
+  const cacheKey = 'vungSets_' + sheetName;
+
+  const cached = cache.get(cacheKey);
+  if (cached) {
+    try {
+      const parsed = JSON.parse(cached);
+      return { thuong: new Set(parsed.thuong), for: new Set(parsed.for) };
+    } catch (e) {}
+  }
+
+  const thuongSet = new Set();
+  const forSet = new Set();
+  const sheet = ss.getSheetByName(sheetName);
+
+  if (sheet) {
+    const startRow = 6;
+    const endRow = 644;
+    const numRows = endRow - startRow + 1;
+    const values = sheet.getRange(startRow, CONFIG.MSP_COL_IN_MONTH_SHEET, numRows, 1).getValues();
+
+    for (let i = 0; i < values.length; i++) {
+      const v = String(values[i][0]).trim();
+      if (!v) continue;
+      const rowNum = startRow + i;
+
+      if (rowNum >= 544 && rowNum <= 630) {
+        forSet.add(v);
+      } else if ((rowNum >= 6 && rowNum <= 543) || (rowNum >= 637 && rowNum <= 644)) {
+        thuongSet.add(v);
+      }
+    }
+
+    try {
+      cache.put(cacheKey, JSON.stringify({
+        thuong: Array.from(thuongSet),
+        for: Array.from(forSet)
+      }), 600);
+    } catch (e) {}
+  }
+
+  return { thuong: thuongSet, for: forSet };
+}
+
+function submitEntry(payload) {
+  try {
+    const rule = LOAI_RULES[payload.loai];
+    if (!rule) return { success: false, message: 'Loại không hợp lệ' };
+
+    if (!payload.msp) return { success: false, message: 'Thiếu MSP' };
+
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    const date = new Date(payload.dateStr);
+    if (isNaN(date.getTime())) {
+      return { success: false, message: 'Ngày không hợp lệ: "' + payload.dateStr + '"' };
+    }
+    const month = date.getMonth() + 1;
+    const day = date.getDate();
+    const sheetName = String(month);
+    const sheet = ss.getSheetByName(sheetName);
+
+    if (!sheet) {
+      return { success: false, message: 'Chưa có sheet tháng "' + sheetName + '". Vui lòng tạo sheet trước.' };
+    }
+
+    const baoCol = CONFIG.AF_COL_INDEX + (day - 1) * 8 + rule.offset;
+
+    const ranges = rule.dynamicVung
+      ? (payload.vung === 'FOR' ? VUNG_FOR_RANGES : VUNG_THUONG_RANGES)
+      : rule.ranges;
+
+    const foundRow = findRowByMsp_(sheet, payload.msp, ranges);
+    if (foundRow === -1) {
+      return { success: false, message: 'Không tìm thấy MSP "' + payload.msp + '" trong kho đã chọn' };
+    }
+
+    const baoInput = payload.bao ? Number(payload.bao) : 0;
+    const kgInput = payload.kg ? Number(payload.kg) : 0;
+
+    if (!isFinite(baoInput) || !isFinite(kgInput)) {
+      return { success: false, message: 'Bao/Kg không phải là số hợp lệ' };
+    }
+    if (baoInput < 0 || kgInput < 0) {
+      return { success: false, message: 'Bao/Kg không thể là số âm' };
+    }
+
+    const range = sheet.getRange(foundRow, baoCol, 1, 2);
+    const existing = range.getValues()[0];
+
+    const baoResult = combineValue_(existing[0], baoInput, rule.suffix);
+    if (!baoResult.ok) {
+      return {
+        success: false,
+        message: 'Ô BAO đang có loại khác (hậu tố .x' + baoResult.existingSuffix + '), không thể cộng dồn với loại đang chọn'
+      };
+    }
+
+    const kgResult = combineValue_(existing[1], kgInput, rule.suffix);
+    if (!kgResult.ok) {
+      return {
+        success: false,
+        message: 'Ô KG đang có loại khác (hậu tố .x' + kgResult.existingSuffix + '), không thể cộng dồn với loại đang chọn'
+      };
+    }
+
+    range.setValues([[
+      Math.round(baoResult.val * 100) / 100,
+      Math.round(kgResult.val * 100) / 100
+    ]]);
+
+    sheet.getRange(foundRow, baoCol + 1).setNote(payload.ghiChu || '');
+
+    const vungThucTe = (ranges === VUNG_FOR_RANGES) ? 'FOR' : 'NORMAL';
+
+    return {
+      success: true,
+      message: 'Đã ghi vào sheet ' + sheetName + ', dòng ' + foundRow,
+      newBao: baoResult.val,
+      newKg: kgResult.val,
+      vung: vungThucTe
+    };
+  } catch (err) {
+    return { success: false, message: 'Lỗi: ' + err.message };
+  }
+}
+
+function layLS_() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  let sh = ss.getSheetByName('LS');
+  if (!sh) {
+    sh = ss.insertSheet('LS');
+    sh.getRange(1, 1, 1, 7).setValues([['LỊCH SỬ NHẬP XUẤT KHO', '', '', '', '', '', '']]);
+    sh.getRange(2, 1, 1, 7).setValues([['MSP', 'Quy cách', 'Loại', 'Bao', 'KG', 'Ngày', 'Vùng']]);
+    sh.getRange(2, 1, 1, 7).setFontWeight('bold');
+  }
+  return sh;
+}
+
+function ghiLichSu(payload) {
+  try {
+    const sh = layLS_();
+    const lastRow = sh.getLastRow();
+    const row = Math.max(lastRow + 1, 3);
+    const parts = String(payload.dateStr).split('-').map(Number);
+    const ngayObj = new Date(parts[0], parts[1] - 1, parts[2]);
+    const vungLabel = payload.vung === 'FOR' ? 'X1' : 'X5';
+
+    sh.getRange(row, 1, 1, 7).setValues([[
+      payload.msp || '',
+      payload.ten || '',
+      payload.loaiText || '',
+      Number(payload.bao) || 0,
+      Number(payload.kg) || 0,
+      ngayObj,
+      vungLabel
+    ]]);
+    sh.getRange(row, 6).setNumberFormat('dd/MM/yyyy');
+  } catch (e) {}
+}
+
+function layLichSu(dateStr) {
+  try {
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    const sh = ss.getSheetByName('LS');
+    if (!sh) return [];
+
+    const lastRow = sh.getLastRow();
+    if (lastRow < 3) return [];
+
+    const parts = String(dateStr).split('-').map(Number);
+    const ty = parts[0], tm = parts[1], td = parts[2];
+
+    const numRows = lastRow - 3 + 1;
+    const data = sh.getRange(3, 1, numRows, 7).getValues();
+
+    const result = [];
+    for (let i = 0; i < data.length; i++) {
+      const r = data[i];
+      const ngayCell = r[5];
+      if (!(ngayCell instanceof Date)) continue;
+      if (ngayCell.getFullYear() === ty && ngayCell.getMonth() + 1 === tm && ngayCell.getDate() === td) {
+        result.push({
+          msp: r[0],
+          ten: r[1],
+          loai: r[2],
+          bao: r[3],
+          kg: r[4],
+          vung: r[6]
+        });
+      }
+    }
+    return result;
+  } catch (e) {
+    return [];
+  }
+}
+
+function capNhatSoLanDung(msp, vung, dateStr) {
+  incrementUsageCount_(msp, vung);
+}
+
+function incrementUsageCount_(msp, vung) {
+  try {
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    const listSheet = ss.getSheetByName(CONFIG.LIST_SHEET_NAME);
+    if (!listSheet) return;
+
+    const lastRow = listSheet.getLastRow();
+    if (lastRow < CONFIG.LIST_START_ROW) return;
+
+    const target = String(msp).trim();
+    const col = (vung === 'FOR') ? CONFIG.LIST_COL_SOLAN_FOR : CONFIG.LIST_COL_SOLAN_THUONG;
+    const cache = CacheService.getScriptCache();
+    const cacheKey = 'mspRowMap_v1';
+
+    let rowMap = null;
+    const cached = cache.get(cacheKey);
+    if (cached) {
+      try { rowMap = JSON.parse(cached); } catch (e) { rowMap = null; }
+    }
+    const cachedRow = rowMap && rowMap[target];
+
+    if (cachedRow) {
+      const rowData = listSheet.getRange(cachedRow, CONFIG.LIST_COL_MSP, 1, 3).getValues()[0];
+      if (String(rowData[0]).trim() === target) {
+        const current = Number(rowData[(vung === 'FOR') ? 2 : 1]) || 0;
+        listSheet.getRange(cachedRow, col).setValue(current + 1);
+        return;
+      }
+    }
+
+    const numRows = lastRow - CONFIG.LIST_START_ROW + 1;
+    const data = listSheet.getRange(CONFIG.LIST_START_ROW, CONFIG.LIST_COL_MSP, numRows, 3).getValues();
+
+    const newRowMap = {};
+    let foundRow = -1;
+    let foundCurrent = 0;
+    for (let i = 0; i < data.length; i++) {
+      const rowMsp = String(data[i][0]).trim();
+      if (!rowMsp) continue;
+      const rowNum = CONFIG.LIST_START_ROW + i;
+      newRowMap[rowMsp] = rowNum;
+      if (rowMsp === target) {
+        foundRow = rowNum;
+        foundCurrent = Number(data[i][(vung === 'FOR') ? 2 : 1]) || 0;
+      }
+    }
+
+    try { cache.put(cacheKey, JSON.stringify(newRowMap), 21600); } catch (e) {}
+
+    if (foundRow === -1) return;
+
+    listSheet.getRange(foundRow, col).setValue(foundCurrent + 1);
+  } catch (e) {}
+}
+
+function findRowByMsp_(sheet, msp, ranges) {
+  const target = String(msp).trim();
+  for (const [start, end] of ranges) {
+    const numRows = end - start + 1;
+    const values = sheet.getRange(start, CONFIG.MSP_COL_IN_MONTH_SHEET, numRows, 1).getValues();
+    for (let i = 0; i < values.length; i++) {
+      if (String(values[i][0]).trim() === target) {
+        return start + i;
+      }
+    }
+  }
+  return -1;
+}
+
+function combineValue_(existingRaw, inputVal, suffixCode) {
+  const existingNum = parseCellNumber_(existingRaw);
+
+  if (existingNum === 0) {
+    const roundedInput = Math.round(inputVal * 10) / 10;
+    return { ok: true, val: roundedInput + (suffixCode > 0 ? suffixCode / 100 : 0) };
+  }
+
+  const existingCents = Math.round(existingNum * 100);
+  const existingTypeDigit = ((existingCents % 10) + 10) % 10;
+  const existingRealAmount = (existingCents - existingTypeDigit) / 100;
+
+  if (existingTypeDigit !== suffixCode) {
+    return { ok: false, existingSuffix: existingTypeDigit };
+  }
+
+  const newRealAmount = Math.round((existingRealAmount + inputVal) * 10) / 10;
+  return { ok: true, val: newRealAmount + (suffixCode > 0 ? suffixCode / 100 : 0) };
+}
+
+function parseCellNumber_(val) {
+  if (val === '' || val === '-' || val === null || val === undefined) return 0;
+  const n = Number(val);
+  return isNaN(n) ? 0 : n;
+}
+
+function doPost(e) {
+  let result;
+  try {
+    const body = JSON.parse(e.postData.contents);
+    switch (body.action) {
+      case "khoiTaoForm":
+        result = khoiTaoForm(body.dateStr, body.forceRefresh);
+        break;
+      case "submitEntryX5":
+        result = submitEntryX5(body.payload);
+        break;
+      case "layUngVienGhepCX5":
+        result = layUngVienGhepCX5(body.payload);
+        break;
+      case "ghiGhepCX5":
+        result = ghiGhepCX5(body.payload);
+        break;
+      case "xoaUngVienGhepCX5":
+        result = xoaUngVienGhepCX5(body.payload);
+        break;
+      case "layChiTietNguonGocCX5":
+        result = layChiTietNguonGocCX5(body.payload);
+        break;
+      case "layDanhSachSanPhamTonKhoCX5":
+        result = layDanhSachSanPhamTonKhoCX5();
+        break;
+      case "layTonKhoCX5":
+        result = layTonKhoCX5(body.payload);
+        break;
+      default:
+        result = { success: false, message: "Action không hợp lệ: " + body.action };
+    }
+  } catch (err) {
+    result = { success: false, message: "Lỗi server: " + err.message };
+  }
+  return ContentService.createTextOutput(JSON.stringify(result)).setMimeType(ContentService.MimeType.JSON);
+}
+
+function submitEntryX5(payload) {
+  try {
+    if (!payload || !payload.msp) return { success: false, message: "Thiếu MSP" };
+
+    const entryResult = submitEntry({
+      dateStr: payload.dateStr,
+      loai: "NHAP_SX",
+      msp: payload.msp,
+      bao: payload.bao,
+      kg: payload.kg,
+      ghiChu: payload.ghiChu || ""
+    });
+    if (!entryResult.success) return entryResult;
+
+    const lots = (payload.lots && payload.lots.length)
+      ? payload.lots
+      : [{ kgList: payload.kgList || [] }];
+
+    ghiLichSuC5({
+      dateStr: payload.dateStr,
+      msp: payload.msp,
+      ten: payload.ten,
+      lots: lots
+    });
+
+    return entryResult;
+  } catch (err) {
+    return { success: false, message: "Lỗi: " + err.message };
+  }
+}
+
+function layLSC5_() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  let sh = ss.getSheetByName("LSC5");
+  if (!sh) {
+    sh = ss.insertSheet("LSC5");
+  }
+  return sh;
+}
+
+function ghiLichSuC5(payload) {
+  try {
+    const lots = payload.lots || [];
+    if (lots.length === 0) return;
+
+    const sh = layLSC5_();
+    let row = Math.max(sh.getLastRow() + 1, 3);
+
+    lots.forEach(function (lot) {
+      const kgList = lot.kgList || [];
+      if (kgList.length === 0) return;
+
+      let idx = 0;
+      let dongDauTien = true;
+      let dongCuoiCung = row;
+
+      while (idx < kgList.length) {
+        const chunk = kgList.slice(idx, idx + 12);
+        const gia = [];
+        for (let i = 0; i < 12; i++) gia.push(chunk[i] || "");
+
+        if (dongDauTien) {
+          sh.getRange(row, 2, 1, 3).setValues([[payload.dateStr, payload.msp, payload.ten]]);
+          dongDauTien = false;
+        }
+        sh.getRange(row, 5, 1, 12).setValues([gia]);
+
+        dongCuoiCung = row;
+        idx += 12;
+        row += 1;
+      }
+
+      const tongKg = kgList.reduce(function (s, v) { return s + (Number(v) || 0); }, 0);
+      sh.getRange(dongCuoiCung, 18).setValue(Math.round(tongKg * 100) / 100);
+    });
+  } catch (e) {}
+}
+
+function chuanHoaNgayLSC5_(v) {
+  if (v instanceof Date) {
+    const y = v.getFullYear();
+    const m = String(v.getMonth() + 1).padStart(2, "0");
+    const d = String(v.getDate()).padStart(2, "0");
+    return y + "-" + m + "-" + d;
+  }
+  return String(v == null ? "" : v).trim();
+}
+
+function docCacKhoiLSC5_() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const sh = ss.getSheetByName("LSC5");
+  const blocks = [];
+  if (!sh) return blocks;
+
+  const lastRow = sh.getLastRow();
+  if (lastRow < 3) return blocks;
+
+  const numRows = lastRow - 3 + 1;
+  const data = sh.getRange(3, 2, numRows, 21).getValues();
+
+  let cur = null;
+
+  function dongLai() {
+    if (cur) {
+      // T/U là giá trị ghép đã ghi; nếu trống thì dùng tổng số bao/kg gốc của cả khối.
+      cur.baoHieuLuc = cur.baoGhep != null ? cur.baoGhep : cur.bao;
+      cur.kgHieuLuc = cur.kgGhep != null ? cur.kgGhep : cur.kg;
+      blocks.push(cur);
+    }
+    cur = null;
+  }
+
+  for (let i = 0; i < data.length; i++) {
+    const r = data[i];
+    const rowNum = 3 + i;
+    const ngayRaw = r[0];
+    const msp = r[1];
+    const qc = r[2];
+    const kgCells = r.slice(3, 15);
+    const soBaoDong = kgCells.filter(function (v) { return v !== "" && v !== null; }).length;
+    const tongCell = r[16];
+    const baoGhepCell = r[18];
+    const kgGhepCell = r[19];
+    const anCell = r[20];
+
+    if (ngayRaw !== "" && ngayRaw !== null && msp) {
+      dongLai();
+      cur = {
+        msp: String(msp).trim(),
+        ten: String(qc).trim(),
+        ngay: chuanHoaNgayLSC5_(ngayRaw),
+        bao: soBaoDong,
+        kg: 0,
+        baoGhep: null,
+        kgGhep: null,
+        daAn: false,
+        rowDauTien: rowNum,
+        rowCuoiCung: rowNum,
+        daGhep: false
+      };
+    } else if (cur) {
+      cur.bao += soBaoDong;
+    }
+
+    if (cur) {
+      if (tongCell !== "" && tongCell !== null) {
+        cur.kg = Number(tongCell) || 0;
+        cur.rowCuoiCung = rowNum;
+      }
+      if ((baoGhepCell !== "" && baoGhepCell !== null) || (kgGhepCell !== "" && kgGhepCell !== null)) {
+        cur.daGhep = true;
+      }
+      if (baoGhepCell !== "" && baoGhepCell !== null) cur.baoGhep = Number(baoGhepCell) || 0;
+      if (kgGhepCell !== "" && kgGhepCell !== null) cur.kgGhep = Number(kgGhepCell) || 0;
+      if (String(anCell == null ? "" : anCell).trim().toUpperCase() === "X") cur.daAn = true;
+    }
+  }
+  dongLai();
+
+  return blocks;
+}
+
+function layUngVienGhepCX5(payload) {
+  try {
+    const dsQC = payload.dsQC || [];
+    const dateStr = payload.dateStr;
+
+    const result = {};
+    dsQC.forEach(function (q) { result[q.msp + "|" + q.ten] = { homNay: [], cu: [] }; });
+
+    const blocks = docCacKhoiLSC5_();
+
+    blocks.forEach(function (b) {
+      const key = b.msp + "|" + b.ten;
+      if (!(key in result)) return;
+      const item = {
+        row: b.rowCuoiCung,
+        ngay: b.ngay,
+        bao: b.baoHieuLuc,
+        kg: Math.round(b.kgHieuLuc * 100) / 100
+      };
+      if (b.ngay === dateStr) {
+        result[key].homNay.push(item);
+      } else if (!b.daAn && b.baoHieuLuc > 0 && b.baoHieuLuc < 10) {
+        result[key].cu.push(item);
+      }
+    });
+
+    return result;
+  } catch (err) {
+    return { error: err.message };
+  }
+}
+
+function chuoiThanhDsSo_(v) {
+  const s = String(v == null ? "" : v).trim();
+  if (!s) return [];
+  return s.split(",")
+    .map(function (x) { return Number(String(x).trim()); })
+    .filter(function (n) { return Number.isInteger(n) && n > 0; });
+}
+
+function ghiGhepCX5(payload) {
+  try {
+    const groups = payload.groups || [];
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    const sh = ss.getSheetByName("LSC5");
+    if (!sh) return { success: false, message: "Không tìm thấy sheet LSC5" };
+
+    const rowsCu = [];
+    groups.forEach(function (g) {
+      (g.cuList || []).forEach(function (item) { rowsCu.push(Number(item.row)); });
+    });
+    if (new Set(rowsCu).size !== rowsCu.length) {
+      return { success: false, message: "Một số dư đang được chọn ở nhiều khối" };
+    }
+    for (let i = 0; i < rowsCu.length; i++) {
+      if (sh.getRange(rowsCu[i], 22).getValue() === "X") {
+        return { success: false, message: "Một số dư đã được ghép hoặc đã hủy" };
+      }
+    }
+
+    groups.forEach(function (g) {
+      if (g.rowNeo) {
+        const wHienCo = chuoiThanhDsSo_(sh.getRange(g.rowNeo, 23).getValue());
+        const wMoi = new Set(wHienCo);
+
+        (g.cuList || []).forEach(function (item) {
+          wMoi.add(Number(item.row));
+          chuoiThanhDsSo_(sh.getRange(item.row, 23).getValue()).forEach(function (r) { wMoi.add(r); });
+        });
+
+        sh.getRange(g.rowNeo, 20, 1, 2).setValues([[g.tongBao, Math.round(g.tongKg * 100) / 100]]);
+        if (wMoi.size > 0) {
+          sh.getRange(g.rowNeo, 23).setValue(Array.from(wMoi).join(","));
+        }
+      }
+      (g.cuList || []).forEach(function (item) {
+        sh.getRange(item.row, 20, 1, 2).setValues([[item.bao, Math.round(item.kg * 100) / 100]]);
+        sh.getRange(item.row, 22).setValue("X");
+      });
+    });
+
+    return { success: true };
+  } catch (err) {
+    return { success: false, message: "Lỗi: " + err.message };
+  }
+}
+
+function docThongTinLuotLSC5_(sh, rowCuoi) {
+  let rowDau = rowCuoi;
+  while (rowDau > 3) {
+    const bTruoc = sh.getRange(rowDau - 1, 2).getValue();
+    if (bTruoc !== "" && bTruoc !== null) break;
+    rowDau -= 1;
+  }
+
+  const ngay = chuanHoaNgayLSC5_(sh.getRange(rowDau, 2).getValue());
+  const soDong = rowCuoi - rowDau + 1;
+  const data = sh.getRange(rowDau, 5, soDong, 12).getValues();
+  const kgList = [];
+  data.forEach(function (r) {
+    r.forEach(function (v) { if (v !== "" && v !== null) kgList.push(Number(v) || 0); });
+  });
+
+  return { ngay: ngay, kgList: kgList };
+}
+
+function layChiTietNguonGocCX5(payload) {
+  try {
+    const row = Number(payload && payload.row);
+    if (!Number.isInteger(row) || row < 3) return { error: "Dòng không hợp lệ" };
+
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    const sh = ss.getSheetByName("LSC5");
+    if (!sh) return { error: "Không tìm thấy sheet LSC5" };
+
+    const dsDong = [row].concat(chuoiThanhDsSo_(sh.getRange(row, 23).getValue()));
+
+    const nguon = dsDong.map(function (r) {
+      const tt = docThongTinLuotLSC5_(sh, r);
+      return { row: r, ngay: tt.ngay, kgList: tt.kgList };
+    });
+
+    return { nguon: nguon };
+  } catch (err) {
+    return { error: err.message };
+  }
+}
+
+function xoaUngVienGhepCX5(payload) {
+  try {
+    const row = Number(payload && payload.row);
+    if (!Number.isInteger(row) || row < 3) return { success: false, message: "Dòng dữ liệu không hợp lệ" };
+    const sh = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("LSC5");
+    if (!sh) return { success: false, message: "Không tìm thấy sheet LSC5" };
+    sh.getRange(row, 22).setValue("X");
+    return { success: true };
+  } catch (err) {
+    return { success: false, message: "Lỗi: " + err.message };
+  }
+}
+
+function layDanhSachSanPhamTonKhoCX5() {
+  try {
+    const cacheKey = "tonKhoDanhSach_v1";
+    const cache = CacheService.getScriptCache();
+    const cached = cache.get(cacheKey);
+    if (cached) {
+      try { return { list: JSON.parse(cached) }; } catch (e) {}
+    }
+
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    const listSheet = ss.getSheetByName(CONFIG.LIST_SHEET_NAME);
+    if (!listSheet) return { list: [] };
+
+    const lastRow = listSheet.getLastRow();
+    if (lastRow < CONFIG.LIST_START_ROW) return { list: [] };
+
+    const numRows = lastRow - CONFIG.LIST_START_ROW + 1;
+    const data = listSheet.getRange(CONFIG.LIST_START_ROW, 1, numRows, 2).getValues();
+
+    const list = data
+      .filter(function (r) { return r[CONFIG.LIST_COL_TEN - 1] && r[CONFIG.LIST_COL_MSP - 1]; })
+      .map(function (r) {
+        return { ten: String(r[CONFIG.LIST_COL_TEN - 1]).trim(), msp: String(r[CONFIG.LIST_COL_MSP - 1]).trim() };
+      });
+
+    try { cache.put(cacheKey, JSON.stringify(list), 1800); } catch (e) {}
+
+    return { list: list };
+  } catch (err) {
+    return { error: err.message };
+  }
+}
+
+function layTonKhoCX5(payload) {
+  try {
+    const dateStr = payload && payload.dateStr;
+    const msps = (payload && payload.msps) || [];
+    if (msps.length === 0) return { list: [] };
+
+    const date = new Date(dateStr);
+    if (isNaN(date.getTime())) return { error: "Ngày không hợp lệ" };
+
+    const sheetName = String(date.getMonth() + 1);
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    const sheet = ss.getSheetByName(sheetName);
+    if (!sheet) return { error: 'Chưa có sheet tháng "' + sheetName + '"' };
+
+    const ketQua = [];
+    msps.forEach(function (msp) {
+      const rowThuong = findRowByMsp_(sheet, msp, VUNG_THUONG_RANGES);
+      const rowFor = findRowByMsp_(sheet, msp, VUNG_FOR_RANGES);
+
+      if (rowThuong !== -1) {
+        const v = sheet.getRange(rowThuong, 8, 1, 4).getValues()[0];
+        ketQua.push({ msp: msp, kho: "Thường", baoDau: v[0] || 0, kgDau: v[1] || 0, baoCuoi: v[2] || 0, kgCuoi: v[3] || 0 });
+      }
+      if (rowFor !== -1) {
+        const v = sheet.getRange(rowFor, 8, 1, 4).getValues()[0];
+        ketQua.push({ msp: msp, kho: "FOR", baoDau: v[0] || 0, kgDau: v[1] || 0, baoCuoi: v[2] || 0, kgCuoi: v[3] || 0 });
+      }
+    });
+
+    return { list: ketQua };
+  } catch (err) {
+    return { error: err.message };
+  }
+}

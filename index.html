@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Quản lý Kho</title>
+  <link rel="stylesheet" href="style.css?v=20260623-sieucap">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@zxing/library@0.19.1/umd/index.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" type="image/png" sizes="64x64" href="favicon.png">
+<meta name="theme-color" content="#141b17">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<script>
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('./sw.js');
+  }
+</script>
+</head>
+<body>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+
+<div class="bottom-nav">
+  <button class="bnav-btn active" data-page="trangChu" onclick="chuyenTrang('trangChu', this)">
+    <i class="ti ti-home" aria-hidden="true"></i>
+    <span>Trang chủ</span>
+  </button>
+  <button class="bnav-btn" data-page="chiX5" onclick="chuyenTrang('chiX5', this)">
+    <i class="ti ti-scale" aria-hidden="true"></i>
+    <span>Chỉ X5</span>
+  </button>
+  <button class="bnav-btn" data-page="quetQR" onclick="chuyenTrang('quetQR', this)">
+    <i class="ti ti-scan" aria-hidden="true"></i>
+    <span>Quét QR</span>
+  </button>
+  <button class="bnav-btn" data-page="kiemKe" onclick="chuyenTrang('kiemKe', this)">
+    <i class="ti ti-clipboard-list" aria-hidden="true"></i>
+    <span>Kiểm kê</span>
+  </button>
+  <button class="bnav-btn" data-page="chiFor" onclick="chuyenTrang('chiFor', this)">
+    <i class="ti ti-package" aria-hidden="true"></i>
+    <span>Chỉ FOR</span>
+  </button>
+</div>
+
+<div class="canh-bao" id="canh-bao"></div>
+<div class="mang-status" id="mang-status"></div>
+
+<div id="trangChu" class="page active">
+  <div class="card" id="phien-dodang-card" style="display:none">
+    <h3>Phiên dở dang</h3>
+    <div id="phien-dodang-noidung"></div>
+    <div style="display:flex; gap:10px; margin-top:14px;">
+      <button class="btn btn-green" style="flex:1" onclick="tiepTucPhienChiFor()">Tiếp tục</button>
+      <button class="btn btn-red" style="flex:1" onclick="huyPhienChiFor()">Huỷ bỏ</button>
+    </div>
+  </div>
+  <div class="card" id="phien-dodang-card-x5" style="display:none">
+    <h3>Phiên dở dang</h3>
+    <div id="phien-dodang-noidung-x5"></div>
+    <div style="display:flex; gap:10px; margin-top:14px;">
+      <button class="btn btn-green" style="flex:1" onclick="tiepTucPhienChiX5()">Tiếp tục</button>
+      <button class="btn btn-red" style="flex:1" onclick="huyPhienChiX5()">Huỷ bỏ</button>
+    </div>
+  </div>
+  <div class="card">
+    <h3>Quản Lý Kho</h3>
+
+    <div class="trangchu-grid">
+      <button class="btn" style="background:var(--neutral-solid);color:var(--cream)" onclick="chuyenTrangKhongNav('taoQR')">Tạo QR</button>
+      <button class="btn" style="background:var(--neutral-solid);color:var(--cream)" onclick="diToiTab('quetQR')">Quét QR</button>
+      <button class="btn" style="background:var(--neutral-solid);color:var(--cream)" onclick="diToiTab('kiemKe')">Kiểm kê</button>
+      <button class="btn" style="background:var(--neutral-solid);color:var(--cream)" onclick="diToiTab('chiFor')">Chỉ For</button>
+      <button class="btn" style="background:var(--neutral-solid);color:var(--cream)" onclick="diToiTab('chiX5')">Chỉ X5</button>
+      <button class="btn" style="background:var(--neutral-solid);color:var(--cream)" id="btn-ton-kho" onclick="tkMoTonKho()">Tồn kho</button>
+    </div>
+  </div>
+  <div class="card">
+    <h3>Lịch Sử</h3>
+    <button class="btn btn-full" style="background:var(--neutral-solid);color:var(--cream);" onclick="moLichSuCX1()">Xem lịch sử Chỉ For</button>
+    <button class="btn btn-full" style="background:var(--neutral-solid);color:var(--cream);margin-top:8px" onclick="moLichSuCX5()">Xem lịch sử Chỉ X5</button>
+  </div>
+</div>
+
+<div id="lichSu" class="page">
+  <div class="card">
+    <h3>Lịch Sử Chỉ For</h3>
+    <div id="lichsu-list"></div>
+    <button class="btn btn-excel btn-full" style="margin-top:14px" onclick="xuatExcelLichSuCX1()"><i class="ti ti-file-spreadsheet"></i> Xuất File Excel Lịch Sử</button>
+    <button class="btn btn-full" style="background:var(--neutral-solid);color:var(--cream);margin-top:8px" onclick="diToiTab('trangChu')">← Trang chủ</button>
+  </div>
+</div>
+
+<div id="tonKho" class="page">
+  <div class="card">
+    <h3>Tồn Kho</h3>
+
+    <div id="tk-search-box">
+      <label>Ngày</label>
+      <input type="date" id="tk-ngay" onchange="tkDoiNgay()">
+
+      <label>Tên sản phẩm</label>
+      <div class="row">
+        <div class="tk-ten-wrap" style="flex:1">
+          <input type="text" id="tk-ten" placeholder="Nhập tên để tra tồn" autocomplete="off"
+            oninput="tkOnInputTen()" onkeydown="tkOnKeydownTen(event)">
+          <button type="button" class="tk-clear-btn" id="tk-clear-btn" onclick="tkXoaOTen()" aria-label="Xoá">✕</button>
+          <div id="tk-dropdown" class="tk-dropdown"></div>
+        </div>
+        <button class="btn btn-blue" onclick="tkTimTonKho()">Tìm</button>
+      </div>
+    </div>
+
+    <div id="tk-loading" style="display:none;justify-content:center;padding:20px;">
+      <div class="spinner-loading md"></div>
+    </div>
+
+    <div id="tk-ket-qua"></div>
+
+    <button class="btn btn-full" style="background:var(--neutral-solid);color:var(--cream);margin-top:14px" onclick="diToiTab('trangChu')">← Trang chủ</button>
+  </div>
+</div>
+
+<div id="lichsuChiTiet" class="page">
+  <div class="card">
+    <h3 id="lichsu-chitiet-tieude">Chi tiết phiên</h3>
+
+    <div style="margin-bottom: 30px;">
+      <h4 style="color:var(--brass); margin-bottom:10px;">CHI TIẾT</h4>
+      <div style="overflow-x:auto;">
+        <table style="width:100%; border-collapse:collapse; background:var(--card-raised); font-size:14px; border-radius:8px; overflow:hidden;">
+          <thead>
+            <tr style="background:var(--line-soft)">
+              <th style="padding:10px; border-bottom:2px solid var(--line); text-align:left">Đợt</th>
+              <th style="padding:10px; border-bottom:2px solid var(--line); text-align:left">MSP</th>
+              <th style="padding:10px; border-bottom:2px solid var(--line); text-align:left">QC</th>
+              <th style="padding:10px; border-bottom:2px solid var(--line); text-align:center">Bao</th>
+              <th style="padding:10px; border-bottom:2px solid var(--line); text-align:right">KG</th>
+            </tr>
+          </thead>
+          <tbody id="lichsu-tbody-dot"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div style="margin-bottom: 20px;">
+      <h4 style="color:var(--steel); margin-bottom:10px;">TỔNG HỢP</h4>
+      <div style="overflow-x:auto;">
+        <table style="width:100%; border-collapse:collapse; background:var(--card-raised); font-size:14px; border-radius:8px; overflow:hidden;">
+          <thead>
+            <tr style="background:var(--line-soft)">
+              <th style="padding:10px; border-bottom:2px solid var(--line); text-align:left">MSP</th>
+              <th style="padding:10px; border-bottom:2px solid var(--line); text-align:left">QC</th>
+              <th style="padding:10px; border-bottom:2px solid var(--line); text-align:center">Bao</th>
+              <th style="padding:10px; border-bottom:2px solid var(--line); text-align:right">KG</th>
+            </tr>
+          </thead>
+          <tbody id="lichsu-tbody-gom"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <button class="btn btn-green btn-full" onclick="tiepTucTuChiTietLichSu()">Tiếp tục quét</button>
+    <button class="btn btn-excel btn-full" style="margin-top:8px" onclick="xuatExcelLichSuCX1()"><i class="ti ti-file-spreadsheet"></i> Xuất File Excel Phiên Này</button>
+    <button class="btn btn-full" style="background:var(--neutral-solid);color:var(--cream);margin-top:8px" onclick="chuyenTrangKhongNav('lichSu')">← Lịch sử</button>
+  </div>
+</div>
+
+<div id="taoQR" class="page">
+  <div class="card">
+    <h3>Tạo QR</h3>
+    <label>MSP</label>
+    <div class="row">
+      <input type="text" id="msp-tao" placeholder="Nhập mã" onkeydown="if(event.key==='Enter') timMSP()">
+      <button class="btn btn-blue" onclick="timMSP()">Tìm</button>
+    </div>
+    <div class="info-box" id="info-tao">
+      <div class="irow"><span class="ilabel">Tên</span><span class="ivalue" id="t-ten"></span></div>
+      <div class="irow"><span class="ilabel">Màu</span><span class="ivalue" id="t-mau"></span></div>
+      <label>Số lượng</label>
+      <input type="number" id="sl-qr" value="20" min="1" max="100">
+      <button class="btn btn-green btn-full" onclick="taoQR()">Tạo QR</button>
+    </div>
+  </div>
+  <div class="card" id="card-qr" style="display:none">
+    <h3>Danh sách QR</h3>
+    <div class="qr-grid" id="qr-grid"></div>
+    <button class="btn-print" onclick="window.print()">In QR</button>
+  </div>
+</div>
+
+<div id="quetQR" class="page">
+  <div class="card">
+    <h3>Quét QR</h3>
+
+    <div id="form-chon">
+      <label>Ngày</label>
+      <input type="date" id="chon-ngay">
+
+      <label>Loại</label>
+      <div class="custom-select">
+        <button type="button" id="chon-loai-btn" class="custom-select-btn">
+  Chọn loại
+</button>
+
+        <div id="chon-loai-list" class="custom-select-list">
+          <div class="group-title">Nhập</div>
+          <div class="custom-option" data-value="Nhập SX">Nhập SX</div>
+          <div class="custom-option" data-value="Nhập Trả">Nhập Trả</div>
+          <div class="custom-option" data-value="Nhập For">Nhập For</div>
+
+          <div class="group-title">Xuất</div>
+          <div class="custom-option" data-value="Xuất SX">Xuất SX</div>
+          <div class="custom-option" data-value="Xuất Trả">Xuất Trả</div>
+          <div class="custom-option" data-value="Xuất Gia Công">Xuất Gia Công</div>
+          <div class="custom-option" data-value="Xuất Phế">Xuất Phế</div>
+          <div class="custom-option" data-value="Xuất Bán">Xuất Bán</div>
+          <div class="custom-option" data-value="Bình Thuận">Bình Thuận</div>
+          <div class="custom-option" data-value="Xuất For">Xuất For</div>
+        </div>
+      </div>
+
+      <input type="hidden" id="chon-loai">
+      <button class="btn btn-blue btn-full" onclick="batDauQuet()">Quét</button>
+    </div>
+
+    <div id="cam-box" style="display:none">
+      <video id="reader" autoplay playsinline muted style="width:100%;border-radius:8px;background:#000;margin-top:12px;"></video>
+      <button id="toggle-quet-nhanh" class="btn btn-full" style="background:var(--neutral-solid);color:var(--cream);margin-top:10px" onclick="toggleQuetNhanh()">Nhập Kg: TẮT</button>
+      <div class="scanner-status" id="scanner-status"></div>
+      <button class="btn btn-red btn-full" id="btn-stop" onclick="dungQuet()" style="display:none">Dừng quét</button>
+    </div>
+  </div>
+</div>
+
+<div id="kiemKe" class="page">
+  <div class="card">
+    <h3> Kiểm Kê</h3>
+    <div id="kk-form">
+      <label>Ngày</label>
+      <input type="date" id="kk-ngay">
+      <button class="btn btn-blue btn-full" onclick="batDauKiemKe()">Quét</button>
+      <button class="btn btn-excel btn-full" style="margin-top:8px" onclick="xuatExcelKiemKe()"><i class="ti ti-file-spreadsheet"></i> Xuất File Excel</button>
+    </div>
+    <div id="kk-cam" style="display:none">
+      <video id="kk-reader" autoplay playsinline muted style="width:100%;border-radius:20px;background:#000;margin-top:12px;border:2px solid var(--brass);"></video>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:12px;">
+        <div id="kk-dem" style="color:var(--success);font-weight:700;font-size:16px;">Đã quét: 0 mã</div>
+        <div id="kk-status" class="scanner-status" style="margin:0;"></div>
+      </div>
+      <button class="btn btn-red btn-full" onclick="dungKiemKe()">Dừng & Lưu</button>
+    </div>
+  </div>
+</div>
+
+<div id="chiFor" class="page">
+  <div id="cx1-form" class="card">
+  <h3>Chỉ For</h3>
+  <label>Ngày</label>
+  <input type="date" id="cx1-ngay">
+  <button class="btn btn-blue btn-full" onclick="batDauCX1()">Quét</button>
+</div>
+
+  <div id="cx1-cam" class="card" style="display:none">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px">
+      <span id="cx1-status" style="font-weight:700">🟢 Đang quét Đợt 1...</span>
+      <span id="cx1-dem" class="cx5-badge">Đã quét: 0 mã</span>
+    </div>
+    <div class="video-container" style="position:relative; width:100%; padding-bottom:75%; background:#000; border-radius:8px; overflow:hidden; margin-bottom:15px">
+      <video id="cx1-reader" style="position:absolute; width:100%; height:100%; object-fit:cover"></video>
+    </div>
+
+    <div style="display:flex; flex-direction:column; gap:10px; width:100%;">
+      <button id="btn-flash-cx1" class="btn btn-full" style="background:var(--neutral-solid); color:var(--cream);" onclick="toggleFlashCX1()">Bật/Tắt đèn</button>
+      <button id="btn-dung-tieptuc-cx1" class="btn btn-red btn-full" onclick="toggleDungTiepTuc()">Dừng quét</button>
+      <button class="btn btn-green btn-full" onclick="ketThucCX1()">Kết Thúc</button>
+    </div>
+  </div>
+
+  <div id="cx1-ketqua" class="card" style="display:none">
+    <h3 style="color:var(--success); text-align:center; margin-bottom:20px;">Hoàn tất</h3>
+
+    <div style="margin-bottom: 30px;">
+      <h4 style="color:var(--brass); margin-bottom:10px;">CHI TIẾT</h4>
+      <div style="overflow-x:auto;">
+        <table style="width:100%; border-collapse:collapse; background:var(--card-raised); font-size:14px; border-radius:8px; overflow:hidden;">
+          <thead>
+            <tr style="background:var(--line-soft)">
+              <th style="padding:10px; border-bottom:2px solid var(--line); text-align:left">Đợt</th>
+              <th style="padding:10px; border-bottom:2px solid var(--line); text-align:left">MSP</th>
+              <th style="padding:10px; border-bottom:2px solid var(--line); text-align:left">QC</th>
+              <th style="padding:10px; border-bottom:2px solid var(--line); text-align:center">Bao</th>
+              <th style="padding:10px; border-bottom:2px solid var(--line); text-align:right">KG</th>
+            </tr>
+          </thead>
+          <tbody id="cx1-tbody-dot"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div style="margin-bottom: 20px;">
+      <h4 style="color:var(--steel); margin-bottom:10px;">TỔNG HỢP</h4>
+      <div style="overflow-x:auto;">
+        <table style="width:100%; border-collapse:collapse; background:var(--card-raised); font-size:14px; border-radius:8px; overflow:hidden;">
+          <thead>
+            <tr style="background:var(--line-soft)">
+              <th style="padding:10px; border-bottom:2px solid var(--line); text-align:left">MSP</th>
+              <th style="padding:10px; border-bottom:2px solid var(--line); text-align:left">QC</th>
+              <th style="padding:10px; border-bottom:2px solid var(--line); text-align:center">Bao</th>
+              <th style="padding:10px; border-bottom:2px solid var(--line); text-align:right">KG</th>
+            </tr>
+          </thead>
+          <tbody id="cx1-tbody-gom"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <button class="btn btn-green btn-full" onclick="quetTiepCX1()">Quét tiếp</button>
+<button class="btn btn-blue btn-full" onclick="quetMoiCX1()">Quét mới</button>
+<button class="btn btn-full" style="background:var(--neutral-solid);color:var(--cream);" onclick="xuatCSVCX1()">Xuất CSV</button>
+  </div>
+</div>
+
+<div id="chiX5" class="page">
+  <div id="cx5-form" class="card">
+    <h3>Chỉ X5</h3>
+    <label>Ngày</label>
+    <input type="date" id="cx5-ngay">
+    <button class="btn btn-blue btn-full" onclick="batDauCX5()">Bắt đầu</button>
+    <button class="btn btn-full" style="background:var(--neutral-solid);color:var(--cream)" onclick="diToiTab('trangChu')">Trang chủ</button>
+  </div>
+
+  <div id="cx5-nhap" class="card" style="display:none">
+    <div style="display:flex; justify-content:space-between; align-items:center">
+      <h3 style="margin:0;padding:0;border:0;box-shadow:none" id="cx5-ngay-hienthi"></h3>
+      <span id="cx5-dem" class="cx5-badge">Đã nhập: 0 dòng</span>
+    </div>
+    <div id="cx5-pending-line" style="display:none;color:var(--brass);font-size:12px;font-weight:600;margin-top:6px"></div>
+
+    <label>QC</label>
+    <div class="cx5-ten-wrap" id="cx5-qc-tim-wrap">
+      <input type="text" id="cx5-ten" placeholder="Tìm QC..." autocomplete="off" readonly inputmode="none">
+      <div id="cx5-dropdown" class="cx5-dropdown"></div>
+    </div>
+    <div id="cx5-qc-khoa" class="cx5-qc-khoa" style="display:none" onclick="moKhoaQCCX5()">
+      <span id="cx5-qc-khoa-ten"></span>
+      <span class="cx5-qc-khoa-doi">Đổi</span>
+    </div>
+    <input type="hidden" id="cx5-msp">
+
+    <div id="cx5-kg-khu">
+      <label>Kg</label>
+      <input type="text" id="cx5-kg" inputmode="none" readonly onkeydown="if(event.key==='Enter'){event.preventDefault();themDongCX5()}">
+
+      <button class="btn btn-green btn-full" onclick="themDongCX5()">Thêm</button>
+    </div>
+
+    <div class="cx5-box">
+      <div class="cx5-box-top">
+        <div class="cx5-box-title">Chi tiết</div>
+        <button class="cx5-xoay-btn" onclick="xoayBangCX5('cx5-bang-chitiet')" title="Xoay ngang">⤢</button>
+      </div>
+      <div id="cx5-bang-chitiet-wrap" class="cx5-scroll">
+        <table class="cx5-table">
+          <thead><tr><th>Lượt</th><th>QC</th><th>Bao</th><th>Kg</th><th></th></tr></thead>
+          <tbody id="cx5-tbody-chitiet"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="cx5-box">
+      <div class="cx5-box-top">
+        <div class="cx5-box-title">Tổng hợp</div>
+        <button class="cx5-xoay-btn" onclick="xoayBangCX5('cx5-bang-tonghop')" title="Xem rộng">⤢</button>
+      </div>
+      <div id="cx5-bang-tonghop-wrap" class="cx5-scroll">
+        <table class="cx5-table">
+          <thead><tr><th>QC</th><th>Bao</th><th>Kg</th><th>Trạng thái</th></tr></thead>
+          <tbody id="cx5-tbody-tonghop"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <button class="btn btn-blue btn-full" onclick="ketThucPhienCX5()">Đối chiếu</button>
+    <button class="btn btn-full" style="background:var(--neutral-solid);color:var(--cream)" onclick="diToiTab('trangChu')">Trang chủ</button>
+  </div>
+
+  <div id="cx5-doichieu" class="card" style="display:none">
+    <h3>Đối chiếu Sản Xuất</h3>
+    <div id="cx5-pending-line-dc" style="display:none;color:var(--brass);font-size:12px;font-weight:600;margin:-8px 0 12px"></div>
+
+    <div class="cx5-box" style="margin-bottom:14px; background:var(--card-raised); border:1px solid var(--line); border-radius:8px; padding:12px;">
+      <div class="cx5-box-title" style="color:var(--brass); font-weight:700; margin-bottom:8px;">NHẬP DỮ LIỆU BÊN SẢN XUẤT (SX)</div>
+
+      <label>Quy cách SX</label>
+      <div class="cx5-ten-wrap" id="cx5-sx-qc-wrap">
+        <input type="text" id="cx5-sx-ten" placeholder="Gõ tên hoặc MSP bên SX..." autocomplete="off" oninput="onInputSXCX5()">
+        <div id="cx5-sx-dropdown" class="cx5-dropdown"></div>
+      </div>
+      <input type="hidden" id="cx5-sx-msp">
+
+      <div style="display:flex; gap:8px; margin-top:10px;">
+        <input type="number" id="cx5-sx-kg" placeholder="Số kg SX..." step="0.1" min="0" onkeydown="if(event.key==='Enter'){event.preventDefault();themDongSXCX5()}">
+        <button class="btn btn-blue" style="flex-shrink:0; width:90px;" onclick="themDongSXCX5()">+ Thêm</button>
+      </div>
+    </div>
+
+    <div id="cx5-dc-filter-tabs" style="display:flex; gap:6px; overflow-x:auto; margin-bottom:12px; padding-bottom:4px;">
+      <button class="btn btn-sm cx5-dc-tab active" id="cx5-tab-ALL" onclick="datFilterDoiChieuCX5('ALL')">Tất cả</button>
+      <button class="btn btn-sm cx5-dc-tab" id="cx5-tab-KHOP" onclick="datFilterDoiChieuCX5('KHOP')">🟢 Khớp</button>
+      <button class="btn btn-sm cx5-dc-tab" id="cx5-tab-LECH" onclick="datFilterDoiChieuCX5('LECH')">🟡 Lệch</button>
+      <button class="btn btn-sm cx5-dc-tab" id="cx5-tab-KHO_ONLY" onclick="datFilterDoiChieuCX5('KHO_ONLY')">🔵 Kho chưa có SX</button>
+      <button class="btn btn-sm cx5-dc-tab" id="cx5-tab-SX_ONLY" onclick="datFilterDoiChieuCX5('SX_ONLY')">🟣 SX chưa có Kho</button>
+    </div>
+
+    <div id="cx5-doichieu-list"></div>
+    <button class="btn btn-full" style="background:var(--neutral-solid);color:var(--cream); margin-top:12px;" onclick="dongDoiChieuCX5()">← Quay lại nhập kho</button>
+  </div>
+
+  <div id="cx5-tongkg" class="card" style="display:none">
+    <h3>Tổng kg pallet</h3>
+    <div id="cx5-tongkg-list"></div>
+    <div class="cx5-box" style="margin-top:16px">
+      <div class="cx5-box-top">
+        <div class="cx5-box-title">Tổng kg pallet</div>
+        <button class="cx5-xoay-btn" onclick="xoayBangCX5('cx5-bang-tongkg-phien')" title="Xoay ngang">⤢</button>
+      </div>
+      <div id="cx5-bang-tongkg-phien-wrap" class="cx5-scroll">
+        <table id="cx5-bang-tongkg-phien" class="cx5-table">
+          <thead><tr><th>QC</th><th>Bao</th><th>Kg</th><th>Trạng thái</th></tr></thead>
+          <tbody id="cx5-tbody-tongkg-phien"></tbody>
+        </table>
+      </div>
+    </div>
+    <button class="btn btn-full" style="background:var(--neutral-solid);color:var(--cream);margin-top:10px" onclick="boQuaTongKgCX5()">Bỏ qua</button>
+  </div>
+</div>
+
+<div id="lichSuX5" class="page">
+  <div class="card">
+    <h3>Lịch Sử Chỉ X5</h3>
+    <input type="text" id="lichsu-x5-tim" placeholder="Tìm theo ngày hoặc quy cách..." autocomplete="off" oninput="renderLichSuCX5()" style="margin-bottom:12px">
+    <div id="lichsu-x5-list"></div>
+    <button class="btn btn-excel btn-full" style="margin-top:14px" onclick="xuatExcelLichSuCX5()"><i class="ti ti-file-spreadsheet"></i> Xuất File Excel Lịch Sử X5</button>
+    <button class="btn btn-red btn-full" style="margin-top:8px" onclick="xoaTatCaLichSuCX5()">Xóa tất cả lịch sử</button>
+    <button class="btn btn-full" style="background:var(--neutral-solid);color:var(--cream);margin-top:8px" onclick="diToiTab('trangChu')">Trang chủ</button>
+  </div>
+</div>
+
+<div id="overlay-loading" style="display:none;position:fixed;inset:0;background:var(--overlay-bg);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);z-index:99999;justify-content:center;align-items:center;">
+  <div class="spinner-loading lg"></div>
+</div>
+
+<div class="overlay" id="overlay">
+  <div class="overlay-card">
+    <div id="overlay-spinner" style="display:none;justify-content:center;padding:20px;">
+      <div class="spinner-loading md"></div>
+    </div>
+    <div id="overlay-content">
+      <div class="tk-card-header" style="margin-bottom:14px">
+        <div>
+          <div class="tk-card-ten" id="q-ten">Thông tin tem QR</div>
+          <div class="tk-card-msp">MSP: <span id="q-msp">—</span> &nbsp;·&nbsp; ID: <span id="q-id">—</span></div>
+        </div>
+        <div class="tk-badge tk-badge-thuong" id="q-loai">Nhập</div>
+      </div>
+
+      <div class="tk-stat-grid" style="margin-bottom:14px">
+        <div class="tk-stat-box">
+          <div class="tk-stat-label">MÀU SẮC</div>
+          <div class="tk-stat-val" style="font-size:14px;color:var(--cream)" id="q-mau">—</div>
+        </div>
+        <div class="tk-stat-box highlight">
+          <div class="tk-stat-label">TỒN KHO</div>
+          <div class="tk-stat-val main-ton" id="q-ton">0</div>
+        </div>
+      </div>
+
+      <label>Số kg nhập/xuất</label>
+      <input type="number" id="q-kg" placeholder="Nhập số kg" min="0" step="0.1">
+      <button class="btn btn-green btn-full" id="btn-luu" style="margin-top:12px" onclick="luuGiaoDich()">Lưu & quét tiếp</button>
+      <button class="btn btn-full" style="background:var(--neutral-solid);color:var(--cream);margin-top:8px" onclick="dongOverlay()">Bỏ qua</button>
+      <div class="msg" id="msg-quet"></div>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="cx5-overlay-luot">
+  <div class="overlay-card">
+    <div class="overlay-title">Sửa lượt — <span id="cx5-sl-ten"></span></div>
+    <div id="cx5-sl-chitiet" class="cx5-chitiet-kg" style="margin-top:10px"></div>
+    <div style="display:flex;gap:8px;margin-top:14px">
+      <input type="text" id="cx5-sl-them-kg" inputmode="none" readonly placeholder="Thêm số kg..." onkeydown="if(event.key==='Enter'){event.preventDefault();themKgVaoLuotCX5()}">
+      <button class="btn btn-green" style="width:56px;flex-shrink:0" onclick="themKgVaoLuotCX5()">+</button>
+    </div>
+    <button class="btn btn-full" style="background:var(--neutral-solid);color:var(--cream);margin-top:12px" onclick="dongSuaLuotCX5()">Đóng</button>
+  </div>
+</div>
+
+<div class="cx5-xoay-overlay" id="cx5-overlay-xoay">
+  <button id="cx5-xoay-dong" onclick="dongXoayCX5()" title="Đóng">✕</button>
+  <span id="cx5-xoay-tieude"></span>
+  <div class="cx5-xoay-scrollzone">
+    <div id="cx5-overlay-xoay-content" class="cx5-xoay-rotor"></div>
+  </div>
+</div>
+
+<div class="overlay" id="cx5-overlay-chitiet-lichsu">
+  <div class="overlay-card">
+    <div class="overlay-title" id="cx5-ctls-tieude"></div>
+    <div id="cx5-ctls-noidung" style="max-height:50vh;overflow:auto;margin:8px 0"></div>
+    <div style="display:flex; gap:10px; margin-top:6px;">
+      <button class="btn" style="flex:1;background:var(--neutral-solid);color:var(--cream)" onclick="dongChiTietLichSuCX5()">Đóng</button>
+      <button class="btn btn-blue" style="flex:1" id="cx5-ctls-tieptuc">Tiếp tục sửa</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="cx5-overlay-xacnhan">
+  <div class="overlay-card" style="text-align:center;">
+    <div class="overlay-title" style="text-align:center;">Xác nhận</div>
+    <div style="color:var(--cream-soft);font-size:13px;margin:-4px 0 4px;" id="cx5-xacnhan-noidung"></div>
+    <div style="display:flex; gap:10px; margin-top:6px;">
+      <button class="btn" style="flex:1;background:var(--neutral-solid);color:var(--cream)" id="cx5-xacnhan-nut-huy" onclick="dongXacNhanCX5(false)">Hủy</button>
+      <button class="btn btn-red" style="flex:1" id="cx5-xacnhan-nut-ok" onclick="dongXacNhanCX5(true)">Xóa</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="overlay-thoat">
+  <div class="overlay-card" style="text-align:center;">
+    <div class="overlay-title" style="text-align:center;">Bạn sợ à?</div>
+    <div style="display:flex; gap:10px; margin-top:6px;">
+      <button class="btn btn-blue" style="flex:1" onclick="khongThoatApp()">Không</button>
+      <button class="btn btn-red" style="flex:1" onclick="xacNhanThoatApp()">Tôi sợ</button>
+    </div>
+  </div>
+</div>
+
+<script src="app.js?v=20260623-sieucap"></script>
+<script src="kiemke.js"></script>
+<script src="cx1.js?v=20260623-sieucap"></script>
+<script src="cx5.js"></script>
+<script src="tonkho.js?v=20260623-sieucap"></script>
+</body>
+</html>
