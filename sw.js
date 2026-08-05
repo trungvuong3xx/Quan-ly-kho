@@ -7,6 +7,7 @@ const urlsToCache = [
   './kiemke.js',
   './cx1.js',
   './cx5.js',
+  './btp.js',
   './tonkho.js',
   './manifest.json',
   './icon-192.png',

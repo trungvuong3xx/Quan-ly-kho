@@ -114,8 +114,10 @@ function chuyenTrang(id, el) {
   document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
   document.querySelectorAll(".bnav-btn").forEach(b => b.classList.remove("active"));
   document.getElementById(id).classList.add("active");
-  el.classList.add("active");
+  if (el) el.classList.add("active");
   if (id !== "quetQR") dungQuet();
+  if (id !== "chiFor" && typeof dungCX1 === "function") dungCX1();
+  if (id !== "btpPage" && typeof dungBTP === "function") dungBTP();
   if (id === "trangChu" && typeof capNhatTrangChu === "function") capNhatTrangChu();
 }
 
@@ -123,13 +125,17 @@ function chuyenTrang(id, el) {
 function diToiTab(id) {
   const btn = document.querySelector('.bnav-btn[data-page="' + id + '"]');
   if (btn) chuyenTrang(id, btn);
+  else chuyenTrangKhongNav(id);
 }
 window.diToiTab = diToiTab;
 
 // Điều hướng tới 1 trang KHÔNG có nút riêng trên bottom-nav (vd: Lịch sử, chi tiết lịch sử)
 function chuyenTrangKhongNav(id) {
   document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
-  document.getElementById(id).classList.add("active");
+  if (id !== "chiFor" && typeof dungCX1 === "function") dungCX1();
+  if (id !== "btpPage" && typeof dungBTP === "function") dungBTP();
+  const page = document.getElementById(id);
+  if (page) page.classList.add("active");
 }
 window.chuyenTrangKhongNav = chuyenTrangKhongNav;
 
@@ -763,6 +769,41 @@ function capNhatTrangChu() {
       cardX5.style.display = "none";
     }
   }
+
+  const cardBTP = document.getElementById("phien-dodang-card-btp");
+  const noidungBTP = document.getElementById("phien-dodang-noidung-btp");
+  if (cardBTP && noidungBTP) {
+    let stateBTP = null;
+    try { stateBTP = JSON.parse(localStorage.getItem("btp_phien_dodang")); } catch (e) {}
+
+    if (stateBTP && Array.isArray(stateBTP.phienBTP) && stateBTP.phienBTP.length > 0) {
+      const gioCapNhatBTP = stateBTP.capNhat
+        ? new Date(stateBTP.capNhat).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" })
+        : "—";
+      noidungBTP.innerHTML = `
+        <div class="tk-card-header" style="margin-bottom:10px">
+          <div>
+            <div class="tk-card-ten">BTP (Bán Thành Phẩm)</div>
+            <div class="tk-card-msp">Cập nhật: <span>${gioCapNhatBTP}</span></div>
+          </div>
+          <div class="tk-badge tk-badge-thuong">Dở dang</div>
+        </div>
+        <div class="tk-stat-grid">
+          <div class="tk-stat-box">
+            <div class="tk-stat-label">NGÀY</div>
+            <div class="tk-stat-val" style="font-size:14px;color:var(--cream)">${stateBTP.ngayBTP || "—"}</div>
+          </div>
+          <div class="tk-stat-box highlight">
+            <div class="tk-stat-label">ĐÃ QUÉT</div>
+            <div class="tk-stat-val main-ton">${stateBTP.phienBTP.length} <small>mã</small></div>
+          </div>
+        </div>
+      `;
+      cardBTP.style.display = "block";
+    } else {
+      cardBTP.style.display = "none";
+    }
+  }
 }
 window.capNhatTrangChu = capNhatTrangChu;
 
@@ -782,6 +823,7 @@ function demPendingMang() {
   try { tong += JSON.parse(localStorage.getItem("cx1_pending_saves") || "[]").length; } catch (e) {}
   try { tong += JSON.parse(localStorage.getItem("kk_pending_saves") || "[]").length; } catch (e) {}
   try { tong += JSON.parse(localStorage.getItem("cx5_pending_saves") || "[]").length; } catch (e) {}
+  try { tong += JSON.parse(localStorage.getItem("btp_pending_saves") || "[]").length; } catch (e) {}
   return tong;
 }
 
