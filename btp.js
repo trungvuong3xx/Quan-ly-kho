@@ -491,6 +491,76 @@ function renderLichSuBTP() {
 }
 window.renderLichSuBTP = renderLichSuBTP;
 
+let dangXemLichSuBTPId = null;
+
+function xemChiTietLichSuBTP(idPhien) {
+  const list = docLichSuBTP();
+  const entry = list.find(s => s.idPhien === idPhien);
+  if (!entry) return;
+
+  dangXemLichSuBTPId = idPhien;
+  const { hangDot, hangGom } = taoHangKetQuaBTP(entry.phienBTP);
+  
+  const elDot = document.getElementById("lichsu-btp-tbody-dot");
+  const elGom = document.getElementById("lichsu-btp-tbody-gom");
+  const elTieude = document.getElementById("lichsu-btp-chitiet-tieude");
+  
+  if (elDot) elDot.innerHTML = hangDot;
+  if (elGom) elGom.innerHTML = hangGom;
+  if (elTieude) elTieude.textContent = "BTP — " + entry.ngay;
+
+  if (typeof chuyenTrangKhongNav === "function") chuyenTrangKhongNav("lichSuBTPChiTiet");
+}
+window.xemChiTietLichSuBTP = xemChiTietLichSuBTP;
+
+function tiepTucLichSuBTP(idPhien) {
+  const list = docLichSuBTP();
+  const entry = list.find(s => s.idPhien === idPhien);
+  if (!entry) return;
+
+  if (typeof diToiTab === "function") diToiTab("btpPage");
+  else if (typeof chuyenTrangKhongNav === "function") chuyenTrangKhongNav("btpPage");
+
+  khoiPhucBTP({
+    phienBTP: entry.phienBTP,
+    ngayBTP: entry.ngay,
+    idPhienHienTaiBTP: entry.idPhien,
+    soLuongDaGuiHienTaiBTP: entry.soLuongDaGui || 0
+  });
+}
+window.tiepTucLichSuBTP = tiepTucLichSuBTP;
+
+function tiepTucTuChiTietLichSuBTP() {
+  if (dangXemLichSuBTPId) tiepTucLichSuBTP(dangXemLichSuBTPId);
+}
+window.tiepTucTuChiTietLichSuBTP = tiepTucTuChiTietLichSuBTP;
+
+function xuatExcelLichSuBTP(idPhien) {
+  const targetId = idPhien || dangXemLichSuBTPId;
+  const list = docLichSuBTP();
+  const entry = list.find(s => s.idPhien === targetId);
+  if (!entry || !entry.phienBTP || entry.phienBTP.length === 0) {
+    alert("Chưa có dữ liệu phiên này để xuất Excel!");
+    return;
+  }
+  const dateStr = entry.ngay || new Date().toISOString().split("T")[0];
+  const data = entry.phienBTP.map((r, i) => ({
+    "STT": i + 1,
+    "Ngày": entry.ngay,
+    "Mã QR Gốc": r.rawQR,
+    "Mã BTP": r.msp,
+    "Số lượng": r.kg,
+    "Thời gian": r.thoiGian ? new Date(r.thoiGian).toLocaleTimeString("vi-VN") : ""
+  }));
+  if (typeof XLSX !== "undefined") {
+    const ws = XLSX.utils.json_to_sheet(data);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "BTP");
+    XLSX.writeFile(wb, "Quet_BTP_" + dateStr + ".xlsx");
+  }
+}
+window.xuatExcelLichSuBTP = xuatExcelLichSuBTP;
+
 function xuatCSVBTP() {
   if (phienBTP.length === 0) { alert("Chưa có dữ liệu để xuất"); return; }
   const header = ["Dot", "Mã QR Gốc", "Mã BTP", "Số Lượng", "Thời Gian"];

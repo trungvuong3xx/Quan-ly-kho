@@ -411,6 +411,50 @@
   </div>
 </div>
 
+<div id="lichSuBTPChiTiet" class="page">
+  <div class="card">
+    <h3 id="lichsu-btp-chitiet-tieude">Chi tiết Lịch sử BTP</h3>
+    
+    <div style="margin-bottom: 20px;">
+      <h4 style="color:var(--brass); margin-bottom:10px;">DANH SÁCH MÃ QUÉT</h4>
+      <div style="overflow-x:auto;">
+        <table style="width:100%; border-collapse:collapse; background:var(--card-raised); font-size:14px; border-radius:8px; overflow:hidden;">
+          <thead>
+            <tr style="background:var(--line-soft)">
+              <th style="padding:10px; border-bottom:2px solid var(--line); text-align:left">STT</th>
+              <th style="padding:10px; border-bottom:2px solid var(--line); text-align:left">Mã BTP</th>
+              <th style="padding:10px; border-bottom:2px solid var(--line); text-align:right">Số lượng</th>
+            </tr>
+          </thead>
+          <tbody id="lichsu-btp-tbody-dot"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div style="margin-bottom: 20px;">
+      <h4 style="color:var(--steel); margin-bottom:10px;">TỔNG HỢP GOM MÃ</h4>
+      <div style="overflow-x:auto;">
+        <table style="width:100%; border-collapse:collapse; background:var(--card-raised); font-size:14px; border-radius:8px; overflow:hidden;">
+          <thead>
+            <tr style="background:var(--line-soft)">
+              <th style="padding:10px; border-bottom:2px solid var(--line); text-align:left">Mã BTP</th>
+              <th style="padding:10px; border-bottom:2px solid var(--line); text-align:center">Mã</th>
+              <th style="padding:10px; border-bottom:2px solid var(--line); text-align:right">Tổng SL</th>
+            </tr>
+          </thead>
+          <tbody id="lichsu-btp-tbody-gom"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div style="display:flex; flex-direction:column; gap:8px;">
+      <button class="btn btn-green btn-full" onclick="tiepTucTuChiTietLichSuBTP()">Quét tiếp / Sửa phiên này</button>
+      <button class="btn btn-excel btn-full" onclick="xuatExcelLichSuBTP()"><i class="ti ti-file-spreadsheet"></i> Xuất Excel Phiên Này</button>
+      <button class="btn btn-full" style="background:var(--neutral-solid);color:var(--cream);" onclick="chuyenTrangKhongNav('lichSuBTP')">← Quay lại Lịch sử</button>
+    </div>
+  </div>
+</div>
+
 <div id="chiX5" class="page">
   <div id="cx5-form" class="card">
     <h3>Chỉ X5</h3>
