@@ -192,30 +192,19 @@ function tongHopBTPSheet(fromRow, toRow) {
     var soKeo = parseFloat(qrRow[2]) || 0;                     // Cột C: Số kèo / Khổ kiện
     if (!maEM || soKeo <= 0) continue;
 
-    var infoQC = mapQC[maEM] || {};
-    var matTam = infoQC.matMax || 960;
-    var isNguyenTam = (soKeo >= matTam && matTam > 0) || (soKeo === 960);
-
     if (!gomData[maEM]) {
       gomData[maEM] = {
         maEM: maEM,
-        nguyenTamCount: 0,
         kienMap: {},
         tongKienEyes: 0
       };
     }
 
-    if (isNguyenTam) {
-      // Nhóm cục nguyên tấm
-      gomData[maEM].nguyenTamCount += 1;
-    } else {
-      // Nhóm các kiện thành phần lẻ (VD: 210, 110, 320)
-      if (!gomData[maEM].kienMap[soKeo]) {
-        gomData[maEM].kienMap[soKeo] = 0;
-      }
-      gomData[maEM].kienMap[soKeo] += 1;
-      gomData[maEM].tongKienEyes += soKeo;
+    if (!gomData[maEM].kienMap[soKeo]) {
+      gomData[maEM].kienMap[soKeo] = 0;
     }
+    gomData[maEM].kienMap[soKeo] += 1;
+    gomData[maEM].tongKienEyes += soKeo;
   }
 
   // 3. Tính toán và tạo dòng kết quả xuất sang Sheet 'Tổng Hợp'
@@ -232,21 +221,6 @@ function tongHopBTPSheet(fromRow, toRow) {
     var kgAA = infoQC.kgAA || 0;
     var matTam = infoQC.matMax || 960;
 
-    // HÀNG 1: Dành cho các cục NGUYÊN TẤM hoàn chỉnh (VD: 960 hoặc 320)
-    if (item.nguyenTamCount > 0) {
-      var soTamNguyen = item.nguyenTamCount;
-      var soKgNguyen = Math.round((soTamNguyen * kgAA) * 100) / 100;
-      rowsTongHop.push([
-        mspERP,        // Cột A: MSP (Cột J trong QC)
-        qcV,           // Cột B: QC (Cột V trong QC)
-        soTamNguyen,   // Cột C: Số Tấm
-        soKgNguyen,    // Cột D: Số Kg
-        maEM,          // Cột E: Số đơn
-        ""             // Cột F: Số kiện (ĐỂ TRỐNG nếu là tấm hoàn chỉnh)
-      ]);
-    }
-
-    // HÀNG 2: Dành cho các KIỆN LẺ GHÉP THÀNH TẤM (VD: 210 + 110 = 320 hoặc 3k 320 = 960)
     var soKeoKeys = Object.keys(item.kienMap);
     if (soKeoKeys.length > 0) {
       var tongEyes = item.tongKienEyes;
@@ -272,7 +246,7 @@ function tongHopBTPSheet(fromRow, toRow) {
         soTamLe,       // Cột C: Số Tấm (Số tấm hoàn chỉnh ghép được)
         soKgLe,        // Cột D: Số Kg
         maEM,          // Cột E: Số đơn
-        noteText       // Cột F: Số kiện (VD: "1k 210 + 1k 110" hoặc "3k 320")
+        noteText       // Cột F: Số kiện (VD: "5k 166 + 5k 83" hoặc "5k 133")
       ]);
     }
   }
