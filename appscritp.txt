@@ -92,10 +92,10 @@ function chayTongHopBTP() {
   var toRow = lastRowQR;
 
   if (sheetTH) {
-    var valB2 = sheetTH.getRange("B2").getValue();
-    var valB3 = sheetTH.getRange("B3").getValue();
-    if (valB2 && !isNaN(valB2)) fromRow = parseInt(valB2, 10);
-    if (valB3 && !isNaN(valB3)) toRow = parseInt(valB3, 10);
+    var valC2 = sheetTH.getRange("C2").getValue();
+    var valC3 = sheetTH.getRange("C3").getValue();
+    if (valC2 && !isNaN(valC2)) fromRow = parseInt(valC2, 10);
+    if (valC3 && !isNaN(valC3)) toRow = parseInt(valC3, 10);
   }
 
   if (fromRow < 5) fromRow = 5;
