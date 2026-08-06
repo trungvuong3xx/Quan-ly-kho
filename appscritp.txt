@@ -239,7 +239,7 @@ function tongHopBTPSheet(fromRow, toRow) {
     if (item.nguyenTamCount > 0) {
       var soTamNguyen = item.nguyenTamCount;
       var soKgNguyen = Math.round((soTamNguyen * kgAA) * 10) / 10;
-      var noteNguyen = soTamNguyen + "k " + item.nguyenTamSize;
+      var noteNguyen = "lưới dài";
 
       rowsTongHop.push([
         mspERP,        // Cột A: MSP (Cột J trong QC)
@@ -247,7 +247,7 @@ function tongHopBTPSheet(fromRow, toRow) {
         soTamNguyen,   // Cột C: Số Tấm
         soKgNguyen,    // Cột D: Số Kg
         maEM,          // Cột E: Số đơn
-        noteNguyen     // Cột F: Số kiện (VD: "7k 166")
+        noteNguyen     // Cột F: Số kiện (Nếu là tấm hoàn chỉnh nguyên thì ghi "lưới dài")
       ]);
     }
 
