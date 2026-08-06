@@ -258,9 +258,13 @@ function tongHopBTPSheet(fromRow, toRow) {
       }
       var noteText = kienNotes.join(" + ");
 
-      // QUY ƯỚC: Số Tấm = Math.round(Tổng mắt kiện / Khổ tấm lớn nhất matTam)
-      var soTamLe = (matTam > 0) ? Math.round(tongEyes / matTam) : 0;
-      var soKgLe = Math.round((soTamLe * kgAA) * 100) / 100;
+      // CÔNG THỨC CHUẨN XÁC THEO YÊU CẦU:
+      // Ratio = tongEyes / matTam (VD: 999 / 599 = 1.667779632721202)
+      // Cột C (Số Tấm) = Làm tròn 2 chữ số thập phân (VD: 1.67)
+      // Cột D (Số Kg) = (Ratio * kgAA) Làm tròn 1 chữ số thập phân (VD: 43.3622... -> 43.4)
+      var ratioTam = (matTam > 0) ? (tongEyes / matTam) : 0;
+      var soTamLe = Math.round(ratioTam * 100) / 100;
+      var soKgLe = Math.round((ratioTam * kgAA) * 10) / 10;
 
       rowsTongHop.push([
         mspERP,        // Cột A: MSP (Cột J trong QC)
