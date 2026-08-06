@@ -296,12 +296,9 @@ async function ketThucBTP() {
 function taoHangKetQuaBTP(danhSach) {
   let tongGomLoaiMa = {};
   let tongQRAll = danhSach.length;
-  let tongKGAll = 0;
 
   let hangDot = "";
   danhSach.forEach((r, idx) => {
-    tongKGAll += r.kg;
-
     hangDot += `
   <tr>
     <td style="padding:10px;border-bottom:1px solid var(--line-soft);color:var(--steel);font-weight:700">${idx + 1}</td>
@@ -316,7 +313,7 @@ function taoHangKetQuaBTP(danhSach) {
     tongGomLoaiMa[keyGom].soLuong += 1;
   });
 
-  hangDot += `
+  let footDot = `
   <tr>
     <td style="padding:10px;font-weight:700;color:var(--brass);background:var(--card-raised)">TỔNG</td>
     <td style="padding:10px;background:var(--card-raised);font-weight:700;color:var(--brass)">${tongQRAll} mã</td>
@@ -332,20 +329,28 @@ function taoHangKetQuaBTP(danhSach) {
     <td style="padding:10px;border-bottom:1px solid var(--line-soft);text-align:right;font-weight:700;color:var(--success)">${item.soLuong}</td>
   </tr>`;
   });
-  hangGom += `
+
+  let footGom = `
   <tr>
     <td style="padding:10px;font-weight:700;color:var(--steel);background:var(--card-raised)">TỔNG</td>
     <td style="padding:10px;text-align:center;font-weight:700;color:var(--steel);background:var(--card-raised)">${Object.keys(tongGomLoaiMa).length} loại</td>
     <td style="padding:10px;text-align:right;font-weight:700;color:var(--steel);background:var(--card-raised)">${tongQRAll}</td>
   </tr>`;
 
-  return { hangDot, hangGom };
+  return { hangDot, footDot, hangGom, footGom };
 }
 
 function hienKetQuaBTP() {
-  const { hangDot, hangGom } = taoHangKetQuaBTP(phienBTP);
-  document.getElementById("btp-tbody-dot").innerHTML = hangDot;
-  document.getElementById("btp-tbody-gom").innerHTML = hangGom;
+  const { hangDot, footDot, hangGom, footGom } = taoHangKetQuaBTP(phienBTP);
+  const elDot = document.getElementById("btp-tbody-dot");
+  const elFootDot = document.getElementById("btp-tfoot-dot");
+  const elGom = document.getElementById("btp-tbody-gom");
+  const elFootGom = document.getElementById("btp-tfoot-gom");
+
+  if (elDot) elDot.innerHTML = hangDot;
+  if (elFootDot) elFootDot.innerHTML = footDot;
+  if (elGom) elGom.innerHTML = hangGom;
+  if (elFootGom) elFootGom.innerHTML = footGom;
 
   document.getElementById("btp-cam").style.display = "none";
   document.getElementById("btp-ketqua").style.display = "block";
@@ -553,14 +558,18 @@ function xemChiTietLichSuBTP(idPhien) {
   if (!entry) return;
 
   dangXemLichSuBTPId = idPhien;
-  const { hangDot, hangGom } = taoHangKetQuaBTP(entry.phienBTP);
+  const { hangDot, footDot, hangGom, footGom } = taoHangKetQuaBTP(entry.phienBTP);
   
   const elDot = document.getElementById("lichsu-btp-tbody-dot");
+  const elFootDot = document.getElementById("lichsu-btp-tfoot-dot");
   const elGom = document.getElementById("lichsu-btp-tbody-gom");
+  const elFootGom = document.getElementById("lichsu-btp-tfoot-gom");
   const elTieude = document.getElementById("lichsu-btp-chitiet-tieude");
   
   if (elDot) elDot.innerHTML = hangDot;
+  if (elFootDot) elFootDot.innerHTML = footDot;
   if (elGom) elGom.innerHTML = hangGom;
+  if (elFootGom) elFootGom.innerHTML = footGom;
   if (elTieude) elTieude.textContent = "BTP — " + entry.ngay;
 
   if (typeof chuyenTrangKhongNav === "function") chuyenTrangKhongNav("lichSuBTPChiTiet");

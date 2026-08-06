@@ -318,24 +318,6 @@
       <div style="overflow-x:auto;">
         <table style="width:100%; border-collapse:collapse; background:var(--card-raised); font-size:14px; border-radius:8px; overflow:hidden;">
           <thead>
-            <tr style="background:var(--line-soft)">
-              <th style="padding:10px; border-bottom:2px solid var(--line); text-align:left">MSP</th>
-              <th style="padding:10px; border-bottom:2px solid var(--line); text-align:left">QC</th>
-              <th style="padding:10px; border-bottom:2px solid var(--line); text-align:center">Bao</th>
-              <th style="padding:10px; border-bottom:2px solid var(--line); text-align:right">KG</th>
-            </tr>
-          </thead>
-          <tbody id="cx1-tbody-gom"></tbody>
-        </table>
-      </div>
-    </div>
-
-    <button class="btn btn-green btn-full" onclick="quetTiepCX1()">Quét tiếp</button>
-<button class="btn btn-blue btn-full" onclick="quetMoiCX1()">Quét mới</button>
-<button class="btn btn-full" style="background:var(--neutral-solid);color:var(--cream);" onclick="xuatCSVCX1()">Xuất CSV</button>
-  </div>
-</div>
-
 <div id="btpPage" class="page">
   <div id="btp-form" class="card">
     <h3>Quét BTP (Bán Thành Phẩm)</h3>
@@ -345,7 +327,7 @@
     <button class="btn btn-full" style="background:var(--neutral-solid);color:var(--cream);margin-top:8px" onclick="chuyenTrangKhongNav('trangChu')">← Trang chủ</button>
   </div>
 
-  <div id="btp-cam" class="card" style="display:none; overflow:hidden;">
+  <div id="btp-cam" class="card" style="display:none; overflow:hidden; padding:16px 16px 14px; margin-bottom:0;">
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px">
       <span id="btp-status" style="font-weight:700">🟢 Đang quét...</span>
       <span id="btp-dem" style="background:var(--brass); color:var(--bg-deep); font-weight:800; font-size:14px; padding:6px 14px; border-radius:20px; box-shadow:0 3px 10px rgba(245,158,11,0.45); letter-spacing:0.3px;">Đã quét: 0 mã</span>
@@ -379,6 +361,7 @@
             </tr>
           </thead>
           <tbody id="btp-tbody-dot"></tbody>
+          <tfoot id="btp-tfoot-dot" style="position: sticky; bottom: 0; background: var(--card-raised); z-index: 2; border-top: 2px solid var(--line);"></tfoot>
         </table>
       </div>
     </div>
@@ -395,6 +378,7 @@
             </tr>
           </thead>
           <tbody id="btp-tbody-gom"></tbody>
+          <tfoot id="btp-tfoot-gom" style="position: sticky; bottom: 0; background: var(--card-raised); z-index: 2; border-top: 2px solid var(--line);"></tfoot>
         </table>
       </div>
     </div>
@@ -434,6 +418,7 @@
             </tr>
           </thead>
           <tbody id="lichsu-btp-tbody-dot"></tbody>
+          <tfoot id="lichsu-btp-tfoot-dot" style="position: sticky; bottom: 0; background: var(--card-raised); z-index: 2; border-top: 2px solid var(--line);"></tfoot>
         </table>
       </div>
     </div>
@@ -450,6 +435,7 @@
             </tr>
           </thead>
           <tbody id="lichsu-btp-tbody-gom"></tbody>
+          <tfoot id="lichsu-btp-tfoot-gom" style="position: sticky; bottom: 0; background: var(--card-raised); z-index: 2; border-top: 2px solid var(--line);"></tfoot>
         </table>
       </div>
     </div>
