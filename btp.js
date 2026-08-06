@@ -117,19 +117,28 @@ function xoaPhienDoDangBTP() {
 async function batDauBTP() {
   const ngayEl = document.getElementById("btp-ngay");
   ngayBTP = ngayEl ? ngayEl.value : new Date().toISOString().split("T")[0];
-  if (!ngayBTP) { alert("Vui lòng chọn ngày!"); return; }
+  if (!ngayBTP) { showCanhBaoBTP("Vui lòng chọn ngày!"); return; }
 
   let phienCu = null;
   try { phienCu = JSON.parse(localStorage.getItem(BTP_DODANG_KEY)); } catch (e) {}
   if (phienCu && Array.isArray(phienCu.phienBTP) && phienCu.phienBTP.length > 0) {
-    const tiepTuc = confirm(
-      "Bạn đang có phiên BTP dở dang (" + phienCu.phienBTP.length + " mã, ngày " + phienCu.ngayBTP + ").\n" +
-      "Bấm OK để tiếp tục phiên đó, hoặc Cancel để xoá và bắt đầu phiên mới."
-    );
-    if (tiepTuc) { khoiPhucBTP(phienCu); return; }
-    xoaPhienDoDangBTP();
+    if (typeof moXacNhanApp === "function") {
+      moXacNhanApp(
+        "Bạn đang có phiên BTP dở dang (" + phienCu.phienBTP.length + " mã, ngày " + phienCu.ngayBTP + "). Bạn muốn tiếp tục hay xóa đi bắt đầu mới?",
+        () => { khoiPhucBTP(phienCu); },
+        "Tiếp tục",
+        () => { xoaPhienDoDangBTP(); batDauPhienMoiBTP(); },
+        "Bắt đầu mới",
+        "Phiên BTP dở dang"
+      );
+      return;
+    }
   }
 
+  batDauPhienMoiBTP();
+}
+
+async function batDauPhienMoiBTP() {
   phienBTP = [];
   demSoDotBTP = 1;
   dangQuetBTP = true;
@@ -296,6 +305,7 @@ async function ketThucBTP() {
 function taoHangKetQuaBTP(danhSach) {
   let tongGomLoaiMa = {};
   let tongQRAll = danhSach.length;
+  let soDot = new Set(danhSach.map(r => r.dotQuet || 1)).size;
 
   let hangDot = "";
   danhSach.forEach((r, idx) => {
@@ -316,8 +326,8 @@ function taoHangKetQuaBTP(danhSach) {
   let footDot = `
   <tr>
     <td style="padding:10px;font-weight:700;color:var(--brass);background:var(--card-raised)">TỔNG</td>
-    <td style="padding:10px;background:var(--card-raised);font-weight:700;color:var(--brass)">${tongQRAll} mã</td>
-    <td style="padding:10px;text-align:right;font-weight:700;color:var(--brass);background:var(--card-raised)">${tongQRAll} kiện</td>
+    <td style="padding:10px;background:var(--card-raised)"></td>
+    <td style="padding:10px;text-align:right;font-weight:700;color:var(--brass);background:var(--card-raised)">${soDot}</td>
   </tr>`;
 
   let hangGom = "";
@@ -333,7 +343,7 @@ function taoHangKetQuaBTP(danhSach) {
   let footGom = `
   <tr>
     <td style="padding:10px;font-weight:700;color:var(--steel);background:var(--card-raised)">TỔNG</td>
-    <td style="padding:10px;text-align:center;font-weight:700;color:var(--steel);background:var(--card-raised)">${Object.keys(tongGomLoaiMa).length} loại</td>
+    <td style="padding:10px;background:var(--card-raised)"></td>
     <td style="padding:10px;text-align:right;font-weight:700;color:var(--steel);background:var(--card-raised)">${tongQRAll}</td>
   </tr>`;
 
@@ -475,7 +485,19 @@ function luuLichSuBTP(list) {
 
 function xoaMotPhienLichSuBTP(idPhien, ev) {
   if (ev) ev.stopPropagation();
-  if (confirm("Xóa phiên lịch sử BTP này? Không thể hoàn tác.")) {
+  if (typeof moXacNhanApp === "function") {
+    moXacNhanApp(
+      "Xóa phiên lịch sử BTP này? Không thể hoàn tác.",
+      () => {
+        luuLichSuBTP(docLichSuBTP().filter(s => s.idPhien !== idPhien));
+        renderLichSuBTP();
+      },
+      "Xóa",
+      null,
+      "Hủy",
+      "Xóa phiên lịch sử"
+    );
+  } else if (confirm("Xóa phiên lịch sử BTP này? Không thể hoàn tác.")) {
     luuLichSuBTP(docLichSuBTP().filter(s => s.idPhien !== idPhien));
     renderLichSuBTP();
   }
@@ -484,8 +506,20 @@ window.xoaMotPhienLichSuBTP = xoaMotPhienLichSuBTP;
 
 function xoaTatCaLichSuBTP() {
   const list = docLichSuBTP();
-  if (list.length === 0) { alert("Không có lịch sử BTP để xóa"); return; }
-  if (confirm("Xóa toàn bộ " + list.length + " phiên lịch sử BTP? Không thể hoàn tác.")) {
+  if (list.length === 0) { showCanhBaoBTP("Không có lịch sử BTP để xóa"); return; }
+  if (typeof moXacNhanApp === "function") {
+    moXacNhanApp(
+      "Xóa toàn bộ " + list.length + " phiên lịch sử BTP? Không thể hoàn tác.",
+      () => {
+        luuLichSuBTP([]);
+        renderLichSuBTP();
+      },
+      "Xóa tất cả",
+      null,
+      "Hủy",
+      "Xóa tất cả lịch sử"
+    );
+  } else if (confirm("Xóa toàn bộ " + list.length + " phiên lịch sử BTP? Không thể hoàn tác.")) {
     luuLichSuBTP([]);
     renderLichSuBTP();
   }

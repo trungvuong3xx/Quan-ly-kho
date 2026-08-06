@@ -848,3 +848,38 @@ window.addEventListener("offline", capNhatTrangThaiMang);
 window.addEventListener("load", capNhatTrangThaiMang);
 setInterval(capNhatTrangThaiMang, 4000);
 window.capNhatTrangThaiMang = capNhatTrangThaiMang;
+
+let _appXacNhanCallbackOk = null;
+let _appXacNhanCallbackHuy = null;
+
+function moXacNhanApp(noiDung, callbackOk, nhanNutOk, callbackHuy, nhanNutHuy, tieuDe) {
+  const elTieude = document.getElementById("app-xacnhan-tieude");
+  const elNoidung = document.getElementById("app-xacnhan-noidung");
+  const elNutOk = document.getElementById("app-xacnhan-nut-ok");
+  const elNutHuy = document.getElementById("app-xacnhan-nut-huy");
+
+  if (elTieude) elTieude.textContent = tieuDe || "Xác nhận";
+  if (elNoidung) elNoidung.textContent = noiDung || "";
+  if (elNutOk) elNutOk.textContent = nhanNutOk || "Đồng ý";
+  if (elNutHuy) elNutHuy.textContent = nhanNutHuy || "Hủy";
+
+  _appXacNhanCallbackOk = callbackOk || null;
+  _appXacNhanCallbackHuy = callbackHuy || null;
+
+  const overlay = document.getElementById("app-overlay-xacnhan");
+  if (overlay) overlay.classList.add("show");
+}
+window.moXacNhanApp = moXacNhanApp;
+
+function dongXacNhanApp(dongY) {
+  const overlay = document.getElementById("app-overlay-xacnhan");
+  if (overlay) overlay.classList.remove("show");
+  const cbOk = _appXacNhanCallbackOk;
+  const cbHuy = _appXacNhanCallbackHuy;
+  _appXacNhanCallbackOk = null;
+  _appXacNhanCallbackHuy = null;
+
+  if (dongY && cbOk) cbOk();
+  else if (!dongY && cbHuy) cbHuy();
+}
+window.dongXacNhanApp = dongXacNhanApp;
