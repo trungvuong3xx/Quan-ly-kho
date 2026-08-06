@@ -82,57 +82,50 @@ function onOpen() {
   } catch (e) {}
 }
 
-function chayTongHopBTPTatCa() {
+function chayTongHopBTP() {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sheetTH = ss.getSheetByName("Tổng Hợp");
   var sheetQR = ss.getSheetByName("QRBTP") || ss.getActiveSheet();
-  var lastRow = sheetQR ? sheetQR.getLastRow() : 5;
-  if (lastRow < 5) lastRow = 5;
-  tongHopBTPSheet(5, lastRow);
-  SpreadsheetApp.getUi().alert("Đã tổng hợp BTP thành công từ hàng 5 đến hàng " + lastRow + " sang Sheet 'Tổng Hợp'!");
+  
+  var lastRowQR = sheetQR ? sheetQR.getLastRow() : 5;
+  var fromRow = 5;
+  var toRow = lastRowQR;
+
+  if (sheetTH) {
+    var valB2 = sheetTH.getRange("B2").getValue();
+    var valB3 = sheetTH.getRange("B3").getValue();
+    if (valB2 && !isNaN(valB2)) fromRow = parseInt(valB2, 10);
+    if (valB3 && !isNaN(valB3)) toRow = parseInt(valB3, 10);
+  }
+
+  if (fromRow < 5) fromRow = 5;
+  if (toRow < fromRow) toRow = lastRowQR;
+  if (toRow < 5) toRow = 5;
+
+  tongHopBTPSheet(fromRow, toRow);
+}
+
+function chayTongHopBTPTatCa() {
+  chayTongHopBTP();
 }
 
 function chayTongHopBTPKhoang() {
-  var ui = SpreadsheetApp.getUi();
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
-  var sheetQR = ss.getSheetByName("QRBTP") || ss.getActiveSheet();
-  var lastRow = sheetQR ? sheetQR.getLastRow() : 5;
-
-  var response = ui.prompt(
-    'Chọn khoảng hàng tổng hợp',
-    'Nhập số hàng bắt đầu và hàng kết thúc (VD: 5-50).\nMặc định: 5-' + lastRow,
-    ui.ButtonSet.OK_CANCEL
-  );
-
-  if (response.getSelectedButton() === ui.Button.OK) {
-    var text = response.getResponseText().trim();
-    var fromRow = 5;
-    var toRow = lastRow;
-
-    if (text) {
-      var parts = text.split("-");
-      if (parts.length === 2) {
-        fromRow = parseInt(parts[0].trim(), 10) || 5;
-        toRow = parseInt(parts[1].trim(), 10) || lastRow;
-      }
-    }
-    tongHopBTPSheet(fromRow, toRow);
-    ui.alert("Đã tổng hợp BTP từ hàng " + fromRow + " đến hàng " + toRow + " sang Sheet 'Tổng Hợp'!");
-  }
+  chayTongHopBTP();
 }
 
 function tongHopBTP() {
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
-  var sheetQR = ss.getSheetByName("QRBTP") || ss.getActiveSheet();
-  var lastRow = sheetQR ? sheetQR.getLastRow() : 5;
-  if (lastRow >= 5) {
-    tongHopBTPSheet(5, lastRow);
-  }
+  chayTongHopBTP();
 }
 
 function tongHopBTPSheet(fromRow, toRow) {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   var sheetQC = ss.getSheetByName("QC");
   var sheetQR = ss.getSheetByName("QRBTP") || ss.getActiveSheet();
+  var sheetTH = ss.getSheetByName("Tổng Hợp");
+
+  if (!sheetTH) {
+    sheetTH = ss.insertSheet("Tổng Hợp");
+  }
   
   if (!sheetQR) return;
   if (!fromRow || fromRow < 5) fromRow = 5;
@@ -180,6 +173,7 @@ function tongHopBTPSheet(fromRow, toRow) {
   }
 
   // 2. Đọc dữ liệu quét thô từ Sheet QRBTP (Từ hàng fromRow đến toRow)
+  // Quy tắc: 1 QR được tính là 1
   var numRows = toRow - fromRow + 1;
   if (numRows <= 0) return;
 
@@ -190,8 +184,6 @@ function tongHopBTPSheet(fromRow, toRow) {
     var qrRow = qrVals[j];
     var maEM = String(qrRow[1] || "").trim().toUpperCase();   // Cột B: Mã đơn EM (Mã SX - KEY tra cứu)
     var soKeo = parseFloat(qrRow[2]) || 0;                     // Cột C: Số kèo / Khổ kiện
-    var soLuong = parseFloat(qrRow[3]) || 1;                   // Cột D: Số lượng kiện (nếu nhập số lượng)
-    if (soLuong <= 0) soLuong = 1;
     if (!maEM || soKeo <= 0) continue;
 
     if (!gomData[maEM]) {
@@ -205,8 +197,9 @@ function tongHopBTPSheet(fromRow, toRow) {
     if (!gomData[maEM].kienMap[soKeo]) {
       gomData[maEM].kienMap[soKeo] = 0;
     }
-    gomData[maEM].kienMap[soKeo] += soLuong;
-    gomData[maEM].tongKienEyes += (soKeo * soLuong);
+    // 1 QR = 1 kiện
+    gomData[maEM].kienMap[soKeo] += 1;
+    gomData[maEM].tongKienEyes += soKeo;
   }
 
   // 3. Tính toán và tạo dòng kết quả xuất sang Sheet 'Tổng Hợp'
@@ -253,24 +246,13 @@ function tongHopBTPSheet(fromRow, toRow) {
     }
   }
 
-  // 4. Ghi dữ liệu vào Sheet 'Tổng Hợp' (Bắt đầu từ HÀNG 3 trở xuống)
-  var sheetTH = ss.getSheetByName("Tổng Hợp");
-  if (!sheetTH) {
-    sheetTH = ss.insertSheet("Tổng Hợp");
-  }
-
-  // Dòng 1: Tiêu đề Báo Cáo
-  // Dòng 2: Tiêu đề Cột
-  sheetTH.getRange(1, 1, 1, 6).setValues([["BẢNG TỔNG HỢP BÁO CÁO BTP", "", "", "", "", ""]]).setFontWeight("bold").setFontSize(12);
-  sheetTH.getRange(2, 1, 1, 6).setValues([["MSP", "QC", "Số Tấm", "Số Kg", "Số đơn", "Số kiện"]]).setFontWeight("bold").setBackground("#d9ead3");
-
-  // Xóa nội dung cũ từ HÀNG 3 trở xuống trước khi ghi
+  // 4. Ghi dữ liệu vào Sheet 'Tổng Hợp' (BỎ TIÊU ĐỀ, ĐỔ TỪ HÀNG 6 TRỞ XUỐNG)
   var lastRowTH = sheetTH.getLastRow();
-  if (lastRowTH >= 3) {
-    sheetTH.getRange(3, 1, lastRowTH - 2, 6).clearContents();
+  if (lastRowTH >= 6) {
+    sheetTH.getRange(6, 1, lastRowTH - 5, 6).clearContent();
   }
 
   if (rowsTongHop.length > 0) {
-    sheetTH.getRange(3, 1, rowsTongHop.length, 6).setValues(rowsTongHop);
+    sheetTH.getRange(6, 1, rowsTongHop.length, 6).setValues(rowsTongHop);
   }
 }
