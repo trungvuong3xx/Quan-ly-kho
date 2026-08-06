@@ -150,9 +150,8 @@ function tongHopBTPSheet(fromRow, toRow) {
         var maEM = String(row[0] || "").trim().toUpperCase();  // Cột A (Index 0): Mã đơn EM
         if (!maEM) continue;
 
-        var mspM = String(row[12] || "").trim();              // Cột M (Index 12): MSP BTP MỚI ERP
-        var mspJ = String(row[9] || "").trim();               // Cột J (Index 9): MSP Cũ
-        var mspFinal = mspM || mspJ;                          // Ưu tiên Cột M (MSP BTP MỚI ERP)
+        var mspJ = String(row[9] || "").trim();               // Cột J (Index 9): MSP Cũ (Chính xác theo yêu cầu)
+        var mspFinal = mspJ;
 
         var qcV = String(row[21] || "").trim();               // Cột V (Index 21): Qui cách dệt
         var kgAA = parseFloat(row[26]) || 0;                 // Cột AA (Index 26): KG/TẤM BTP
