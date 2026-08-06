@@ -194,67 +194,94 @@ function tongHopBTPSheet(fromRow, toRow) {
     var qrRow = qrVals[j];
     var maEM = String(qrRow[1] || "").trim().toUpperCase();   // Cột B: Mã đơn EM
     var soKeo = parseFloat(qrRow[2]) || 0;                     // Cột C: Số kèo / Khổ kiện
-    if (!maEM) continue;
+    if (!maEM || soKeo <= 0) continue;
 
-    // TÁCH HÀNG: Cùng 1 đơn nhưng khác loại số kèo (VD: 320 và 960) sẽ tạo key riêng
-    var key = maEM + "|" + soKeo;
-    if (!gomData[key]) {
-      gomData[key] = { maEM: maEM, soKeo: soKeo, tongCount: 0 };
+    var infoQC = mapQC[maEM] || {};
+    var matTam = infoQC.matMax || 960;
+    var isNguyenTam = (soKeo >= matTam && matTam > 0) || (soKeo === 960);
+
+    if (!gomData[maEM]) {
+      gomData[maEM] = {
+        maEM: maEM,
+        nguyenTamCount: 0,
+        kienMap: {},
+        tongKienEyes: 0
+      };
     }
-    gomData[key].tongCount += 1;
+
+    if (isNguyenTam) {
+      // Nhóm cục nguyên tấm
+      gomData[maEM].nguyenTamCount += 1;
+    } else {
+      // Nhóm các kiện thành phần lẻ (VD: 210, 110, 320)
+      if (!gomData[maEM].kienMap[soKeo]) {
+        gomData[maEM].kienMap[soKeo] = 0;
+      }
+      gomData[maEM].kienMap[soKeo] += 1;
+      gomData[maEM].tongKienEyes += soKeo;
+    }
   }
 
   // 3. Tính toán và tạo dòng kết quả xuất sang Sheet 'Tổng Hợp'
   var rowsTongHop = [];
-  var keys = Object.keys(gomData);
+  var emKeys = Object.keys(gomData);
 
-  for (var k = 0; k < keys.length; k++) {
-    var item = gomData[keys[k]];
-    var mspERP = infoQC.mspERP || item.maEM;
+  for (var k = 0; k < emKeys.length; k++) {
+    var maEM = emKeys[k];
+    var item = gomData[maEM];
+    var infoQC = mapQC[maEM] || {};
+
+    var mspERP = infoQC.mspERP || maEM;
     var qcV = infoQC.qcV || "";
     var kgAA = infoQC.kgAA || 0;
-    var matTam = infoQC.matMax || item.soKeo;
-    var soKeo = item.soKeo;
-    var tongCount = item.tongCount;
+    var matTam = infoQC.matMax || 960;
 
-    var isNguyenTam = (soKeo >= matTam && matTam > 0) || (soKeo === 960);
-
-    var soTam = 0;
-    var soKg = 0;
-    var soKienNote = "";
-
-    if (isNguyenTam) {
-      // TRƯỜNG HỢP NGUYÊN TẤM (VD: 960)
-      soTam = tongCount;
-      soKg = Math.round((soTam * kgAA) * 100) / 100;
-      soKienNote = ""; // ĐỂ TRỐNG nếu là tấm hoàn chỉnh nguyên
-    } else {
-      // TRƯỜNG HỢP KIỆN LẺ (VD: 320)
-      var kienPerTam = (soKeo > 0 && matTam >= soKeo) ? Math.round(matTam / soKeo) : 1;
-      if (kienPerTam <= 0) kienPerTam = 1;
-
-      soTam = Math.floor(tongCount / kienPerTam);
-      var soKienLe = tongCount % kienPerTam;
-
-      if (soTam > 0) {
-        soKg = Math.round((soTam * kgAA) * 100) / 100;
-        soKienNote = tongCount + "k " + soKeo;
-      } else {
-        // Nếu chưa đủ 1 tấm
-        var kgSingleKien = (matTam > 0) ? (kgAA * (soKeo / matTam)) : 0;
-        soKg = Math.round((tongCount * kgSingleKien) * 100) / 100;
-        soKienNote = tongCount + "k " + soKeo;
-      }
+    // HÀNG 1: Dành cho các cục NGUYÊN TẤM hoàn chỉnh (VD: 960 hoặc 320)
+    if (item.nguyenTamCount > 0) {
+      var soTamNguyen = item.nguyenTamCount;
+      var soKgNguyen = Math.round((soTamNguyen * kgAA) * 100) / 100;
+      rowsTongHop.push([
+        mspERP,        // Cột A: MSP (Cột J trong QC)
+        qcV,           // Cột B: QC (Cột V trong QC)
+        soTamNguyen,   // Cột C: Số Tấm
+        soKgNguyen,    // Cột D: Số Kg
+        maEM,          // Cột E: Số đơn
+        ""             // Cột F: Số kiện (ĐỂ TRỐNG nếu là tấm hoàn chỉnh)
+      ]);
     }
 
-    rowsTongHop.push([
-      mspERP,        // Cột A: MSP (Ưu tiên Cột M "MSP BTP MỚI ERP", fallback Cột J trong QC)
-      qcV,           // Cột B: QC (lấy Cột V trong QC)
-      soTam,         // Cột C: Số Tấm
-      soKg,          // Cột D: Số Kg
-      item.maEM,     // Cột E: Số đơn (Mã EM)
-      soKienNote     // Cột F: Số kiện (3k 320 hoặc Để trống)
-    ]);
+    // HÀNG 2: Dành cho các KIỆN LẺ GHÉP THÀNH TẤM (VD: 210 + 110 = 320 hoặc 3k 320 = 960)
+    var soKeoKeys = Object.keys(item.kienMap);
+    if (soKeoKeys.length > 0) {
+      var tongEyes = item.tongKienEyes;
+      var kienNotes = [];
+      for (var s = 0; s < soKeoKeys.length; s++) {
+        var sk = soKeoKeys[s];
+        var countSk = item.kienMap[sk];
+        kienNotes.push(countSk + "k " + sk);
+      }
+      var noteText = kienNotes.join(" + ");
+
+      var soTamLe = (matTam > 0) ? Math.floor(tongEyes / matTam) : 0;
+      var matDuLe = (matTam > 0) ? (tongEyes % matTam) : 0;
+
+      var soKgLe = 0;
+      if (soTamLe > 0) {
+        soKgLe = Math.round((soTamLe * kgAA) * 100) / 100;
+      } else {
+        // Nếu chưa đủ 1 tấm
+        soKgLe = Math.round((kgAA * (tongEyes / matTam)) * 100) / 100;
+      }
+
+      rowsTongHop.push([
+        mspERP,        // Cột A: MSP (Cột J trong QC)
+        qcV,           // Cột B: QC (Cột V trong QC)
+        soTamLe,       // Cột C: Số Tấm (Số tấm hoàn chỉnh ghép được)
+        soKgLe,        // Cột D: Số Kg
+        maEM,          // Cột E: Số đơn
+        noteText       // Cột F: Số kiện (VD: "1k 210 + 1k 110" hoặc "3k 320")
+      ]);
+    }
   }
 
   // 4. Ghi dữ liệu vào Sheet 'Tổng Hợp' (Bắt đầu từ HÀNG 3 trở xuống)
