@@ -188,8 +188,10 @@ function tongHopBTPSheet(fromRow, toRow) {
 
   for (var j = 0; j < qrVals.length; j++) {
     var qrRow = qrVals[j];
-    var maEM = String(qrRow[1] || "").trim().toUpperCase();   // Cột B: Mã đơn EM
+    var maEM = String(qrRow[1] || "").trim().toUpperCase();   // Cột B: Mã đơn EM (Mã SX - KEY tra cứu)
     var soKeo = parseFloat(qrRow[2]) || 0;                     // Cột C: Số kèo / Khổ kiện
+    var soLuong = parseFloat(qrRow[3]) || 1;                   // Cột D: Số lượng kiện (nếu nhập số lượng)
+    if (soLuong <= 0) soLuong = 1;
     if (!maEM || soKeo <= 0) continue;
 
     if (!gomData[maEM]) {
@@ -203,8 +205,8 @@ function tongHopBTPSheet(fromRow, toRow) {
     if (!gomData[maEM].kienMap[soKeo]) {
       gomData[maEM].kienMap[soKeo] = 0;
     }
-    gomData[maEM].kienMap[soKeo] += 1;
-    gomData[maEM].tongKienEyes += soKeo;
+    gomData[maEM].kienMap[soKeo] += soLuong;
+    gomData[maEM].tongKienEyes += (soKeo * soLuong);
   }
 
   // 3. Tính toán và tạo dòng kết quả xuất sang Sheet 'Tổng Hợp'
