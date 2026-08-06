@@ -1,4 +1,4 @@
-const CACHE_NAME = 'quan-ly-kho-v2026-v42-btp-toast-finetune';
+const CACHE_NAME = 'quan-ly-kho-v2026-v44-btp-scroll-fix';
 const urlsToCache = [
   './',
   './index.html',
