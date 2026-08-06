@@ -1,4 +1,4 @@
-const CACHE_NAME = 'quan-ly-kho-v2026-v41-btp-tonghop';
+const CACHE_NAME = 'quan-ly-kho-v2026-v42-btp-toast-finetune';
 const urlsToCache = [
   './',
   './index.html',
