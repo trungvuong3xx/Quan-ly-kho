@@ -48,6 +48,29 @@ function xuLyDuLieuQRBTP(text) {
 
 let dangKhoaQuetBTP = false;
 
+function capNhatLogBTP() {
+  const container = document.getElementById("btp-log-list");
+  const countEl = document.getElementById("btp-log-count");
+  if (countEl) countEl.textContent = phienBTP.length + " mã";
+  if (!container) return;
+  if (phienBTP.length === 0) {
+    container.innerHTML = '<div style="color:var(--cream-soft); font-size:12px; text-align:center; padding:8px 0;">Chưa có mã nào được quét</div>';
+    return;
+  }
+  
+  const newestFirst = phienBTP.slice().reverse();
+  container.innerHTML = newestFirst.map((item, idx) => {
+    const stt = phienBTP.length - idx;
+    const gio = item.thoiGian ? new Date(item.thoiGian).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit", second: "2-digit" }) : "";
+    return `<div style="display:flex; justify-content:space-between; align-items:center; padding:5px 0; border-bottom:1px solid rgba(255,255,255,0.06); font-size:13px;">
+      <span style="color:var(--steel); font-weight:700; width:36px;">#${stt}</span>
+      <span style="color:var(--brass); font-weight:800; flex:1; text-align:left;">${item.msp || '—'}</span>
+      <span style="color:var(--success); font-weight:700; width:60px; text-align:center;">${item.kg || 0}</span>
+      <span style="color:var(--cream-soft); font-size:11px; width:60px; text-align:right;">${gio}</span>
+    </div>`;
+  }).join("");
+}
+
 function khiQuetDuocMaBTP(result) {
   if (!result || !dangQuetBTP || dangKhoaQuetBTP) return;
   const rawText = typeof result.getText === "function" ? result.getText() : String(result);
@@ -77,17 +100,8 @@ function khiQuetDuocMaBTP(result) {
   if (demEl) demEl.textContent = "Đã quét: " + phienBTP.length + " mã";
   luuPhienDoDangBTP();
 
-  // 2. Hiển thị thẻ nhỏ (toast badge) EMxxxxxx + loại trong khoảng 1.9s
-  const toastEl = document.getElementById("btp-scan-toast");
-  const toastText = document.getElementById("btp-scan-toast-text");
-  if (toastEl && toastText) {
-    toastText.textContent = (data.msp || "MÃ BTP") + " - " + (data.kg || "0");
-    toastEl.style.display = "block";
-    if (btpToastTimeout) clearTimeout(btpToastTimeout);
-    btpToastTimeout = setTimeout(() => {
-      toastEl.style.display = "none";
-    }, 1900);
-  }
+  // 2. Cập nhật Hộp Log quét phía dưới camera
+  capNhatLogBTP();
 
   const statusEl = document.getElementById("btp-status");
   if (statusEl) statusEl.textContent = "⏳ Chờ 2s... (Đợt " + (demSoDotBTP || 1) + ")";
@@ -152,6 +166,8 @@ async function batDauPhienMoiBTP() {
   document.getElementById("btp-dem").textContent = "Đã quét: 0 mã";
   document.getElementById("btp-status").textContent = "🟢 Đang quét Đợt 1...";
   
+  capNhatLogBTP();
+
   const btnFlash = document.getElementById("btn-flash-btp");
   if (btnFlash) {
     btnFlash.style.background = "var(--card-raised)";
@@ -173,7 +189,7 @@ async function batDauPhienMoiBTP() {
       }
     });
   } catch(e) {
-    alert("Lỗi camera: " + e);
+    showCanhBaoBTP("Lỗi camera: " + e);
     dungBTP();
   }
 }
@@ -425,6 +441,8 @@ async function khoiPhucBTP(state) {
   document.getElementById("btp-ketqua").style.display = "none";
   document.getElementById("btp-dem").textContent = "Đã quét: " + phienBTP.length + " mã";
   document.getElementById("btp-status").textContent = "🟢 Đang quét Đợt " + demSoDotBTP + "...";
+  
+  capNhatLogBTP();
 
   const btnFlash = document.getElementById("btn-flash-btp");
   if (btnFlash) {

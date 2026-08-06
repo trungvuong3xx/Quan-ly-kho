@@ -1,4 +1,4 @@
-const CACHE_NAME = 'quan-ly-kho-v2026-v47-btp-app-popup-tfoot-batch';
+const CACHE_NAME = 'quan-ly-kho-v2026-v48-btp-fix-black-screen-scan-log';
 const urlsToCache = [
   './',
   './index.html',
