@@ -149,13 +149,23 @@ function tongHopBTPSheet(fromRow, toRow) {
         var qcV = String(row[21] || "").trim();               // Cột V (Index 21): Qui cách dệt
         var kgAA = parseFloat(row[26]) || 0;                 // Cột AA (Index 26): KG/TẤM BTP
 
-        // Tách khổ dệt hoàn chỉnh từ chuỗi Cột V (Lấy phần tử thứ 3 khi phân tách bằng 'x')
-        // Ví dụ: 380/15A x 12.5mm x 599 x 1201 (Màu mới) -> 599
+        // Tách khổ dệt hoàn chỉnh từ chuỗi Cột V (Ví dụ: 380/30BX x 30mm x 960 x 505 -> 960)
         var matMaxVal = 0;
-        var partsQC = qcV.split(/x/i);
-        if (partsQC.length >= 3) {
-          var strPart = partsQC[2].replace(/[^0-9]/g, "");
-          matMaxVal = parseInt(strPart, 10) || 0;
+        if (qcV) {
+          var matchesVal = [];
+          var regexQC = /[xX]\s*(\d+)\s*(?=[xX\s\(]|$)/g;
+          var mQC;
+          while ((mQC = regexQC.exec(qcV)) !== null) {
+            var vNum = parseInt(mQC[1], 10);
+            if (vNum > 0 && vNum < 5000) {
+              matchesVal.push(vNum);
+            }
+          }
+          if (matchesVal.length >= 2) {
+            matMaxVal = matchesVal[matchesVal.length - 2];
+          } else if (matchesVal.length === 1) {
+            matMaxVal = matchesVal[0];
+          }
         }
 
         if (!mapQC[maEM]) {
