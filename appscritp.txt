@@ -234,20 +234,20 @@ function tongHopBTPSheet(fromRow, toRow) {
     var qcV = infoQC.qcV || "";
     var kgAA = infoQC.kgAA || 0;
     var matTam = infoQC.matMax || item.nguyenTamSize || 960;
+    var maSoDonOnly = maEM.replace(/^EM/i, ""); // Lấy con số đơn (VD: 260369 từ EM260369)
 
     // HÀNG 1: DÀNH CHO TẤM HOÀN CHỈNH NGUYÊN (NẾU CÓ)
     if (item.nguyenTamCount > 0) {
       var soTamNguyen = item.nguyenTamCount;
       var soKgNguyen = Math.round((soTamNguyen * kgAA) * 10) / 10;
-      var noteNguyen = "lưới dài";
+      var colETextNguyen = maSoDonOnly + " chưa vá lưới dài";
 
       rowsTongHop.push([
-        mspERP,        // Cột A: MSP (Cột J trong QC)
-        qcV,           // Cột B: QC (Cột V trong QC)
-        soTamNguyen,   // Cột C: Số Tấm
-        soKgNguyen,    // Cột D: Số Kg
-        maEM,          // Cột E: Số đơn
-        noteNguyen     // Cột F: Số kiện (Nếu là tấm hoàn chỉnh nguyên thì ghi "lưới dài")
+        mspERP,          // Cột A: MSP (Cột J trong QC)
+        qcV,             // Cột B: QC (Cột V trong QC)
+        soTamNguyen,     // Cột C: Số Tấm
+        soKgNguyen,      // Cột D: Số Kg
+        colETextNguyen   // Cột E: Số đơn + chưa vá + ghi chú (VD: "260486 chưa vá lưới dài")
       ]);
     }
 
@@ -266,25 +266,25 @@ function tongHopBTPSheet(fromRow, toRow) {
       var ratioTam = (matTam > 0) ? (tongEyes / matTam) : 0;
       var soTamLe = Math.round(ratioTam * 10) / 10;
       var soKgLe = Math.round((ratioTam * kgAA) * 10) / 10;
+      var colETextLe = maSoDonOnly + " chưa vá " + noteText;
 
       rowsTongHop.push([
         mspERP,        // Cột A: MSP (Cột J trong QC)
         qcV,           // Cột B: QC (Cột V trong QC)
-        soTamLe,       // Cột C: Số Tấm (Ghép từ kiện lẻ)
+        soTamLe,       // Cột C: Số Tấm
         soKgLe,        // Cột D: Số Kg
-        maEM,          // Cột E: Số đơn
-        noteText       // Cột F: Số kiện (VD: "9k 83" hoặc "2k 110 + 4k 210")
+        colETextLe     // Cột E: Số đơn + chưa vá + ghi chú (VD: "260369 chưa vá 9k 320md")
       ]);
     }
   }
 
-  // 4. Ghi dữ liệu vào Sheet 'Tổng Hợp' (BỎ TIÊU ĐỀ, ĐỔ TỪ HÀNG 6 TRỞ XUỐNG)
+  // 4. Ghi dữ liệu vào Sheet 'Tổng Hợp' (ĐỔ VÀO 5 CỘT A-E, XÓA DỮ LIỆU CŨ BAO GỒM CẢ CỘT F)
   var lastRowTH = sheetTH.getLastRow();
   if (lastRowTH >= 6) {
-    sheetTH.getRange(6, 1, lastRowTH - 5, 6).clearContent();
+    sheetTH.getRange(6, 1, lastRowTH - 5, 6).clearContent(); // Xóa sạch 6 cột để mất Cột F cũ
   }
 
   if (rowsTongHop.length > 0) {
-    sheetTH.getRange(6, 1, rowsTongHop.length, 6).setValues(rowsTongHop);
+    sheetTH.getRange(6, 1, rowsTongHop.length, 5).setValues(rowsTongHop); // Đổ dữ liệu vào 5 Cột A-E
   }
 }
