@@ -58,8 +58,144 @@ function luuBTP(data) {
     // Ghi mảng dữ liệu trực tiếp từ startRow
     sheet.getRange(startRow, 1, rows.length, 5).setValues(rows);
 
-    return { success: true, message: "Đã lưu " + rows.length + " dòng từ hàng " + startRow };
+    // Kích hoạt tự động tổng hợp sang Sheet TONG_HOP_BTP
+    try {
+      tongHopBTP();
+    } catch (eTongHop) {
+      Logger.log("Lỗi tổng hợp BTP: " + eTongHop.message);
+    }
+
+    return { success: true, message: "Đã lưu " + rows.length + " dòng từ hàng " + startRow + " & đã tổng hợp BTP thành công" };
   } catch (err) {
     return { success: false, message: "Lỗi lưu BTP: " + err.message };
+  }
+}
+
+function tongHopBTP() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sheetQC = ss.getSheetByName("QC");
+  var sheetQR = ss.getSheetByName("QRBTP") || ss.getActiveSheet();
+  
+  if (!sheetQR) return;
+
+  // 1. Đọc dữ liệu tra cứu từ Sheet QC
+  var mapQC = {};
+  if (sheetQC) {
+    var qcVals = sheetQC.getDataRange().getValues();
+    // Bỏ qua dòng tiêu đề
+    for (var i = 1; i < qcVals.length; i++) {
+      var row = qcVals[i];
+      var maEM = String(row[0] || "").trim().toUpperCase(); // Cột A: Mã SX EM
+      if (!maEM) continue;
+
+      var mspERP = String(row[11] || "").trim();           // Cột L: MSP BTP MỚI ERP
+      var qcText = String(row[21] || "").trim();           // Cột V: Qui cách dệt
+      var kgTam = parseFloat(row[26]) || 0;               // Cột AA: KG/TẤM BTP
+
+      // Phân tích khổ dệt từ chuỗi Qui cách dệt (VD: 380/30BX x 30mm x 960 x 505)
+      var numbersInQC = qcText.match(/x\s*(\d+)\s*x/ig);
+      var matVal = 0;
+      if (numbersInQC && numbersInQC.length > 0) {
+        var numStr = numbersInQC[numbersInQC.length - 1].replace(/[^0-9]/g, "");
+        matVal = parseInt(numStr, 10) || 0;
+      } else {
+        var parts = qcText.split("x");
+        if (parts.length >= 3) {
+          matVal = parseInt(parts[parts.length - 2].trim(), 10) || 0;
+        }
+      }
+
+      if (!mapQC[maEM]) {
+        mapQC[maEM] = { maEM: maEM, mspERP: mspERP, matMax: matVal, kgTam: kgTam, qcText: qcText };
+      } else {
+        if (matVal > mapQC[maEM].matMax) {
+          mapQC[maEM].matMax = matVal;
+        }
+        if (kgTam > 0) mapQC[maEM].kgTam = kgTam;
+        if (mspERP) mapQC[maEM].mspERP = mspERP;
+      }
+    }
+  }
+
+  // 2. Đọc dữ liệu quét thô từ Sheet QRBTP (bắt đầu từ hàng 5)
+  var lastRowQR = sheetQR.getLastRow();
+  if (lastRowQR < 5) return;
+
+  var qrVals = sheetQR.getRange(5, 1, lastRowQR - 4, 5).getValues();
+  var gomData = {};
+
+  for (var j = 0; j < qrVals.length; j++) {
+    var qrRow = qrVals[j];
+    var msp = String(qrRow[1] || "").trim().toUpperCase();
+    var soMatKien = parseFloat(qrRow[2]) || 0;
+    var ngay = String(qrRow[3] || "").trim();
+
+    if (!msp) continue;
+    var key = ngay + "|" + msp + "|" + soMatKien;
+
+    if (!gomData[key]) {
+      gomData[key] = { ngay: ngay, msp: msp, soMatKien: soMatKien, tongLuot: 0 };
+    }
+    gomData[key].tongLuot += 1;
+  }
+
+  // 3. Tính toán và chuẩn bị bảng Tổng Hợp
+  var rowsTongHop = [];
+  var keys = Object.keys(gomData);
+
+  for (var k = 0; k < keys.length; k++) {
+    var item = gomData[keys[k]];
+    var infoQC = mapQC[item.msp] || {};
+
+    var matTam = infoQC.matMax || item.soMatKien;
+    var matKien = item.soMatKien;
+    var kienPerTam = (matKien > 0 && matTam >= matKien) ? Math.round(matTam / matKien) : 1;
+    if (kienPerTam <= 0) kienPerTam = 1;
+
+    var tongKien = item.tongLuot;
+    var soTamHoanChinh = Math.floor(tongKien / kienPerTam);
+    var soKienLe = tongKien % kienPerTam;
+
+    var kgTam = infoQC.kgTam || 0;
+    var kgHoanChinh = Math.round((soTamHoanChinh * kgTam) * 100) / 100;
+    var kgSingleKien = (matTam > 0) ? (kgTam * (matKien / matTam)) : 0;
+    var kgKienLe = Math.round((soKienLe * kgSingleKien) * 100) / 100;
+    var tongKgAll = Math.round((kgHoanChinh + kgKienLe) * 100) / 100;
+
+    var trangThai = (soKienLe === 0)
+      ? "🟢 Đủ " + soTamHoanChinh + " tấm hoàn chỉnh"
+      : "🟡 " + soTamHoanChinh + " tấm + dư " + soKienLe + " kiện (" + matKien + ")";
+
+    rowsTongHop.push([
+      item.ngay,                        // Cột A: Ngày
+      item.msp,                         // Cột B: Mã SX EM
+      infoQC.mspERP || "",              // Cột C: MSP BTP MỚI ERP
+      matTam,                           // Cột D: Khổ Tấm Hoàn Chỉnh
+      matKien,                          // Cột E: Khổ Kiện Dệt
+      tongKien,                         // Cột F: Tổng Số Kiện Quét
+      soTamHoanChinh,                   // Cột G: Số Tấm Hoàn Chỉnh
+      soKienLe,                         // Cột H: Số Kiện Dư Lẻ
+      kgHoanChinh,                      // Cột I: Tổng Kg Tấm Hoàn Chỉnh
+      tongKgAll,                        // Cột J: Tổng Kg Tất Cả (Cả Tấm + Lẻ)
+      trangThai                         // Cột K: Trạng Thái
+    ]);
+  }
+
+  // 4. Ghi kết quả sang Sheet TONG_HOP_BTP
+  var sheetTH = ss.getSheetByName("TONG_HOP_BTP");
+  if (!sheetTH) {
+    sheetTH = ss.insertSheet("TONG_HOP_BTP");
+  }
+
+  // Dòng tiêu đề cho Sheet TONG_HOP_BTP
+  var headers = [
+    ["NGÀY", "MÃ SX EM", "MSP BTP MỚI ERP", "KHỔ TẤM HOÀN CHỈNH", "KHỔ KIỆN DỆT", "TỔNG KIỆN QUÉT", "SỐ TẤM HOÀN CHỈNH", "SỐ KIỆN LẺ DƯ", "KG TẤM HOÀN CHỈNH", "TỔNG KG TẤT CẢ", "TRẠNG THÁI"]
+  ];
+
+  sheetTH.clearContents();
+  sheetTH.getRange(1, 1, 1, headers[0].length).setValues(headers).setFontWeight("bold").setBackground("#d9ead3");
+
+  if (rowsTongHop.length > 0) {
+    sheetTH.getRange(2, 1, rowsTongHop.length, rowsTongHop[0].length).setValues(rowsTongHop);
   }
 }

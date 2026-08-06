@@ -287,38 +287,37 @@ function taoHangKetQuaBTP(danhSach) {
   <tr>
     <td style="padding:10px;border-bottom:1px solid var(--line-soft);color:var(--steel);font-weight:700">${idx + 1}</td>
     <td style="padding:10px;border-bottom:1px solid var(--line-soft);font-weight:600">${r.msp}</td>
-    <td style="padding:10px;border-bottom:1px solid var(--line-soft);text-align:right;font-weight:700;color:var(--success)">${r.kg.toFixed(1)}</td>
+    <td style="padding:10px;border-bottom:1px solid var(--line-soft);text-align:right;font-weight:700;color:var(--success)">${r.kg} (khổ)</td>
   </tr>`;
 
-    const keyGom = r.msp;
+    const keyGom = r.msp + "|" + r.kg;
     if (!tongGomLoaiMa[keyGom]) {
-      tongGomLoaiMa[keyGom] = { msp: r.msp, soLuong: 0, tongKG: 0 };
+      tongGomLoaiMa[keyGom] = { msp: r.msp, soMat: r.kg, soLuong: 0 };
     }
     tongGomLoaiMa[keyGom].soLuong += 1;
-    tongGomLoaiMa[keyGom].tongKG += r.kg;
   });
 
   hangDot += `
   <tr>
     <td style="padding:10px;font-weight:700;color:var(--brass);background:var(--card-raised)">TỔNG</td>
     <td style="padding:10px;background:var(--card-raised);font-weight:700;color:var(--brass)">${tongQRAll} mã</td>
-    <td style="padding:10px;text-align:right;font-weight:700;color:var(--brass);background:var(--card-raised)">${tongKGAll.toFixed(1)}</td>
+    <td style="padding:10px;text-align:right;font-weight:700;color:var(--brass);background:var(--card-raised)">${tongQRAll} kiện</td>
   </tr>`;
 
   let hangGom = "";
   Object.values(tongGomLoaiMa).forEach(item => {
     hangGom += `
   <tr>
-    <td style="padding:10px;border-bottom:1px solid var(--line-soft);font-weight:600">${item.msp}</td>
-    <td style="padding:10px;border-bottom:1px solid var(--line-soft);text-align:center;font-weight:700">${item.soLuong}</td>
-    <td style="padding:10px;border-bottom:1px solid var(--line-soft);text-align:right;font-weight:700;color:var(--success)">${item.tongKG.toFixed(1)}</td>
+    <td style="padding:10px;border-bottom:1px solid var(--line-soft);font-weight:600">${item.msp} (Khổ ${item.soMat})</td>
+    <td style="padding:10px;border-bottom:1px solid var(--line-soft);text-align:center;font-weight:700">${item.soLuong} kiện</td>
+    <td style="padding:10px;border-bottom:1px solid var(--line-soft);text-align:right;font-weight:700;color:var(--success)">Ghi nhận QRBTP</td>
   </tr>`;
   });
   hangGom += `
   <tr>
-    <td style="padding:10px;font-weight:700;color:var(--steel);background:var(--card-raised)">TỔNG</td>
-    <td style="padding:10px;text-align:center;font-weight:700;color:var(--steel);background:var(--card-raised)">${tongQRAll}</td>
-    <td style="padding:10px;text-align:right;font-weight:700;color:var(--steel);background:var(--card-raised)">${tongKGAll.toFixed(1)}</td>
+    <td style="padding:10px;font-weight:700;color:var(--steel);background:var(--card-raised)">TỔNG GOM</td>
+    <td style="padding:10px;text-align:center;font-weight:700;color:var(--steel);background:var(--card-raised)">${tongQRAll} kiện</td>
+    <td style="padding:10px;text-align:right;font-weight:700;color:var(--steel);background:var(--card-raised)">Ghi nhận QRBTP</td>
   </tr>`;
 
   return { hangDot, hangGom };
