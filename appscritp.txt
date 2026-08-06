@@ -150,11 +150,14 @@ function tongHopBTPSheet(fromRow, toRow) {
         var maEM = String(row[0] || "").trim().toUpperCase();  // Cột A (Index 0): Mã đơn EM
         if (!maEM) continue;
 
-        var mspJ = String(row[9] || "").trim();               // Cột J (Index 9): MSP
+        var mspM = String(row[12] || "").trim();              // Cột M (Index 12): MSP BTP MỚI ERP
+        var mspJ = String(row[9] || "").trim();               // Cột J (Index 9): MSP Cũ
+        var mspFinal = mspM || mspJ;                          // Ưu tiên Cột M (MSP BTP MỚI ERP)
+
         var qcV = String(row[21] || "").trim();               // Cột V (Index 21): Qui cách dệt
         var kgAA = parseFloat(row[26]) || 0;                 // Cột AA (Index 26): KG/TẤM BTP
 
-        // Tách khổ dệt hoàn chỉnh từ chuỗi Cột V (VD: 380/30BX x 30mm x 960 x 505)
+        // Tách khổ dệt hoàn chỉnh từ chuỗi Cột V (VD: 380/15 x 45mm x 166 x 1201)
         var numbersInQC = qcV.match(/x\s*(\d+)\s*x/ig);
         var matMaxVal = 0;
         if (numbersInQC && numbersInQC.length > 0) {
@@ -168,12 +171,14 @@ function tongHopBTPSheet(fromRow, toRow) {
         }
 
         if (!mapQC[maEM]) {
-          mapQC[maEM] = { maEM: maEM, mspJ: mspJ, qcV: qcV, kgAA: kgAA, matMax: matMaxVal };
+          mapQC[maEM] = { maEM: maEM, mspERP: mspFinal, qcV: qcV, kgAA: kgAA, matMax: matMaxVal };
         } else {
-          if (matMaxVal > mapQC[maEM].matMax) mapQC[maEM].matMax = matMaxVal;
+          if (matMaxVal > mapQC[maEM].matMax) {
+            mapQC[maEM].matMax = matMaxVal;
+            if (qcV) mapQC[maEM].qcV = qcV; // Cập nhật chuỗi Qui cách dệt tương ứng với tấm lớn nhất
+          }
           if (kgAA > 0) mapQC[maEM].kgAA = kgAA;
-          if (mspJ) mapQC[maEM].mspJ = mspJ;
-          if (qcV) mapQC[maEM].qcV = qcV;
+          if (mspFinal) mapQC[maEM].mspERP = mspFinal;
         }
       }
     }
@@ -206,9 +211,7 @@ function tongHopBTPSheet(fromRow, toRow) {
 
   for (var k = 0; k < keys.length; k++) {
     var item = gomData[keys[k]];
-    var infoQC = mapQC[item.maEM] || {};
-
-    var mspJ = infoQC.mspJ || item.maEM;
+    var mspERP = infoQC.mspERP || item.maEM;
     var qcV = infoQC.qcV || "";
     var kgAA = infoQC.kgAA || 0;
     var matTam = infoQC.matMax || item.soKeo;
@@ -246,7 +249,7 @@ function tongHopBTPSheet(fromRow, toRow) {
     }
 
     rowsTongHop.push([
-      mspJ,          // Cột A: MSP (lấy Cột J trong QC)
+      mspERP,        // Cột A: MSP (Ưu tiên Cột M "MSP BTP MỚI ERP", fallback Cột J trong QC)
       qcV,           // Cột B: QC (lấy Cột V trong QC)
       soTam,         // Cột C: Số Tấm
       soKg,          // Cột D: Số Kg
