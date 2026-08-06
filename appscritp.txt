@@ -258,16 +258,9 @@ function tongHopBTPSheet(fromRow, toRow) {
       }
       var noteText = kienNotes.join(" + ");
 
-      var soTamLe = (matTam > 0) ? Math.floor(tongEyes / matTam) : 0;
-      var matDuLe = (matTam > 0) ? (tongEyes % matTam) : 0;
-
-      var soKgLe = 0;
-      if (soTamLe > 0) {
-        soKgLe = Math.round((soTamLe * kgAA) * 100) / 100;
-      } else {
-        // Nếu chưa đủ 1 tấm
-        soKgLe = Math.round((kgAA * (tongEyes / matTam)) * 100) / 100;
-      }
+      // QUY ƯỚC: Số Tấm = Math.round(Tổng mắt kiện / Khổ tấm lớn nhất matTam)
+      var soTamLe = (matTam > 0) ? Math.round(tongEyes / matTam) : 0;
+      var soKgLe = Math.round((soTamLe * kgAA) * 100) / 100;
 
       rowsTongHop.push([
         mspERP,        // Cột A: MSP (Cột J trong QC)
