@@ -193,20 +193,32 @@ function tongHopBTPSheet(fromRow, toRow) {
     var soKeo = parseFloat(qrRow[2]) || 0;                     // Cột C: Số kèo / Khổ kiện
     if (!maEM || soKeo <= 0) continue;
 
+    var infoQC = mapQC[maEM] || mapQC[maEM.trim().toUpperCase()] || {};
+    var matTam = infoQC.matMax || 960;
+    var isNguyenTam = (soKeo >= matTam && matTam > 0) || (soKeo === 960);
+
     if (!gomData[maEM]) {
       gomData[maEM] = {
         maEM: maEM,
+        nguyenTamCount: 0,
+        nguyenTamSize: matTam,
         kienMap: {},
         tongKienEyes: 0
       };
     }
 
-    if (!gomData[maEM].kienMap[soKeo]) {
-      gomData[maEM].kienMap[soKeo] = 0;
+    if (isNguyenTam) {
+      // Tấm hoàn chỉnh nguyên (VD: 166 hoặc 960)
+      gomData[maEM].nguyenTamCount += 1;
+      gomData[maEM].nguyenTamSize = soKeo;
+    } else {
+      // Kiện lẻ thành phần (VD: 83, 210, 110)
+      if (!gomData[maEM].kienMap[soKeo]) {
+        gomData[maEM].kienMap[soKeo] = 0;
+      }
+      gomData[maEM].kienMap[soKeo] += 1;
+      gomData[maEM].tongKienEyes += soKeo;
     }
-    // 1 QR = 1 kiện
-    gomData[maEM].kienMap[soKeo] += 1;
-    gomData[maEM].tongKienEyes += soKeo;
   }
 
   // 3. Tính toán và tạo dòng kết quả xuất sang Sheet 'Tổng Hợp'
@@ -221,8 +233,25 @@ function tongHopBTPSheet(fromRow, toRow) {
     var mspERP = infoQC.mspERP || maEM;
     var qcV = infoQC.qcV || "";
     var kgAA = infoQC.kgAA || 0;
-    var matTam = infoQC.matMax || 960;
+    var matTam = infoQC.matMax || item.nguyenTamSize || 960;
 
+    // HÀNG 1: DÀNH CHO TẤM HOÀN CHỈNH NGUYÊN (NẾU CÓ)
+    if (item.nguyenTamCount > 0) {
+      var soTamNguyen = item.nguyenTamCount;
+      var soKgNguyen = Math.round((soTamNguyen * kgAA) * 10) / 10;
+      var noteNguyen = soTamNguyen + "k " + item.nguyenTamSize;
+
+      rowsTongHop.push([
+        mspERP,        // Cột A: MSP (Cột J trong QC)
+        qcV,           // Cột B: QC (Cột V trong QC)
+        soTamNguyen,   // Cột C: Số Tấm
+        soKgNguyen,    // Cột D: Số Kg
+        maEM,          // Cột E: Số đơn
+        noteNguyen     // Cột F: Số kiện (VD: "7k 166")
+      ]);
+    }
+
+    // HÀNG 2: DÀNH CHO KIỆN LẺ THÀNH PHẦN (NẾU CÓ)
     var soKeoKeys = Object.keys(item.kienMap);
     if (soKeoKeys.length > 0) {
       var tongEyes = item.tongKienEyes;
@@ -234,10 +263,6 @@ function tongHopBTPSheet(fromRow, toRow) {
       }
       var noteText = kienNotes.join(" + ");
 
-      // CÔNG THỨC CHUẨN XÁC THEO YÊU CẦU:
-      // Ratio = tongEyes / matTam (Lúc tính giữ nguyên không làm tròn, VD: 2.6875)
-      // Cột C (Số Tấm) = Làm tròn 1 chữ số thập phân khi đưa vào Sheet (VD: 2.6875 -> 2.7)
-      // Cột D (Số Kg) = (Ratio chưa làm tròn * kgAA) Làm tròn 1 chữ số thập phân (VD: 2.6875 * 29 = 77.9375 -> 77.9)
       var ratioTam = (matTam > 0) ? (tongEyes / matTam) : 0;
       var soTamLe = Math.round(ratioTam * 10) / 10;
       var soKgLe = Math.round((ratioTam * kgAA) * 10) / 10;
@@ -245,10 +270,10 @@ function tongHopBTPSheet(fromRow, toRow) {
       rowsTongHop.push([
         mspERP,        // Cột A: MSP (Cột J trong QC)
         qcV,           // Cột B: QC (Cột V trong QC)
-        soTamLe,       // Cột C: Số Tấm (Số tấm hoàn chỉnh ghép được)
+        soTamLe,       // Cột C: Số Tấm (Ghép từ kiện lẻ)
         soKgLe,        // Cột D: Số Kg
         maEM,          // Cột E: Số đơn
-        noteText       // Cột F: Số kiện (VD: "5k 166 + 5k 83" hoặc "5k 133")
+        noteText       // Cột F: Số kiện (VD: "9k 83" hoặc "2k 110 + 4k 210")
       ]);
     }
   }
