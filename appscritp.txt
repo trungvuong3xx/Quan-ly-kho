@@ -149,22 +149,19 @@ function tongHopBTPSheet(fromRow, toRow) {
         var qcV = String(row[21] || "").trim();               // Cột V (Index 21): Qui cách dệt
         var kgAA = parseFloat(row[26]) || 0;                 // Cột AA (Index 26): KG/TẤM BTP
 
-        // Tách khổ dệt hoàn chỉnh từ chuỗi Cột V (Ví dụ: 380/30BX x 30mm x 960 x 505 -> 960)
+        // Tách khổ mắt / số kèo ở vị trí thứ 3 (sau dấu ' x ') từ chuỗi Cột V (VÙNG ĐỎ KHOANH)
+        // Ví dụ: 380/30BX x 30mm x 960 x 505 -> Tách thành phần thứ 3 = 960
         var matMaxVal = 0;
         if (qcV) {
-          var matchesVal = [];
-          var regexQC = /[xX]\s*(\d+)\s*(?=[xX\s\(]|$)/g;
-          var mQC;
-          while ((mQC = regexQC.exec(qcV)) !== null) {
-            var vNum = parseInt(mQC[1], 10);
-            if (vNum > 0 && vNum < 5000) {
-              matchesVal.push(vNum);
+          var partsQC = qcV.split(/\s+[xX]\s+/);
+          if (partsQC.length >= 3) {
+            var valStr = partsQC[2].replace(/[^0-9\.]/g, "");
+            matMaxVal = parseFloat(valStr) || 0;
+          } else {
+            var nums = qcV.match(/\d+/g);
+            if (nums && nums.length >= 2) {
+              matMaxVal = parseFloat(nums[nums.length - 2]) || 0;
             }
-          }
-          if (matchesVal.length >= 2) {
-            matMaxVal = matchesVal[matchesVal.length - 2];
-          } else if (matchesVal.length === 1) {
-            matMaxVal = matchesVal[0];
           }
         }
 
