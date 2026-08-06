@@ -352,6 +352,9 @@
     </div>
     <div class="video-container" style="position:relative; width:100%; padding-bottom:75%; background:#000; border-radius:8px; overflow:hidden; margin-bottom:15px">
       <video id="btp-reader" style="position:absolute; width:100%; height:100%; object-fit:cover"></video>
+      <div id="btp-scan-toast" style="display:none; position:absolute; top:12px; left:50%; transform:translateX(-50%); z-index:10; background:rgba(0,0,0,0.85); color:var(--brass); padding:8px 18px; border-radius:20px; font-weight:700; font-size:16px; border:1px solid var(--brass); text-align:center; box-shadow:0 4px 14px rgba(0,0,0,0.6); backdrop-filter:blur(4px); pointer-events:none; white-space:nowrap;">
+        <span id="btp-scan-toast-text">EM260405 - 150</span>
+      </div>
     </div>
 
     <div style="display:flex; flex-direction:column; gap:10px; width:100%;">
@@ -372,7 +375,7 @@
             <tr style="background:var(--line-soft)">
               <th style="padding:10px; border-bottom:2px solid var(--line); text-align:left">STT</th>
               <th style="padding:10px; border-bottom:2px solid var(--line); text-align:left">Mã BTP</th>
-              <th style="padding:10px; border-bottom:2px solid var(--line); text-align:right">Số lượng</th>
+              <th style="padding:10px; border-bottom:2px solid var(--line); text-align:right">Loại</th>
             </tr>
           </thead>
           <tbody id="btp-tbody-dot"></tbody>
@@ -381,14 +384,14 @@
     </div>
 
     <div style="margin-bottom: 20px;">
-      <h4 style="color:var(--steel); margin-bottom:10px;">TỔNG HỢP GOM MÃ</h4>
+      <h4 style="color:var(--steel); margin-bottom:10px;">TỔNG HỢP</h4>
       <div style="overflow-x:auto;">
         <table style="width:100%; border-collapse:collapse; background:var(--card-raised); font-size:14px; border-radius:8px; overflow:hidden;">
           <thead>
             <tr style="background:var(--line-soft)">
-              <th style="padding:10px; border-bottom:2px solid var(--line); text-align:left">Mã BTP</th>
-              <th style="padding:10px; border-bottom:2px solid var(--line); text-align:center">Mã</th>
-              <th style="padding:10px; border-bottom:2px solid var(--line); text-align:right">Tổng SL</th>
+              <th style="padding:10px; border-bottom:2px solid var(--line); text-align:left">Đơn</th>
+              <th style="padding:10px; border-bottom:2px solid var(--line); text-align:center">Loại</th>
+              <th style="padding:10px; border-bottom:2px solid var(--line); text-align:right">SL</th>
             </tr>
           </thead>
           <tbody id="btp-tbody-gom"></tbody>
@@ -405,7 +408,11 @@
 
 <div id="lichSuBTP" class="page">
   <div class="card">
-    <h3>Lịch Sử Quét BTP</h3>
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+      <h3 style="margin:0">Lịch Sử Quét BTP</h3>
+      <button class="btn btn-red" style="padding:6px 12px; font-size:13px;" onclick="xoaTatCaLichSuBTP()">Xóa tất cả</button>
+    </div>
+    <input type="text" id="lichsu-btp-tim" placeholder="Tìm theo ngày, mã BTP, loại..." oninput="renderLichSuBTP()" style="margin-bottom:12px">
     <div id="lichsu-btp-list"></div>
     <button class="btn btn-full" style="background:var(--neutral-solid);color:var(--cream);margin-top:14px" onclick="chuyenTrangKhongNav('trangChu')">← Trang chủ</button>
   </div>
@@ -423,7 +430,7 @@
             <tr style="background:var(--line-soft)">
               <th style="padding:10px; border-bottom:2px solid var(--line); text-align:left">STT</th>
               <th style="padding:10px; border-bottom:2px solid var(--line); text-align:left">Mã BTP</th>
-              <th style="padding:10px; border-bottom:2px solid var(--line); text-align:right">Số lượng</th>
+              <th style="padding:10px; border-bottom:2px solid var(--line); text-align:right">Loại</th>
             </tr>
           </thead>
           <tbody id="lichsu-btp-tbody-dot"></tbody>
@@ -432,14 +439,14 @@
     </div>
 
     <div style="margin-bottom: 20px;">
-      <h4 style="color:var(--steel); margin-bottom:10px;">TỔNG HỢP GOM MÃ</h4>
+      <h4 style="color:var(--steel); margin-bottom:10px;">TỔNG HỢP</h4>
       <div style="overflow-x:auto;">
         <table style="width:100%; border-collapse:collapse; background:var(--card-raised); font-size:14px; border-radius:8px; overflow:hidden;">
           <thead>
             <tr style="background:var(--line-soft)">
-              <th style="padding:10px; border-bottom:2px solid var(--line); text-align:left">Mã BTP</th>
-              <th style="padding:10px; border-bottom:2px solid var(--line); text-align:center">Mã</th>
-              <th style="padding:10px; border-bottom:2px solid var(--line); text-align:right">Tổng SL</th>
+              <th style="padding:10px; border-bottom:2px solid var(--line); text-align:left">Đơn</th>
+              <th style="padding:10px; border-bottom:2px solid var(--line); text-align:center">Loại</th>
+              <th style="padding:10px; border-bottom:2px solid var(--line); text-align:right">SL</th>
             </tr>
           </thead>
           <tbody id="lichsu-btp-tbody-gom"></tbody>
