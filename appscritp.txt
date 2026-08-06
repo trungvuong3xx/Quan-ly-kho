@@ -240,14 +240,19 @@ function tongHopBTPSheet(fromRow, toRow) {
     if (item.nguyenTamCount > 0) {
       var soTamNguyen = item.nguyenTamCount;
       var soKgNguyen = Math.round((soTamNguyen * kgAA) * 10) / 10;
-      var colETextNguyen = maSoDonOnly + " chưa vá lưới dài";
+      var colJTextNguyen = maSoDonOnly + " chưa vá lưới dài";
 
       rowsTongHop.push([
-        mspERP,          // Cột A: MSP (Cột J trong QC)
-        qcV,             // Cột B: QC (Cột V trong QC)
-        soTamNguyen,     // Cột C: Số Tấm
-        soKgNguyen,      // Cột D: Số Kg
-        colETextNguyen   // Cột E: Số đơn + chưa vá + ghi chú (VD: "260486 chưa vá lưới dài")
+        mspERP,        // Cột A: MSP
+        "",            // Cột B: Bỏ trống
+        qcV,           // Cột C: QC
+        "",            // Cột D: Bỏ trống
+        "",            // Cột E: Bỏ trống
+        soTamNguyen,   // Cột F: Số Tấm
+        soKgNguyen,    // Cột G: Số Kg
+        "",            // Cột H: Bỏ trống
+        "",            // Cột I: Bỏ trống
+        colJTextNguyen // Cột J: Ghi chú (VD: "260486 chưa vá lưới dài")
       ]);
     }
 
@@ -266,25 +271,30 @@ function tongHopBTPSheet(fromRow, toRow) {
       var ratioTam = (matTam > 0) ? (tongEyes / matTam) : 0;
       var soTamLe = Math.round(ratioTam * 10) / 10;
       var soKgLe = Math.round((ratioTam * kgAA) * 10) / 10;
-      var colETextLe = maSoDonOnly + " chưa vá " + noteText;
+      var colJTextLe = maSoDonOnly + " chưa vá " + noteText;
 
       rowsTongHop.push([
-        mspERP,        // Cột A: MSP (Cột J trong QC)
-        qcV,           // Cột B: QC (Cột V trong QC)
-        soTamLe,       // Cột C: Số Tấm
-        soKgLe,        // Cột D: Số Kg
-        colETextLe     // Cột E: Số đơn + chưa vá + ghi chú (VD: "260369 chưa vá 9k 320md")
+        mspERP,        // Cột A: MSP
+        "",            // Cột B: Bỏ trống
+        qcV,           // Cột C: QC
+        "",            // Cột D: Bỏ trống
+        "",            // Cột E: Bỏ trống
+        soTamLe,       // Cột F: Số Tấm
+        soKgLe,        // Cột G: Số Kg
+        "",            // Cột H: Bỏ trống
+        "",            // Cột I: Bỏ trống
+        colJTextLe     // Cột J: Ghi chú (VD: "260369 chưa vá 9k 320md")
       ]);
     }
   }
 
-  // 4. Ghi dữ liệu vào Sheet 'Tổng Hợp' (ĐỔ VÀO 5 CỘT A-E, XÓA DỮ LIỆU CŨ BAO GỒM CẢ CỘT F)
+  // 4. Ghi dữ liệu vào Sheet 'Tổng Hợp' (ĐỔ VÀO 10 CỘT A-J TỪ HÀNG 6 TRỞ XUỐNG)
   var lastRowTH = sheetTH.getLastRow();
   if (lastRowTH >= 6) {
-    sheetTH.getRange(6, 1, lastRowTH - 5, 6).clearContent(); // Xóa sạch 6 cột để mất Cột F cũ
+    sheetTH.getRange(6, 1, lastRowTH - 5, 10).clearContent(); // Xóa sạch 10 cột A-J
   }
 
   if (rowsTongHop.length > 0) {
-    sheetTH.getRange(6, 1, rowsTongHop.length, 5).setValues(rowsTongHop); // Đổ dữ liệu vào 5 Cột A-E
+    sheetTH.getRange(6, 1, rowsTongHop.length, 10).setValues(rowsTongHop); // Đổ dữ liệu vào 10 Cột A-J
   }
 }
