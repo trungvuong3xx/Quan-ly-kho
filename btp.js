@@ -77,7 +77,7 @@ function khiQuetDuocMaBTP(result) {
   if (demEl) demEl.textContent = "Đã quét: " + phienBTP.length + " mã";
   luuPhienDoDangBTP();
 
-  // 2. Hiển thị thẻ nhỏ (toast badge) EMxxxxxx + loại trong khoảng 1.5s
+  // 2. Hiển thị thẻ nhỏ (toast badge) EMxxxxxx + loại trong khoảng 1.9s
   const toastEl = document.getElementById("btp-scan-toast");
   const toastText = document.getElementById("btp-scan-toast-text");
   if (toastEl && toastText) {
@@ -86,7 +86,7 @@ function khiQuetDuocMaBTP(result) {
     if (btpToastTimeout) clearTimeout(btpToastTimeout);
     btpToastTimeout = setTimeout(() => {
       toastEl.style.display = "none";
-    }, 1500);
+    }, 1900);
   }
 
   const statusEl = document.getElementById("btp-status");
@@ -145,9 +145,10 @@ async function batDauBTP() {
   
   const btnFlash = document.getElementById("btn-flash-btp");
   if (btnFlash) {
-    btnFlash.style.background = "var(--neutral)";
+    btnFlash.style.background = "var(--card-raised)";
     btnFlash.style.color = "var(--cream)";
-    btnFlash.textContent = "Bật đèn pin";
+    btnFlash.style.border = "1px solid var(--line)";
+    btnFlash.textContent = "💡 Bật đèn pin";
   }
 
   const btnToggle = document.getElementById("btn-dung-tieptuc-btp");
@@ -185,9 +186,10 @@ async function tiepTucBTP() {
   document.getElementById("btp-status").textContent = "🟢 Đang quét Đợt " + demSoDotBTP + "...";
   const btnFlash = document.getElementById("btn-flash-btp");
   if (btnFlash) {
-    btnFlash.style.background = "var(--neutral)";
+    btnFlash.style.background = "var(--card-raised)";
     btnFlash.style.color = "var(--cream)";
-    btnFlash.textContent = "Bật đèn pin";
+    btnFlash.style.border = "1px solid var(--line)";
+    btnFlash.textContent = "💡 Bật đèn pin";
   }
   try {
     zxingReaderBTP = await khoiTaoCameraFast("btp-reader", (txt) => {
@@ -227,9 +229,10 @@ async function toggleFlashBTP() {
     await track.applyConstraints({ advanced: [{ torch: denPinBatBTP }] });
     const btnFlash = document.getElementById("btn-flash-btp");
     if (btnFlash) {
-      btnFlash.style.background = denPinBatBTP ? "var(--brass)" : "var(--neutral)";
-      btnFlash.style.color = denPinBatBTP ? "var(--bg)" : "var(--cream)";
-      btnFlash.textContent = denPinBatBTP ? "Tắt đèn" : "Bật đèn";
+      btnFlash.style.background = denPinBatBTP ? "var(--brass)" : "var(--card-raised)";
+      btnFlash.style.color = denPinBatBTP ? "var(--bg-deep)" : "var(--cream)";
+      btnFlash.style.border = denPinBatBTP ? "1px solid var(--brass)" : "1px solid var(--line)";
+      btnFlash.textContent = denPinBatBTP ? "⚡ Tắt đèn pin" : "💡 Bật đèn pin";
     }
   } catch (err) {}
 }
@@ -410,9 +413,10 @@ async function khoiPhucBTP(state) {
 
   const btnFlash = document.getElementById("btn-flash-btp");
   if (btnFlash) {
-    btnFlash.style.background = "var(--neutral)";
+    btnFlash.style.background = "var(--card-raised)";
     btnFlash.style.color = "var(--cream)";
-    btnFlash.textContent = "Bật đèn pin";
+    btnFlash.style.border = "1px solid var(--line)";
+    btnFlash.textContent = "💡 Bật đèn pin";
   }
 
   const btnToggle = document.getElementById("btn-dung-tieptuc-btp");
