@@ -1178,9 +1178,9 @@ function xuatExcelLichSuCX5(idPhien) {
   const dateStr = (entry ? entry.ngay : ngayCX5) || new Date().toISOString().split("T")[0];
   const exportData = dataList.map((item, idx) => ({
     "STT": idx + 1,
-    "Mã ID": item.id || item.maID,
+    "Lượt": item.luot || item.seq,
     "Mã MSP": item.msp,
-    "Quy cách": item.qc,
+    "Quy cách": item.ten,
     "Khối lượng (Kg)": item.kg,
     "Thời gian": item.thoiGian ? new Date(item.thoiGian).toLocaleTimeString("vi-VN") : ""
   }));
