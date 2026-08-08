@@ -342,11 +342,6 @@ function themDongCX5() {
   if (!kg || kg <= 0) { showCanhBaoCX5("Nhập số kg hợp lệ"); return; }
   if (kg > CX5_KG_MAX) { showCanhBaoCX5("Số kg quá lớn (trên " + CX5_KG_MAX + "kg), kiểm tra lại"); return; }
 
-  const truocDo = phienCX5[phienCX5.length - 1];
-  if (truocDo && truocDo.msp === msp && truocDo.kg === kg && (Date.now() - new Date(truocDo.thoiGian).getTime()) < 8000) {
-    moXacNhanCX5("Vừa nhập " + kg + "kg cho quy cách này chưa tới 8 giây trước. Nhập tiếp?", () => hoanTatThemDongCX5(msp, ten, kg), "Vẫn nhập");
-    return;
-  }
   hoanTatThemDongCX5(msp, ten, kg);
 }
 
