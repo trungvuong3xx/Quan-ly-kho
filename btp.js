@@ -48,25 +48,134 @@ function xuLyDuLieuQRBTP(text) {
 
 let dangKhoaQuetBTP = false;
 
+function dongBoChoPhepTrungBTP(el) {
+  if (!el) return;
+  const val = el.checked;
+  const el1 = document.getElementById("btp-cho-phep-trung");
+  const el2 = document.getElementById("btp-cho-phep-trung-cam");
+  if (el1) el1.checked = val;
+  if (el2) el2.checked = val;
+}
+window.dongBoChoPhepTrungBTP = dongBoChoPhepTrungBTP;
+
+function nhapThuCongBTP(src) {
+  const inputId = src === 'cam' ? 'btp-manual-input-cam' : 'btp-manual-input';
+  const el = document.getElementById(inputId);
+  if (!el) return;
+  const rawText = el.value.trim();
+  if (!rawText) {
+    showCanhBaoBTP("Vui lòng nhập chuỗi mã QR hoặc mã BTP!");
+    return;
+  }
+
+  const data = xuLyDuLieuQRBTP(rawText);
+  if (!data || !data.rawQR) {
+    showCanhBaoBTP("Mã không hợp lệ!");
+    return;
+  }
+
+  const elCheck = document.getElementById("btp-cho-phep-trung") || document.getElementById("btp-cho-phep-trung-cam");
+  const choPhepTrung = elCheck ? elCheck.checked : false;
+
+  if (!choPhepTrung && phienBTP.some(item => item.rawQR.toLowerCase() === data.rawQR.toLowerCase())) {
+    showCanhBaoBTP("⚠️ Mã QR đã tồn tại trong phiên quét!");
+    if (typeof window.phatVibrateError === "function") window.phatVibrateError();
+    return;
+  }
+
+  if (typeof window.phatTiengBip === "function") window.phatTiengBip();
+  else if (typeof phatTiengBip === "function") phatTiengBip();
+
+  if (typeof window.phatVibrateSuccess === "function") window.phatVibrateSuccess();
+
+  phienBTP.push({
+    rawQR: data.rawQR,
+    id: data.rawQR,
+    msp: data.msp,
+    qc: data.qc,
+    kg: data.kg,
+    thoiGian: new Date(),
+    dotQuet: demSoDotBTP || 1
+  });
+
+  el.value = "";
+  const demEl = document.getElementById("btp-dem");
+  if (demEl) demEl.textContent = "Đã quét: " + phienBTP.length + " mã";
+  luuPhienDoDangBTP();
+  capNhatLogBTP();
+  showCanhBaoBTP("Đã thêm: " + (data.msp || data.rawQR));
+}
+window.nhapThuCongBTP = nhapThuCongBTP;
+
+function xoaMaBTP(index, ev) {
+  if (ev) ev.stopPropagation();
+  if (index < 0 || index >= phienBTP.length) return;
+
+  const item = phienBTP[index];
+  const tenMa = item ? (item.msp || item.rawQR) : "mã này";
+
+  const doXoa = () => {
+    phienBTP.splice(index, 1);
+    luuPhienDoDangBTP();
+    capNhatLogBTP();
+    const demEl = document.getElementById("btp-dem");
+    if (demEl) demEl.textContent = "Đã quét: " + phienBTP.length + " mã";
+    if (document.getElementById("btp-ketqua") && document.getElementById("btp-ketqua").style.display !== "none") {
+      hienKetQuaBTP();
+    }
+    showCanhBaoBTP("Đã xóa " + tenMa);
+  };
+
+  if (typeof moXacNhanApp === "function") {
+    moXacNhanApp("Xóa mã " + tenMa + " khỏi phiên quét?", doXoa, "Xóa", null, "Hủy", "Xóa mã BTP");
+  } else if (confirm("Xóa mã " + tenMa + " khỏi phiên quét?")) {
+    doXoa();
+  }
+}
+window.xoaMaBTP = xoaMaBTP;
+
 function capNhatLogBTP() {
   const container = document.getElementById("btp-log-list");
   const countEl = document.getElementById("btp-log-count");
+  const searchInput = document.getElementById("btp-log-search");
+  const tuKhoa = searchInput ? searchInput.value.trim().toLowerCase() : "";
+
   if (countEl) countEl.textContent = phienBTP.length + " mã";
   if (!container) return;
   if (phienBTP.length === 0) {
     container.innerHTML = '<div style="color:var(--cream-soft); font-size:12px; text-align:center; padding:8px 0;">Chưa có mã nào được quét</div>';
     return;
   }
-  
-  const newestFirst = phienBTP.slice().reverse();
-  container.innerHTML = newestFirst.map((item, idx) => {
-    const stt = phienBTP.length - idx;
+
+  const mapped = phienBTP.map((item, originalIndex) => ({ item, originalIndex }));
+  let filtered = mapped.slice().reverse();
+
+  if (tuKhoa) {
+    filtered = filtered.filter(({ item, originalIndex }) => {
+      const sttStr = "#" + (originalIndex + 1);
+      const mspStr = (item.msp || "").toLowerCase();
+      const kgStr = String(item.kg || "").toLowerCase();
+      const rawStr = (item.rawQR || "").toLowerCase();
+      return sttStr.includes(tuKhoa) || mspStr.includes(tuKhoa) || kgStr.includes(tuKhoa) || rawStr.includes(tuKhoa);
+    });
+  }
+
+  if (filtered.length === 0) {
+    container.innerHTML = '<div style="color:var(--cream-soft); font-size:12px; text-align:center; padding:8px 0;">Không tìm thấy mã nào khớp từ khóa</div>';
+    return;
+  }
+
+  container.innerHTML = filtered.map(({ item, originalIndex }) => {
+    const stt = originalIndex + 1;
     const gio = item.thoiGian ? new Date(item.thoiGian).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit", second: "2-digit" }) : "";
     return `<div style="display:flex; justify-content:space-between; align-items:center; padding:5px 0; border-bottom:1px solid rgba(255,255,255,0.06); font-size:13px;">
       <span style="color:var(--steel); font-weight:700; width:36px;">#${stt}</span>
       <span style="color:var(--brass); font-weight:800; flex:1; text-align:left;">${item.msp || '—'}</span>
-      <span style="color:var(--success); font-weight:700; width:60px; text-align:center;">${item.kg || 0}</span>
-      <span style="color:var(--cream-soft); font-size:11px; width:60px; text-align:right;">${gio}</span>
+      <span style="color:var(--success); font-weight:700; width:50px; text-align:center;">${item.kg || 0}</span>
+      <span style="color:var(--cream-soft); font-size:11px; width:55px; text-align:right;">${gio}</span>
+      <button class="cx5-del-btn" onclick="xoaMaBTP(${originalIndex}, event)" title="Xóa mã này" style="margin-left:6px; background:none; border:none; color:var(--red); cursor:pointer; padding:2px 4px;">
+        <i class="ti ti-trash"></i>
+      </button>
     </div>`;
   }).join("");
 }
@@ -77,7 +186,15 @@ function khiQuetDuocMaBTP(result) {
   const data = xuLyDuLieuQRBTP(rawText);
   if (!data || !data.rawQR) return;
 
-  // Khóa quét trong 2 giây
+  const elCheck = document.getElementById("btp-cho-phep-trung") || document.getElementById("btp-cho-phep-trung-cam");
+  const choPhepTrung = elCheck ? elCheck.checked : false;
+
+  if (!choPhepTrung && phienBTP.some(item => item.rawQR.toLowerCase() === data.rawQR.toLowerCase())) {
+    showCanhBaoBTP("⚠️ Mã QR đã quét rồi!");
+    if (typeof window.phatVibrateError === "function") window.phatVibrateError();
+    return;
+  }
+
   dangKhoaQuetBTP = true;
 
   if (typeof window.phatTiengBip === "function") window.phatTiengBip();
@@ -95,24 +212,24 @@ function khiQuetDuocMaBTP(result) {
     dotQuet: demSoDotBTP || 1 
   });
 
-  // 1. Cập nhật số lượng tổng đã quét
   const demEl = document.getElementById("btp-dem");
   if (demEl) demEl.textContent = "Đã quét: " + phienBTP.length + " mã";
   luuPhienDoDangBTP();
 
-  // 2. Cập nhật Hộp Log quét phía dưới camera
   capNhatLogBTP();
 
-  const statusEl = document.getElementById("btp-status");
-  if (statusEl) statusEl.textContent = "⏳ Chờ 2s... (Đợt " + (demSoDotBTP || 1) + ")";
+  const lockMs = choPhepTrung ? 1500 : 500;
+  const lockStatusEl = document.getElementById("btp-lock-status");
+  if (lockStatusEl) lockStatusEl.textContent = "⏳ Chờ " + (lockMs / 1000) + "s...";
 
   setTimeout(() => {
     dangKhoaQuetBTP = false;
+    if (lockStatusEl) lockStatusEl.textContent = "🟢 Sẵn sàng";
     if (dangQuetBTP) {
       const sEl = document.getElementById("btp-status");
       if (sEl) sEl.textContent = "🟢 Đang quét Đợt " + (demSoDotBTP || 1) + "...";
     }
-  }, 2000);
+  }, lockMs);
 }
 
 function luuPhienDoDangBTP() {
@@ -271,7 +388,43 @@ function docPendingBTP() {
 
 function luuPendingBTP(list) {
   try { localStorage.setItem(BTP_PENDING_KEY, JSON.stringify(list)); } catch (e) {}
+  capNhatBadgePendingBTP();
 }
+
+function capNhatBadgePendingBTP() {
+  const pending = docPendingBTP();
+  const count = pending.length;
+
+  const btnCam = document.getElementById("btn-dongbo-btp");
+  const countCam = document.getElementById("btp-pending-count");
+  const btnForm = document.getElementById("btn-dongbo-btp-form");
+  const countForm = document.getElementById("btp-pending-count-form");
+
+  if (countCam) countCam.textContent = count;
+  if (countForm) countForm.textContent = count;
+
+  if (btnCam) btnCam.style.display = count > 0 ? "block" : "none";
+  if (btnForm) btnForm.style.display = count > 0 ? "block" : "none";
+}
+window.capNhatBadgePendingBTP = capNhatBadgePendingBTP;
+
+async function dongBoThietBiBTP() {
+  const pending = docPendingBTP();
+  if (pending.length === 0) {
+    showCanhBaoBTP("Không có dữ liệu chưa gửi!");
+    return;
+  }
+
+  showCanhBaoBTP("⏳ Đang gửi " + pending.length + " bản ghi lên Sheet...");
+  try {
+    await guiLenSheetBTP(pending);
+    luuPendingBTP([]);
+    showCanhBaoBTP("✅ Đã đồng bộ thành công " + pending.length + " bản ghi!");
+  } catch (err) {
+    showCanhBaoBTP("❌ Lỗi đồng bộ: " + (err.message || err));
+  }
+}
+window.dongBoThietBiBTP = dongBoThietBiBTP;
 
 async function guiLenSheetBTP(rows) {
   const URL_API = "https://script.google.com/macros/s/AKfycbxjnWLrJXZk1MJN4bSXdf72Wly7Of1Rc7iRtUNpcKk3iZDkxk-N1W7mE965tNMyhA9z1Q/exec";
@@ -316,34 +469,50 @@ async function ketThucBTP() {
   }
 
   luuVaoLichSuBTP();
+  capNhatBadgePendingBTP();
 }
 
 function taoHangKetQuaBTP(danhSach) {
   let tongGomLoaiMa = {};
   let tongQRAll = danhSach.length;
   let soDot = new Set(danhSach.map(r => r.dotQuet || 1)).size;
+  const oTim = document.getElementById("btp-ketqua-search");
+  const tuKhoa = oTim ? oTim.value.trim().toLowerCase() : "";
 
   let hangDot = "";
   danhSach.forEach((r, idx) => {
-    hangDot += `
-  <tr>
-    <td style="padding:10px;border-bottom:1px solid var(--line-soft);color:var(--steel);font-weight:700">${idx + 1}</td>
-    <td style="padding:10px;border-bottom:1px solid var(--line-soft);font-weight:600">${r.msp}</td>
-    <td style="padding:10px;border-bottom:1px solid var(--line-soft);text-align:right;font-weight:700;color:var(--success)">${r.kg}</td>
-  </tr>`;
-
-    const keyGom = r.msp + "|" + r.kg;
+    const keyGom = (r.msp || '—') + "|" + (r.kg || 0);
     if (!tongGomLoaiMa[keyGom]) {
-      tongGomLoaiMa[keyGom] = { msp: r.msp, soMat: r.kg, soLuong: 0 };
+      tongGomLoaiMa[keyGom] = { msp: r.msp || '—', soMat: r.kg || 0, soLuong: 0 };
     }
     tongGomLoaiMa[keyGom].soLuong += 1;
+
+    const sttStr = String(idx + 1);
+    const mspStr = (r.msp || "").toLowerCase();
+    const kgStr = String(r.kg || "").toLowerCase();
+    const rawStr = (r.rawQR || "").toLowerCase();
+
+    if (!tuKhoa || sttStr.includes(tuKhoa) || mspStr.includes(tuKhoa) || kgStr.includes(tuKhoa) || rawStr.includes(tuKhoa)) {
+      hangDot += `
+  <tr>
+    <td style="padding:10px;border-bottom:1px solid var(--line-soft);color:var(--steel);font-weight:700">${idx + 1}</td>
+    <td style="padding:10px;border-bottom:1px solid var(--line-soft);font-weight:600">${r.msp || '—'}</td>
+    <td style="padding:10px;border-bottom:1px solid var(--line-soft);text-align:right;font-weight:700;color:var(--success)">${r.kg || 0}</td>
+    <td style="padding:10px;border-bottom:1px solid var(--line-soft);text-align:center;">
+      <button class="cx5-del-btn" onclick="xoaMaBTP(${idx}, event)" title="Xóa mã này" style="background:none;border:none;color:var(--red);cursor:pointer;padding:2px 4px;">
+        <i class="ti ti-trash"></i>
+      </button>
+    </td>
+  </tr>`;
+    }
   });
 
   let footDot = `
   <tr>
     <td style="padding:10px;font-weight:700;color:var(--brass);background:var(--card-raised)">TỔNG</td>
     <td style="padding:10px;background:var(--card-raised)"></td>
-    <td style="padding:10px;text-align:right;font-weight:700;color:var(--brass);background:var(--card-raised)">${soDot}</td>
+    <td style="padding:10px;text-align:right;font-weight:700;color:var(--brass);background:var(--card-raised)">${tongQRAll} mã</td>
+    <td style="padding:10px;background:var(--card-raised)"></td>
   </tr>`;
 
   let hangGom = "";
@@ -722,9 +891,11 @@ window.addEventListener("load", function() {
   const today = new Date().toISOString().split("T")[0];
   const ngayInput = document.getElementById("btp-ngay");
   if (ngayInput) ngayInput.value = today;
+  capNhatBadgePendingBTP();
 });
 
 window.addEventListener("load", async function() {
+  capNhatBadgePendingBTP();
   const pending = docPendingBTP();
   if (pending.length === 0) return;
   try {
@@ -732,6 +903,7 @@ window.addEventListener("load", async function() {
     luuPendingBTP([]);
   } catch (e) {}
   if (typeof capNhatTrangThaiMang === "function") capNhatTrangThaiMang();
+  capNhatBadgePendingBTP();
 });
 
 window.addEventListener("online", async function() {
