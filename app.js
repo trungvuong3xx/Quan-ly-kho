@@ -868,14 +868,15 @@ function capNhatTrangThaiMang() {
   if (!el) return;
   const soCho = demPendingMang();
   if (!navigator.onLine) {
-    el.textContent = soCho > 0 ? ("🔴 Ngoại tuyến (" + soCho + " mã chờ đồng bộ)") : "🔴 Ngoại tuyến";
+    const text = soCho > 0 ? ("Ngoại tuyến (" + soCho + " mã chờ đồng bộ)") : "Ngoại tuyến";
+    el.innerHTML = '<span class="live-pulse-dot" style="background:#ef4444;box-shadow:0 0 8px #ef4444;"></span>' + text;
     el.className = "mang-status show err";
   } else if (soCho > 0) {
-    el.textContent = "⚡ Có mạng — Đang đồng bộ " + soCho + " mã...";
+    el.innerHTML = '<span class="live-pulse-dot" style="background:#f59e0b;box-shadow:0 0 8px #f59e0b;"></span>Đang đồng bộ ' + soCho + ' mã...';
     el.className = "mang-status show warn";
   } else {
     el.className = "mang-status";
-    el.textContent = "";
+    el.innerHTML = "";
   }
 }
 

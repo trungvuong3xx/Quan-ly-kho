@@ -388,12 +388,13 @@ function renderBangChiTietCX5() {
     luotMap.get(r.luot).push(r);
   });
 
-  tbody.innerHTML = thuTuLuot.slice().reverse().map(lid => {
+  tbody.innerHTML = thuTuLuot.slice().reverse().map((lid, idx) => {
+    const flashClass = idx === 0 ? ' class="scan-flash-new"' : '';
     const rows = luotMap.get(lid);
     const first = rows[0];
     const bao = rows.length;
     const kg = Math.round(rows.reduce((s, r) => s + r.kg, 0) * 100) / 100;
-    return "<tr>" +
+    return "<tr" + flashClass + ">" +
       "<td>" + lid + "</td>" +
       "<td>" + escHtmlCX5(first.ten) + "</td>" +
       "<td>" + bao + "</td>" +

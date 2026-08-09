@@ -160,7 +160,8 @@ function capNhatLogBTP() {
     const stt = phienBTP.length - idx;
     const originalIndex = phienBTP.length - 1 - idx;
     const gio = item.thoiGian ? new Date(item.thoiGian).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit", second: "2-digit" }) : "";
-    return `<div style="display:flex; justify-content:space-between; align-items:center; padding:4px 0; border-bottom:1px solid rgba(255,255,255,0.06); font-size:12px;">
+    const flashClass = idx === 0 ? ' scan-flash-new' : '';
+    return `<div class="${flashClass}" style="display:flex; justify-content:space-between; align-items:center; padding:4px 0; border-bottom:1px solid rgba(255,255,255,0.06); font-size:12px; border-radius:6px;">
       <span style="color:var(--steel); font-weight:700; width:26px;">${stt}</span>
       <span style="color:var(--brass); font-weight:800; flex:1; text-align:left; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${item.msp || '—'}</span>
       <span style="color:var(--success); font-weight:700; width:45px; text-align:center;">${item.kg || 0}</span>
