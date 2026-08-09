@@ -1386,9 +1386,8 @@ body.cam-active #btp-cam {
 }
 
 body.cam-active #btp-video-box {
-  flex: 1 1 auto !important;
-  min-height: 240px !important;
-  height: auto !important;
+  flex: 0 0 auto !important;
+  height: 215px !important;
   padding-bottom: 0 !important;
   margin-bottom: 0 !important;
   border-radius: 14px !important;
@@ -1397,20 +1396,21 @@ body.cam-active #btp-video-box {
 }
 
 body.cam-active #btp-log-container {
-  flex: 0 0 auto !important;
+  flex: 1 1 auto !important;
   display: flex !important;
   flex-direction: column !important;
   margin-top: 0 !important;
   padding: 6px 10px !important;
   overflow: hidden !important;
-  max-height: 125px !important;
-  min-height: unset !important;
+  max-height: none !important;
+  min-height: 120px !important;
   border-radius: 12px !important;
 }
 
 body.cam-active #btp-log-list {
   flex: 1 1 auto !important;
-  max-height: 80px !important;
+  max-height: none !important;
+  height: 100% !important;
   overflow-y: auto !important;
 }
 
