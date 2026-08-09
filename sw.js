@@ -1,4 +1,4 @@
-const CACHE_NAME = 'quan-ly-kho-v2026-v50-audio-unlock-web-audio-fix';
+const CACHE_NAME = 'quan-ly-kho-v2026-v51-mp3-fix';
 const urlsToCache = [
   './',
   './index.html',
@@ -9,6 +9,7 @@ const urlsToCache = [
   './cx5.js',
   './btp.js',
   './tonkho.js',
+  './Fast.mp3',
   './manifest.json',
   './icon-192.png',
   './icon-512.png',
