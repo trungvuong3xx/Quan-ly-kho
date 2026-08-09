@@ -90,10 +90,12 @@
     </div>
   </div>
   <div class="card">
-    <h3>Lịch Sử</h3>
-    <button class="btn btn-full" style="background:var(--neutral-solid);color:var(--cream);" onclick="moLichSuCX1()">Xem lịch sử Chỉ For</button>
-    <button class="btn btn-full" style="background:var(--neutral-solid);color:var(--cream);margin-top:8px" onclick="moLichSuCX5()">Xem lịch sử Chỉ X5</button>
-    <button class="btn btn-full" style="background:var(--neutral-solid);color:var(--cream);margin-top:8px" onclick="moLichSuBTP()">Xem lịch sử BTP</button>
+    <button class="btn btn-full" style="background:var(--neutral-solid);color:var(--cream);font-weight:700;font-size:15px;" onclick="toggleChonLichSuTrangChu()">📜 Xem Lịch Sử</button>
+    <div id="lichsu-menu-trangchu" style="display:none; flex-direction:column; gap:8px; margin-top:10px;">
+      <button class="btn btn-full" style="background:var(--card-raised);color:var(--cream);border:1px solid var(--line-soft);" onclick="moLichSuChon('btp')">📦 Lịch sử BTP</button>
+      <button class="btn btn-full" style="background:var(--card-raised);color:var(--cream);border:1px solid var(--line-soft);" onclick="moLichSuChon('for')">🧶 Lịch sử Chỉ FOR</button>
+      <button class="btn btn-full" style="background:var(--card-raised);color:var(--cream);border:1px solid var(--line-soft);" onclick="moLichSuChon('x5')">⚖️ Lịch sử Chỉ X5</button>
+    </div>
   </div>
 </div>
 
