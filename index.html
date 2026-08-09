@@ -28,8 +28,11 @@
       window.screen.orientation.lock("portrait-primary").catch(function() {});
     }
   }
+  window.addEventListener("DOMContentLoaded", khoaOrientation);
   window.addEventListener("load", khoaOrientation);
   window.addEventListener("orientationchange", khoaOrientation);
+  window.addEventListener("touchstart", khoaOrientation);
+  window.addEventListener("click", khoaOrientation);
 </script>
 </head>
 <body>

@@ -1251,12 +1251,3 @@ body.cam-active #btp-log-list {
   height: 100% !important;
   overflow-y: auto !important;
 }
-
-/* ── Cố định ứng dụng hiển thị dạng màn hình dọc dù điện thoại ở bất kỳ hướng nào ── */
-@media screen and (orientation: landscape) and (max-height: 600px) {
-  html, body {
-    max-width: 600px !important;
-    margin: 0 auto !important;
-    overflow-x: hidden !important;
-  }
-}
