@@ -1,4 +1,4 @@
-const CACHE_NAME = 'quan-ly-kho-v2026-v49-fast-sound-ui-upgrade';
+const CACHE_NAME = 'quan-ly-kho-v2026-v50-audio-unlock-web-audio-fix';
 const urlsToCache = [
   './',
   './index.html',
