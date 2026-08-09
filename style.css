@@ -1258,28 +1258,3 @@ body.cam-active #btp-log-list {
   height: 100%;
   box-sizing: border-box;
 }
-
-@media screen and (orientation: landscape) {
-  html, body {
-    width: 100vw !important;
-    height: 100vh !important;
-    height: 100dvh !important;
-    overflow: hidden !important;
-    margin: 0 !important;
-    padding: 0 !important;
-    background: var(--bg) !important;
-  }
-
-  #app-viewport {
-    position: fixed !important;
-    top: 50% !important;
-    left: 50% !important;
-    width: 100vh !important;
-    height: 100vw !important;
-    transform: translate(-50%, -50%) rotate(-90deg) !important;
-    transform-origin: center center !important;
-    overflow-x: hidden !important;
-    overflow-y: auto !important;
-    box-sizing: border-box !important;
-  }
-}

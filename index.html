@@ -23,16 +23,71 @@
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('./sw.js');
   }
+  function capNhatGocXoayBaoVe() {
+    const el = document.getElementById("app-viewport");
+    if (!el) return;
+    
+    let angle = 0;
+    if (window.screen && window.screen.orientation && typeof window.screen.orientation.angle === "number") {
+      angle = window.screen.orientation.angle;
+    } else if (typeof window.orientation === "number") {
+      angle = window.orientation;
+    }
+    
+    angle = (Number(angle) + 360) % 360;
+    
+    if (angle === 0) {
+      el.style.position = "";
+      el.style.top = "";
+      el.style.left = "";
+      el.style.width = "";
+      el.style.height = "";
+      el.style.transform = "";
+      el.style.transformOrigin = "";
+    } else if (angle === 90) {
+      el.style.position = "fixed";
+      el.style.top = "50%";
+      el.style.left = "50%";
+      el.style.width = "100vh";
+      el.style.height = "100vw";
+      el.style.transform = "translate(-50%, -50%) rotate(-90deg)";
+      el.style.transformOrigin = "center center";
+    } else if (angle === 270) {
+      el.style.position = "fixed";
+      el.style.top = "50%";
+      el.style.left = "50%";
+      el.style.width = "100vh";
+      el.style.height = "100vw";
+      el.style.transform = "translate(-50%, -50%) rotate(90deg)";
+      el.style.transformOrigin = "center center";
+    } else if (angle === 180) {
+      el.style.position = "fixed";
+      el.style.top = "50%";
+      el.style.left = "50%";
+      el.style.width = "100vw";
+      el.style.height = "100vh";
+      el.style.transform = "translate(-50%, -50%) rotate(180deg)";
+      el.style.transformOrigin = "center center";
+    }
+  }
+
   function khoaOrientation() {
     if (window.screen && window.screen.orientation && typeof window.screen.orientation.lock === "function") {
       window.screen.orientation.lock("portrait-primary").catch(function() {});
     }
+    capNhatGocXoayBaoVe();
+  }
+
+  if (window.screen && window.screen.orientation) {
+    window.screen.orientation.addEventListener("change", capNhatGocXoayBaoVe);
   }
   window.addEventListener("DOMContentLoaded", khoaOrientation);
   window.addEventListener("load", khoaOrientation);
-  window.addEventListener("orientationchange", khoaOrientation);
+  window.addEventListener("orientationchange", capNhatGocXoayBaoVe);
+  window.addEventListener("resize", capNhatGocXoayBaoVe);
   window.addEventListener("touchstart", khoaOrientation);
   window.addEventListener("click", khoaOrientation);
+  setInterval(capNhatGocXoayBaoVe, 250);
 </script>
 </head>
 <body>
