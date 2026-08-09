@@ -921,3 +921,96 @@ function dongXacNhanApp(dongY) {
   else if (!dongY && cbHuy) cbHuy();
 }
 window.dongXacNhanApp = dongXacNhanApp;
+
+// ── Âm thanh quét thành công ─────────
+let sharedAudioCtx = null;
+let beepAudioFallback = null;
+let beepAudioThanhCong = null;
+
+function laySoundThanhCong() {
+  if (!beepAudioThanhCong) {
+    beepAudioThanhCong = new Audio("data:audio/mp3;base64,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");
+  }
+  return beepAudioThanhCong;
+}
+
+function initSharedAudioCtx() {
+  if (!sharedAudioCtx) {
+    try {
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (AudioCtx) sharedAudioCtx = new AudioCtx();
+    } catch (e) {}
+  }
+  if (sharedAudioCtx && sharedAudioCtx.state === "suspended") {
+    try { sharedAudioCtx.resume(); } catch (e) {}
+  }
+
+  try {
+    if (!beepAudioFallback) phatAmThanhFallbackWav();
+    if (beepAudioFallback) {
+      const p = beepAudioFallback.play();
+      if (p && typeof p.then === 'function') {
+        p.then(() => { beepAudioFallback.pause(); beepAudioFallback.currentTime = 0; }).catch(() => {});
+      }
+    }
+  } catch (e) {}
+
+  try {
+    const audioTC = laySoundThanhCong();
+    const p2 = audioTC.play();
+    if (p2 && typeof p2.then === 'function') {
+      p2.then(() => { audioTC.pause(); audioTC.currentTime = 0; }).catch(() => {});
+    }
+  } catch (e) {}
+}
+window.addEventListener("touchstart", initSharedAudioCtx, { passive: true });
+window.addEventListener("click", initSharedAudioCtx, { passive: true });
+
+function phatAmThanhFallbackWav() {
+  try {
+    if (!beepAudioFallback) {
+      const sampleRate = 22050;
+      const numSamples = Math.floor(sampleRate * 0.12);
+      const dataSize = numSamples * 2;
+      const buffer = new Uint8Array(44 + dataSize);
+      const writeString = (offset, str) => { for (let i = 0; i < str.length; i++) buffer[offset + i] = str.charCodeAt(i); };
+      const write32 = (offset, val) => { buffer[offset] = val & 0xff; buffer[offset + 1] = (val >> 8) & 0xff; buffer[offset + 2] = (val >> 16) & 0xff; buffer[offset + 3] = (val >> 24) & 0xff; };
+      const write16 = (offset, val) => { buffer[offset] = val & 0xff; buffer[offset + 1] = (val >> 8) & 0xff; };
+
+      writeString(0, 'RIFF'); write32(4, 36 + dataSize); writeString(8, 'WAVE'); writeString(12, 'fmt ');
+      write32(16, 16); write16(20, 1); write16(22, 1); write32(24, sampleRate); write32(28, sampleRate * 2);
+      write16(32, 2); write16(34, 16); writeString(36, 'data'); write32(40, dataSize);
+
+      const freq = 2400;
+      const view = new DataView(buffer.buffer);
+      for (let i = 0; i < numSamples; i++) {
+        const t = i / sampleRate;
+        const sample = Math.sin(2 * Math.PI * freq * t);
+        const env = Math.exp(-t * 22);
+        const intVal = Math.floor(sample * env * 28000);
+        view.setInt16(44 + i * 2, intVal, true);
+      }
+
+      let binary = '';
+      for (let i = 0; i < buffer.length; i++) binary += String.fromCharCode(buffer[i]);
+      const base64 = btoa(binary);
+      beepAudioFallback = new Audio("data:audio/wav;base64," + base64);
+    }
+    beepAudioFallback.currentTime = 0;
+    beepAudioFallback.play().catch(() => {});
+  } catch (e) {}
+}
+
+function phatTiengBip() {
+  if (navigator.vibrate) {
+    try { navigator.vibrate([100, 50, 100]); } catch (e) {}
+  }
+  try {
+    const audio = laySoundThanhCong();
+    audio.currentTime = 0;
+    audio.play().catch(() => { phatAmThanhFallbackWav(); });
+  } catch (e) {
+    phatAmThanhFallbackWav();
+  }
+}
+window.phatTiengBip = phatTiengBip;
