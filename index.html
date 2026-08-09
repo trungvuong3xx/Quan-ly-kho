@@ -358,16 +358,16 @@
     <button class="btn btn-full" style="background:var(--card-raised); color:var(--cream); border:1px solid var(--line); margin-top:8px" onclick="chuyenTrangKhongNav('trangChu')">← Trang chủ</button>
   </div>
 
-  <div id="btp-cam" class="card" style="display:none; overflow:hidden; padding:10px 12px 10px; margin-bottom:0;">
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px">
+  <div id="btp-cam" class="card" style="display:none; overflow:hidden; padding:14px 14px 12px; margin-bottom:0;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px">
       <span id="btp-status" style="font-weight:700">🟢 Đang quét...</span>
-      <span id="btp-dem" style="background:var(--brass); color:var(--bg-deep); font-weight:800; font-size:13px; padding:4px 10px; border-radius:20px; box-shadow:0 3px 10px rgba(245,158,11,0.45); letter-spacing:0.3px;">Đã quét: 0 mã</span>
+      <span id="btp-dem" style="background:var(--brass); color:var(--bg-deep); font-weight:800; font-size:14px; padding:5px 12px; border-radius:20px; box-shadow:0 3px 10px rgba(245,158,11,0.45); letter-spacing:0.3px;">Đã quét: 0 mã</span>
     </div>
-    <div id="btp-video-box" class="video-container" style="position:relative; width:100%; padding-bottom:50%; background:#000; border-radius:8px; overflow:hidden; margin-bottom:6px; border: 3px solid transparent; transition: border-color 0.3s ease, box-shadow 0.3s ease;">
+    <div id="btp-video-box" class="video-container" style="position:relative; width:100%; padding-bottom:60%; background:#000; border-radius:8px; overflow:hidden; margin-bottom:10px; border: 3px solid transparent; transition: border-color 0.3s ease, box-shadow 0.3s ease;">
       <video id="btp-reader" style="position:absolute; width:100%; height:100%; object-fit:cover"></video>
     </div>
 
-    <div style="margin-bottom:6px; padding:6px 8px; background:var(--card-raised); border-radius:8px; border:1px solid var(--line-soft); display:flex; flex-direction:column; gap:6px;">
+    <div style="margin-bottom:10px; padding:8px 10px; background:var(--card-raised); border-radius:8px; border:1px solid var(--line-soft); display:flex; flex-direction:column; gap:8px;">
       <div style="display:flex; align-items:center; justify-content:space-between;">
         <label style="display:flex; align-items:center; gap:6px; font-size:12px; font-weight:600; color:var(--cream); cursor:pointer; margin:0;">
           <input type="checkbox" id="btp-cho-phep-trung-cam" style="width:15px; height:15px; accent-color:var(--brass);">
@@ -376,23 +376,23 @@
         <span id="btp-lock-status" style="font-size:11px; color:var(--cream-soft);">Chờ quét...</span>
       </div>
       <div style="display:flex; gap:6px; align-items:center;">
-        <input type="text" id="btp-manual-input-cam" placeholder="Nhập tay mã BTP..." style="flex:1; height:36px; padding:0 10px; font-size:13px; margin:0; box-sizing:border-box;" onkeydown="if(event.key==='Enter') nhapThuCongBTP('cam')">
-        <button class="btn btn-blue" style="height:36px; padding:0 14px; font-size:13px; white-space:nowrap; margin:0;" onclick="nhapThuCongBTP('cam')">Thêm</button>
+        <input type="text" id="btp-manual-input-cam" placeholder="Nhập tay mã BTP..." style="flex:1; height:40px; padding:0 12px; font-size:13px; margin:0; box-sizing:border-box;" onkeydown="if(event.key==='Enter') nhapThuCongBTP('cam')">
+        <button class="btn btn-blue" style="height:40px; padding:0 16px; font-size:13px; white-space:nowrap; margin:0;" onclick="nhapThuCongBTP('cam')">Thêm</button>
       </div>
     </div>
 
-    <div style="display:flex; flex-direction:column; gap:6px; width:100%;">
-      <button id="btn-dung-tieptuc-btp" class="btn btn-red" style="width:100%; height:36px; font-size:13px; margin:0;" onclick="toggleDungTiepTucBTP()">Dừng quét</button>
-      <button class="btn btn-green" style="width:100%; height:36px; font-size:13px; margin:0;" onclick="ketThucBTP()">Kết Thúc & Gửi</button>
+    <div style="display:flex; flex-direction:column; gap:8px; width:100%;">
+      <button id="btn-dung-tieptuc-btp" class="btn btn-red" style="width:100%; height:40px; font-size:14px; margin:0;" onclick="toggleDungTiepTucBTP()">Dừng quét</button>
+      <button class="btn btn-green" style="width:100%; height:40px; font-size:14px; margin:0;" onclick="ketThucBTP()">Kết Thúc & Gửi</button>
     </div>
 
-    <div id="btp-log-container" style="margin-top:6px; background:var(--card-raised); border-radius:8px; padding:8px; border:1px solid var(--line-soft);">
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px; border-bottom:1px solid var(--line); padding-bottom:4px; gap:8px;">
+    <div id="btp-log-container" style="margin-top:10px; background:var(--card-raised); border-radius:8px; padding:10px; border:1px solid var(--line-soft);">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; border-bottom:1px solid var(--line); padding-bottom:6px; gap:8px;">
         <span style="font-size:12px; font-weight:800; color:var(--brass); letter-spacing:0.5px; white-space:nowrap;">📋 NHẬT KÝ QUÉT BTP</span>
         <span id="btp-log-count" style="font-size:12px; font-weight:700; color:var(--steel); white-space:nowrap;">0 mã</span>
       </div>
-      <div id="btp-log-list" style="max-height:100px; overflow-y:auto; padding-right:4px;">
-        <div style="color:var(--cream-soft); font-size:12px; text-align:center; padding:6px 0;">Chưa có mã nào được quét</div>
+      <div id="btp-log-list" style="max-height:140px; overflow-y:auto; padding-right:4px;">
+        <div style="color:var(--cream-soft); font-size:12px; text-align:center; padding:8px 0;">Chưa có mã nào được quét</div>
       </div>
     </div>
   </div>

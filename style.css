@@ -1169,18 +1169,25 @@ select:focus {
   100% { box-shadow: 0 0 0 0 rgba(82, 196, 26, 0); }
 }
 
-/* ── Ẩn hoàn toàn thanh cuộn dọc (scrollbar) ở thẻ quét camera BTP ── */
-#btp-cam,
-#btp-cam *,
-#btp-log-list {
+/* ── Xóa hoàn toàn thanh cuộn (scrollbar) trên toàn bộ ứng dụng & trình duyệt ── */
+html, body, *, ::-webkit-scrollbar {
   -ms-overflow-style: none !important;
   scrollbar-width: none !important;
 }
 
-#btp-cam::-webkit-scrollbar,
-#btp-cam *::-webkit-scrollbar,
-#btp-log-list::-webkit-scrollbar {
+::-webkit-scrollbar,
+*::-webkit-scrollbar,
+html::-webkit-scrollbar,
+body::-webkit-scrollbar {
   display: none !important;
-  width: 0 !important;
-  height: 0 !important;
+  width: 0px !important;
+  height: 0px !important;
+  background: transparent !important;
+}
+
+::-webkit-scrollbar-thumb,
+::-webkit-scrollbar-track,
+::-webkit-scrollbar-corner {
+  display: none !important;
+  background: transparent !important;
 }
