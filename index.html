@@ -427,10 +427,14 @@
       </div>
     </div>
 
-    <button class="btn btn-green btn-full" onclick="quetTiepBTP()">Quét tiếp</button>
-    <button class="btn btn-blue btn-full" style="margin-top:8px" onclick="quetMoiBTP()">Quét mới</button>
-    <button class="btn btn-excel btn-full" style="margin-top:8px" onclick="xuatExcelBTP()"><i class="ti ti-file-spreadsheet"></i> Xuất Excel BTP</button>
-    <button class="btn btn-full" style="background:var(--card-raised); color:var(--cream); border:1px solid var(--line); margin-top:8px" onclick="chuyenTrangKhongNav('trangChu')">← Trang chủ</button>
+    <div style="display:flex; gap:8px; margin-top:12px;">
+      <button class="btn btn-green" style="flex:1; height:38px; font-size:13px; margin:0;" onclick="quetTiepBTP()">Quét tiếp</button>
+      <button class="btn btn-blue" style="flex:1; height:38px; font-size:13px; margin:0;" onclick="quetMoiBTP()">Quét mới</button>
+    </div>
+    <div style="display:flex; gap:8px; margin-top:8px;">
+      <button class="btn btn-excel" style="flex:1; height:38px; font-size:13px; margin:0;" onclick="xuatExcelBTP()"><i class="ti ti-file-spreadsheet"></i> Xuất Excel</button>
+      <button class="btn" style="flex:1; height:38px; font-size:13px; margin:0; background:var(--card-raised); color:var(--cream); border:1px solid var(--line);" onclick="chuyenTrangKhongNav('trangChu')">← Trang chủ</button>
+    </div>
   </div>
 </div>
 
