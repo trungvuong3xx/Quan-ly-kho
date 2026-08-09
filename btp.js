@@ -266,6 +266,7 @@ async function batDauBTP() {
 }
 
 async function batDauPhienMoiBTP() {
+  document.body.classList.add("cam-active");
   phienBTP = [];
   demSoDotBTP = 1;
   dangQuetBTP = true;
@@ -310,6 +311,7 @@ async function batDauPhienMoiBTP() {
 }
 
 function dungBTP() {
+  document.body.classList.remove("cam-active");
   dangQuetBTP = false;
   if (typeof dungCameraFast === "function" && zxingReaderBTP) {
     dungCameraFast("btp-reader", zxingReaderBTP);
@@ -533,6 +535,7 @@ function taoHangKetQuaBTP(danhSach) {
 }
 
 function hienKetQuaBTP() {
+  document.body.classList.remove("cam-active");
   const { hangDot, footDot, hangGom, footGom } = taoHangKetQuaBTP(phienBTP);
   const elDot = document.getElementById("btp-tbody-dot");
   const elFootDot = document.getElementById("btp-tfoot-dot");
@@ -549,6 +552,7 @@ function hienKetQuaBTP() {
 }
 
 async function quetTiepBTP() {
+  document.body.classList.add("cam-active");
   demSoDotBTP = (demSoDotBTP || 0) + 1;
   dangQuetBTP = true;
   denPinBatBTP = false;
@@ -594,6 +598,7 @@ function showCanhBaoBTP(text) {
 }
 
 async function khoiPhucBTP(state) {
+  document.body.classList.add("cam-active");
   phienBTP = state.phienBTP.map(r => ({ ...r, thoiGian: new Date(r.thoiGian) }));
   demSoDotBTP = state.demSoDotBTP || 1;
   ngayBTP = state.ngayBTP;

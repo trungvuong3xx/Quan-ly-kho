@@ -117,7 +117,10 @@ function chuyenTrang(id, el) {
   if (el) el.classList.add("active");
   if (id !== "quetQR") dungQuet();
   if (id !== "chiFor" && typeof dungCX1 === "function") dungCX1();
-  if (id !== "btpPage" && typeof dungBTP === "function") dungBTP();
+  if (id !== "btpPage") {
+    document.body.classList.remove("cam-active");
+    if (typeof dungBTP === "function") dungBTP();
+  }
   if (id === "trangChu" && typeof capNhatTrangChu === "function") capNhatTrangChu();
 }
 
@@ -133,7 +136,10 @@ window.diToiTab = diToiTab;
 function chuyenTrangKhongNav(id) {
   document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
   if (id !== "chiFor" && typeof dungCX1 === "function") dungCX1();
-  if (id !== "btpPage" && typeof dungBTP === "function") dungBTP();
+  if (id !== "btpPage") {
+    document.body.classList.remove("cam-active");
+    if (typeof dungBTP === "function") dungBTP();
+  }
   const page = document.getElementById(id);
   if (page) page.classList.add("active");
 }
