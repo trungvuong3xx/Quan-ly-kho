@@ -284,14 +284,6 @@ async function batDauPhienMoiBTP() {
   
   capNhatLogBTP();
 
-  const btnFlash = document.getElementById("btn-flash-btp");
-  if (btnFlash) {
-    btnFlash.style.background = "var(--card-raised)";
-    btnFlash.style.color = "var(--cream)";
-    btnFlash.style.border = "1px solid var(--line)";
-    btnFlash.textContent = "💡 Bật đèn pin";
-  }
-
   const btnToggle = document.getElementById("btn-dung-tieptuc-btp");
   if (btnToggle) {
     btnToggle.textContent = "Dừng quét";
@@ -324,15 +316,7 @@ function dungBTP() {
 async function tiepTucBTP() {
   demSoDotBTP = (demSoDotBTP || 0) + 1;
   dangQuetBTP = true;
-  denPinBatBTP = false;
   document.getElementById("btp-status").textContent = "🟢 Đang quét Đợt " + demSoDotBTP + "...";
-  const btnFlash = document.getElementById("btn-flash-btp");
-  if (btnFlash) {
-    btnFlash.style.background = "var(--card-raised)";
-    btnFlash.style.color = "var(--cream)";
-    btnFlash.style.border = "1px solid var(--line)";
-    btnFlash.textContent = "💡 Bật đèn pin";
-  }
   try {
     zxingReaderBTP = await khoiTaoCameraFast("btp-reader", (txt) => {
       if (txt && dangQuetBTP) {
@@ -359,25 +343,7 @@ function toggleDungTiepTucBTP() {
   }
 }
 
-async function toggleFlashBTP() {
-  if (!zxingReaderBTP || !dangQuetBTP) return;
-  try {
-    const stream = document.getElementById("btp-reader").srcObject;
-    if (!stream) return;
-    const track = stream.getVideoTracks()[0];
-    const capabilities = track.getCapabilities();
-    if (!capabilities.torch) { alert("Thiết bị không hỗ trợ đèn pin."); return; }
-    denPinBatBTP = !denPinBatBTP;
-    await track.applyConstraints({ advanced: [{ torch: denPinBatBTP }] });
-    const btnFlash = document.getElementById("btn-flash-btp");
-    if (btnFlash) {
-      btnFlash.style.background = denPinBatBTP ? "var(--brass)" : "var(--card-raised)";
-      btnFlash.style.color = denPinBatBTP ? "var(--bg-deep)" : "var(--cream)";
-      btnFlash.style.border = denPinBatBTP ? "1px solid var(--brass)" : "1px solid var(--line)";
-      btnFlash.textContent = denPinBatBTP ? "⚡ Tắt đèn pin" : "💡 Bật đèn pin";
-    }
-  } catch (err) {}
-}
+
 
 function docPendingBTP() {
   try {
@@ -614,14 +580,6 @@ async function khoiPhucBTP(state) {
   document.getElementById("btp-status").textContent = "🟢 Đang quét Đợt " + demSoDotBTP + "...";
   
   capNhatLogBTP();
-
-  const btnFlash = document.getElementById("btn-flash-btp");
-  if (btnFlash) {
-    btnFlash.style.background = "var(--card-raised)";
-    btnFlash.style.color = "var(--cream)";
-    btnFlash.style.border = "1px solid var(--line)";
-    btnFlash.textContent = "💡 Bật đèn pin";
-  }
 
   const btnToggle = document.getElementById("btn-dung-tieptuc-btp");
   if (btnToggle) {
