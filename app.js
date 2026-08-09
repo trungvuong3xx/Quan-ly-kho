@@ -805,10 +805,13 @@ function capNhatTrangChu() {
     }
   }
 }
+window.capNhatTrangChu = capNhatTrangChu;
+
 function toggleChonLichSuTrangChu() {
   const el = document.getElementById("lichsu-menu-trangchu");
   if (!el) return;
-  if (el.style.display === "none" || !el.style.display) {
+  const currentDisplay = window.getComputedStyle(el).display;
+  if (currentDisplay === "none") {
     el.style.display = "flex";
   } else {
     el.style.display = "none";
@@ -820,12 +823,15 @@ function moLichSuChon(loai) {
   const el = document.getElementById("lichsu-menu-trangchu");
   if (el) el.style.display = "none";
 
-  if (loai === "btp" && typeof window.moLichSuBTP === "function") {
-    window.moLichSuBTP();
-  } else if (loai === "for" && typeof window.moLichSuCX1 === "function") {
-    window.moLichSuCX1();
-  } else if (loai === "x5" && typeof window.moLichSuCX5 === "function") {
-    window.moLichSuCX5();
+  if (loai === "btp") {
+    if (typeof window.moLichSuBTP === "function") window.moLichSuBTP();
+    else if (typeof window.chuyenTrangKhongNav === "function") window.chuyenTrangKhongNav("lichSuBTP");
+  } else if (loai === "for") {
+    if (typeof window.moLichSuCX1 === "function") window.moLichSuCX1();
+    else if (typeof window.chuyenTrangKhongNav === "function") window.chuyenTrangKhongNav("lichSu");
+  } else if (loai === "x5") {
+    if (typeof window.moLichSuCX5 === "function") window.moLichSuCX5();
+    else if (typeof window.chuyenTrangKhongNav === "function") window.chuyenTrangKhongNav("lichSuCX5");
   }
 }
 window.moLichSuChon = moLichSuChon;

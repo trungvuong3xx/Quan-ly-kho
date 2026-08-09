@@ -90,7 +90,7 @@
     </div>
   </div>
   <div class="card">
-    <button class="btn btn-full" style="background:var(--neutral-solid);color:var(--cream);font-weight:700;font-size:15px;" onclick="toggleChonLichSuTrangChu()">📜 Xem Lịch Sử</button>
+    <button class="btn btn-full" style="background:var(--neutral-solid);color:var(--cream);font-weight:700;font-size:15px;" onclick="if(typeof toggleChonLichSuTrangChu==='function') toggleChonLichSuTrangChu(); else { var m=document.getElementById('lichsu-menu-trangchu'); if(m) m.style.display=(m.style.display==='none'||!m.style.display)?'flex':'none'; }">📜 Xem Lịch Sử</button>
     <div id="lichsu-menu-trangchu" style="display:none; flex-direction:column; gap:8px; margin-top:10px;">
       <button class="btn btn-full" style="background:var(--card-raised);color:var(--cream);border:1px solid var(--line-soft);" onclick="moLichSuChon('btp')">📦 Lịch sử BTP</button>
       <button class="btn btn-full" style="background:var(--card-raised);color:var(--cream);border:1px solid var(--line-soft);" onclick="moLichSuChon('for')">🧶 Lịch sử Chỉ FOR</button>
