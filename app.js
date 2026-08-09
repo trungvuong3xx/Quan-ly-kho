@@ -1,3 +1,4 @@
+// ── Web App Core v20260809-ultra ──────────────────────────
 const API = "https://script.google.com/macros/s/AKfycbzXjzccld3X04iJgIpEvKm01in0QT0i7tkjar_oJ6K5-sBGdm9xibe7Mu4UB3mWtha5-w/exec";
 
 async function callAPI(body) {

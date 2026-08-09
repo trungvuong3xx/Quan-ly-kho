@@ -1,4 +1,4 @@
-// ── Quản lý BTP (Bán Thành Phẩm) ──────────────────────────
+// ── Quản lý BTP (Bán Thành Phẩm) v20260809-ultra ──────────────────────────
 let zxingReaderBTP = null;
 let dangQuetBTP = false;
 let phienBTP = []; 
