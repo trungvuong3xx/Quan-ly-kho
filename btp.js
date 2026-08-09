@@ -238,6 +238,7 @@ function luuPhienDoDangBTP() {
 
 function xoaPhienDoDangBTP() {
   try { localStorage.removeItem(BTP_DODANG_KEY); } catch (e) {}
+  if (typeof capNhatTrangChu === "function") capNhatTrangChu();
 }
 
 async function batDauBTP() {
@@ -271,6 +272,8 @@ async function batDauPhienMoiBTP() {
   denPinBatBTP = false;
   idPhienHienTaiBTP = Date.now() + "-" + Math.random().toString(36).slice(2);
   soLuongDaGuiHienTaiBTP = 0;
+
+  luuPhienDoDangBTP();
 
   document.getElementById("btp-form").style.display = "none";
   document.getElementById("btp-cam").style.display = "block";

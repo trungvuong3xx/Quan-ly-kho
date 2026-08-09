@@ -364,15 +364,15 @@
         </label>
         <span id="btp-lock-status" style="font-size:11px; color:var(--cream-soft);">Chờ quét...</span>
       </div>
-      <div style="display:flex; gap:6px;">
-        <input type="text" id="btp-manual-input-cam" placeholder="Nhập tay mã BTP..." style="flex:1; padding:6px 10px; font-size:12px; margin:0;" onkeydown="if(event.key==='Enter') nhapThuCongBTP('cam')">
-        <button class="btn btn-blue" style="padding:6px 12px; font-size:12px; white-space:nowrap;" onclick="nhapThuCongBTP('cam')">Thêm</button>
+      <div style="display:flex; gap:6px; align-items:center;">
+        <input type="text" id="btp-manual-input-cam" placeholder="Nhập tay mã BTP..." style="flex:1; height:40px; padding:0 12px; font-size:13px; margin:0; box-sizing:border-box;" onkeydown="if(event.key==='Enter') nhapThuCongBTP('cam')">
+        <button class="btn btn-blue" style="height:40px; padding:0 16px; font-size:13px; white-space:nowrap; margin:0;" onclick="nhapThuCongBTP('cam')">Thêm</button>
       </div>
     </div>
 
-    <div style="display:flex; flex-direction:column; gap:8px; width:100%;">
-      <button id="btn-dung-tieptuc-btp" class="btn btn-red" style="width:100%; height:42px;" onclick="toggleDungTiepTucBTP()">Dừng quét</button>
-      <button class="btn btn-green" style="width:100%; height:42px;" onclick="ketThucBTP()">Kết Thúc & Gửi</button>
+    <div style="display:flex; gap:8px; width:100%;">
+      <button id="btn-dung-tieptuc-btp" class="btn btn-red" style="flex:1; height:40px; font-size:13px; margin:0;" onclick="toggleDungTiepTucBTP()">Dừng quét</button>
+      <button class="btn btn-green" style="flex:1; height:40px; font-size:13px; margin:0;" onclick="ketThucBTP()">Kết Thúc & Gửi</button>
     </div>
 
     <div id="btp-log-container" style="margin-top:10px; background:var(--card-raised); border-radius:8px; padding:10px; border:1px solid var(--line-soft);">

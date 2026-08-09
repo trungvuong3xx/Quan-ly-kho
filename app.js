@@ -776,7 +776,8 @@ function capNhatTrangChu() {
     let stateBTP = null;
     try { stateBTP = JSON.parse(localStorage.getItem("btp_phien_dodang")); } catch (e) {}
 
-    if (stateBTP && Array.isArray(stateBTP.phienBTP) && stateBTP.phienBTP.length > 0) {
+    if (stateBTP && (Array.isArray(stateBTP.phienBTP) || stateBTP.idPhienHienTaiBTP)) {
+      const soMa = Array.isArray(stateBTP.phienBTP) ? stateBTP.phienBTP.length : 0;
       const gioCapNhatBTP = stateBTP.capNhat
         ? new Date(stateBTP.capNhat).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" })
         : "—";
@@ -795,7 +796,7 @@ function capNhatTrangChu() {
           </div>
           <div class="tk-stat-box highlight">
             <div class="tk-stat-label">ĐÃ QUÉT</div>
-            <div class="tk-stat-val main-ton">${stateBTP.phienBTP.length} <small>mã</small></div>
+            <div class="tk-stat-val main-ton">${soMa} <small>mã</small></div>
           </div>
         </div>
       `;
