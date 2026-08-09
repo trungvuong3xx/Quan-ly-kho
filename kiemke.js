@@ -58,6 +58,7 @@ async function batDauKiemKe() {
         return;
       }
 
+      if (typeof window.phatTiengBip === "function") window.phatTiengBip();
       if (typeof phatVibrateSuccess === "function") phatVibrateSuccess();
       dsQuetKiemKe.push(id);
 
