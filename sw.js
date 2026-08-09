@@ -1,4 +1,4 @@
-const CACHE_NAME = 'quan-ly-kho-v2026-v48-btp-fix-black-screen-scan-log';
+const CACHE_NAME = 'quan-ly-kho-v2026-v49-fast-sound-ui-upgrade';
 const urlsToCache = [
   './',
   './index.html',
