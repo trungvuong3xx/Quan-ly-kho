@@ -160,12 +160,12 @@ function capNhatLogBTP() {
     const stt = phienBTP.length - idx;
     const originalIndex = phienBTP.length - 1 - idx;
     const gio = item.thoiGian ? new Date(item.thoiGian).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit", second: "2-digit" }) : "";
-    return `<div style="display:flex; justify-content:space-between; align-items:center; padding:5px 0; border-bottom:1px solid rgba(255,255,255,0.06); font-size:13px;">
-      <span style="color:var(--steel); font-weight:700; width:36px;">#${stt}</span>
-      <span style="color:var(--brass); font-weight:800; flex:1; text-align:left;">${item.msp || '—'}</span>
-      <span style="color:var(--success); font-weight:700; width:50px; text-align:center;">${item.kg || 0}</span>
-      <span style="color:var(--cream-soft); font-size:11px; width:55px; text-align:right;">${gio}</span>
-      <button class="cx5-del-btn" onclick="xoaMaBTP(${originalIndex}, event)" title="Xóa mã này" style="margin-left:6px; background:none; border:none; color:var(--red); cursor:pointer; padding:2px 4px;">
+    return `<div style="display:flex; justify-content:space-between; align-items:center; padding:4px 0; border-bottom:1px solid rgba(255,255,255,0.06); font-size:12px;">
+      <span style="color:var(--steel); font-weight:700; width:26px;">${stt}</span>
+      <span style="color:var(--brass); font-weight:800; flex:1; text-align:left; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${item.msp || '—'}</span>
+      <span style="color:var(--success); font-weight:700; width:45px; text-align:center;">${item.kg || 0}</span>
+      <span style="color:var(--cream-soft); font-size:11px; width:50px; text-align:right;">${gio}</span>
+      <button class="cx5-del-btn" onclick="xoaMaBTP(${originalIndex}, event)" title="Xóa mã này" style="margin-left:4px; background:none; border:none; color:var(--red); cursor:pointer; padding:2px 4px;">
         <i class="ti ti-trash"></i>
       </button>
     </div>`;
@@ -314,6 +314,7 @@ function dungBTP() {
 }
 
 async function tiepTucBTP() {
+  document.body.classList.add("cam-active");
   demSoDotBTP = (demSoDotBTP || 0) + 1;
   dangQuetBTP = true;
   document.getElementById("btp-status").textContent = "🟢 Đang quét Đợt " + demSoDotBTP + "...";
