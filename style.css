@@ -1192,7 +1192,7 @@ body::-webkit-scrollbar {
   background: transparent !important;
 }
 
-/* ── Cố định thẻ quét camera BTP vừa khít 100% màn hình, không trượt ── */
+/* ── Cố định thẻ quét camera BTP vừa khít 100% màn hình, mở rộng nhật ký quét ── */
 body.cam-active {
   position: fixed !important;
   top: 0 !important;
@@ -1223,25 +1223,31 @@ body.cam-active #btp-cam {
   padding: 10px 12px !important;
   margin: 0 !important;
   box-sizing: border-box !important;
-  justify-content: space-between !important;
+  justify-content: flex-start !important;
+  gap: 6px !important;
   overflow: hidden !important;
 }
 
 body.cam-active #btp-video-box {
-  flex: 1 1 auto !important;
-  min-height: 120px !important;
-  max-height: 210px !important;
+  flex: 0 0 auto !important;
+  height: 170px !important;
   padding-bottom: 0 !important;
-  height: auto !important;
-  margin-bottom: 6px !important;
+  margin-bottom: 0 !important;
 }
 
 body.cam-active #btp-log-container {
-  flex: 0 0 auto !important;
-  margin-top: 6px !important;
+  flex: 1 1 auto !important;
+  display: flex !important;
+  flex-direction: column !important;
+  margin-top: 0 !important;
   padding: 6px 8px !important;
+  overflow: hidden !important;
+  min-height: 120px !important;
 }
 
 body.cam-active #btp-log-list {
-  max-height: 85px !important;
+  flex: 1 1 auto !important;
+  max-height: none !important;
+  height: 100% !important;
+  overflow-y: auto !important;
 }
