@@ -1,8 +1,8 @@
 // ── Quản lý BTP (Bán Thành Phẩm) v20260809-ultra ──────────────────────────
 let zxingReaderBTP = null;
 let dangQuetBTP = false;
-let phienBTP = []; 
-let demSoDotBTP = 0;   
+let phienBTP = [];
+let demSoDotBTP = 0;
 let denPinBatBTP = false;
 let ngayBTP = null;
 let btpToastTimeout = null;
@@ -18,7 +18,7 @@ const BTP_PENDING_KEY = "btp_pending_saves";
 function xuLyDuLieuQRBTP(text) {
   if (!text) return null;
   const rawQR = text.trim();
-  
+
   // Trích xuất mã BTP (VD: EM260405 từ 1AEM2604051-150 hoặc 10BEM2603691-320)
   const matchEM = rawQR.match(/EM\d{6}/i) || rawQR.match(/EM\d+/i);
   // Trích xuất số lượng sau dấu - ở cuối (VD: 150 từ -150)
@@ -197,14 +197,14 @@ function khiQuetDuocMaBTP(result) {
 
   if (typeof window.phatVibrateSuccess === "function") window.phatVibrateSuccess();
 
-  phienBTP.push({ 
+  phienBTP.push({
     rawQR: data.rawQR,
     id: data.rawQR,
     msp: data.msp,
-    qc: data.qc, 
+    qc: data.qc,
     kg: data.kg,
     thoiGian: new Date(),
-    dotQuet: demSoDotBTP || 1 
+    dotQuet: demSoDotBTP || 1
   });
 
   const demEl = document.getElementById("btp-dem");
@@ -233,12 +233,12 @@ function luuPhienDoDangBTP() {
       phienBTP, ngayBTP, capNhat: new Date().toISOString(),
       idPhienHienTaiBTP, soLuongDaGuiHienTaiBTP, demSoDotBTP
     }));
-  } catch (e) {}
+  } catch (e) { }
   if (typeof capNhatTrangChu === "function") capNhatTrangChu();
 }
 
 function xoaPhienDoDangBTP() {
-  try { localStorage.removeItem(BTP_DODANG_KEY); } catch (e) {}
+  try { localStorage.removeItem(BTP_DODANG_KEY); } catch (e) { }
   if (typeof capNhatTrangChu === "function") capNhatTrangChu();
 }
 
@@ -248,7 +248,7 @@ async function batDauBTP() {
   if (!ngayBTP) { showCanhBaoBTP("Vui lòng chọn ngày!"); return; }
 
   let phienCu = null;
-  try { phienCu = JSON.parse(localStorage.getItem(BTP_DODANG_KEY)); } catch (e) {}
+  try { phienCu = JSON.parse(localStorage.getItem(BTP_DODANG_KEY)); } catch (e) { }
   if (phienCu && Array.isArray(phienCu.phienBTP) && phienCu.phienBTP.length > 0) {
     if (typeof moXacNhanApp === "function") {
       moXacNhanApp(
@@ -282,7 +282,7 @@ async function batDauPhienMoiBTP() {
   document.getElementById("btp-ketqua").style.display = "none";
   document.getElementById("btp-dem").textContent = "Đã quét: 0 mã";
   document.getElementById("btp-status").textContent = "🟢 Đang quét Đợt 1...";
-  
+
   capNhatLogBTP();
 
   const btnToggle = document.getElementById("btn-dung-tieptuc-btp");
@@ -297,7 +297,7 @@ async function batDauPhienMoiBTP() {
         khiQuetDuocMaBTP({ getText: () => txt });
       }
     });
-  } catch(e) {
+  } catch (e) {
     showCanhBaoBTP("Lỗi camera: " + e);
     dungBTP();
   }
@@ -325,7 +325,7 @@ async function tiepTucBTP() {
         khiQuetDuocMaBTP({ getText: () => txt });
       }
     });
-  } catch(e) {
+  } catch (e) {
     alert("Lỗi camera: " + e);
     dungBTP();
   }
@@ -355,7 +355,7 @@ function docPendingBTP() {
 }
 
 function luuPendingBTP(list) {
-  try { localStorage.setItem(BTP_PENDING_KEY, JSON.stringify(list)); } catch (e) {}
+  try { localStorage.setItem(BTP_PENDING_KEY, JSON.stringify(list)); } catch (e) { }
   capNhatBadgePendingBTP();
 }
 
@@ -406,38 +406,70 @@ async function guiLenSheetBTP(rows) {
   if (json && json.error) throw new Error(json.error);
 }
 
-async function ketThucBTP() {
+// Chỉ dừng camera và hiện bảng kết quả — KHÔNG gửi lên Sheet
+function xemKetQuaBTP() {
   dungBTP();
-  xoaPhienDoDangBTP();
-
   hienKetQuaBTP();
+  luuPhienDoDangBTP();
+}
+window.xemKetQuaBTP = xemKetQuaBTP;
 
-  const moiBoSung = phienBTP.slice(soLuongDaGuiHienTaiBTP);
-  if (moiBoSung.length > 0) {
-    const rows = moiBoSung.map(r => ({
-      rawQR: r.rawQR,
-      id: r.rawQR,
-      msp: r.msp,
-      qc: r.qc,
-      kg: r.kg,
-      ngay: ngayBTP,
-      thoiGian: r.thoiGian ? (typeof r.thoiGian.toISOString === "function" ? r.thoiGian.toISOString() : r.thoiGian) : new Date().toISOString()
-    }));
-    try {
-      await guiLenSheetBTP(rows);
-      soLuongDaGuiHienTaiBTP = phienBTP.length;
-    } catch (err) {
-      const pending = docPendingBTP();
-      pending.push(...rows);
-      luuPendingBTP(pending);
-      showCanhBaoBTP("Mất mạng — đã lưu tạm trên máy, sẽ tự gửi lại sau");
-      soLuongDaGuiHienTaiBTP = phienBTP.length;
-    }
-    if (typeof capNhatTrangThaiMang === "function") capNhatTrangThaiMang();
+// Gửi toàn bộ dữ liệu phienBTP lên Google Sheet
+async function guiDuLieuBTP() {
+  if (phienBTP.length === 0) {
+    showCanhBaoBTP("Không có dữ liệu để gửi!");
+    return;
   }
 
-  luuVaoLichSuBTP();
+  const btnGui = document.getElementById("btn-gui-dulieu-btp");
+  if (btnGui) {
+    btnGui.disabled = true;
+    btnGui.textContent = "⏳ Đang gửi...";
+  }
+
+  const rows = phienBTP.map(r => ({
+    rawQR: r.rawQR,
+    id: r.rawQR,
+    msp: r.msp,
+    qc: r.qc,
+    kg: r.kg,
+    ngay: ngayBTP,
+    thoiGian: r.thoiGian ? (typeof r.thoiGian.toISOString === "function" ? r.thoiGian.toISOString() : r.thoiGian) : new Date().toISOString()
+  }));
+
+  try {
+    await guiLenSheetBTP(rows);
+    soLuongDaGuiHienTaiBTP = phienBTP.length;
+    xoaPhienDoDangBTP();
+    luuVaoLichSuBTP();
+    showCanhBaoBTP("✅ Đã gửi thành công " + rows.length + " mã lên Sheet!");
+    if (btnGui) {
+      btnGui.textContent = "✅ Đã gửi thành công";
+      btnGui.style.background = "linear-gradient(135deg, #10b981, #059669)";
+      btnGui.style.color = "#fff";
+    }
+  } catch (err) {
+    const pending = docPendingBTP();
+    pending.push(...rows);
+    luuPendingBTP(pending);
+    showCanhBaoBTP("Mất mạng — đã lưu tạm trên máy, sẽ tự gửi lại sau");
+    soLuongDaGuiHienTaiBTP = phienBTP.length;
+    if (btnGui) {
+      btnGui.disabled = false;
+      btnGui.textContent = "📤 Gửi dữ liệu lên Sheet";
+      btnGui.style.background = "linear-gradient(135deg, #f59e0b, #d97706)";
+      btnGui.style.color = "#1a1a2e";
+    }
+  }
+  if (typeof capNhatTrangThaiMang === "function") capNhatTrangThaiMang();
 }
+window.guiDuLieuBTP = guiDuLieuBTP;
+
+// Giữ backward-compatible
+async function ketThucBTP() {
+  xemKetQuaBTP();
+}
+
 
 function taoHangKetQuaBTP(danhSach) {
   let tongGomLoaiMa = {};
@@ -478,7 +510,7 @@ function taoHangKetQuaBTP(danhSach) {
   <tr>
     <td style="padding:10px;font-weight:700;color:var(--brass);background:var(--card-raised)">TỔNG</td>
     <td style="padding:10px;background:var(--card-raised)"></td>
-    <td style="padding:10px;text-align:right;font-weight:700;color:var(--brass);background:var(--card-raised)">${tongQRAll} mã</td>
+    <td style="padding:10px;text-align:right;font-weight:700;color:var(--brass);background:var(--card-raised)">${soDot}</td>
     <td style="padding:10px;background:var(--card-raised)"></td>
   </tr>`;
 
@@ -517,6 +549,15 @@ function hienKetQuaBTP() {
 
   document.getElementById("btp-cam").style.display = "none";
   document.getElementById("btp-ketqua").style.display = "block";
+
+  // Reset nút gửi về trạng thái ban đầu
+  const btnGui = document.getElementById("btn-gui-dulieu-btp");
+  if (btnGui) {
+    btnGui.disabled = false;
+    btnGui.textContent = "📤 Gửi dữ liệu lên Sheet";
+    btnGui.style.background = "linear-gradient(135deg, #f59e0b, #d97706)";
+    btnGui.style.color = "#1a1a2e";
+  }
 }
 
 async function quetTiepBTP() {
@@ -541,7 +582,7 @@ async function quetTiepBTP() {
         khiQuetDuocMaBTP({ getText: () => txt });
       }
     });
-  } catch(e) {
+  } catch (e) {
     alert("Lỗi camera: " + e);
     dungBTP();
   }
@@ -580,7 +621,7 @@ async function khoiPhucBTP(state) {
   document.getElementById("btp-ketqua").style.display = "none";
   document.getElementById("btp-dem").textContent = "Đã quét: " + phienBTP.length + " mã";
   document.getElementById("btp-status").textContent = "🟢 Đang quét Đợt " + demSoDotBTP + "...";
-  
+
   capNhatLogBTP();
 
   const btnToggle = document.getElementById("btn-dung-tieptuc-btp");
@@ -603,7 +644,7 @@ async function khoiPhucBTP(state) {
 
 function tiepTucPhienBTP() {
   let state = null;
-  try { state = JSON.parse(localStorage.getItem(BTP_DODANG_KEY)); } catch (e) {}
+  try { state = JSON.parse(localStorage.getItem(BTP_DODANG_KEY)); } catch (e) { }
   if (!state) return;
   if (typeof diToiTab === "function") diToiTab("btpPage");
   else if (typeof chuyenTrang === "function") chuyenTrang("btpPage");
@@ -629,7 +670,7 @@ function docLichSuBTP() {
 }
 
 function luuLichSuBTP(list) {
-  try { localStorage.setItem(BTP_LICHSU_KEY, JSON.stringify(list)); } catch (e) {}
+  try { localStorage.setItem(BTP_LICHSU_KEY, JSON.stringify(list)); } catch (e) { }
 }
 
 function xoaMotPhienLichSuBTP(idPhien, ev) {
@@ -742,13 +783,13 @@ function xemChiTietLichSuBTP(idPhien) {
 
   dangXemLichSuBTPId = idPhien;
   const { hangDot, footDot, hangGom, footGom } = taoHangKetQuaBTP(entry.phienBTP);
-  
+
   const elDot = document.getElementById("lichsu-btp-tbody-dot");
   const elFootDot = document.getElementById("lichsu-btp-tfoot-dot");
   const elGom = document.getElementById("lichsu-btp-tbody-gom");
   const elFootGom = document.getElementById("lichsu-btp-tfoot-gom");
   const elTieude = document.getElementById("lichsu-btp-chitiet-tieude");
-  
+
   if (elDot) elDot.innerHTML = hangDot;
   if (elFootDot) elFootDot.innerHTML = footDot;
   if (elGom) elGom.innerHTML = hangGom;
@@ -849,29 +890,29 @@ function xuatExcelBTP() {
   XLSX.writeFile(wb, "Quet_BTP_" + ngay + ".xlsx");
 }
 
-window.addEventListener("load", function() {
+window.addEventListener("load", function () {
   const today = new Date().toISOString().split("T")[0];
   const ngayInput = document.getElementById("btp-ngay");
   if (ngayInput) ngayInput.value = today;
 });
 
-window.addEventListener("load", async function() {
+window.addEventListener("load", async function () {
   const pending = docPendingBTP();
   if (pending.length === 0) return;
   try {
     await guiLenSheetBTP(pending);
     luuPendingBTP([]);
-  } catch (e) {}
+  } catch (e) { }
   if (typeof capNhatTrangThaiMang === "function") capNhatTrangThaiMang();
 });
 
-window.addEventListener("online", async function() {
+window.addEventListener("online", async function () {
   const pending = docPendingBTP();
   if (pending.length === 0) return;
   try {
     await guiLenSheetBTP(pending);
     luuPendingBTP([]);
-  } catch (e) {}
+  } catch (e) { }
   if (typeof capNhatTrangThaiMang === "function") capNhatTrangThaiMang();
 });
 

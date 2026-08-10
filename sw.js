@@ -1,4 +1,4 @@
-const CACHE_NAME = 'quan-ly-kho-v2026-v51-mp3-fix';
+const CACHE_NAME = 'quan-ly-kho-v2026-v52-split-gui';
 const urlsToCache = [
   './',
   './index.html',

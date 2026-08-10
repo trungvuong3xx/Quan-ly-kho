@@ -495,7 +495,7 @@
 
     <div style="display:flex; flex-direction:column; gap:6px; width:100%;">
       <button id="btn-dung-tieptuc-btp" class="btn btn-red" style="width:100%; height:38px; font-size:14px; margin:0;" onclick="toggleDungTiepTucBTP()">Dừng quét</button>
-      <button class="btn btn-green" style="width:100%; height:38px; font-size:14px; margin:0;" onclick="ketThucBTP()">Kết Thúc & Gửi</button>
+      <button class="btn btn-green" style="width:100%; height:38px; font-size:14px; margin:0;" onclick="xemKetQuaBTP()">📋 Xem kết quả</button>
     </div>
 
     <div id="btp-log-container" style="margin-top:8px; background:var(--card-raised); border-radius:12px; padding:8px 10px; border:1px solid var(--line-soft); display:flex; flex-direction:column; flex:1 1 auto;">
@@ -550,7 +550,8 @@
       </div>
     </div>
 
-    <div style="display:flex; gap:8px; margin-top:12px;">
+    <button id="btn-gui-dulieu-btp" class="btn" style="width:100%; height:42px; font-size:14px; font-weight:700; margin:0; background:linear-gradient(135deg, #f59e0b, #d97706); color:#1a1a2e; border:none; box-shadow:0 4px 12px rgba(245,158,11,0.4);" onclick="guiDuLieuBTP()">📤 Gửi dữ liệu lên Sheet</button>
+    <div style="display:flex; gap:8px; margin-top:8px;">
       <button class="btn btn-green" style="flex:1; height:38px; font-size:13px; margin:0;" onclick="quetTiepBTP()">Quét tiếp</button>
       <button class="btn btn-blue" style="flex:1; height:38px; font-size:13px; margin:0;" onclick="quetMoiBTP()">Quét mới</button>
     </div>
