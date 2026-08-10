@@ -414,20 +414,21 @@ function xemKetQuaBTP() {
 }
 window.xemKetQuaBTP = xemKetQuaBTP;
 
-// Gửi toàn bộ dữ liệu phienBTP lên Google Sheet
+// Gửi phần dữ liệu CHƯA GỬI lên Google Sheet (tránh trùng lặp)
 async function guiDuLieuBTP() {
-  if (phienBTP.length === 0) {
-    showCanhBaoBTP("Không có dữ liệu để gửi!");
+  const moiBoSung = phienBTP.slice(soLuongDaGuiHienTaiBTP);
+  if (moiBoSung.length === 0) {
+    showCanhBaoBTP("Không có dữ liệu mới để gửi!");
     return;
   }
 
   const btnGui = document.getElementById("btn-gui-dulieu-btp");
   if (btnGui) {
     btnGui.disabled = true;
-    btnGui.textContent = "⏳ Đang gửi...";
+    btnGui.textContent = "⏳ Đang gửi " + moiBoSung.length + " mã...";
   }
 
-  const rows = phienBTP.map(r => ({
+  const rows = moiBoSung.map(r => ({
     rawQR: r.rawQR,
     id: r.rawQR,
     msp: r.msp,
