@@ -51,12 +51,12 @@ function luuPhienDoDangCX5() {
       idPhienHienTaiC5, seqCX5, doiChieuCX5, dangKetThucCX5,
       luotDemCX5, luotHienTaiCX5
     }));
-  } catch (e) {}
+  } catch (e) { }
   luuPhienVaoLichSuCX5();
 }
 
 function xoaPhienDoDangCX5() {
-  try { localStorage.removeItem("cx5_phien_dodang"); } catch (e) {}
+  try { localStorage.removeItem("cx5_phien_dodang"); } catch (e) { }
 }
 
 // Cache danh sách quy cách xuống localStorage — sống qua cả lần tải lại trang/mở
@@ -76,7 +76,7 @@ function docMspCacheLocalCX5(monthKey, boQuaHanSuDung) {
 }
 
 function luuMspCacheLocalCX5(monthKey, data) {
-  try { localStorage.setItem("cx5_msp_cache_" + monthKey, JSON.stringify({ data, savedAt: Date.now() })); } catch (e) {}
+  try { localStorage.setItem("cx5_msp_cache_" + monthKey, JSON.stringify({ data, savedAt: Date.now() })); } catch (e) { }
 }
 
 let taiDanhSachTokenCX5 = 0;
@@ -139,7 +139,7 @@ async function batDauCX5() {
   if (!ngayCX5) { alert("Vui lòng chọn ngày!"); return; }
 
   let phienCu = null;
-  try { phienCu = JSON.parse(localStorage.getItem("cx5_phien_dodang")); } catch (e) {}
+  try { phienCu = JSON.parse(localStorage.getItem("cx5_phien_dodang")); } catch (e) { }
   if (phienCu && Array.isArray(phienCu.phienCX5) && phienCu.phienCX5.length > 0) {
     moXacNhanCX5(
       "Bạn đang có phiên Chỉ X5 dở dang (" + phienCu.phienCX5.length + " dòng, ngày " + phienCu.ngayCX5 + "). Tiếp tục phiên đó hay bắt đầu phiên mới?",
@@ -867,7 +867,7 @@ function docPendingCX5() {
 }
 
 function luuPendingCX5(list) {
-  try { localStorage.setItem("cx5_pending_saves", JSON.stringify(list)); } catch (e) {}
+  try { localStorage.setItem("cx5_pending_saves", JSON.stringify(list)); } catch (e) { }
   capNhatDongPendingCX5();
 }
 
@@ -1290,7 +1290,7 @@ function docLichSuCX5() {
 }
 
 function luuLichSuCX5(list) {
-  try { localStorage.setItem(CX5_LICHSU_KEY, JSON.stringify(list)); } catch (e) {}
+  try { localStorage.setItem(CX5_LICHSU_KEY, JSON.stringify(list)); } catch (e) { }
 }
 
 let _cx5XacNhanCallback = null;
@@ -1460,7 +1460,7 @@ window.tiepTucLichSuCX5 = tiepTucLichSuCX5;
 
 function tiepTucPhienChiX5() {
   let state = null;
-  try { state = JSON.parse(localStorage.getItem("cx5_phien_dodang")); } catch (e) {}
+  try { state = JSON.parse(localStorage.getItem("cx5_phien_dodang")); } catch (e) { }
   if (!state) return;
   if (typeof diToiTab === "function") diToiTab("chiX5");
   khoiPhucCX5(state);
@@ -1589,7 +1589,15 @@ function moBanPhimCX5(el, loai) {
   kgPanel.classList.toggle("show", loai === "kg");
   qcPanel.classList.toggle("show", loai === "qc");
   const panelHienTai = loai === "kg" ? kgPanel : qcPanel;
-  document.body.style.paddingBottom = panelHienTai.offsetHeight + "px";
+  
+  const h = panelHienTai.offsetHeight || panelHienTai.getBoundingClientRect().height || 280;
+  document.body.style.paddingBottom = h + "px";
+
+  // Tự động đẩy tất cả Pop-up Overlay đang mở lên trên bàn phím
+  document.querySelectorAll(".overlay.show").forEach(ol => {
+    ol.style.paddingBottom = h + "px";
+  });
+
   if (typeof pushChanThoatState === "function") pushChanThoatState();
   setTimeout(() => {
     if (el && el.scrollIntoView) el.scrollIntoView({ block: "center", behavior: "smooth" });
@@ -1600,6 +1608,9 @@ function dongBanPhimCX5() {
   document.getElementById("cx5-bp-kg").classList.remove("show");
   document.getElementById("cx5-bp-qc").classList.remove("show");
   document.body.style.paddingBottom = "";
+  document.querySelectorAll(".overlay").forEach(ol => {
+    ol.style.paddingBottom = "";
+  });
   if (banPhimActiveElCX5) banPhimActiveElCX5.blur();
   banPhimActiveElCX5 = null;
   banPhimLoaiCX5 = null;
