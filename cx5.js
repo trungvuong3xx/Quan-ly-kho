@@ -399,7 +399,7 @@ function renderBangChiTietCX5() {
       "<td>" + escHtmlCX5(first.ten) + "</td>" +
       "<td>" + bao + "</td>" +
       "<td>" + kg + "</td>" +
-      '<td class="cx5-sua-luot" onclick="moSuaLuotCX5(' + lid + ')">✏️</td>' +
+      '<td class="cx5-sua-luot" onclick="moSuaLuotCX5(' + lid + ')"><i class="ti ti-pencil"></i></td>' +
       "</tr>";
   }).join("");
 }
@@ -425,7 +425,7 @@ function renderSuaLuotCX5() {
   document.getElementById("cx5-sl-ten").textContent = rows[0].ten;
   const box = document.getElementById("cx5-sl-chitiet");
   box.innerHTML = rows.map(r => {
-    const xoa = r.daDongBo ? "" : ' <span onclick="xoaDongTrongLuotCX5(' + r.seq + ')">✕</span>';
+    const xoa = r.daDongBo ? "" : ' <i class="ti ti-x" onclick="xoaDongTrongLuotCX5(' + r.seq + ')"></i>';
     return '<span class="cx5-so-sx' + (r.daDongBo ? " cx5-so-sx-dadongbo" : "") + '">' + r.kg + xoa + '</span>';
   }).join("");
 }
@@ -646,11 +646,15 @@ window.xoaHangDoiChieuCX5 = xoaHangDoiChieuCX5;
 let cx5DoiChieuFilter = "ALL";
 
 function datFilterDoiChieuCX5(filterKey) {
-  cx5DoiChieuFilter = filterKey;
-  const tabs = ["ALL", "KHOP", "LECH", "KHO_ONLY", "SX_ONLY"];
+  if (cx5DoiChieuFilter === filterKey) {
+    cx5DoiChieuFilter = "ALL";
+  } else {
+    cx5DoiChieuFilter = filterKey;
+  }
+  const tabs = ["KHOP", "LECH", "KHO_ONLY", "SX_ONLY"];
   tabs.forEach(t => {
     const el = document.getElementById("cx5-tab-" + t);
-    if (el) el.classList.toggle("active", t === filterKey);
+    if (el) el.classList.toggle("active", t === cx5DoiChieuFilter);
   });
   renderDoiChieuCX5();
 }
@@ -724,11 +728,10 @@ function renderDoiChieuCX5() {
   });
 
   // Cập nhật số đếm trên các Tab Filter
-  const elAll = document.getElementById("cx5-tab-ALL"); if (elAll) elAll.textContent = "Tất cả (" + items.length + ")";
-  const elKhop = document.getElementById("cx5-tab-KHOP"); if (elKhop) elKhop.textContent = "🟢 Khớp (" + countKhop + ")";
-  const elLech = document.getElementById("cx5-tab-LECH"); if (elLech) elLech.textContent = "🟡 Lệch (" + countLech + ")";
-  const elKho = document.getElementById("cx5-tab-KHO_ONLY"); if (elKho) elKho.textContent = "🔵 Kho chưa có SX (" + countKhoOnly + ")";
-  const elSx = document.getElementById("cx5-tab-SX_ONLY"); if (elSx) elSx.textContent = "🟣 SX chưa có Kho (" + countSxOnly + ")";
+  const elKhop = document.getElementById("cx5-cnt-KHOP"); if (elKhop) elKhop.textContent = countKhop;
+  const elLech = document.getElementById("cx5-cnt-LECH"); if (elLech) elLech.textContent = countLech;
+  const elKho = document.getElementById("cx5-cnt-KHO_ONLY"); if (elKho) elKho.textContent = countKhoOnly;
+  const elSx = document.getElementById("cx5-cnt-SX_ONLY"); if (elSx) elSx.textContent = countSxOnly;
 
   const filteredItems = items.filter(it => {
     if (cx5DoiChieuFilter === "ALL") return true;
@@ -745,34 +748,37 @@ function renderDoiChieuCX5() {
       const { key, kho, dc, sxTong, khoKgNorm, khop, conDeDongBo, loaiTrangThai } = it;
       const ten = escHtmlCX5(dc.ten || kho.ten);
 
-      let loaiText, loaiClass;
+      let iconHtml;
       if (loaiTrangThai === "KHOP") {
-        if (!conDeDongBo) { loaiText = "🟢 Đã ĐB"; loaiClass = "cx5-dc-khop"; }
-        else { loaiText = "🟢 Khớp"; loaiClass = "cx5-dc-khop"; }
+        if (!conDeDongBo) {
+          iconHtml = '<i class="ti ti-checks" style="color:var(--success);font-size:17px;" title="Đã đồng bộ"></i>';
+        } else {
+          iconHtml = '<i class="ti ti-check" style="color:var(--success);font-size:17px;" title="Khớp"></i>';
+        }
       } else if (loaiTrangThai === "LECH") {
-        loaiText = "🟡 Lệch"; loaiClass = "cx5-dc-lech";
+        iconHtml = '<i class="ti ti-alert-triangle" style="color:var(--danger);font-size:17px;" title="Lệch"></i>';
       } else if (loaiTrangThai === "KHO_ONLY") {
-        loaiText = "🔵 Kho"; loaiClass = "cx5-dc-lech";
+        iconHtml = '<i class="ti ti-box" style="color:#3b82f6;font-size:17px;" title="Kho chưa có SX"></i>';
       } else if (loaiTrangThai === "SX_ONLY") {
-        loaiText = "🟣 SX"; loaiClass = "cx5-dc-lech";
+        iconHtml = '<i class="ti ti-building-factory-2" style="color:#a855f7;font-size:17px;" title="SX chưa có Kho"></i>';
       } else {
-        loaiText = "—"; loaiClass = "";
+        iconHtml = '—';
       }
 
       return '<tr class="cx5-dc-row" onclick="moDcChiTietCX5(\'' + escHtmlCX5(key) + '\')">' +
         '<td>' + ten + '</td>' +
         '<td>' + khoKgNorm.toFixed(1) + '</td>' +
         '<td>' + sxTong.toFixed(1) + '</td>' +
-        '<td class="' + loaiClass + '" style="font-weight:700;white-space:nowrap">' + loaiText + '</td>' +
+        '<td style="text-align:center">' + iconHtml + '</td>' +
         '</tr>';
     }).join("");
     html += '</tbody></table></div>';
   }
 
   html += '<button class="btn btn-full" style="background:var(--neutral-solid);color:var(--cream);margin-top:12px" ' + (coDaDongBoGi ? "" : "disabled") +
-    ' onclick="xemTongKgGhepPalletCX5()">Tổng kg pallet</button>';
+    ' onclick="xemTongKgGhepPalletCX5()"><i class="ti ti-layers-intersect"></i> Tổng kg pallet</button>';
 
-  html += '<button id="cx5-btn-dongbo-tatca" class="btn btn-blue btn-full" style="margin-top:8px" ' + (coTheDongBo ? "" : "disabled") + ' onclick="dongBoTatCaCX5()">Đồng bộ quy cách khớp 🟢</button>';
+  html += '<button id="cx5-btn-dongbo-tatca" class="btn btn-blue btn-full" style="margin-top:8px" ' + (coTheDongBo ? "" : "disabled") + ' onclick="dongBoTatCaCX5()"><i class="ti ti-refresh"></i> Đồng bộ quy cách khớp</button>';
 
   container.innerHTML = html;
 }
@@ -790,44 +796,45 @@ function moDcChiTietCX5(key) {
   document.getElementById("cx5-dcc-tieude").textContent = dc.ten || kho.ten || key;
 
   const dsSo = dc.sxEntries.map((v, idx) =>
-    '<span class="cx5-so-sx">' + v + ' <span onclick="xoaSoSXCX5(\'' + escHtmlCX5(key) + '\',' + idx + ');moDcChiTietCX5(\'' + escHtmlCX5(key) + '\')">✕</span></span>'
+    '<span class="cx5-so-sx">' + v + ' <i class="ti ti-x" onclick="xoaSoSXCX5(\'' + escHtmlCX5(key) + '\',' + idx + ');moDcChiTietCX5(\'' + escHtmlCX5(key) + '\')"></i></span>'
   ).join("");
 
   let ketQuaHtml;
   if (kho.bao === 0) {
     ketQuaHtml = sxTong > 0
-      ? '<div class="cx5-dc-ketqua cx5-dc-lech">🟣 Kho chưa nhập — SX báo: ' + sxTong.toFixed(1) + 'kg</div>'
-      : '<div class="cx5-dc-ketqua" style="color:var(--cream-soft)">Kho chưa nhập gì cho quy cách này</div>';
+      ? '<div class="cx5-dc-ketqua cx5-dc-lech"><i class="ti ti-info-circle"></i> Kho chưa nhập — SX báo: ' + sxTong.toFixed(1) + 'kg</div>'
+      : '<div class="cx5-dc-ketqua" style="color:var(--cream-soft)"><i class="ti ti-info-circle"></i> Kho chưa nhập gì cho quy cách này</div>';
   } else if (sxTong === 0) {
-    ketQuaHtml = '<div class="cx5-dc-ketqua cx5-dc-lech">🔵 Kho đã nhập (' + khoKgNorm.toFixed(1) + 'kg) — SX chưa báo số liệu</div>';
+    ketQuaHtml = '<div class="cx5-dc-ketqua cx5-dc-lech"><i class="ti ti-info-circle"></i> Kho đã nhập (' + khoKgNorm.toFixed(1) + 'kg) — SX chưa báo</div>';
   } else if (!conDeDongBo) {
-    ketQuaHtml = '<div class="cx5-dc-ketqua cx5-dc-khop">🟢 Đã đồng bộ</div>';
+    ketQuaHtml = '<div class="cx5-dc-ketqua cx5-dc-khop"><i class="ti ti-checks"></i> Đã đồng bộ</div>';
   } else if (khop) {
-    ketQuaHtml = '<div class="cx5-dc-ketqua cx5-dc-khop">🟢 Khớp hoàn toàn — sẵn sàng đồng bộ</div>';
+    ketQuaHtml = '<div class="cx5-dc-ketqua cx5-dc-khop"><i class="ti ti-check"></i> Khớp hoàn toàn — sẵn sàng đồng bộ</div>';
   } else {
     const lech = Math.round((sxTong - khoKgNorm) * 10) / 10;
-    ketQuaHtml = '<div class="cx5-dc-ketqua cx5-dc-lech">🟡 Lệch: ' + (lech > 0 ? "+" : "") + lech.toFixed(1) + 'kg (Kho: ' + khoKgNorm.toFixed(1) + 'kg vs SX: ' + sxTong.toFixed(1) + 'kg)</div>';
+    ketQuaHtml = '<div class="cx5-dc-ketqua cx5-dc-lech"><i class="ti ti-alert-triangle"></i> Lệch: ' + (lech > 0 ? "+" : "") + lech.toFixed(1) + 'kg (Kho: ' + khoKgNorm.toFixed(1) + 'kg vs SX: ' + sxTong.toFixed(1) + 'kg)</div>';
   }
 
   const nd = document.getElementById("cx5-dcc-noidung");
   nd.innerHTML =
     // Thông tin bên KHO
-    '<div style="background:var(--card-raised);padding:10px;border-radius:8px;margin-bottom:8px">' +
-    '<div>📦 <b>BÊN KHO</b> — Bao: <b>' + kho.bao + '</b> · Kg: <b>' + khoKgNorm.toFixed(1) + '</b></div>' +
+    '<div style="background:var(--card-raised);border:1px solid var(--line);padding:10px 12px;border-radius:10px;margin-bottom:8px">' +
+    '<div style="font-size:13px;font-weight:600;color:var(--cream);display:flex;align-items:center;gap:6px"><i class="ti ti-box" style="color:#3b82f6;font-size:16px"></i> <b>BÊN KHO</b> — Bao: <b>' + kho.bao + '</b> · Kg: <b>' + khoKgNorm.toFixed(1) + '</b></div>' +
     '</div>' +
 
     // Thông tin bên SX
-    '<div style="background:var(--card-raised);padding:10px;border-radius:8px;margin-bottom:8px">' +
-    '<div style="font-size:12px;font-weight:600;color:var(--steel)">⚙️ <b>BÊN SẢN XUẤT (SX)</b></div>' +
+    '<div style="background:var(--card-raised);border:1px solid var(--line);padding:10px 12px;border-radius:10px;margin-bottom:8px">' +
+    '<div style="font-size:13px;font-weight:600;color:var(--cream);display:flex;align-items:center;gap:6px"><i class="ti ti-building-factory-2" style="color:#a855f7;font-size:16px"></i> <b>BÊN SẢN XUẤT (SX)</b></div>' +
     '<div style="margin-top:6px">' + (dsSo || '<span style="color:var(--cream-soft);font-style:italic">Chưa có số SX</span>') + '</div>' +
     '<div class="cx5-dc-tong" style="margin-top:6px">Tổng SX: <b>' + sxTong.toFixed(1) + 'kg</b></div>' +
     '</div>' +
 
     ketQuaHtml +
 
-    // Nút xóa
-    '<div style="text-align:right;margin-top:10px">' +
-    '<span style="color:var(--danger);font-weight:700;font-size:12px;cursor:pointer" onclick="xoaHangDoiChieuCX5(\'' + escHtmlCX5(key) + '\');dongDcChiTietCX5()">Xóa dữ liệu SX</span>' +
+    // Nút hành động
+    '<div style="display:flex;gap:8px;margin-top:14px">' +
+    '<button class="btn btn-red btn-sm" style="flex:1" onclick="xoaHangDoiChieuCX5(\'' + escHtmlCX5(key) + '\');dongDcChiTietCX5()"><i class="ti ti-trash"></i> Xóa dữ liệu SX</button>' +
+    '<button class="btn btn-sm" style="flex:1;background:var(--neutral-solid);color:var(--cream)" onclick="dongDcChiTietCX5()">Đóng</button>' +
     '</div>';
 
   document.getElementById("cx5-overlay-dc-chitiet").classList.add("show");
@@ -939,7 +946,7 @@ async function dongBoTatCaCX5() {
   }
 
   showLoading(false);
-  if (btn) { btn.disabled = false; btn.textContent = "Đồng bộ quy cách khớp 🟢"; }
+  if (btn) { btn.disabled = false; btn.innerHTML = '<i class="ti ti-refresh"></i> Đồng bộ quy cách khớp'; }
 
   luuPhienDoDangCX5();
   renderBangChiTietCX5();
@@ -1018,10 +1025,10 @@ function renderTongKgCX5() {
       const lopMo = daChonOKhoiKhac ? " cx5-tk-row-disabled" : "";
       return '<div class="cx5-tk-row" style="display:flex;align-items:center;gap:8px;padding:6px 0">' +
         '<input type="checkbox" ' + (c.checked ? "checked" : "") + disabled + ' onchange="toggleGhepCX5(\'' + key + '\',' + idx + ')">' +
-        '<span class="' + lopMo + '" style="flex:1">Ngày ' + c.ngay + ': ' +
+        '<span class="' + lopMo + '" style="flex:1;font-size:13px">Ngày ' + c.ngay + ': ' +
         '<span class="cx5-tk-kg-chip" onclick="xemNguonGocCX5(' + c.row + ')">' + c.kg.toFixed(1) + 'kg (' + c.bao + ' bao)</span>' +
         (daChonOKhoiKhac ? ' · Đã chọn ở khối khác' : '') + '</span>' +
-        '<button type="button" class="cx5-tk-xoa"' + disabled + ' title="Ẩn ứng viên này" aria-label="Ẩn ứng viên này" onclick="xoaUngVienGhepCX5(\'' + key + '\',' + idx + ')">×</button>' +
+        '<button type="button" class="cx5-tk-xoa"' + disabled + ' title="Ẩn ứng viên này" aria-label="Ẩn ứng viên này" onclick="xoaUngVienGhepCX5(\'' + key + '\',' + idx + ')"><i class="ti ti-x"></i></button>' +
         '</div>';
     }).join("");
 
@@ -1035,7 +1042,7 @@ function renderTongKgCX5() {
       '</div>';
   }).join("");
 
-  container.innerHTML = html + '<button id="cx5-btn-ghep" class="btn btn-blue btn-full" style="margin-top:10px" onclick="dongBoGhepCX5()">Đồng bộ</button>';
+  container.innerHTML = html;
   renderTongKetPhienTongKgCX5();
 }
 window.renderTongKgCX5 = renderTongKgCX5;

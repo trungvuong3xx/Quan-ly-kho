@@ -704,16 +704,15 @@
       </div>
     </div>
 
-    <div id="cx5-dc-filter-tabs" style="display:flex; gap:6px; overflow-x:auto; margin-bottom:12px; padding-bottom:4px;">
-      <button class="btn btn-sm cx5-dc-tab active" id="cx5-tab-ALL" onclick="datFilterDoiChieuCX5('ALL')">Tất cả</button>
-      <button class="btn btn-sm cx5-dc-tab" id="cx5-tab-KHOP" onclick="datFilterDoiChieuCX5('KHOP')">🟢 Khớp</button>
-      <button class="btn btn-sm cx5-dc-tab" id="cx5-tab-LECH" onclick="datFilterDoiChieuCX5('LECH')">🟡 Lệch</button>
-      <button class="btn btn-sm cx5-dc-tab" id="cx5-tab-KHO_ONLY" onclick="datFilterDoiChieuCX5('KHO_ONLY')">🔵 Kho chưa có SX</button>
-      <button class="btn btn-sm cx5-dc-tab" id="cx5-tab-SX_ONLY" onclick="datFilterDoiChieuCX5('SX_ONLY')">🟣 SX chưa có Kho</button>
+    <div id="cx5-dc-filter-tabs" class="cx5-dc-filter-bar">
+      <button class="cx5-dc-tab-btn cx5-tab-khop" id="cx5-tab-KHOP" onclick="datFilterDoiChieuCX5('KHOP')" title="Quy cách Khớp"><i class="ti ti-check"></i><span id="cx5-cnt-KHOP">0</span></button>
+      <button class="cx5-dc-tab-btn cx5-tab-lech" id="cx5-tab-LECH" onclick="datFilterDoiChieuCX5('LECH')" title="Quy cách Lệch"><i class="ti ti-alert-triangle"></i><span id="cx5-cnt-LECH">0</span></button>
+      <button class="cx5-dc-tab-btn cx5-tab-kho" id="cx5-tab-KHO_ONLY" onclick="datFilterDoiChieuCX5('KHO_ONLY')" title="Kho chưa có SX"><i class="ti ti-box"></i><span id="cx5-cnt-KHO_ONLY">0</span></button>
+      <button class="cx5-dc-tab-btn cx5-tab-sx" id="cx5-tab-SX_ONLY" onclick="datFilterDoiChieuCX5('SX_ONLY')" title="SX chưa có Kho"><i class="ti ti-building-factory-2"></i><span id="cx5-cnt-SX_ONLY">0</span></button>
     </div>
 
     <div id="cx5-doichieu-list"></div>
-    <button class="btn btn-full" style="background:var(--neutral-solid);color:var(--cream); margin-top:12px;" onclick="dongDoiChieuCX5()">← Quay lại nhập kho</button>
+    <button class="btn btn-full" style="background:var(--neutral-solid);color:var(--cream); margin-top:12px;" onclick="dongDoiChieuCX5()"><i class="ti ti-arrow-left"></i> Quay lại nhập kho</button>
   </div>
 
   <div id="cx5-tongkg" class="card" style="display:none">
@@ -731,7 +730,8 @@
         </table>
       </div>
     </div>
-    <button class="btn btn-full" style="background:var(--neutral-solid);color:var(--cream);margin-top:10px" onclick="boQuaTongKgCX5()">Bỏ qua</button>
+    <button id="cx5-btn-ghep" class="btn btn-blue btn-full" style="margin-top:12px" onclick="dongBoGhepCX5()"><i class="ti ti-refresh"></i> Đồng bộ Bảng Tổng kết</button>
+    <button class="btn btn-full" style="background:var(--neutral-solid);color:var(--cream);margin-top:8px" onclick="boQuaTongKgCX5()">Bỏ qua</button>
   </div>
 </div>
 
