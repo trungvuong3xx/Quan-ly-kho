@@ -990,15 +990,42 @@ async function moTongKgCX5(dsQC) {
     if (daXuLyQC.has(key)) return;
     daXuLyQC.add(key);
     const duLieuQC = res[key] || { homNay: [], cu: [] };
-    const homNayList = (duLieuQC.homNay || []).filter(function (c) { return c.bao < 10; });
-    const cu = (duLieuQC.cu || [])
-      .map(function (c) { return Object.assign({ checked: false }, c); });
-    (duLieuQC.homNay || []).forEach(function (c) {
-      if (!tongKetPhienCX5.some(function (x) { return x.row === c.row; })) tongKetPhienCX5.push(Object.assign({ msp: q.msp, ten: q.ten }, c));
+    
+    // Khối ứng viên hôm nay: effBao < 10 và V khác "X"
+    const homNayList = (duLieuQC.homNay || []).filter(function (c) {
+      const effBao = c.effBao !== undefined ? c.effBao : c.bao;
+      return effBao < 10 && c.v !== "X";
     });
+
+    // Khối ứng viên ngày cũ: effBao < 10 và V khác "X"
+    const cu = (duLieuQC.cu || [])
+      .filter(function (c) {
+        const effBao = c.effBao !== undefined ? c.effBao : c.bao;
+        return effBao < 10 && c.v !== "X";
+      })
+      .map(function (c) {
+        const effBao = c.effBao !== undefined ? c.effBao : c.bao;
+        const effKg = c.effKg !== undefined ? c.effKg : c.kg;
+        return Object.assign({ checked: false, effBao: effBao, effKg: effKg }, c);
+      });
+
+    (duLieuQC.homNay || []).forEach(function (c) {
+      const effBao = c.effBao !== undefined ? c.effBao : c.bao;
+      const effKg = c.effKg !== undefined ? c.effKg : c.kg;
+      if (!tongKetPhienCX5.some(function (x) { return x.row === c.row; })) {
+        tongKetPhienCX5.push(Object.assign({ msp: q.msp, ten: q.ten, bao: effBao, kg: effKg }, c));
+      }
+    });
+
     homNayList.forEach(function (homNay) {
       const keyKhoi = key + "|" + homNay.row;
-      tongKgDataCX5[keyKhoi] = { msp: q.msp, ten: q.ten, homNay: homNay, cu: cu.map(function (c) { return Object.assign({}, c); }) };
+      const effBao = homNay.effBao !== undefined ? homNay.effBao : homNay.bao;
+      const effKg = homNay.effKg !== undefined ? homNay.effKg : homNay.kg;
+      const homNayObj = Object.assign({}, homNay, { bao: effBao, kg: effKg });
+      tongKgDataCX5[keyKhoi] = {
+        msp: q.msp, ten: q.ten, homNay: homNayObj,
+        cu: cu.map(function (c) { return Object.assign({}, c); })
+      };
     });
   });
 
@@ -1020,18 +1047,25 @@ function renderTongKgCX5() {
   const html = keys.map(function (key) {
     const d = tongKgDataCX5[key];
     let tongBao = d.homNay.bao, tongKg = d.homNay.kg;
-    d.cu.forEach(function (c) { if (c.checked) { tongBao += c.bao; tongKg += c.kg; } });
+    d.cu.forEach(function (c) {
+      if (c.checked) {
+        tongBao += c.effBao !== undefined ? c.effBao : c.bao;
+        tongKg += c.effKg !== undefined ? c.effKg : c.kg;
+      }
+    });
 
     const dsCu = d.cu.map(function (c, idx) {
       const daChonOKhoiKhac = dangDuocChonODauKhacCX5(c.row, key);
       const disabled = daChonOKhoiKhac ? " disabled" : "";
       const lopMo = daChonOKhoiKhac ? " cx5-tk-row-disabled" : "";
+      const hienBao = c.effBao !== undefined ? c.effBao : c.bao;
+      const hienKg = c.effKg !== undefined ? c.effKg : c.kg;
       return '<div class="cx5-tk-row" style="display:flex;align-items:center;gap:8px;padding:6px 0">' +
         '<input type="checkbox" ' + (c.checked ? "checked" : "") + disabled + ' onchange="toggleGhepCX5(\'' + key + '\',' + idx + ')">' +
         '<span class="' + lopMo + '" style="flex:1;font-size:13px">Ngày ' + c.ngay + ': ' +
-        '<span class="cx5-tk-kg-chip" onclick="xemNguonGocCX5(' + c.row + ')">' + c.kg.toFixed(1) + 'kg (' + c.bao + ' bao)</span>' +
+        '<span class="cx5-tk-kg-chip" onclick="xemNguonGocCX5(' + c.row + ')">' + hienKg.toFixed(1) + 'kg (' + hienBao + ' bao)</span>' +
         (daChonOKhoiKhac ? ' · Đã chọn ở khối khác' : '') + '</span>' +
-        '<button type="button" class="cx5-tk-xoa"' + disabled + ' title="Ẩn ứng viên này" aria-label="Ẩn ứng viên này" onclick="xoaUngVienGhepCX5(\'' + key + '\',' + idx + ')"><i class="ti ti-x"></i></button>' +
+        '<button type="button" class="cx5-tk-xoa"' + disabled + ' title="Ẩn vĩnh viễn (ghi V=X)" aria-label="Ẩn ứng viên này" onclick="xoaUngVienGhepCX5(\'' + key + '\',' + idx + ')"><i class="ti ti-x"></i></button>' +
         '</div>';
     }).join("");
 
