@@ -819,14 +819,17 @@ function moDcChiTietCX5(key) {
   nd.innerHTML =
     // Thông tin bên KHO
     '<div style="background:var(--card-raised);border:1px solid var(--line);padding:10px 12px;border-radius:10px;margin-bottom:8px">' +
-    '<div style="font-size:13px;font-weight:600;color:var(--cream);display:flex;align-items:center;gap:6px"><i class="ti ti-box" style="color:#3b82f6;font-size:16px"></i> <b>BÊN KHO</b> — Bao: <b>' + kho.bao + '</b> · Kg: <b>' + khoKgNorm.toFixed(1) + '</b></div>' +
+    '<div style="font-size:13px;font-weight:600;color:var(--cream);display:flex;align-items:center;gap:6px"><i class="ti ti-box" style="color:#3b82f6;font-size:16px"></i> <b>KHO</b> — Bao: <b>' + kho.bao + '</b> · Kg: <b>' + khoKgNorm.toFixed(1) + '</b></div>' +
     '</div>' +
 
     // Thông tin bên SX
     '<div style="background:var(--card-raised);border:1px solid var(--line);padding:10px 12px;border-radius:10px;margin-bottom:8px">' +
-    '<div style="font-size:13px;font-weight:600;color:var(--cream);display:flex;align-items:center;gap:6px"><i class="ti ti-building-factory-2" style="color:#a855f7;font-size:16px"></i> <b>BÊN SẢN XUẤT (SX)</b></div>' +
+    '<div style="font-size:13px;font-weight:600;color:var(--cream);display:flex;align-items:center;gap:6px"><i class="ti ti-building-factory-2" style="color:#a855f7;font-size:16px"></i> <b>SẢN XUẤT (SX)</b></div>' +
     '<div style="margin-top:6px">' + (dsSo || '<span style="color:var(--cream-soft);font-style:italic">Chưa có số SX</span>') + '</div>' +
-    '<div class="cx5-dc-tong" style="margin-top:6px">Tổng SX: <b>' + sxTong.toFixed(1) + 'kg</b></div>' +
+    '<div style="margin-top:10px;padding:8px 12px;background:rgba(168,85,247,0.12);border:1px solid rgba(168,85,247,0.3);border-radius:8px;display:flex;justify-content:space-between;align-items:center;">' +
+    '<span style="font-size:13px;color:var(--cream);font-weight:600;">Tổng SX:</span>' +
+    '<span style="font-size:16px;font-weight:700;color:#c084fc;font-family:\'IBM Plex Mono\',monospace;">' + sxTong.toFixed(1) + ' kg</span>' +
+    '</div>' +
     '</div>' +
 
     ketQuaHtml +
@@ -930,7 +933,7 @@ async function dongBoTatCaCX5() {
   if (dsCanDongBo.length === 0) { showCanhBaoCX5("Không có quy cách nào đủ điều kiện đồng bộ"); return; }
 
   const btn = document.getElementById("cx5-btn-dongbo-tatca");
-  if (btn) { btn.disabled = true; btn.textContent = "Đang đồng bộ..."; }
+  if (btn) { btn.disabled = true; btn.innerHTML = '<i class="ti ti-refresh"></i> Đang đồng bộ...'; }
   showLoading(true);
 
   let thanhCong = 0, thatBai = 0;
@@ -1145,10 +1148,8 @@ async function dongBoGhepCX5() {
     });
   });
 
-  if (groups.length === 0) { showCanhBaoCX5("Chưa chọn ngày nào để ghép — bấm Bỏ qua nếu không cần ghép"); return; }
-
   const btn = document.getElementById("cx5-btn-ghep");
-  if (btn) { btn.disabled = true; btn.textContent = "Đang ghi..."; }
+  if (btn) { btn.disabled = true; btn.innerHTML = '<i class="ti ti-refresh"></i> Đang đồng bộ...'; }
   showLoading(true);
 
   try {
@@ -1157,11 +1158,9 @@ async function dongBoGhepCX5() {
     });
     const r = await callApiCX5({ action: "ghiGhepCX5", payload: { groups: payloadGroups } });
     showLoading(false);
-    if (btn) { btn.disabled = false; btn.textContent = "Đồng bộ"; }
+    if (btn) { btn.disabled = false; btn.innerHTML = '<i class="ti ti-refresh"></i> Đồng bộ Bảng Tổng kết'; }
     if (!r.success) { showCanhBaoCX5("Lỗi: " + (r.message || "không rõ nguyên nhân")); return; }
 
-    // Cập nhật lại dữ liệu ngay tại trang này (khớp với những gì vừa ghi lên
-    // server) thay vì thoát ra Trang chủ — để thấy ngay kết quả vừa ghép.
     groups.forEach(function (g) {
       const d = tongKgDataCX5[g.key];
       if (!d) return;
@@ -1174,15 +1173,25 @@ async function dongBoGhepCX5() {
       if (phien) { phien.bao = g.tongBao; phien.kg = g.tongKg; }
     });
 
-    showCanhBaoCX5("Đã ghi ghép pallet cho " + groups.length + " quy cách");
+    if (groups.length > 0) {
+      showCanhBaoCX5("Đã ghi ghép pallet cho " + groups.length + " quy cách");
+    } else {
+      showCanhBaoCX5("Đã đồng bộ Bảng Tổng kết thành công!");
+    }
     renderTongKgCX5();
   } catch (e) {
     showLoading(false);
-    if (btn) { btn.disabled = false; btn.textContent = "Đồng bộ"; }
+    if (btn) { btn.disabled = false; btn.innerHTML = '<i class="ti ti-refresh"></i> Đồng bộ Bảng Tổng kết'; }
     showCanhBaoCX5("Mất mạng — thử lại: " + e.message);
   }
 }
 window.dongBoGhepCX5 = dongBoGhepCX5;
+
+function quayLaiDoiChieuCX5() {
+  document.getElementById("cx5-tongkg").style.display = "none";
+  document.getElementById("cx5-doichieu").style.display = "block";
+}
+window.quayLaiDoiChieuCX5 = quayLaiDoiChieuCX5;
 
 function boQuaTongKgCX5() {
   document.getElementById("cx5-tongkg").style.display = "none";
