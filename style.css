@@ -1076,6 +1076,11 @@ table thead th,
 .cx5-dc-khop { color: var(--success); }
 .cx5-dc-lech { color: var(--danger); }
 
+.cx5-dc-table { width: 100%; }
+.cx5-dc-table td { font-size: 13px; }
+.cx5-dc-row { cursor: pointer; }
+.cx5-dc-row:active { background: var(--neutral-hover); }
+
 .cx5-chitiet-kg { display: grid; grid-template-columns: repeat(5, 1fr); gap: 5px; }
 .cx5-chitiet-kg .cx5-so-sx { margin: 0; justify-content: center; }
 
@@ -1238,6 +1243,8 @@ table thead th,
 .cx5-bp-key-enter { background: var(--brass); color: var(--bg-deep); grid-row: span 2; }
 .cx5-bp-key-zero { grid-column: span 3; }
 .cx5-bp-key-zero-kg { grid-column: span 2; }
+
+
 
 .cx5-bp-close {
   display: block;
