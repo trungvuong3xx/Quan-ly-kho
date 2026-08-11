@@ -295,6 +295,25 @@ window.addEventListener("click", pushChanThoatState, { once: true });
 function handlePopStateThoat(e) {
   if (isExitingApp) return;
 
+  // 1. Nếu đang mở bàn phím ảo custom -> đóng bàn phím trước
+  const openBp = document.querySelector(".cx5-bp-panel.show");
+  if (openBp) {
+    if (typeof dongBanPhimCX5 === "function") dongBanPhimCX5();
+    setTimeout(pushChanThoatState, 10);
+    return;
+  }
+
+  // 2. Nếu đang mở overlay / modal -> đóng overlay trước
+  const openOverlay = document.querySelector(".overlay.show, .cx5-xoay-overlay.show");
+  if (openOverlay) {
+    openOverlay.classList.remove("show");
+    if (typeof dongSuaLuotCX5 === "function") dongSuaLuotCX5();
+    if (typeof dongDcChiTietCX5 === "function") dongDcChiTietCX5();
+    if (typeof dongXoayCX5 === "function") dongXoayCX5();
+    setTimeout(pushChanThoatState, 10);
+    return;
+  }
+
   const activePage = document.querySelector(".page.active");
   const activeId = activePage ? activePage.id : "trangChu";
 

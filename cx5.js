@@ -1545,24 +1545,27 @@ let banPhimQCPendingCX5 = null;
   const qcPanel = document.createElement("div");
   qcPanel.id = "cx5-bp-qc";
   qcPanel.className = "cx5-bp-panel";
-  const key = d => (CX5_BP_QC_MAP[d] ? '<span class="cx5-bp-key-sub">' + CX5_BP_QC_MAP[d] + "</span>" : "");
+  const letters = ["A", "B", "D", "E", "R", "X", "/", "-", "m"];
+  const letterBarHtml = '<div class="cx5-bp-letter-bar">' +
+    letters.map(l => '<div class="cx5-bp-letter-key" onclick="bpQcSoCX5(\'' + l + '\')">' + l + '</div>').join("") +
+    '</div>';
   qcPanel.innerHTML =
     '<span class="cx5-bp-close" onclick="dongBanPhimCX5()">Đóng bàn phím ▾</span>' +
+    letterBarHtml +
     '<div class="cx5-bp-grid">' +
-    '<div class="cx5-bp-key" onclick="bpQcSoCX5(\'7\')">7' + key("7") + '</div>' +
-    '<div class="cx5-bp-key" onclick="bpQcSoCX5(\'8\')">8' + key("8") + '</div>' +
-    '<div class="cx5-bp-key" onclick="bpQcSoCX5(\'9\')">9' + key("9") + '</div>' +
+    '<div class="cx5-bp-key" onclick="bpQcSoCX5(\'7\')">7</div>' +
+    '<div class="cx5-bp-key" onclick="bpQcSoCX5(\'8\')">8</div>' +
+    '<div class="cx5-bp-key" onclick="bpQcSoCX5(\'9\')">9</div>' +
     '<div class="cx5-bp-key cx5-bp-key-fn" onclick="bpQcXoaLuiCX5()">⌫</div>' +
-    '<div class="cx5-bp-key" onclick="bpQcSoCX5(\'4\')">4' + key("4") + '</div>' +
-    '<div class="cx5-bp-key" onclick="bpQcSoCX5(\'5\')">5' + key("5") + '</div>' +
-    '<div class="cx5-bp-key" onclick="bpQcSoCX5(\'6\')">6' + key("6") + '</div>' +
+    '<div class="cx5-bp-key" onclick="bpQcSoCX5(\'4\')">4</div>' +
+    '<div class="cx5-bp-key" onclick="bpQcSoCX5(\'5\')">5</div>' +
+    '<div class="cx5-bp-key" onclick="bpQcSoCX5(\'6\')">6</div>' +
     '<div class="cx5-bp-key cx5-bp-key-fn" onclick="bpQcXoaHetCX5()">C</div>' +
-    '<div class="cx5-bp-key" onclick="bpQcSoCX5(\'1\')">1' + key("1") + '</div>' +
-    '<div class="cx5-bp-key" onclick="bpQcSoCX5(\'2\')">2' + key("2") + '</div>' +
-    '<div class="cx5-bp-key" onclick="bpQcSoCX5(\'3\')">3' + key("3") + '</div>' +
+    '<div class="cx5-bp-key" onclick="bpQcSoCX5(\'1\')">1</div>' +
+    '<div class="cx5-bp-key" onclick="bpQcSoCX5(\'2\')">2</div>' +
+    '<div class="cx5-bp-key" onclick="bpQcSoCX5(\'3\')">3</div>' +
     '<div class="cx5-bp-key cx5-bp-key-enter" onclick="bpQcEnterCX5()">Enter</div>' +
-    '<div class="cx5-bp-key cx5-bp-key-zero-kg" onclick="bpQcSoCX5(\'0\')">0</div>' +
-    '<div class="cx5-bp-key" onclick="bpQcSoCX5(\'m\')">m</div>' +
+    '<div class="cx5-bp-key cx5-bp-key-zero" onclick="bpQcSoCX5(\'0\')">0</div>' +
     "</div>";
   document.body.appendChild(qcPanel);
 
@@ -1571,7 +1574,7 @@ let banPhimQCPendingCX5 = null;
     if (!el || el.tagName !== "INPUT") return;
     if (el.id === "cx5-kg" || el.id === "cx5-sl-them-kg" || el.id === "cx5-sx-kg" || el.classList.contains("cx5-sx-input")) {
       moBanPhimCX5(el, "kg");
-    } else if (el.id === "cx5-ten") {
+    } else if (el.id === "cx5-ten" || el.id === "cx5-sx-ten" || el.id === "cx5-sl-ten-tim") {
       moBanPhimCX5(el, "qc");
     }
   }, true);
@@ -1587,6 +1590,7 @@ function moBanPhimCX5(el, loai) {
   qcPanel.classList.toggle("show", loai === "qc");
   const panelHienTai = loai === "kg" ? kgPanel : qcPanel;
   document.body.style.paddingBottom = panelHienTai.offsetHeight + "px";
+  if (typeof pushChanThoatState === "function") pushChanThoatState();
   setTimeout(() => {
     if (el && el.scrollIntoView) el.scrollIntoView({ block: "center", behavior: "smooth" });
   }, 120);
@@ -1600,8 +1604,90 @@ function dongBanPhimCX5() {
   banPhimActiveElCX5 = null;
   banPhimLoaiCX5 = null;
   banPhimQCPendingCX5 = null;
+  closeDropdownCX5();
+  closeDropdownSXCX5();
+  closeDropdownSLLuotCX5();
 }
 window.dongBanPhimCX5 = dongBanPhimCX5;
+
+function moDoiQCLuotCX5() {
+  const wrap = document.getElementById("cx5-sl-doi-qc-wrap");
+  if (!wrap) return;
+  const hien = wrap.style.display !== "none";
+  wrap.style.display = hien ? "none" : "block";
+  if (!hien) {
+    const input = document.getElementById("cx5-sl-ten-tim");
+    if (input) { input.value = ""; setTimeout(() => { input.focus(); }, 50); }
+  }
+}
+window.moDoiQCLuotCX5 = moDoiQCLuotCX5;
+
+let filteredSLLuotCX5 = [];
+let activeIndexSLLuotCX5 = -1;
+
+function onInputSLLuotCX5() {
+  const input = document.getElementById("cx5-sl-ten-tim");
+  if (!input) return;
+  const query = input.value.trim();
+  if (!query) { closeDropdownSLLuotCX5(); return; }
+  if (typeof tkLocDanhSach === "function") {
+    filteredSLLuotCX5 = tkLocDanhSach(mspDataCX5, query, 30);
+  } else {
+    const q = boDauCX5(query).toUpperCase();
+    filteredSLLuotCX5 = mspDataCX5.filter(item => boDauCX5(item.ten).toUpperCase().includes(q)).slice(0, 30);
+  }
+  activeIndexSLLuotCX5 = -1;
+  renderDropdownSLLuotCX5();
+}
+
+function renderDropdownSLLuotCX5() {
+  const el = document.getElementById("cx5-sl-dropdown");
+  if (!el) return;
+  if (filteredSLLuotCX5.length === 0) {
+    el.classList.remove("open"); el.innerHTML = "";
+    return;
+  }
+  el.innerHTML = filteredSLLuotCX5.map((item, idx) =>
+    '<div class="cx5-dropdown-item' + (idx === activeIndexSLLuotCX5 ? " active" : "") + '" data-idx="' + idx + '">' + escHtmlCX5(item.ten) + '</div>'
+  ).join("");
+  el.classList.add("open");
+  Array.from(el.children).forEach(child => {
+    child.addEventListener("mousedown", e => {
+      e.preventDefault();
+      chonQCSLLuotCX5(filteredSLLuotCX5[parseInt(child.getAttribute("data-idx"), 10)]);
+    });
+  });
+}
+
+function closeDropdownSLLuotCX5() {
+  filteredSLLuotCX5 = [];
+  activeIndexSLLuotCX5 = -1;
+  const el = document.getElementById("cx5-sl-dropdown");
+  if (el) { el.classList.remove("open"); el.innerHTML = ""; }
+}
+
+function chonQCSLLuotCX5(item) {
+  if (luotDangSuaCX5 == null) return;
+  phienCX5.forEach(r => {
+    if (r.luot === luotDangSuaCX5) {
+      r.msp = item.msp;
+      r.ten = item.ten;
+    }
+  });
+  if (luotHienTaiCX5 && luotHienTaiCX5.id === luotDangSuaCX5) {
+    luotHienTaiCX5.msp = item.msp;
+    luotHienTaiCX5.ten = item.ten;
+  }
+  luuPhienDoDangCX5();
+  renderBangChiTietCX5();
+  renderBangTongHopCX5();
+  renderDoiChieuCX5();
+  renderSuaLuotCX5();
+  closeDropdownSLLuotCX5();
+  const wrap = document.getElementById("cx5-sl-doi-qc-wrap");
+  if (wrap) wrap.style.display = "none";
+  showCanhBaoCX5("Đã đổi quy cách lượt sang: " + item.ten);
+}
 
 function bpGiaTriCX5() {
   return banPhimActiveElCX5 ? banPhimActiveElCX5.value : "";
@@ -1649,17 +1735,7 @@ window.bpKgEnterCX5 = bpKgEnterCX5;
 
 function bpQcSoCX5(ky) {
   if (!banPhimActiveElCX5) return;
-  const now = Date.now();
-
-  if (banPhimQCPendingCX5 && banPhimQCPendingCX5.ky === ky && (now - banPhimQCPendingCX5.time) < CX5_BP_DOUBLE_TAP_MS && CX5_BP_QC_MAP[ky]) {
-    const cur = bpGiaTriCX5();
-    bpDatGiaTriCX5(cur.slice(0, -1) + CX5_BP_QC_MAP[ky]);
-    banPhimQCPendingCX5 = null;
-  } else {
-    bpDatGiaTriCX5(bpGiaTriCX5() + ky);
-    banPhimQCPendingCX5 = { ky, time: now };
-  }
-
+  bpDatGiaTriCX5(bpGiaTriCX5() + ky);
   bpKichHoatLocCX5();
 }
 window.bpQcSoCX5 = bpQcSoCX5;
@@ -1682,12 +1758,18 @@ window.bpQcXoaHetCX5 = bpQcXoaHetCX5;
 function bpKichHoatLocCX5() {
   if (!banPhimActiveElCX5) return;
   if (banPhimActiveElCX5.id === "cx5-ten") onInputCX5();
+  if (banPhimActiveElCX5.id === "cx5-sx-ten") onInputSXCX5();
+  if (banPhimActiveElCX5.id === "cx5-sl-ten-tim") onInputSLLuotCX5();
 }
 
 function bpQcEnterCX5() {
   if (!banPhimActiveElCX5) return;
   if (banPhimActiveElCX5.id === "cx5-ten") {
     if (filteredCX5.length) chonQCX5(filteredCX5[activeIndexCX5 >= 0 ? activeIndexCX5 : 0]);
+  } else if (banPhimActiveElCX5.id === "cx5-sx-ten") {
+    if (filteredSXCX5.length) chonQCSXCX5(filteredSXCX5[activeIndexSXCX5 >= 0 ? activeIndexSXCX5 : 0]);
+  } else if (banPhimActiveElCX5.id === "cx5-sl-ten-tim") {
+    if (filteredSLLuotCX5.length) chonQCSLLuotCX5(filteredSLLuotCX5[activeIndexSLLuotCX5 >= 0 ? activeIndexSLLuotCX5 : 0]);
   }
 }
 window.bpQcEnterCX5 = bpQcEnterCX5;

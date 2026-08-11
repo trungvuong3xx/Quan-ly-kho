@@ -693,7 +693,7 @@
 
       <label>Quy cách SX</label>
       <div class="cx5-ten-wrap" id="cx5-sx-qc-wrap">
-        <input type="text" id="cx5-sx-ten" placeholder="Gõ tên hoặc MSP bên SX..." autocomplete="off" oninput="onInputSXCX5()">
+        <input type="text" id="cx5-sx-ten" placeholder="Gõ tên hoặc MSP bên SX..." autocomplete="off" readonly inputmode="none">
         <div id="cx5-sx-dropdown" class="cx5-dropdown"></div>
       </div>
       <input type="hidden" id="cx5-sx-msp">
@@ -787,7 +787,16 @@
 
 <div class="overlay" id="cx5-overlay-luot">
   <div class="overlay-card">
-    <div class="overlay-title">Sửa lượt — <span id="cx5-sl-ten"></span></div>
+    <div class="overlay-title" style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+      <span id="cx5-sl-ten"></span>
+      <button type="button" class="btn btn-sm" style="padding:4px 8px;background:var(--card-raised);border:1px solid var(--line);color:var(--cream-soft);font-size:12px;" onclick="moDoiQCLuotCX5()" title="Chỉnh sửa Quy cách lượt này"><i class="ti ti-pencil"></i> Sửa QC</button>
+    </div>
+    <div id="cx5-sl-doi-qc-wrap" style="display:none;margin:8px 0;">
+      <div class="cx5-ten-wrap">
+        <input type="text" id="cx5-sl-ten-tim" placeholder="Đổi thành quy cách..." autocomplete="off" readonly inputmode="none">
+        <div id="cx5-sl-dropdown" class="cx5-dropdown"></div>
+      </div>
+    </div>
     <div id="cx5-sl-chitiet" class="cx5-chitiet-kg" style="margin-top:10px"></div>
     <div style="display:flex;gap:8px;margin-top:14px">
       <input type="text" id="cx5-sl-them-kg" inputmode="none" readonly placeholder="Thêm số kg..." onkeydown="if(event.key==='Enter'){event.preventDefault();themKgVaoLuotCX5()}">
