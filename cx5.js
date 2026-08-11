@@ -1188,7 +1188,7 @@ async function dongBoGhepCX5() {
     });
     const r = await callApiCX5({ action: "ghiGhepCX5", payload: { groups: payloadGroups } });
     showLoading(false);
-    if (btn) { btn.disabled = false; btn.innerHTML = '<i class="ti ti-refresh"></i> Đồng bộ'; }
+    if (btn) { btn.disabled = false; btn.innerHTML = '<i class="ti ti-refresh"></i> Đồng bộ Bảng Tổng kết'; }
     if (!r.success) { showCanhBaoCX5("Lỗi: " + (r.message || "không rõ nguyên nhân")); return; }
 
     groups.forEach(function (g) {
@@ -1211,7 +1211,7 @@ async function dongBoGhepCX5() {
     renderTongKgCX5();
   } catch (e) {
     showLoading(false);
-    if (btn) { btn.disabled = false; btn.innerHTML = '<i class="ti ti-refresh"></i> Đồng bộ'; }
+    if (btn) { btn.disabled = false; btn.innerHTML = '<i class="ti ti-refresh"></i> Đồng bộ Bảng Tổng kết'; }
     showCanhBaoCX5("Mất mạng — thử lại: " + e.message);
   }
 }
