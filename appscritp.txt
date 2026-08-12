@@ -435,6 +435,9 @@ function doPost(e) {
       case "submitEntryX5":
         result = submitEntryX5(body.payload);
         break;
+      case "batchSubmitEntryX5":
+        result = batchSubmitEntryX5(body.payload);
+        break;
       case "layUngVienGhepCX5":
         result = layUngVienGhepCX5(body.payload);
         break;
@@ -466,6 +469,7 @@ function submitEntryX5(payload) {
   try {
     if (!payload || !payload.msp) return { success: false, message: "Thiếu MSP" };
 
+    // Tách biệt hoàn toàn: Bảng đối chiếu CHỈ ghi dữ liệu vào Sheet Tháng
     const entryResult = submitEntry({
       dateStr: payload.dateStr,
       loai: "NHAP_SX",
@@ -474,22 +478,41 @@ function submitEntryX5(payload) {
       kg: payload.kg,
       ghiChu: payload.ghiChu || ""
     });
-    if (!entryResult.success) return entryResult;
-
-    const lots = (payload.lots && payload.lots.length)
-      ? payload.lots
-      : [{ kgList: payload.kgList || [] }];
-
-    ghiLichSuC5({
-      dateStr: payload.dateStr,
-      msp: payload.msp,
-      ten: payload.ten,
-      lots: lots
-    });
-
     return entryResult;
   } catch (err) {
     return { success: false, message: "Lỗi: " + err.message };
+  }
+}
+
+function batchSubmitEntryX5(payload) {
+  try {
+    const items = (payload && payload.items) ? payload.items : [];
+    if (!Array.isArray(items) || items.length === 0) {
+      return { success: true, count: 0, results: [] };
+    }
+
+    const results = [];
+    for (let i = 0; i < items.length; i++) {
+      const item = items[i];
+      if (!item || !item.msp) {
+        results.push({ msp: item ? item.msp : "", success: false, message: "Thiếu MSP" });
+        continue;
+      }
+
+      const r = submitEntry({
+        dateStr: item.dateStr,
+        loai: "NHAP_SX",
+        msp: item.msp,
+        bao: item.bao,
+        kg: item.kg,
+        ghiChu: item.ghiChu || ""
+      });
+      results.push({ key: item.key, msp: item.msp, ten: item.ten, success: r.success, message: r.message });
+    }
+
+    return { success: true, results: results };
+  } catch (err) {
+    return { success: false, message: "Lỗi batch: " + err.message };
   }
 }
 

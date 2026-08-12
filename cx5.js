@@ -476,8 +476,10 @@ function themKgVaoLuotCX5() {
 function tomTatCX5() {
   const gom = {};
   phienCX5.forEach(r => {
-    const key = keyQCX5(r.msp, r.ten);
-    if (!gom[key]) gom[key] = { msp: r.msp, ten: r.ten, bao: 0, kg: 0, baoDaDongBo: 0, kgDaDongBo: 0 };
+    const mspNorm = String(r.msp || "").trim();
+    const tenNorm = String(r.ten || "").trim();
+    const key = keyQCX5(mspNorm, tenNorm);
+    if (!gom[key]) gom[key] = { msp: mspNorm, ten: tenNorm, bao: 0, kg: 0, baoDaDongBo: 0, kgDaDongBo: 0 };
     gom[key].bao += 1;
     gom[key].kg += r.kg;
     if (r.daDongBo) { gom[key].baoDaDongBo += 1; gom[key].kgDaDongBo += r.kg; }
@@ -950,23 +952,49 @@ async function dongBoTatCaCX5() {
   if (dsCanDongBo.length === 0) { showCanhBaoCX5("Không có quy cách nào đủ điều kiện đồng bộ"); return; }
 
   const btn = document.getElementById("cx5-btn-dongbo-tatca");
-  if (btn) { btn.disabled = true; btn.innerHTML = '<i class="ti ti-refresh"></i> Đang đồng bộ...'; }
+  if (btn) { btn.disabled = true; btn.innerHTML = '<i class="ti ti-refresh spin"></i> Đang đồng bộ...'; }
   showLoading(true);
 
+  const itemsToSubmit = dsCanDongBo.map(key => {
+    const kho = gom[key];
+    const dc = doiChieuCX5[key];
+    const chuaDongBo = phienCX5.filter(r => keyQCX5(r.msp, r.ten) === key && !r.daDongBo);
+    const bao = chuaDongBo.length;
+    const kg = chuaDongBo.reduce((s, r) => s + r.kg, 0);
+    return {
+      key: key,
+      dateStr: ngayCX5,
+      msp: dc ? dc.msp : kho.msp,
+      ten: dc ? dc.ten : kho.ten,
+      bao: Math.round(bao * 100) / 100,
+      kg: Math.round(kg * 100) / 100
+    };
+  });
+
   let thanhCong = 0, thatBai = 0;
-  const dsThanhCongCX5 = [];
-  const results = await Promise.all(dsCanDongBo.map(async key => {
-    const ok = await dongBoMotQC_(key);
-    return { key, ok };
-  }));
-
-  for (const res of results) {
-    if (res.ok) { thanhCong += 1; dsThanhCongCX5.push(res.key); }
-    else { thatBai += 1; }
+  try {
+    const res = await callApiCX5({ action: "batchSubmitEntryX5", payload: { items: itemsToSubmit } });
+    if (res && res.results && Array.isArray(res.results)) {
+      res.results.forEach(r => {
+        if (r.success) {
+          thanhCong++;
+          phienCX5.filter(row => keyQCX5(row.msp, row.ten) === r.key || row.msp === r.msp).forEach(row => { row.daDongBo = true; });
+        } else {
+          thatBai++;
+        }
+      });
+    } else if (res && res.success) {
+      thanhCong = itemsToSubmit.length;
+      phienCX5.forEach(row => { row.daDongBo = true; });
+    } else {
+      thatBai = itemsToSubmit.length;
+    }
+  } catch (e) {
+    showCanhBaoCX5("Lỗi kết nối đồng bộ: " + e.message);
+  } finally {
+    showLoading(false);
+    if (btn) { btn.disabled = false; btn.innerHTML = '<i class="ti ti-refresh"></i> Đồng bộ'; }
   }
-
-  showLoading(false);
-  if (btn) { btn.disabled = false; btn.innerHTML = '<i class="ti ti-refresh"></i> Đồng bộ'; }
 
   luuPhienDoDangCX5();
   renderBangChiTietCX5();
@@ -974,15 +1002,9 @@ async function dongBoTatCaCX5() {
   renderDoiChieuCX5();
   if (typeof capNhatTrangThaiMang === "function") capNhatTrangThaiMang();
 
-  if (thatBai === 0) showCanhBaoCX5("Đã đồng bộ " + thanhCong + " quy cách");
+  if (thatBai === 0) showCanhBaoCX5("Đã đồng bộ " + thanhCong + " quy cách vào Sheet Tháng!");
   else showCanhBaoCX5("Đồng bộ " + thanhCong + " thành công, " + thatBai + " lỗi");
-
-  if (dsThanhCongCX5.length > 0) {
-    const dsQC = Object.keys(gom)
-      .filter(key => gom[key] && (gom[key].bao > 0 || (gom[key].baoDaDongBo || 0) > 0))
-      .map(key => ({ msp: gom[key].msp, ten: gom[key].ten }));
-    moTongKgCX5(dsQC);
-  }
+  // TÁCH BIỆT HOÀN TOÀN: Bảng đối chiếu chỉ đồng bộ dữ liệu vào Sheet Tháng, không tự chuyển sang LSC5
 }
 
 async function moTongKgCX5(dsQC) {
@@ -1113,19 +1135,22 @@ function renderTongKetPhienTongKgCX5() {
 
   const daXuLy = new Set();
   const danhSach = [];
+  const gom = tomTatCX5();
 
-  // 1) Gom theo từng quy cách trong tongKetPhienCX5
-  tongKetPhienCX5.forEach(function (item) {
-    const key = item.msp + "|" + item.ten;
-    if (daXuLy.has(key)) return;
+  // 1) Lấy số bao & kg thực tế từ phienCX5 (đang nhập trong phiên) để khớp 100% với Bảng chi tiết
+  Object.keys(gom).forEach(function (key) {
     daXuLy.add(key);
-
-    const card = Object.keys(tongKgDataCX5).map(function (k) { return tongKgDataCX5[k]; }).find(function (d) { return d.homNay.row === item.row; });
-    let bao = item.bao;
-    let kg = item.kg;
+    const g = gom[key];
+    let bao = g.bao;
+    let kg = g.kg;
     let trangThaiHtml = '<i class="ti ti-minus" style="color:var(--cream-soft);font-size:18px" title="Chưa ghép"></i>';
 
-    if (card) {
+    const cardKey = Object.keys(tongKgDataCX5).find(function (k) {
+      return k === key || k.indexOf(g.msp) !== -1;
+    });
+
+    if (cardKey && tongKgDataCX5[cardKey]) {
+      const card = tongKgDataCX5[cardKey];
       const chosen = card.cu.filter(function (c) { return c.checked; });
       if (chosen.length > 0) {
         bao += chosen.reduce(function (s, c) { return s + c.bao; }, 0);
@@ -1136,31 +1161,29 @@ function renderTongKetPhienTongKgCX5() {
       }
     } else if (bao >= 10) {
       trangThaiHtml = '<i class="ti ti-check" style="color:var(--success);font-size:18px" title="OK (≥10 bao)"></i>';
+    } else if (g.baoDaDongBo > 0) {
+      trangThaiHtml = '<i class="ti ti-check" style="color:var(--success);font-size:18px" title="Đã đồng bộ"></i>';
     }
 
     danhSach.push({
-      ten: item.ten,
+      ten: g.ten,
       bao: bao,
       kg: Math.round(kg * 10) / 10,
       trangThaiHtml: trangThaiHtml
     });
   });
 
-  // 2) Các quy cách nhập trong phiên chưa có trên server
-  const gom = tomTatCX5();
-  Object.keys(gom).forEach(function (key) {
+  // 2) Quy cách từ tổng kết server nhưng chưa nhập ở phiên hiện tại
+  tongKetPhienCX5.forEach(function (item) {
+    const key = item.msp + "|" + item.ten;
     if (daXuLy.has(key)) return;
     daXuLy.add(key);
-    const g = gom[key];
-    let trangThaiHtml = g.baoDaDongBo > 0
-      ? '<i class="ti ti-check" style="color:var(--success);font-size:18px" title="OK"></i>'
-      : '<i class="ti ti-cloud-upload" style="color:var(--danger);font-size:18px" title="Chưa đồng bộ"></i>';
 
     danhSach.push({
-      ten: g.ten,
-      bao: g.bao,
-      kg: Math.round(g.kg * 10) / 10,
-      trangThaiHtml: trangThaiHtml
+      ten: item.ten,
+      bao: item.bao,
+      kg: Math.round(item.kg * 10) / 10,
+      trangThaiHtml: '<i class="ti ti-minus" style="color:var(--cream-soft);font-size:18px"></i>'
     });
   });
 
