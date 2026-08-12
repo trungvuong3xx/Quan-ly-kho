@@ -458,13 +458,35 @@
     <label>Ngày</label>
     <input type="date" id="btp-ngay" style="margin-bottom:10px;">
     <label>Phiên quét</label>
-    <select id="btp-phien" style="margin-bottom:16px;">
-      <option value="1">Phiên 1</option>
-      <option value="2">Phiên 2</option>
-      <option value="3">Phiên 3</option>
-      <option value="4">Phiên 4</option>
-      <option value="5">Phiên 5</option>
-    </select>
+    <div class="custom-select-wrap" style="margin-bottom:16px;">
+      <input type="hidden" id="btp-phien" value="1">
+      <div id="btp-phien-trigger" class="custom-select-trigger" onclick="toggleDropdownPhienBTP(event)">
+        <span id="btp-phien-label">Phiên 1</span>
+        <svg class="select-chevron" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 9l-7 7-7-7"/></svg>
+      </div>
+      <div id="btp-phien-menu" class="custom-select-menu">
+        <div class="custom-select-item active" data-val="1" onclick="chonPhienBTP(1)">
+          <span>Phiên 1</span>
+          <i class="ti ti-check check-icon"></i>
+        </div>
+        <div class="custom-select-item" data-val="2" onclick="chonPhienBTP(2)">
+          <span>Phiên 2</span>
+          <i class="ti ti-check check-icon"></i>
+        </div>
+        <div class="custom-select-item" data-val="3" onclick="chonPhienBTP(3)">
+          <span>Phiên 3</span>
+          <i class="ti ti-check check-icon"></i>
+        </div>
+        <div class="custom-select-item" data-val="4" onclick="chonPhienBTP(4)">
+          <span>Phiên 4</span>
+          <i class="ti ti-check check-icon"></i>
+        </div>
+        <div class="custom-select-item" data-val="5" onclick="chonPhienBTP(5)">
+          <span>Phiên 5</span>
+          <i class="ti ti-check check-icon"></i>
+        </div>
+      </div>
+    </div>
     <button class="btn btn-blue btn-full" onclick="batDauBTP()">Bắt đầu Quét Camera</button>
     <button class="btn btn-full" style="background:var(--card-raised); color:var(--cream); border:1px solid var(--line); margin-top:8px" onclick="chuyenTrangKhongNav('trangChu')">← Trang chủ</button>
   </div>

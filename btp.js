@@ -618,6 +618,7 @@ async function khoiPhucBTP(state) {
   demSoDotBTP = state.demSoDotBTP || 1;
   ngayBTP = state.ngayBTP;
   phienSoBTP = state.phienSoBTP || 1;
+  if (typeof chonPhienBTP === "function") chonPhienBTP(phienSoBTP);
   idPhienHienTaiBTP = state.idPhienHienTaiBTP || (Date.now() + "-" + Math.random().toString(36).slice(2));
   soLuongDaGuiHienTaiBTP = state.soLuongDaGuiHienTaiBTP !== undefined ? state.soLuongDaGuiHienTaiBTP : 0;
   dangQuetBTP = true;
@@ -897,21 +898,75 @@ function xuatExcelBTP() {
   XLSX.writeFile(wb, "Quet_BTP_" + ngay + ".xlsx");
 }
 
+function toggleDropdownPhienBTP(e) {
+  if (e) e.stopPropagation();
+  const trigger = document.getElementById("btp-phien-trigger");
+  const menu = document.getElementById("btp-phien-menu");
+  if (!menu) return;
+  const isOpen = menu.classList.contains("open");
+  if (isOpen) {
+    menu.classList.remove("open");
+    if (trigger) trigger.classList.remove("active");
+  } else {
+    menu.classList.add("open");
+    if (trigger) trigger.classList.add("active");
+  }
+}
+window.toggleDropdownPhienBTP = toggleDropdownPhienBTP;
+
+function chonPhienBTP(val) {
+  const numVal = parseInt(val, 10) || 1;
+  const hiddenInput = document.getElementById("btp-phien");
+  const labelEl = document.getElementById("btp-phien-label");
+  const menu = document.getElementById("btp-phien-menu");
+  const trigger = document.getElementById("btp-phien-trigger");
+
+  if (hiddenInput) hiddenInput.value = numVal;
+  if (labelEl) labelEl.textContent = "Phiên " + numVal;
+
+  phienSoBTP = numVal;
+
+  if (menu) {
+    const items = menu.querySelectorAll(".custom-select-item");
+    items.forEach(item => {
+      const itemVal = parseInt(item.getAttribute("data-val"), 10);
+      if (itemVal === numVal) {
+        item.classList.add("active");
+      } else {
+        item.classList.remove("active");
+      }
+    });
+    menu.classList.remove("open");
+  }
+  if (trigger) trigger.classList.remove("active");
+}
+window.chonPhienBTP = chonPhienBTP;
+
+document.addEventListener("click", function (e) {
+  const wrap = document.querySelector(".custom-select-wrap");
+  const menu = document.getElementById("btp-phien-menu");
+  const trigger = document.getElementById("btp-phien-trigger");
+  if (wrap && !wrap.contains(e.target) && menu && menu.classList.contains("open")) {
+    menu.classList.remove("open");
+    if (trigger) trigger.classList.remove("active");
+  }
+});
+
 window.addEventListener("load", function () {
   const now = new Date();
   const today = now.toISOString().split("T")[0];
   const ngayInput = document.getElementById("btp-ngay");
   if (ngayInput) ngayInput.value = today;
 
-  const phienSelect = document.getElementById("btp-phien");
-  if (phienSelect) {
-    const hour = now.getHours();
-    if (hour >= 6 && hour < 12) phienSelect.value = "1";
-    else if (hour >= 12 && hour < 16) phienSelect.value = "2";
-    else if (hour >= 16 && hour < 20) phienSelect.value = "3";
-    else if (hour >= 20 || hour < 2) phienSelect.value = "4";
-    else phienSelect.value = "5";
-  }
+  const hour = now.getHours();
+  let defaultVal = 1;
+  if (hour >= 6 && hour < 12) defaultVal = 1;
+  else if (hour >= 12 && hour < 16) defaultVal = 2;
+  else if (hour >= 16 && hour < 20) defaultVal = 3;
+  else if (hour >= 20 || hour < 2) defaultVal = 4;
+  else defaultVal = 5;
+
+  chonPhienBTP(defaultVal);
 });
 
 window.addEventListener("load", async function () {

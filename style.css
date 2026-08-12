@@ -205,6 +205,118 @@ select option {
   padding: 10px;
 }
 
+/* ============================================================
+   CUSTOM IN-APP DROPDOWN COMPONENT (Obsidian & Amber Gold)
+   ============================================================ */
+.custom-select-wrap {
+  position: relative;
+  width: 100%;
+}
+
+.custom-select-trigger {
+  width: 100%;
+  height: 44px;
+  padding: 0 16px;
+  border-radius: 12px;
+  border: 1px solid var(--line);
+  background-color: var(--card-raised);
+  color: var(--cream);
+  font-size: 14px;
+  font-weight: 600;
+  font-family: 'IBM Plex Sans', sans-serif;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  user-select: none;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  box-sizing: border-box;
+  margin-top: 4px;
+}
+
+.custom-select-trigger:hover,
+.custom-select-trigger.active {
+  border-color: var(--brass);
+  box-shadow: 0 0 0 4px rgba(245, 158, 11, .22), 0 4px 14px rgba(0, 0, 0, .2);
+}
+
+.custom-select-trigger .select-chevron {
+  color: var(--brass);
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  flex-shrink: 0;
+}
+
+.custom-select-trigger.active .select-chevron {
+  transform: rotate(180deg);
+}
+
+.custom-select-menu {
+  display: none;
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  background: #181d25;
+  border: 1px solid rgba(245, 158, 11, 0.4);
+  border-radius: 14px;
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.75), 0 0 20px rgba(245, 158, 11, 0.15);
+  z-index: 1000;
+  overflow: hidden;
+  padding: 6px;
+  animation: customSelectFadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.custom-select-menu.open {
+  display: block;
+}
+
+@keyframes customSelectFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.custom-select-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--cream-soft);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  user-select: none;
+}
+
+.custom-select-item:hover {
+  background: var(--neutral-hover);
+  color: var(--cream);
+}
+
+.custom-select-item.active {
+  background: var(--brass-bg);
+  color: var(--brass);
+  font-weight: 700;
+}
+
+.custom-select-item .check-icon {
+  font-size: 16px;
+  color: var(--brass);
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+.custom-select-item.active .check-icon {
+  opacity: 1;
+}
+
 .btn {
   border: none;
   border-radius: 10px;
