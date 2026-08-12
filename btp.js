@@ -905,8 +905,12 @@ window.addEventListener("load", function () {
 
   const phienSelect = document.getElementById("btp-phien");
   if (phienSelect) {
-    // Trước 12h chọn Phiên 1, từ 12h trở đi chọn Phiên 2
-    phienSelect.value = now.getHours() < 12 ? "1" : "2";
+    const hour = now.getHours();
+    if (hour >= 6 && hour < 12) phienSelect.value = "1";
+    else if (hour >= 12 && hour < 16) phienSelect.value = "2";
+    else if (hour >= 16 && hour < 20) phienSelect.value = "3";
+    else if (hour >= 20 || hour < 2) phienSelect.value = "4";
+    else phienSelect.value = "5";
   }
 });
 
