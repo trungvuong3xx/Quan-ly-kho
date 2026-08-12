@@ -84,25 +84,46 @@ let taiDanhSachTokenCX5 = 0;
 async function taiDanhSachQCX5(dateStr, forceRefresh) {
   const myToken = ++taiDanhSachTokenCX5;
   const monthKey = new Date(dateStr).getMonth() + 1;
-  if (!forceRefresh && mspCacheX5[monthKey]) {
+
+  // 1. Nếu đã có trong RAM -> Nạp ngay lập tức 0ms
+  if (!forceRefresh && mspCacheX5[monthKey] && mspCacheX5[monthKey].length > 0) {
     mspDataCX5 = mspCacheX5[monthKey];
     return;
   }
 
+  // 2. Nếu có trong LocalStorage -> Nạp ngay lập tức 0ms (kể cả quá 4h cũ), mở UI ngay không bắt chờ
   if (!forceRefresh) {
-    const local = docMspCacheLocalCX5(monthKey, false);
-    if (local) {
+    const local = docMspCacheLocalCX5(monthKey, true); // Nạp tức thì cache local
+    if (local && local.length > 0) {
       mspDataCX5 = local;
       mspCacheX5[monthKey] = local;
+
+      // Cập nhật ngầm danh sách mới từ Apps Script server (không chặn UI)
+      callApiCX5({ action: "khoiTaoForm", dateStr, forceRefresh: false }).then(res => {
+        if (res && res.mspList && Array.isArray(res.mspList)) {
+          const freshData = res.mspList.filter(i => i.vung !== "FOR");
+          if (freshData.length > 0) {
+            mspDataCX5 = freshData;
+            mspCacheX5[monthKey] = freshData;
+            luuMspCacheLocalCX5(monthKey, freshData);
+          }
+        }
+      }).catch(() => { });
       return;
     }
   }
 
-  document.getElementById("cx5-ten").placeholder = "Đang tải danh sách...";
-  document.getElementById("cx5-ten").disabled = true;
+  // 3. Chỉ khi chưa có dữ liệu local (lần đầu tải app), mới hiện loading chờ server
+  if (typeof showLoading === "function") showLoading(true);
+  const tenEl = document.getElementById("cx5-ten");
+  if (tenEl) {
+    tenEl.placeholder = "Đang tải danh sách...";
+    tenEl.disabled = true;
+  }
+
   try {
     const res = await callApiCX5({ action: "khoiTaoForm", dateStr, forceRefresh: !!forceRefresh });
-    if (myToken !== taiDanhSachTokenCX5) return; // đã có lượt gọi mới hơn chen ngang, bỏ kết quả cũ
+    if (myToken !== taiDanhSachTokenCX5) return;
     if (res.error) { showCanhBaoCX5(res.error); mspDataCX5 = []; }
     else if (!res.exists) { showCanhBaoCX5('Chưa có sheet tháng "' + res.sheetName + '"'); mspDataCX5 = []; }
     else {
@@ -121,14 +142,18 @@ async function taiDanhSachQCX5(dateStr, forceRefresh) {
       showCanhBaoCX5("Không tải được danh sách quy cách");
       mspDataCX5 = [];
     }
+  } finally {
+    if (typeof showLoading === "function") showLoading(false);
+    if (myToken === taiDanhSachTokenCX5 && tenEl) {
+      tenEl.disabled = false;
+      tenEl.placeholder = "Gõ để tìm...";
+    }
   }
-  if (myToken !== taiDanhSachTokenCX5) return;
-  document.getElementById("cx5-ten").disabled = false;
-  document.getElementById("cx5-ten").placeholder = "Gõ để tìm...";
 }
 
 function showCanhBaoCX5(text) {
   const el = document.getElementById("canh-bao");
+  if (!el) return;
   el.textContent = text;
   el.style.display = "block";
   setTimeout(() => { el.style.display = "none"; }, 2200);
@@ -170,12 +195,8 @@ async function batDauPhienMoiCX5() {
   document.getElementById("cx5-ngay-hienthi").textContent = ngayCX5;
   resetKhoaQCCX5();
 
-  showLoading(true);
-  try {
-    await taiDanhSachQCX5(ngayCX5, false);
-  } finally {
-    showLoading(false);
-  }
+  await taiDanhSachQCX5(ngayCX5, false);
+
   renderBangChiTietCX5();
   renderBangTongHopCX5();
 }
@@ -197,12 +218,8 @@ async function khoiPhucCX5(state) {
   document.getElementById("cx5-ngay-hienthi").textContent = ngayCX5;
   resetKhoaQCCX5();
 
-  showLoading(true);
-  try {
-    await taiDanhSachQCX5(ngayCX5, false);
-  } finally {
-    showLoading(false);
-  }
+  await taiDanhSachQCX5(ngayCX5, false);
+
   renderBangChiTietCX5();
   renderBangTongHopCX5();
 }
@@ -1848,3 +1865,17 @@ function bpQcEnterCX5() {
   }
 }
 window.bpQcEnterCX5 = bpQcEnterCX5;
+
+window.addEventListener("load", function () {
+  const now = new Date();
+  const todayStr = now.toISOString().split("T")[0];
+  const ngayInput = document.getElementById("cx5-ngay");
+  if (ngayInput) ngayInput.value = todayStr;
+
+  const monthKey = now.getMonth() + 1;
+  const local = docMspCacheLocalCX5(monthKey, true);
+  if (local && local.length > 0) {
+    mspDataCX5 = local;
+    mspCacheX5[monthKey] = local;
+  }
+});
