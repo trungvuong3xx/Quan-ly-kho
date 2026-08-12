@@ -794,7 +794,7 @@ function renderDoiChieuCX5() {
     html += '</tbody></table></div>';
   }
 
-  html += '<button class="btn btn-full" style="background:var(--neutral-solid);color:var(--cream);margin-top:12px" ' + (coDaDongBoGi ? "" : "disabled") +
+  html += '<button class="btn btn-full" style="background:var(--neutral-solid);color:var(--cream);margin-top:12px" ' +
     ' onclick="xemTongKgGhepPalletCX5()"><i class="ti ti-layers-intersect"></i> Tổng kg pallet</button>';
 
   html += '<button id="cx5-btn-dongbo-tatca" class="btn btn-blue btn-full" style="margin-top:8px" ' + (coTheDongBo ? "" : "disabled") + ' onclick="dongBoTatCaCX5()"><i class="ti ti-refresh"></i> Đồng bộ</button>';
@@ -876,7 +876,11 @@ function xemTongKgGhepPalletCX5() {
   const dsQC = Object.keys(gom)
     .filter(key => gom[key] && (gom[key].bao > 0 || (gom[key].baoDaDongBo || 0) > 0))
     .map(key => ({ msp: gom[key].msp, ten: gom[key].ten }));
-  if (dsQC.length === 0) { showCanhBaoCX5("Chưa có quy cách nào trong phiên này"); return; }
+  if (dsQC.length === 0) {
+    phienCX5.forEach(r => {
+      if (!dsQC.some(q => q.msp === r.msp)) dsQC.push({ msp: r.msp, ten: r.ten });
+    });
+  }
   moTongKgCX5(dsQC);
 }
 window.xemTongKgGhepPalletCX5 = xemTongKgGhepPalletCX5;
@@ -937,20 +941,31 @@ async function dongBoMotQC_(key) {
   }
 }
 
+let dangDongBoCX5Lock = false;
+
 async function dongBoTatCaCX5() {
+  if (dangDongBoCX5Lock) return;
   const gom = tomTatCX5();
+
+  // CHỐNG ĐỒNG BỘ TRÙNG 100%: Chỉ lọc quy cách có chứa dòng CHƯA ĐỒNG BỘ (daDongBo !== true)
   const dsCanDongBo = Object.keys(doiChieuCX5).filter(key => {
     const kho = gom[key];
     if (!kho) return false;
     const dc = doiChieuCX5[key];
     const sxTong = dc.sxEntries.reduce((s, v) => s + v, 0);
     const khop = Math.round(sxTong * 100) === Math.round(kho.kg * 100) && kho.kg > 0;
-    const conDeDongBo = (kho.bao - (kho.baoDaDongBo || 0)) > 0;
-    return khop && conDeDongBo;
+    
+    // Nếu tất cả các dòng của quy cách này đã được đồng bộ trước đó -> Loại bỏ ngay
+    const chuaDongBoRows = phienCX5.filter(r => keyQCX5(r.msp, r.ten) === key && !r.daDongBo);
+    return khop && chuaDongBoRows.length > 0;
   });
 
-  if (dsCanDongBo.length === 0) { showCanhBaoCX5("Không có quy cách nào đủ điều kiện đồng bộ"); return; }
+  if (dsCanDongBo.length === 0) {
+    showCanhBaoCX5("Tất cả mã chọn đã được đồng bộ trước đó!");
+    return;
+  }
 
+  dangDongBoCX5Lock = true;
   const btn = document.getElementById("cx5-btn-dongbo-tatca");
   if (btn) { btn.disabled = true; btn.innerHTML = '<i class="ti ti-refresh spin"></i> Đang đồng bộ...'; }
   showLoading(true);
@@ -992,6 +1007,7 @@ async function dongBoTatCaCX5() {
   } catch (e) {
     showCanhBaoCX5("Lỗi kết nối đồng bộ: " + e.message);
   } finally {
+    dangDongBoCX5Lock = false;
     showLoading(false);
     if (btn) { btn.disabled = false; btn.innerHTML = '<i class="ti ti-refresh"></i> Đồng bộ'; }
   }
@@ -1007,37 +1023,64 @@ async function dongBoTatCaCX5() {
   // TÁCH BIỆT HOÀN TOÀN: Bảng đối chiếu chỉ đồng bộ dữ liệu vào Sheet Tháng, không tự chuyển sang LSC5
 }
 
-async function moTongKgCX5(dsQC) {
-  showLoading(true);
-  let res;
-  try {
-    res = await callApiCX5({ action: "layUngVienGhepCX5", payload: { dsQC: dsQC, dateStr: ngayCX5 } });
-  } catch (e) {
-    showLoading(false);
-    showCanhBaoCX5("Lỗi tải dữ liệu ghép pallet: " + e.message);
-    return;
+function moTongKgCX5(dsQC) {
+  // CHUYỂN THẺ TỨC THÌ (0ms Delay): Không chặn UI chờ mạng
+  document.getElementById("cx5-form").style.display = "none";
+  document.getElementById("cx5-doichieu").style.display = "none";
+  document.getElementById("cx5-nhap").style.display = "none";
+  document.getElementById("cx5-tongkg").style.display = "block";
+
+  // Vẽ bảng tổng kết ngay từ phienCX5 trên RAM lập tức
+  renderTongKgCX5();
+
+  // Tải danh sách ứng viên ghép pallet ngày cũ ngầm không chặn UI
+  if (dsQC && dsQC.length > 0) {
+    callApiCX5({ action: "layUngVienGhepCX5", payload: { dsQC: dsQC, dateStr: ngayCX5 } }).then(res => {
+      if (!res || res.error) return;
+      tongKgDataCX5 = {};
+      tongKetPhienCX5 = [];
+      const daXuLyQC = new Set();
+      dsQC.forEach(function (q) {
+        const key = q.msp + "|" + q.ten;
+        if (daXuLyQC.has(key)) return;
+        daXuLyQC.add(key);
+        const duLieuQC = res[key] || { homNay: [], cu: [] };
+        
+        const homNayList = (duLieuQC.homNay || []).filter(function (c) {
+          const effBao = c.effBao !== undefined ? c.effBao : c.bao;
+          return effBao < 10 && c.v !== "X";
+        });
+
+        const cu = (duLieuQC.cu || []).filter(function (c) {
+          const effBao = c.effBao !== undefined ? c.effBao : c.bao;
+          return effBao > 0 && effBao < 10 && c.v !== "X";
+        });
+
+        const hnBao = homNayList.reduce(function (s, c) { return s + (c.effBao !== undefined ? c.effBao : c.bao); }, 0);
+        const hnKg = Math.round(homNayList.reduce(function (s, c) { return s + (c.effKg !== undefined ? c.effKg : c.kg); }, 0) * 100) / 100;
+        const homNayNeo = homNayList.length > 0
+          ? { row: homNayList[homNayList.length - 1].row, bao: hnBao, kg: hnKg }
+          : { row: null, bao: 0, kg: 0 };
+
+        tongKgDataCX5[key] = {
+          ten: q.ten,
+          msp: q.msp,
+          homNay: homNayNeo,
+          cu: cu.map(function (c) {
+            return {
+              row: c.row, ngay: c.ngay,
+              bao: c.effBao !== undefined ? c.effBao : c.bao,
+              kg: c.effKg !== undefined ? c.effKg : c.kg,
+              checked: false
+            };
+          })
+        };
+      });
+
+      renderTongKgCX5();
+    }).catch(() => {});
   }
-  showLoading(false);
-
-  if (res.error) { showCanhBaoCX5("Lỗi: " + res.error); return; }
-
-  tongKgDataCX5 = {};
-  tongKetPhienCX5 = [];
-  const daXuLyQC = new Set();
-  dsQC.forEach(function (q) {
-    const key = q.msp + "|" + q.ten;
-    if (daXuLyQC.has(key)) return;
-    daXuLyQC.add(key);
-    const duLieuQC = res[key] || { homNay: [], cu: [] };
-    
-    // Khối ứng viên hôm nay: effBao < 10 và V khác "X"
-    const homNayList = (duLieuQC.homNay || []).filter(function (c) {
-      const effBao = c.effBao !== undefined ? c.effBao : c.bao;
-      return effBao < 10 && c.v !== "X";
-    });
-
-    // Khối ứng viên ngày cũ: effBao < 10 và V khác "X"
-    const cu = (duLieuQC.cu || [])
+}
       .filter(function (c) {
         const effBao = c.effBao !== undefined ? c.effBao : c.bao;
         return effBao < 10 && c.v !== "X";
