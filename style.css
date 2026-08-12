@@ -1729,9 +1729,20 @@ body.cam-active #btp-log-list {
   border-radius: 50%;
 }
 
-.toggle-switch input:checked + .toggle-slider {
-  background-color: rgba(16, 185, 129, 0.15);
-  border-color: #10b981;
+.toggle-switch input:checked + .toggle-slider:before {
+  transform: translateX(18px);
+  background-color: #10b981;
+  box-shadow: 0 0 8px rgba(16, 185, 129, 0.6);
+}
+
+.spin {
+  animation: spinIcon 1s linear infinite;
+  display: inline-block;
+}
+
+@keyframes spinIcon {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
 
 .toggle-switch input:checked + .toggle-slider:before {

@@ -216,14 +216,14 @@ function khiQuetDuocMaBTP(result) {
 
   const lockMs = choPhepTrung ? 1500 : 500;
   const lockStatusEl = document.getElementById("btp-lock-status");
-  if (lockStatusEl) lockStatusEl.textContent = "⏳ Chờ " + (lockMs / 1000) + "s...";
+  if (lockStatusEl) lockStatusEl.innerHTML = '<i class="ti ti-clock"></i> Chờ ' + (lockMs / 1000) + 's...';
 
   setTimeout(() => {
     dangKhoaQuetBTP = false;
-    if (lockStatusEl) lockStatusEl.textContent = "🟢 Sẵn sàng";
+    if (lockStatusEl) lockStatusEl.innerHTML = '<i class="ti ti-circle-check" style="color:var(--success)"></i> Sẵn sàng';
     if (dangQuetBTP) {
       const sEl = document.getElementById("btp-status");
-      if (sEl) sEl.textContent = "🟢 Đang quét Đợt " + (demSoDotBTP || 1) + "...";
+      if (sEl) sEl.innerHTML = '<i class="ti ti-radar" style="color:var(--success)"></i> Đang quét Đợt ' + (demSoDotBTP || 1) + '...';
     }
   }, lockMs);
 }
@@ -285,7 +285,7 @@ async function batDauPhienMoiBTP() {
   document.getElementById("btp-cam").style.display = "block";
   document.getElementById("btp-ketqua").style.display = "none";
   document.getElementById("btp-dem").textContent = "Đã quét: 0 mã";
-  document.getElementById("btp-status").textContent = "🟢 Đang quét Đợt 1...";
+  document.getElementById("btp-status").innerHTML = '<i class="ti ti-radar" style="color:var(--success)"></i> Đang quét Đợt 1...';
 
   capNhatLogBTP();
 
@@ -315,14 +315,14 @@ function dungBTP() {
   }
   zxingReaderBTP = null;
   const statusEl = document.getElementById("btp-status");
-  if (statusEl) statusEl.textContent = "🔴 Đã dừng quét (Đợt " + (demSoDotBTP || 1) + ")";
+  if (statusEl) statusEl.innerHTML = '<i class="ti ti-player-pause" style="color:var(--red)"></i> Đã dừng quét (Đợt ' + (demSoDotBTP || 1) + ')';
 }
 
 async function tiepTucBTP() {
   document.body.classList.add("cam-active");
   demSoDotBTP = (demSoDotBTP || 0) + 1;
   dangQuetBTP = true;
-  document.getElementById("btp-status").textContent = "🟢 Đang quét Đợt " + demSoDotBTP + "...";
+  document.getElementById("btp-status").innerHTML = '<i class="ti ti-radar" style="color:var(--success)"></i> Đang quét Đợt ' + demSoDotBTP + '...';
   try {
     zxingReaderBTP = await khoiTaoCameraFast("btp-reader", (txt) => {
       if (txt && dangQuetBTP) {
@@ -387,7 +387,7 @@ async function dongBoThietBiBTP() {
     return;
   }
 
-  showCanhBaoBTP("⏳ Đang gửi " + pending.length + " bản ghi lên Sheet...");
+  showCanhBaoBTP("Đang gửi " + pending.length + " bản ghi lên Sheet...");
   try {
     await guiLenSheetBTP(pending);
     luuPendingBTP([]);
@@ -429,7 +429,7 @@ async function guiDuLieuBTP() {
   const btnGui = document.getElementById("btn-gui-dulieu-btp");
   if (btnGui) {
     btnGui.disabled = true;
-    btnGui.textContent = "⏳ Đang gửi " + moiBoSung.length + " mã...";
+    btnGui.innerHTML = '<i class="ti ti-loader spin"></i> Đang gửi ' + moiBoSung.length + ' mã...';
   }
 
   const rows = moiBoSung.map(r => ({
@@ -448,9 +448,9 @@ async function guiDuLieuBTP() {
     soLuongDaGuiHienTaiBTP = phienBTP.length;
     xoaPhienDoDangBTP();
     luuVaoLichSuBTP();
-    showCanhBaoBTP("✅ Đã gửi thành công " + rows.length + " mã lên Sheet!");
+    showCanhBaoBTP("Đã gửi thành công " + rows.length + " mã lên Sheet!");
     if (btnGui) {
-      btnGui.textContent = "✅ Đã gửi thành công";
+      btnGui.innerHTML = '<i class="ti ti-circle-check"></i> Đã gửi thành công';
       btnGui.style.background = "linear-gradient(135deg, #10b981, #059669)";
       btnGui.style.color = "#fff";
     }
@@ -466,7 +466,7 @@ async function guiDuLieuBTP() {
     soLuongDaGuiHienTaiBTP = phienBTP.length;
     if (btnGui) {
       btnGui.disabled = false;
-      btnGui.textContent = "📤 Gửi dữ liệu lên Sheet";
+      btnGui.innerHTML = '<i class="ti ti-cloud-upload"></i> Gửi dữ liệu lên Sheet';
       btnGui.style.background = "linear-gradient(135deg, #f59e0b, #d97706)";
       btnGui.style.color = "#1a1a2e";
     }
@@ -564,7 +564,7 @@ function hienKetQuaBTP() {
   const btnGui = document.getElementById("btn-gui-dulieu-btp");
   if (btnGui) {
     btnGui.disabled = false;
-    btnGui.textContent = "📤 Gửi dữ liệu lên Sheet";
+    btnGui.innerHTML = '<i class="ti ti-cloud-upload"></i> Gửi dữ liệu lên Sheet';
     btnGui.style.background = "linear-gradient(135deg, #f59e0b, #d97706)";
     btnGui.style.color = "#1a1a2e";
   }
@@ -578,7 +578,7 @@ async function quetTiepBTP() {
 
   document.getElementById("btp-ketqua").style.display = "none";
   document.getElementById("btp-cam").style.display = "block";
-  document.getElementById("btp-status").textContent = "🟢 Đang quét Đợt " + demSoDotBTP + "...";
+  document.getElementById("btp-status").innerHTML = '<i class="ti ti-radar" style="color:var(--success)"></i> Đang quét Đợt ' + demSoDotBTP + '...';
 
   const btnToggle = document.getElementById("btn-dung-tieptuc-btp");
   if (btnToggle) {
@@ -632,7 +632,7 @@ async function khoiPhucBTP(state) {
   document.getElementById("btp-cam").style.display = "block";
   document.getElementById("btp-ketqua").style.display = "none";
   document.getElementById("btp-dem").textContent = "Đã quét: " + phienBTP.length + " mã";
-  document.getElementById("btp-status").textContent = "🟢 Đang quét Đợt " + demSoDotBTP + "...";
+  document.getElementById("btp-status").innerHTML = '<i class="ti ti-radar" style="color:var(--success)"></i> Đang quét Đợt ' + demSoDotBTP + '...';
 
   capNhatLogBTP();
 
