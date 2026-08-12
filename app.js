@@ -70,13 +70,13 @@ function unlockFastAudioEngine() {
       }
       fastAudioCtx.decodeAudioData(bytes.buffer, (buffer) => {
         fastAudioBuffer = buffer;
-      }, (err) => {});
+      }, (err) => { });
     }
     if (!fastBeepAudio) {
       fastBeepAudio = new Audio(FAST_MP3_BASE64);
       fastBeepAudio.load();
     }
-  } catch(e) {}
+  } catch (e) { }
 }
 
 window.addEventListener("touchstart", unlockFastAudioEngine, { passive: true, capture: true });
@@ -86,9 +86,9 @@ window.addEventListener("keydown", unlockFastAudioEngine, { passive: true, captu
 
 function phatTiengBip() {
   if (navigator.vibrate) {
-    try { navigator.vibrate(70); } catch(e) {}
+    try { navigator.vibrate(70); } catch (e) { }
   }
-  
+
   // 1. Phát qua Web Audio API Buffer (Siêu nhanh 0ms, không bị chặn trên di động)
   try {
     if (!fastAudioCtx) {
@@ -104,7 +104,7 @@ function phatTiengBip() {
       source.start(0);
       return;
     }
-  } catch(e) {}
+  } catch (e) { }
 
   // 2. Thử phát qua HTML5 Audio Element (dự phòng)
   try {
@@ -117,13 +117,13 @@ function phatTiengBip() {
       playPromise.catch(e => {
         try {
           if (fastAudioCtx) phatAmThanhSung(fastAudioCtx);
-        } catch(e2) {}
+        } catch (e2) { }
       });
     }
   } catch (e) {
     try {
       if (fastAudioCtx) phatAmThanhSung(fastAudioCtx);
-    } catch(e2) {}
+    } catch (e2) { }
   }
 }
 window.phatTiengBip = phatTiengBip;
@@ -174,7 +174,7 @@ function phatAmThanhSung(ctx) {
     noise.stop(now + thoiLuong);
     thump.start(now);
     thump.stop(now + 0.2);
-  } catch (e) {}
+  } catch (e) { }
 }
 
 function phatVibrateSuccess() {
@@ -184,7 +184,7 @@ window.phatVibrateSuccess = phatVibrateSuccess;
 
 function phatVibrateError() {
   if (navigator.vibrate) {
-    try { navigator.vibrate([100, 50, 100]); } catch (e) {}
+    try { navigator.vibrate([100, 50, 100]); } catch (e) { }
   }
 }
 window.phatVibrateError = phatVibrateError;
@@ -282,7 +282,7 @@ let isExitingApp = false;
 function pushChanThoatState() {
   try {
     history.pushState({ chanThoat: true }, "", location.href);
-  } catch (e) {}
+  } catch (e) { }
 }
 
 // Khởi tạo trap state ban đầu
@@ -294,6 +294,25 @@ window.addEventListener("click", pushChanThoatState, { once: true });
 
 function handlePopStateThoat(e) {
   if (isExitingApp) return;
+
+  // 1. Nếu đang mở bàn phím ảo custom -> đóng bàn phím trước
+  const openBp = document.querySelector(".cx5-bp-panel.show");
+  if (openBp) {
+    if (typeof dongBanPhimCX5 === "function") dongBanPhimCX5();
+    setTimeout(pushChanThoatState, 10);
+    return;
+  }
+
+  // 2. Nếu đang mở overlay / modal -> đóng overlay trước
+  const openOverlay = document.querySelector(".overlay.show, .cx5-xoay-overlay.show");
+  if (openOverlay) {
+    openOverlay.classList.remove("show");
+    if (typeof dongSuaLuotCX5 === "function") dongSuaLuotCX5();
+    if (typeof dongDcChiTietCX5 === "function") dongDcChiTietCX5();
+    if (typeof dongXoayCX5 === "function") dongXoayCX5();
+    setTimeout(pushChanThoatState, 10);
+    return;
+  }
 
   const activePage = document.querySelector(".page.active");
   const activeId = activePage ? activePage.id : "trangChu";
@@ -328,7 +347,7 @@ function xacNhanThoatApp() {
   if (el) el.classList.remove("show");
   try {
     window.close();
-  } catch (e) {}
+  } catch (e) { }
   setTimeout(() => {
     history.back();
   }, 50);
@@ -444,7 +463,7 @@ async function khoiTaoCameraFast(videoId, onDecodedCallback) {
       if (capabilities.focusMode && capabilities.focusMode.includes('continuous')) {
         await track.applyConstraints({ advanced: [{ focusMode: 'continuous' }] });
       }
-    } catch (e) {}
+    } catch (e) { }
   } catch (e) {
     console.warn("getUserMedia camera stream notice:", e);
   }
@@ -466,7 +485,7 @@ async function khoiTaoCameraFast(videoId, onDecodedCallback) {
             if (codes && codes.length > 0) {
               onDecodedCallback(codes[0].rawValue);
             }
-          } catch (e) {}
+          } catch (e) { }
           isProcessing = false;
         }
         if (videoEl.srcObject) {
@@ -547,12 +566,12 @@ async function batDauQuet() {
         } else {
           await hienOverlay({ id, msp });
         }
-      } catch(e) {
+      } catch (e) {
         showCanhBao("Lỗi đọc QR");
         setTimeout(() => { dangXuLy = false; }, 1500);
       }
     });
-  } catch(e) {
+  } catch (e) {
     alert("Lỗi camera: " + e);
     dungQuet();
   }
@@ -577,7 +596,7 @@ function docPendingApp() {
 }
 
 function luuPendingApp(list) {
-  try { localStorage.setItem(APP_PENDING_KEY, JSON.stringify(list)); } catch (e) {}
+  try { localStorage.setItem(APP_PENDING_KEY, JSON.stringify(list)); } catch (e) { }
 }
 
 async function guiPendingApp() {
@@ -602,7 +621,7 @@ async function guiPendingApp() {
     if (successCount > 0) {
       showCanhBao("🟢 Đã đồng bộ " + successCount + " mã offline thành công!");
     }
-  } catch (e) {}
+  } catch (e) { }
   capNhatTrangThaiMang();
 }
 
@@ -612,7 +631,7 @@ function capNhatTrangThaiMang() {
   const isOnline = navigator.onLine;
   const pendingApp = docPendingApp();
   let pendingCX1 = [];
-  try { if (typeof docPendingCX1 === "function") pendingCX1 = docPendingCX1(); } catch(e) {}
+  try { if (typeof docPendingCX1 === "function") pendingCX1 = docPendingCX1(); } catch (e) { }
   const tongPending = pendingApp.length + pendingCX1.length;
 
   if (!isOnline) {
@@ -827,7 +846,7 @@ function showMsg(text, ok) {
   if (el) { el.textContent = text; el.className = "msg show " + (ok ? "ok" : "err"); }
 }
 
-window.onload = function() {
+window.onload = function () {
   const today = new Date().toISOString().split("T")[0];
   const ngayInput = document.getElementById("chon-ngay");
   if (ngayInput) ngayInput.value = today;
@@ -841,7 +860,7 @@ function capNhatTrangChu() {
   const noidung = document.getElementById("phien-dodang-noidung");
   if (card && noidung) {
     let state = null;
-    try { state = JSON.parse(localStorage.getItem("cx1_phien_dodang")); } catch (e) {}
+    try { state = JSON.parse(localStorage.getItem("cx1_phien_dodang")); } catch (e) { }
 
     if (state && Array.isArray(state.phienCX1) && state.phienCX1.length > 0) {
       const gioCapNhat = state.capNhat
@@ -876,7 +895,7 @@ function capNhatTrangChu() {
   const noidungX5 = document.getElementById("phien-dodang-noidung-x5");
   if (cardX5 && noidungX5) {
     let stateX5 = null;
-    try { stateX5 = JSON.parse(localStorage.getItem("cx5_phien_dodang")); } catch (e) {}
+    try { stateX5 = JSON.parse(localStorage.getItem("cx5_phien_dodang")); } catch (e) { }
 
     if (stateX5 && Array.isArray(stateX5.phienCX5) && stateX5.phienCX5.length > 0) {
       const gioCapNhatX5 = stateX5.capNhat
@@ -911,7 +930,7 @@ function capNhatTrangChu() {
   const noidungBTP = document.getElementById("phien-dodang-noidung-btp");
   if (cardBTP && noidungBTP) {
     let stateBTP = null;
-    try { stateBTP = JSON.parse(localStorage.getItem("btp_phien_dodang")); } catch (e) {}
+    try { stateBTP = JSON.parse(localStorage.getItem("btp_phien_dodang")); } catch (e) { }
 
     if (stateBTP && (Array.isArray(stateBTP.phienBTP) || stateBTP.idPhienHienTaiBTP)) {
       const soMa = Array.isArray(stateBTP.phienBTP) ? stateBTP.phienBTP.length : 0;
@@ -986,11 +1005,11 @@ window.toggleQuetNhanh = toggleQuetNhanh;
 // ── Trạng thái mạng (dùng chung toàn ứng dụng) ──────
 function demPendingMang() {
   let tong = 0;
-  try { tong += JSON.parse(localStorage.getItem(APP_PENDING_KEY) || "[]").length; } catch (e) {}
-  try { tong += JSON.parse(localStorage.getItem("cx1_pending_saves") || "[]").length; } catch (e) {}
-  try { tong += JSON.parse(localStorage.getItem("kk_pending_saves") || "[]").length; } catch (e) {}
-  try { tong += JSON.parse(localStorage.getItem("cx5_pending_saves") || "[]").length; } catch (e) {}
-  try { tong += JSON.parse(localStorage.getItem("btp_pending_saves") || "[]").length; } catch (e) {}
+  try { tong += JSON.parse(localStorage.getItem(APP_PENDING_KEY) || "[]").length; } catch (e) { }
+  try { tong += JSON.parse(localStorage.getItem("cx1_pending_saves") || "[]").length; } catch (e) { }
+  try { tong += JSON.parse(localStorage.getItem("kk_pending_saves") || "[]").length; } catch (e) { }
+  try { tong += JSON.parse(localStorage.getItem("cx5_pending_saves") || "[]").length; } catch (e) { }
+  try { tong += JSON.parse(localStorage.getItem("btp_pending_saves") || "[]").length; } catch (e) { }
   return tong;
 }
 

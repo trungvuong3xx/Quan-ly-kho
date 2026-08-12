@@ -1,10 +1,11 @@
 // ── Quản lý BTP (Bán Thành Phẩm) v20260809-ultra ──────────────────────────
 let zxingReaderBTP = null;
 let dangQuetBTP = false;
-let phienBTP = []; 
-let demSoDotBTP = 0;   
+let phienBTP = [];
+let demSoDotBTP = 0;
 let denPinBatBTP = false;
 let ngayBTP = null;
+let phienSoBTP = 1;
 let btpToastTimeout = null;
 
 let idPhienHienTaiBTP = null;
@@ -18,7 +19,7 @@ const BTP_PENDING_KEY = "btp_pending_saves";
 function xuLyDuLieuQRBTP(text) {
   if (!text) return null;
   const rawQR = text.trim();
-  
+
   // Trích xuất mã BTP (VD: EM260405 từ 1AEM2604051-150 hoặc 10BEM2603691-320)
   const matchEM = rawQR.match(/EM\d{6}/i) || rawQR.match(/EM\d+/i);
   // Trích xuất số lượng sau dấu - ở cuối (VD: 150 từ -150)
@@ -197,14 +198,14 @@ function khiQuetDuocMaBTP(result) {
 
   if (typeof window.phatVibrateSuccess === "function") window.phatVibrateSuccess();
 
-  phienBTP.push({ 
+  phienBTP.push({
     rawQR: data.rawQR,
     id: data.rawQR,
     msp: data.msp,
-    qc: data.qc, 
+    qc: data.qc,
     kg: data.kg,
     thoiGian: new Date(),
-    dotQuet: demSoDotBTP || 1 
+    dotQuet: demSoDotBTP || 1
   });
 
   const demEl = document.getElementById("btp-dem");
@@ -230,15 +231,15 @@ function khiQuetDuocMaBTP(result) {
 function luuPhienDoDangBTP() {
   try {
     localStorage.setItem(BTP_DODANG_KEY, JSON.stringify({
-      phienBTP, ngayBTP, capNhat: new Date().toISOString(),
+      phienBTP, ngayBTP, phienSoBTP, capNhat: new Date().toISOString(),
       idPhienHienTaiBTP, soLuongDaGuiHienTaiBTP, demSoDotBTP
     }));
-  } catch (e) {}
+  } catch (e) { }
   if (typeof capNhatTrangChu === "function") capNhatTrangChu();
 }
 
 function xoaPhienDoDangBTP() {
-  try { localStorage.removeItem(BTP_DODANG_KEY); } catch (e) {}
+  try { localStorage.removeItem(BTP_DODANG_KEY); } catch (e) { }
   if (typeof capNhatTrangChu === "function") capNhatTrangChu();
 }
 
@@ -247,8 +248,11 @@ async function batDauBTP() {
   ngayBTP = ngayEl ? ngayEl.value : new Date().toISOString().split("T")[0];
   if (!ngayBTP) { showCanhBaoBTP("Vui lòng chọn ngày!"); return; }
 
+  const phienEl = document.getElementById("btp-phien");
+  phienSoBTP = phienEl ? (parseInt(phienEl.value, 10) || 1) : 1;
+
   let phienCu = null;
-  try { phienCu = JSON.parse(localStorage.getItem(BTP_DODANG_KEY)); } catch (e) {}
+  try { phienCu = JSON.parse(localStorage.getItem(BTP_DODANG_KEY)); } catch (e) { }
   if (phienCu && Array.isArray(phienCu.phienBTP) && phienCu.phienBTP.length > 0) {
     if (typeof moXacNhanApp === "function") {
       moXacNhanApp(
@@ -282,7 +286,7 @@ async function batDauPhienMoiBTP() {
   document.getElementById("btp-ketqua").style.display = "none";
   document.getElementById("btp-dem").textContent = "Đã quét: 0 mã";
   document.getElementById("btp-status").textContent = "🟢 Đang quét Đợt 1...";
-  
+
   capNhatLogBTP();
 
   const btnToggle = document.getElementById("btn-dung-tieptuc-btp");
@@ -297,7 +301,7 @@ async function batDauPhienMoiBTP() {
         khiQuetDuocMaBTP({ getText: () => txt });
       }
     });
-  } catch(e) {
+  } catch (e) {
     showCanhBaoBTP("Lỗi camera: " + e);
     dungBTP();
   }
@@ -325,7 +329,7 @@ async function tiepTucBTP() {
         khiQuetDuocMaBTP({ getText: () => txt });
       }
     });
-  } catch(e) {
+  } catch (e) {
     alert("Lỗi camera: " + e);
     dungBTP();
   }
@@ -355,7 +359,7 @@ function docPendingBTP() {
 }
 
 function luuPendingBTP(list) {
-  try { localStorage.setItem(BTP_PENDING_KEY, JSON.stringify(list)); } catch (e) {}
+  try { localStorage.setItem(BTP_PENDING_KEY, JSON.stringify(list)); } catch (e) { }
   capNhatBadgePendingBTP();
 }
 
@@ -406,38 +410,72 @@ async function guiLenSheetBTP(rows) {
   if (json && json.error) throw new Error(json.error);
 }
 
-async function ketThucBTP() {
+// Chỉ dừng camera và hiện bảng kết quả — KHÔNG gửi lên Sheet
+function xemKetQuaBTP() {
   dungBTP();
-  xoaPhienDoDangBTP();
-
   hienKetQuaBTP();
+  luuPhienDoDangBTP();
+}
+window.xemKetQuaBTP = xemKetQuaBTP;
 
+// Gửi phần dữ liệu CHƯA GỬI lên Google Sheet (tránh trùng lặp)
+async function guiDuLieuBTP() {
   const moiBoSung = phienBTP.slice(soLuongDaGuiHienTaiBTP);
-  if (moiBoSung.length > 0) {
-    const rows = moiBoSung.map(r => ({
-      rawQR: r.rawQR,
-      id: r.rawQR,
-      msp: r.msp,
-      qc: r.qc,
-      kg: r.kg,
-      ngay: ngayBTP,
-      thoiGian: r.thoiGian ? (typeof r.thoiGian.toISOString === "function" ? r.thoiGian.toISOString() : r.thoiGian) : new Date().toISOString()
-    }));
-    try {
-      await guiLenSheetBTP(rows);
-      soLuongDaGuiHienTaiBTP = phienBTP.length;
-    } catch (err) {
-      const pending = docPendingBTP();
-      pending.push(...rows);
-      luuPendingBTP(pending);
-      showCanhBaoBTP("Mất mạng — đã lưu tạm trên máy, sẽ tự gửi lại sau");
-      soLuongDaGuiHienTaiBTP = phienBTP.length;
-    }
-    if (typeof capNhatTrangThaiMang === "function") capNhatTrangThaiMang();
+  if (moiBoSung.length === 0) {
+    showCanhBaoBTP("Không có dữ liệu mới để gửi!");
+    return;
   }
 
-  luuVaoLichSuBTP();
+  const btnGui = document.getElementById("btn-gui-dulieu-btp");
+  if (btnGui) {
+    btnGui.disabled = true;
+    btnGui.textContent = "⏳ Đang gửi " + moiBoSung.length + " mã...";
+  }
+
+  const rows = moiBoSung.map(r => ({
+    rawQR: r.rawQR,
+    id: r.rawQR,
+    msp: r.msp,
+    qc: r.qc,
+    kg: r.kg,
+    ngay: ngayBTP,
+    phien: phienSoBTP,
+    thoiGian: r.thoiGian ? (typeof r.thoiGian.toISOString === "function" ? r.thoiGian.toISOString() : r.thoiGian) : new Date().toISOString()
+  }));
+
+  try {
+    await guiLenSheetBTP(rows);
+    soLuongDaGuiHienTaiBTP = phienBTP.length;
+    xoaPhienDoDangBTP();
+    luuVaoLichSuBTP();
+    showCanhBaoBTP("✅ Đã gửi thành công " + rows.length + " mã lên Sheet!");
+    if (btnGui) {
+      btnGui.textContent = "✅ Đã gửi thành công";
+      btnGui.style.background = "linear-gradient(135deg, #10b981, #059669)";
+      btnGui.style.color = "#fff";
+    }
+  } catch (err) {
+    const pending = docPendingBTP();
+    pending.push(...rows);
+    luuPendingBTP(pending);
+    showCanhBaoBTP("Mất mạng — đã lưu tạm trên máy, sẽ tự gửi lại sau");
+    soLuongDaGuiHienTaiBTP = phienBTP.length;
+    if (btnGui) {
+      btnGui.disabled = false;
+      btnGui.textContent = "📤 Gửi dữ liệu lên Sheet";
+      btnGui.style.background = "linear-gradient(135deg, #f59e0b, #d97706)";
+      btnGui.style.color = "#1a1a2e";
+    }
+  }
+  if (typeof capNhatTrangThaiMang === "function") capNhatTrangThaiMang();
 }
+window.guiDuLieuBTP = guiDuLieuBTP;
+
+// Giữ backward-compatible
+async function ketThucBTP() {
+  xemKetQuaBTP();
+}
+
 
 function taoHangKetQuaBTP(danhSach) {
   let tongGomLoaiMa = {};
@@ -478,7 +516,7 @@ function taoHangKetQuaBTP(danhSach) {
   <tr>
     <td style="padding:10px;font-weight:700;color:var(--brass);background:var(--card-raised)">TỔNG</td>
     <td style="padding:10px;background:var(--card-raised)"></td>
-    <td style="padding:10px;text-align:right;font-weight:700;color:var(--brass);background:var(--card-raised)">${tongQRAll} mã</td>
+    <td style="padding:10px;text-align:right;font-weight:700;color:var(--brass);background:var(--card-raised)">${soDot}</td>
     <td style="padding:10px;background:var(--card-raised)"></td>
   </tr>`;
 
@@ -517,6 +555,15 @@ function hienKetQuaBTP() {
 
   document.getElementById("btp-cam").style.display = "none";
   document.getElementById("btp-ketqua").style.display = "block";
+
+  // Reset nút gửi về trạng thái ban đầu
+  const btnGui = document.getElementById("btn-gui-dulieu-btp");
+  if (btnGui) {
+    btnGui.disabled = false;
+    btnGui.textContent = "📤 Gửi dữ liệu lên Sheet";
+    btnGui.style.background = "linear-gradient(135deg, #f59e0b, #d97706)";
+    btnGui.style.color = "#1a1a2e";
+  }
 }
 
 async function quetTiepBTP() {
@@ -541,7 +588,7 @@ async function quetTiepBTP() {
         khiQuetDuocMaBTP({ getText: () => txt });
       }
     });
-  } catch(e) {
+  } catch (e) {
     alert("Lỗi camera: " + e);
     dungBTP();
   }
@@ -570,6 +617,7 @@ async function khoiPhucBTP(state) {
   phienBTP = state.phienBTP.map(r => ({ ...r, thoiGian: new Date(r.thoiGian) }));
   demSoDotBTP = state.demSoDotBTP || 1;
   ngayBTP = state.ngayBTP;
+  phienSoBTP = state.phienSoBTP || 1;
   idPhienHienTaiBTP = state.idPhienHienTaiBTP || (Date.now() + "-" + Math.random().toString(36).slice(2));
   soLuongDaGuiHienTaiBTP = state.soLuongDaGuiHienTaiBTP !== undefined ? state.soLuongDaGuiHienTaiBTP : 0;
   dangQuetBTP = true;
@@ -580,7 +628,7 @@ async function khoiPhucBTP(state) {
   document.getElementById("btp-ketqua").style.display = "none";
   document.getElementById("btp-dem").textContent = "Đã quét: " + phienBTP.length + " mã";
   document.getElementById("btp-status").textContent = "🟢 Đang quét Đợt " + demSoDotBTP + "...";
-  
+
   capNhatLogBTP();
 
   const btnToggle = document.getElementById("btn-dung-tieptuc-btp");
@@ -603,7 +651,7 @@ async function khoiPhucBTP(state) {
 
 function tiepTucPhienBTP() {
   let state = null;
-  try { state = JSON.parse(localStorage.getItem(BTP_DODANG_KEY)); } catch (e) {}
+  try { state = JSON.parse(localStorage.getItem(BTP_DODANG_KEY)); } catch (e) { }
   if (!state) return;
   if (typeof diToiTab === "function") diToiTab("btpPage");
   else if (typeof chuyenTrang === "function") chuyenTrang("btpPage");
@@ -629,7 +677,7 @@ function docLichSuBTP() {
 }
 
 function luuLichSuBTP(list) {
-  try { localStorage.setItem(BTP_LICHSU_KEY, JSON.stringify(list)); } catch (e) {}
+  try { localStorage.setItem(BTP_LICHSU_KEY, JSON.stringify(list)); } catch (e) { }
 }
 
 function xoaMotPhienLichSuBTP(idPhien, ev) {
@@ -742,13 +790,13 @@ function xemChiTietLichSuBTP(idPhien) {
 
   dangXemLichSuBTPId = idPhien;
   const { hangDot, footDot, hangGom, footGom } = taoHangKetQuaBTP(entry.phienBTP);
-  
+
   const elDot = document.getElementById("lichsu-btp-tbody-dot");
   const elFootDot = document.getElementById("lichsu-btp-tfoot-dot");
   const elGom = document.getElementById("lichsu-btp-tbody-gom");
   const elFootGom = document.getElementById("lichsu-btp-tfoot-gom");
   const elTieude = document.getElementById("lichsu-btp-chitiet-tieude");
-  
+
   if (elDot) elDot.innerHTML = hangDot;
   if (elFootDot) elFootDot.innerHTML = footDot;
   if (elGom) elGom.innerHTML = hangGom;
@@ -849,29 +897,36 @@ function xuatExcelBTP() {
   XLSX.writeFile(wb, "Quet_BTP_" + ngay + ".xlsx");
 }
 
-window.addEventListener("load", function() {
-  const today = new Date().toISOString().split("T")[0];
+window.addEventListener("load", function () {
+  const now = new Date();
+  const today = now.toISOString().split("T")[0];
   const ngayInput = document.getElementById("btp-ngay");
   if (ngayInput) ngayInput.value = today;
+
+  const phienSelect = document.getElementById("btp-phien");
+  if (phienSelect) {
+    // Trước 12h chọn Phiên 1, từ 12h trở đi chọn Phiên 2
+    phienSelect.value = now.getHours() < 12 ? "1" : "2";
+  }
 });
 
-window.addEventListener("load", async function() {
+window.addEventListener("load", async function () {
   const pending = docPendingBTP();
   if (pending.length === 0) return;
   try {
     await guiLenSheetBTP(pending);
     luuPendingBTP([]);
-  } catch (e) {}
+  } catch (e) { }
   if (typeof capNhatTrangThaiMang === "function") capNhatTrangThaiMang();
 });
 
-window.addEventListener("online", async function() {
+window.addEventListener("online", async function () {
   const pending = docPendingBTP();
   if (pending.length === 0) return;
   try {
     await guiLenSheetBTP(pending);
     luuPendingBTP([]);
-  } catch (e) {}
+  } catch (e) { }
   if (typeof capNhatTrangThaiMang === "function") capNhatTrangThaiMang();
 });
 
