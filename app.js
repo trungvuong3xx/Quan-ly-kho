@@ -600,55 +600,11 @@ function luuPendingApp(list) {
 }
 
 async function guiPendingApp() {
-  const pending = docPendingApp();
-  if (pending.length === 0) return;
-  try {
-    let successCount = 0;
-    const remaining = [];
-    for (const item of pending) {
-      try {
-        const r = await callAPI({ action: "luuGiaoDich", ...item });
-        if (r && !r.error) {
-          successCount++;
-        } else {
-          remaining.push(item);
-        }
-      } catch (e) {
-        remaining.push(item);
-      }
-    }
-    luuPendingApp(remaining);
-    if (successCount > 0) {
-      showCanhBao("🟢 Đã đồng bộ " + successCount + " mã offline thành công!");
-    }
-  } catch (e) { }
-  capNhatTrangThaiMang();
-}
-
-function capNhatTrangThaiMang() {
-  const el = document.getElementById("mang-status");
-  if (!el) return;
-  const isOnline = navigator.onLine;
-  const pendingApp = docPendingApp();
-  let pendingCX1 = [];
-  try { if (typeof docPendingCX1 === "function") pendingCX1 = docPendingCX1(); } catch (e) { }
-  const tongPending = pendingApp.length + pendingCX1.length;
-
-  if (!isOnline) {
-    el.textContent = "🔴 Ngoại tuyến" + (tongPending > 0 ? " (Đã lưu tạm " + tongPending + " mã)" : "");
-    el.className = "mang-status show err";
-  } else if (tongPending > 0) {
-    el.textContent = "⚡ Có mạng — Đang đồng bộ " + tongPending + " mã...";
-    el.className = "mang-status show warn";
-  } else {
-    el.className = "mang-status";
-    el.textContent = "";
-  }
+  await dongBoTatCaOfflineApp();
 }
 
 window.addEventListener("online", () => {
-  capNhatTrangThaiMang();
-  guiPendingApp();
+  dongBoTatCaOfflineApp();
 });
 window.addEventListener("offline", () => {
   capNhatTrangThaiMang();
@@ -1002,10 +958,11 @@ window.dongOverlay = dongOverlay;
 window.luuGiaoDich = luuGiaoDich;
 window.toggleQuetNhanh = toggleQuetNhanh;
 
-// ── Trạng thái mạng (dùng chung toàn ứng dụng) ──────
+// ── Trạng thái mạng & Bộ máy đồng bộ tập trung toàn bộ module ──────
 function demPendingMang() {
   let tong = 0;
   try { tong += JSON.parse(localStorage.getItem(APP_PENDING_KEY) || "[]").length; } catch (e) { }
+  try { tong += JSON.parse(localStorage.getItem("qr_pending_saves") || "[]").length; } catch (e) { }
   try { tong += JSON.parse(localStorage.getItem("cx1_pending_saves") || "[]").length; } catch (e) { }
   try { tong += JSON.parse(localStorage.getItem("kk_pending_saves") || "[]").length; } catch (e) { }
   try { tong += JSON.parse(localStorage.getItem("cx5_pending_saves") || "[]").length; } catch (e) { }
@@ -1013,9 +970,124 @@ function demPendingMang() {
   return tong;
 }
 
+let dangDongBoTongApp = false;
+
+async function dongBoTatCaOfflineApp() {
+  if (dangDongBoTongApp) return;
+  dangDongBoTongApp = true;
+
+  try {
+    // 1. Đồng bộ App QR
+    const appPending = [...docPendingApp(), ...(function () { try { return JSON.parse(localStorage.getItem("qr_pending_saves") || "[]"); } catch (e) { return []; } })()];
+    if (appPending.length > 0) {
+      const remainingApp = [];
+      let okCount = 0;
+      for (const item of appPending) {
+        try {
+          const r = await callAPI({ action: "luuGiaoDich", ...item });
+          if (r && !r.error) okCount++;
+          else remainingApp.push(item);
+        } catch (e) { remainingApp.push(item); }
+      }
+      luuPendingApp(remainingApp);
+      try { localStorage.removeItem("qr_pending_saves"); } catch (e) { }
+    }
+
+    // 2. Đồng bộ Chỉ FOR (CX1)
+    if (typeof docPendingCX1 === "function" && typeof guiLenSheetCX1 === "function") {
+      const pendingCX1 = docPendingCX1();
+      if (pendingCX1.length > 0) {
+        try {
+          await guiLenSheetCX1(pendingCX1);
+          if (typeof luuPendingCX1 === "function") luuPendingCX1([]);
+        } catch (e) { }
+      }
+    }
+
+    // 3. Đồng bộ BTP
+    if (typeof docPendingBTP === "function" && typeof guiLenSheetBTP === "function") {
+      const pendingBTP = docPendingBTP();
+      if (pendingBTP.length > 0) {
+        try {
+          await guiLenSheetBTP(pendingBTP);
+          if (typeof luuPendingBTP === "function") luuPendingBTP([]);
+        } catch (e) { }
+      }
+    }
+
+    // 4. Đồng bộ Chỉ X5 (CX5)
+    try {
+      const pendingCX5 = JSON.parse(localStorage.getItem("cx5_pending_saves") || "[]");
+      if (pendingCX5.length > 0 && typeof callApiCX5 === "function") {
+        const remainingCX5 = [];
+        for (const item of pendingCX5) {
+          try {
+            const r = await callApiCX5({ action: "submitEntryX5", payload: item });
+            if (!r || !r.success) remainingCX5.push(item);
+          } catch (e) { remainingCX5.push(item); }
+        }
+        localStorage.setItem("cx5_pending_saves", JSON.stringify(remainingCX5));
+      }
+    } catch (e) { }
+
+    // 5. Đồng bộ Kiểm kê
+    try {
+      const pendingKK = JSON.parse(localStorage.getItem("kk_pending_saves") || "[]");
+      if (pendingKK.length > 0 && typeof callAPI === "function") {
+        const r = await callAPI({ action: "luuKiemKe", data: pendingKK });
+        if (r && !r.error) localStorage.setItem("kk_pending_saves", "[]");
+      }
+    } catch (e) { }
+
+  } finally {
+    dangDongBoTongApp = false;
+    capNhatTrangThaiMang();
+  }
+}
+window.dongBoTatCaOfflineApp = dongBoTatCaOfflineApp;
+
+function xoaSachPendingApp() {
+  try { localStorage.removeItem(APP_PENDING_KEY); } catch (e) { }
+  try { localStorage.removeItem("qr_pending_saves"); } catch (e) { }
+  try { localStorage.removeItem("cx1_pending_saves"); } catch (e) { }
+  try { localStorage.removeItem("btp_pending_saves"); } catch (e) { }
+  try { localStorage.removeItem("cx5_pending_saves"); } catch (e) { }
+  try { localStorage.removeItem("kk_pending_saves"); } catch (e) { }
+  if (typeof luuPendingBTP === "function") luuPendingBTP([]);
+  if (typeof luuPendingCX1 === "function") luuPendingCX1([]);
+  if (typeof luuPendingCX5 === "function") luuPendingCX5([]);
+  capNhatTrangThaiMang();
+  if (typeof showCanhBao === "function") showCanhBao("Đã xóa sạch hàng chờ đồng bộ!");
+}
+window.xoaSachPendingApp = xoaSachPendingApp;
+
+function toggleHopThoaiDongBoMang() {
+  const soCho = demPendingMang();
+  if (soCho === 0) return;
+
+  if (typeof moXacNhanApp === "function") {
+    moXacNhanApp(
+      "Đang có " + soCho + " bản ghi chưa đồng bộ. Bạn muốn làm gì?",
+      function () { dongBoTatCaOfflineApp(); },
+      "⚡ Thử đồng bộ ngay",
+      function () { xoaSachPendingApp(); },
+      "🗑️ Xóa hàng chờ này",
+      "Hàng chờ đồng bộ"
+    );
+  }
+}
+
 function capNhatTrangThaiMang() {
   const el = document.getElementById("mang-status");
   if (!el) return;
+
+  if (!el.getAttribute("data-has-click")) {
+    el.setAttribute("data-has-click", "true");
+    el.style.cursor = "pointer";
+    el.title = "Bấm để tùy chọn đồng bộ hoặc xóa hàng chờ";
+    el.onclick = toggleHopThoaiDongBoMang;
+  }
+
   const soCho = demPendingMang();
   if (!navigator.onLine) {
     const text = soCho > 0 ? ("Ngoại tuyến (" + soCho + " mã chờ đồng bộ)") : "Ngoại tuyến";
@@ -1030,10 +1102,16 @@ function capNhatTrangThaiMang() {
   }
 }
 
-window.addEventListener("online", capNhatTrangThaiMang);
+window.addEventListener("online", () => {
+  capNhatTrangThaiMang();
+  dongBoTatCaOfflineApp();
+});
 window.addEventListener("offline", capNhatTrangThaiMang);
-window.addEventListener("load", capNhatTrangThaiMang);
-setInterval(capNhatTrangThaiMang, 4000);
+window.addEventListener("load", () => {
+  capNhatTrangThaiMang();
+  dongBoTatCaOfflineApp();
+});
+setInterval(capNhatTrangThaiMang, 3000);
 window.capNhatTrangThaiMang = capNhatTrangThaiMang;
 
 let _appXacNhanCallbackOk = null;
