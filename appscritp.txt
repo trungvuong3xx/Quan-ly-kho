@@ -688,10 +688,33 @@ function chuoiThanhDsSo_(v) {
 
 function ghiGhepCX5(payload) {
   try {
-    const groups = payload.groups || [];
     const ss = SpreadsheetApp.getActiveSpreadsheet();
-    const sh = ss.getSheetByName("LSC5");
-    if (!sh) return { success: false, message: "Không tìm thấy sheet LSC5" };
+    let sh = ss.getSheetByName("LSC5");
+    if (!sh) sh = ss.insertSheet("LSC5");
+
+    // 1) Ghi dữ liệu lượt nhập phiên hôm nay vào LSC5
+    const sessionEntries = (payload && payload.sessionEntries) ? payload.sessionEntries : [];
+    sessionEntries.forEach(function (se) {
+      ghiLichSuC5(se);
+    });
+
+    // 2) Ghép pallet nếu có các khối được chọn
+    const groups = (payload && payload.groups) ? payload.groups : [];
+    if (groups.length === 0) {
+      return { success: true, message: "Đã ghi dữ liệu phiên vào Sheet LSC5 thành công" };
+    }
+
+    const blocks = docCacKhoiLSC5_();
+    groups.forEach(function (g) {
+      if (!g.rowNeo && g.key) {
+        const parts = g.key.split("|");
+        const msp = parts[0], ten = parts[1];
+        const match = blocks.slice().reverse().find(function (b) {
+          return b.msp === msp && b.ten === ten && (payload.dateStr ? b.ngay === payload.dateStr : true);
+        });
+        if (match) g.rowNeo = match.rowCuoiCung;
+      }
+    });
 
     const rowsCu = [];
     groups.forEach(function (g) {

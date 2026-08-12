@@ -1247,34 +1247,55 @@ async function dongBoGhepCX5() {
     const chosen = d.cu.filter(function (c) { return c.checked; });
     if (chosen.length === 0) return;
 
-    let tongBao = d.homNay.bao, tongKg = d.homNay.kg;
+    let tongBao = d.homNay ? d.homNay.bao : 0;
+    let tongKg = d.homNay ? d.homNay.kg : 0;
     chosen.forEach(function (c) { tongBao += c.bao; tongKg += c.kg; });
 
     groups.push({
       key: key,
-      rowNeo: d.homNay.row,
+      rowNeo: d.homNay ? d.homNay.row : null,
       tongBao: tongBao,
       tongKg: Math.round(tongKg * 100) / 100,
       cuList: chosen.map(function (c) { return { row: c.row, bao: c.bao, kg: c.kg }; })
     });
   });
 
+  // Gom sessionEntries của phiên hiện tại để tạo các dòng lịch sử trên LSC5 nếu chưa có
+  const sessionMap = new Map();
+  phienCX5.forEach(r => {
+    const key = keyQCX5(r.msp, r.ten);
+    if (!sessionMap.has(key)) sessionMap.set(key, { msp: r.msp, ten: r.ten, lotMap: new Map(), lotOrder: [] });
+    const entry = sessionMap.get(key);
+    if (!entry.lotMap.has(r.luot)) { entry.lotMap.set(r.luot, []); entry.lotOrder.push(r.luot); }
+    entry.lotMap.get(r.luot).push(r.kg);
+  });
+
+  const sessionEntries = Array.from(sessionMap.values()).map(e => ({
+    dateStr: ngayCX5,
+    msp: e.msp,
+    ten: e.ten,
+    lots: e.lotOrder.map(lid => ({ kgList: e.lotMap.get(lid) }))
+  }));
+
   const btn = document.getElementById("cx5-btn-ghep");
-  if (btn) { btn.disabled = true; btn.innerHTML = '<i class="ti ti-refresh"></i> Đang đồng bộ...'; }
+  if (btn) { btn.disabled = true; btn.innerHTML = '<i class="ti ti-refresh spin"></i> Đang đồng bộ LSC5...'; }
   showLoading(true);
 
   try {
     const payloadGroups = groups.map(function (g) {
-      return { rowNeo: g.rowNeo, tongBao: g.tongBao, tongKg: g.tongKg, cuList: g.cuList };
+      return { key: g.key, rowNeo: g.rowNeo, tongBao: g.tongBao, tongKg: g.tongKg, cuList: g.cuList };
     });
-    const r = await callApiCX5({ action: "ghiGhepCX5", payload: { groups: payloadGroups } });
+    const r = await callApiCX5({
+      action: "ghiGhepCX5",
+      payload: { dateStr: ngayCX5, groups: payloadGroups, sessionEntries: sessionEntries }
+    });
     showLoading(false);
     if (btn) { btn.disabled = false; btn.innerHTML = '<i class="ti ti-refresh"></i> Đồng bộ Bảng Tổng kết'; }
-    if (!r.success) { showCanhBaoCX5("Lỗi: " + (r.message || "không rõ nguyên nhân")); return; }
+    if (!r.success) { showCanhBaoCX5("Lỗi đồng bộ LSC5: " + (r.message || "không rõ nguyên nhân")); return; }
 
     groups.forEach(function (g) {
       const d = tongKgDataCX5[g.key];
-      if (!d) return;
+      if (!d || !d.homNay) return;
       d.homNay.bao = g.tongBao;
       d.homNay.kg = g.tongKg;
       const rowsDaGhep = g.cuList.map(function (c) { return c.row; });
