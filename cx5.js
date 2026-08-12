@@ -1133,26 +1133,34 @@ function renderTongKetPhienTongKgCX5() {
   const tbody = document.getElementById("cx5-tbody-tongkg-phien");
   if (!tbody) return;
 
-  const daXuLy = new Set();
   const danhSach = [];
-  const gom = tomTatCX5();
 
-  // 1) Lấy số bao & kg thực tế từ phienCX5 (đang nhập trong phiên) để khớp 100% với Bảng chi tiết
-  Object.keys(gom).forEach(function (key) {
-    daXuLy.add(key);
-    const g = gom[key];
-    let bao = g.bao;
-    let kg = g.kg;
+  // 1) Hiển thị tách biệt từng LƯỢT nhập (khớp từng dòng với Bảng chi tiết)
+  const luotMap = new Map();
+  const thuTuLuot = [];
+  phienCX5.forEach(r => {
+    if (!luotMap.has(r.luot)) { luotMap.set(r.luot, []); thuTuLuot.push(r.luot); }
+    luotMap.get(r.luot).push(r);
+  });
+
+  thuTuLuot.slice().reverse().forEach(function (lid) {
+    const rows = luotMap.get(lid);
+    const first = rows[0];
+    const key = keyQCX5(first.msp, first.ten);
+
+    let bao = rows.length;
+    let kg = rows.reduce((s, r) => s + r.kg, 0);
     let trangThaiHtml = '<i class="ti ti-minus" style="color:var(--cream-soft);font-size:18px" title="Chưa ghép"></i>';
 
     const cardKey = Object.keys(tongKgDataCX5).find(function (k) {
-      return k === key || k.indexOf(g.msp) !== -1;
+      return k === key || k.indexOf(first.msp) !== -1;
     });
 
     if (cardKey && tongKgDataCX5[cardKey]) {
       const card = tongKgDataCX5[cardKey];
       const chosen = card.cu.filter(function (c) { return c.checked; });
       if (chosen.length > 0) {
+        // Lượt này có chọn ghép pallet -> Thay thế số bao & kg bằng tổng sau ghép
         bao += chosen.reduce(function (s, c) { return s + c.bao; }, 0);
         kg += chosen.reduce(function (s, c) { return s + c.kg; }, 0);
         trangThaiHtml = '<i class="ti ti-layers-intersect" style="color:var(--accent-2);font-size:18px" title="Đã chọn ghép"></i>';
@@ -1161,30 +1169,29 @@ function renderTongKetPhienTongKgCX5() {
       }
     } else if (bao >= 10) {
       trangThaiHtml = '<i class="ti ti-check" style="color:var(--success);font-size:18px" title="OK (≥10 bao)"></i>';
-    } else if (g.baoDaDongBo > 0) {
+    } else if (first.daDongBo) {
       trangThaiHtml = '<i class="ti ti-check" style="color:var(--success);font-size:18px" title="Đã đồng bộ"></i>';
     }
 
     danhSach.push({
-      ten: g.ten,
+      ten: first.ten,
       bao: bao,
       kg: Math.round(kg * 10) / 10,
       trangThaiHtml: trangThaiHtml
     });
   });
 
-  // 2) Quy cách từ tổng kết server nhưng chưa nhập ở phiên hiện tại
+  // 2) Quy cách dư từ server chưa có lượt nào trong phiên hiện tại
   tongKetPhienCX5.forEach(function (item) {
-    const key = item.msp + "|" + item.ten;
-    if (daXuLy.has(key)) return;
-    daXuLy.add(key);
-
-    danhSach.push({
-      ten: item.ten,
-      bao: item.bao,
-      kg: Math.round(item.kg * 10) / 10,
-      trangThaiHtml: '<i class="ti ti-minus" style="color:var(--cream-soft);font-size:18px"></i>'
-    });
+    const daduocHien = danhSach.some(function (d) { return d.ten === item.ten; });
+    if (!daduocHien) {
+      danhSach.push({
+        ten: item.ten,
+        bao: item.bao,
+        kg: Math.round(item.kg * 10) / 10,
+        trangThaiHtml: '<i class="ti ti-minus" style="color:var(--cream-soft);font-size:18px"></i>'
+      });
+    }
   });
 
   if (danhSach.length === 0) {
