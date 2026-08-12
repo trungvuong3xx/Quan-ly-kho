@@ -456,7 +456,11 @@ async function guiDuLieuBTP() {
     }
   } catch (err) {
     const pending = docPendingBTP();
-    pending.push(...rows);
+    rows.forEach(r => {
+      if (!pending.some(p => (p.rawQR || p.id) === (r.rawQR || r.id) && p.thoiGian === r.thoiGian)) {
+        pending.push(r);
+      }
+    });
     luuPendingBTP(pending);
     showCanhBaoBTP("Mất mạng — đã lưu tạm trên máy, sẽ tự gửi lại sau");
     soLuongDaGuiHienTaiBTP = phienBTP.length;
@@ -969,23 +973,24 @@ window.addEventListener("load", function () {
   chonPhienBTP(defaultVal);
 });
 
-window.addEventListener("load", async function () {
-  const pending = docPendingBTP();
-  if (pending.length === 0) return;
-  try {
-    await guiLenSheetBTP(pending);
-    luuPendingBTP([]);
-  } catch (e) { }
-  if (typeof capNhatTrangThaiMang === "function") capNhatTrangThaiMang();
-});
+let dangDongBoPendingBTP = false;
 
-window.addEventListener("online", async function () {
+async function tuDongDongBoPendingBTP() {
+  if (dangDongBoPendingBTP) return;
   const pending = docPendingBTP();
   if (pending.length === 0) return;
+
+  dangDongBoPendingBTP = true;
   try {
     await guiLenSheetBTP(pending);
     luuPendingBTP([]);
   } catch (e) { }
-  if (typeof capNhatTrangThaiMang === "function") capNhatTrangThaiMang();
-});
+  finally {
+    dangDongBoPendingBTP = false;
+    if (typeof capNhatTrangThaiMang === "function") capNhatTrangThaiMang();
+  }
+}
+
+window.addEventListener("load", tuDongDongBoPendingBTP);
+window.addEventListener("online", tuDongDongBoPendingBTP);
 
