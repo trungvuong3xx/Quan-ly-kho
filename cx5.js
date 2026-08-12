@@ -1283,7 +1283,11 @@ function xoaUngVienGhepCX5(key, idx) {
 }
 window.xoaUngVienGhepCX5 = xoaUngVienGhepCX5;
 
+let dangDongBoGhepCX5Lock = false;
+
 async function dongBoGhepCX5() {
+  if (dangDongBoGhepCX5Lock) return;
+
   const groups = [];
   Object.keys(tongKgDataCX5).forEach(function (key) {
     const d = tongKgDataCX5[key];
@@ -1303,9 +1307,10 @@ async function dongBoGhepCX5() {
     });
   });
 
-  // Gom sessionEntries của phiên hiện tại để tạo các dòng lịch sử trên LSC5 nếu chưa có
+  // Gom sessionEntries CHƯA ĐỒNG BỘ LSC5 của phiên hiện tại
+  const chuaDongBoLSC5Rows = phienCX5.filter(r => !r.daDongBoLSC5);
   const sessionMap = new Map();
-  phienCX5.forEach(r => {
+  chuaDongBoLSC5Rows.forEach(r => {
     const key = keyQCX5(r.msp, r.ten);
     if (!sessionMap.has(key)) sessionMap.set(key, { msp: r.msp, ten: r.ten, lotMap: new Map(), lotOrder: [] });
     const entry = sessionMap.get(key);
@@ -1320,6 +1325,12 @@ async function dongBoGhepCX5() {
     lots: e.lotOrder.map(lid => ({ kgList: e.lotMap.get(lid) }))
   }));
 
+  if (groups.length === 0 && sessionEntries.length === 0) {
+    showCanhBaoCX5("Dữ liệu phiên và các chọn ghép đã được đồng bộ trước đó!");
+    return;
+  }
+
+  dangDongBoGhepCX5Lock = true;
   const btn = document.getElementById("cx5-btn-ghep");
   if (btn) { btn.disabled = true; btn.innerHTML = '<i class="ti ti-refresh spin"></i> Đang đồng bộ LSC5...'; }
   showLoading(true);
@@ -1336,6 +1347,9 @@ async function dongBoGhepCX5() {
     if (btn) { btn.disabled = false; btn.innerHTML = '<i class="ti ti-refresh"></i> Đồng bộ Bảng Tổng kết'; }
     if (!r.success) { showCanhBaoCX5("Lỗi đồng bộ LSC5: " + (r.message || "không rõ nguyên nhân")); return; }
 
+    // Đánh dấu các dòng phienCX5 đã đồng bộ LSC5 thành công
+    chuaDongBoLSC5Rows.forEach(r => { r.daDongBoLSC5 = true; });
+
     groups.forEach(function (g) {
       const d = tongKgDataCX5[g.key];
       if (!d || !d.homNay) return;
@@ -1348,16 +1362,14 @@ async function dongBoGhepCX5() {
       if (phien) { phien.bao = g.tongBao; phien.kg = g.tongKg; }
     });
 
-    if (groups.length > 0) {
-      showCanhBaoCX5("Đã ghi ghép pallet cho " + groups.length + " quy cách");
-    } else {
-      showCanhBaoCX5("Đã đồng bộ Bảng Tổng kết thành công!");
-    }
+    showCanhBaoCX5("Đã đồng bộ dữ liệu phiên và ghép pallet vào Sheet LSC5 thành công!");
     renderTongKgCX5();
   } catch (e) {
     showLoading(false);
     if (btn) { btn.disabled = false; btn.innerHTML = '<i class="ti ti-refresh"></i> Đồng bộ Bảng Tổng kết'; }
     showCanhBaoCX5("Mất mạng — thử lại: " + e.message);
+  } finally {
+    dangDongBoGhepCX5Lock = false;
   }
 }
 window.dongBoGhepCX5 = dongBoGhepCX5;

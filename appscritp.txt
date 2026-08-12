@@ -692,10 +692,17 @@ function ghiGhepCX5(payload) {
     let sh = ss.getSheetByName("LSC5");
     if (!sh) sh = ss.insertSheet("LSC5");
 
-    // 1) Ghi dữ liệu lượt nhập phiên hôm nay vào LSC5
+    // 1) Ghi dữ liệu lượt nhập phiên hôm nay vào LSC5 (kiểm tra chống trùng)
     const sessionEntries = (payload && payload.sessionEntries) ? payload.sessionEntries : [];
+    const existingBlocks = docCacKhoiLSC5_();
+    const existingKeys = new Set(existingBlocks.map(b => b.ngay + "|" + b.msp));
+
     sessionEntries.forEach(function (se) {
-      ghiLichSuC5(se);
+      const checkKey = se.dateStr + "|" + se.msp;
+      if (!existingKeys.has(checkKey)) {
+        ghiLichSuC5(se);
+        existingKeys.add(checkKey);
+      }
     });
 
     // 2) Ghép pallet nếu có các khối được chọn
