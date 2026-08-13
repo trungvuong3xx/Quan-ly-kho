@@ -1068,36 +1068,49 @@ function moTongKgCX5(dsQC) {
           }
         });
         
-        let localHnBao = 0, localHnKg = 0;
+        const anchorCandidates = [];
+        homNayList.forEach(c => {
+           anchorCandidates.push({
+             row: c.row,
+             bao: c.effBao !== undefined ? c.effBao : c.bao,
+             kg: c.effKg !== undefined ? c.effKg : c.kg
+           });
+        });
+        
         const thuTuLocal = Array.from(luotMapLocal.keys());
-        for (let i = thuTuLocal.length - 1; i >= 0; i--) {
+        for (let i = 0; i < thuTuLocal.length; i++) {
           const rows = luotMapLocal.get(thuTuLocal[i]);
           if (rows.length > 0 && rows.length < 10) {
-            localHnBao = rows.length;
-            localHnKg = rows.reduce(function (s, r) { return s + r.kg; }, 0);
-            break;
+            anchorCandidates.push({
+              row: null,
+              bao: rows.length,
+              kg: Math.round(rows.reduce(function (s, r) { return s + r.kg; }, 0) * 10) / 10
+            });
           }
         }
 
-        const hnBao = localHnBao > 0 ? localHnBao : homNayList.reduce(function (s, c) { return s + (c.effBao !== undefined ? c.effBao : c.bao); }, 0);
-        const hnKg = localHnBao > 0 ? Math.round(localHnKg * 10) / 10 : Math.round(homNayList.reduce(function (s, c) { return s + (c.effKg !== undefined ? c.effKg : c.kg); }, 0) * 100) / 100;
-        const homNayNeo = (localHnBao > 0 || homNayList.length > 0)
-          ? { row: (homNayList.length > 0 ? homNayList[homNayList.length - 1].row : null), bao: hnBao, kg: hnKg }
-          : { row: null, bao: 0, kg: 0 };
+        if (anchorCandidates.length === 0) {
+           anchorCandidates.push({ row: null, bao: 0, kg: 0 });
+        }
 
-        tongKgDataCX5[key] = {
-          ten: q.ten,
-          msp: q.msp,
-          homNay: homNayNeo,
-          cu: cu.map(function (c) {
-            return {
-              row: c.row, ngay: c.ngay,
-              bao: c.effBao !== undefined ? c.effBao : c.bao,
-              kg: c.effKg !== undefined ? c.effKg : c.kg,
-              checked: false
+        anchorCandidates.forEach((anchor, idx) => {
+          if (anchor.bao > 0 || cu.length > 0) {
+            const cardKey = key + "|" + idx;
+            tongKgDataCX5[cardKey] = {
+              ten: q.ten,
+              msp: q.msp,
+              homNay: anchor,
+              cu: cu.map(function (c) {
+                return {
+                  row: c.row, ngay: c.ngay,
+                  bao: c.effBao !== undefined ? c.effBao : c.bao,
+                  kg: c.effKg !== undefined ? c.effKg : c.kg,
+                  checked: false
+                };
+              })
             };
-          })
-        };
+          }
+        });
       });
 
       renderTongKgCX5();
@@ -1186,9 +1199,14 @@ function renderTongKetPhienTongKgCX5() {
     let kg = rows.reduce((s, r) => s + r.kg, 0);
     let trangThaiHtml = '<i class="ti ti-minus" style="color:var(--cream-soft);font-size:18px" title="Chưa ghép"></i>';
 
-    const cardKey = Object.keys(tongKgDataCX5).find(function (k) {
-      return k === key || k.indexOf(first.msp) !== -1;
+    let cardKey = Object.keys(tongKgDataCX5).find(function (k) {
+      return k.indexOf(first.msp) !== -1 && tongKgDataCX5[k].homNay.bao === bao && Math.abs(tongKgDataCX5[k].homNay.kg - kg) < 0.2 && !appliedCards.has(k);
     });
+    if (!cardKey) {
+      cardKey = Object.keys(tongKgDataCX5).find(function (k) {
+        return k.indexOf(first.msp) !== -1 && !appliedCards.has(k);
+      });
+    }
 
     if (cardKey && tongKgDataCX5[cardKey]) {
       const card = tongKgDataCX5[cardKey];
@@ -1293,6 +1311,7 @@ async function dongBoGhepCX5() {
     groups.push({
       key: key,
       rowNeo: d.homNay ? d.homNay.row : null,
+      baoNeo: d.homNay ? d.homNay.bao : 0,
       tongBao: tongBao,
       tongKg: Math.round(tongKg * 100) / 100,
       cuList: chosen.map(function (c) { return { row: c.row, bao: c.bao, kg: c.kg }; })
