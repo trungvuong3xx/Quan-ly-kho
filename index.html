@@ -22,8 +22,42 @@
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <script>
   if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('./sw.js');
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('./sw.js', { updateViaCache: 'none' }).then(reg => {
+        // Tự động kiểm tra bản cập nhật mới trên GitHub mỗi khi mở app hoặc quay lại app
+        reg.update();
+
+        reg.addEventListener('updatefound', () => {
+          const newWorker = reg.installing;
+          if (newWorker) {
+            newWorker.addEventListener('statechange', () => {
+              if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                console.log('🔄 Đã phát hiện code mới từ GitHub, đang tự động nạp...');
+                newWorker.postMessage({ action: 'skipWaiting' });
+              }
+            });
+          }
+        });
+      }).catch(err => console.log('SW Reg Error:', err));
+
+      // Kiểm tra lại khi ứng dụng từ nền quay lại màn hình chính (Focus/Foreground)
+      document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') {
+          navigator.serviceWorker.ready.then(reg => reg.update()).catch(() => {});
+        }
+      });
+    });
+
+    // Tự động làm mới trang mượt mà ngay khi Service Worker mới kích hoạt
+    let refreshing = false;
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      if (!refreshing) {
+        refreshing = true;
+        window.location.reload();
+      }
+    });
   }
+</script>
   function capNhatGocXoayBaoVe() {
     const el = document.getElementById("app-viewport");
     if (!el) return;

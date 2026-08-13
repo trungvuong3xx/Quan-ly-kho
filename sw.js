@@ -1,4 +1,4 @@
-const CACHE_NAME = 'quan-ly-kho-v2026-v52-split-gui';
+const CACHE_NAME = 'quan-ly-kho-auto-update';
 const urlsToCache = [
   './',
   './index.html',
@@ -20,11 +20,19 @@ const urlsToCache = [
   'https://cdn.jsdelivr.net/npm/@zxing/library@0.19.1/umd/index.min.js'
 ];
 
+// ── Lắng nghe lệnh Skip Waiting từ trang chính ────────────────
+self.addEventListener('message', event => {
+  if (event.data && (event.data.action === 'skipWaiting' || event.data === 'skipWaiting')) {
+    self.skipWaiting();
+  }
+});
+
 self.addEventListener('install', event => {
+  self.skipWaiting(); // Kích hoạt ngay phiên bản mới vừa tải
   event.waitUntil(
     caches.open(CACHE_NAME).then(cache => {
       return cache.addAll(urlsToCache);
-    }).then(() => self.skipWaiting())
+    })
   );
 });
 
@@ -48,7 +56,7 @@ const APP_SHELL_EXTENSIONS = ['.html', '.js', '.css', '.json'];
 function laFileAppShell(url) {
   if (url.origin !== self.location.origin) return false;
   const path = url.pathname;
-  if (path.endsWith('/')) return true;
+  if (path.endsWith('/') || path === '') return true;
   return APP_SHELL_EXTENSIONS.some(ext => path.endsWith(ext));
 }
 
@@ -58,15 +66,19 @@ self.addEventListener('fetch', event => {
 
   const url = new URL(req.url);
 
+  // Network-First cho các file ứng dụng: Luôn lấy code mới nhất từ GitHub khi có mạng
   if (laFileAppShell(url)) {
     event.respondWith(
       fetch(req, { cache: 'no-store' }).then(res => {
-        const resClone = res.clone();
-        caches.open(CACHE_NAME).then(cache => cache.put(req, resClone));
+        if (res && res.status === 200) {
+          const resClone = res.clone();
+          caches.open(CACHE_NAME).then(cache => cache.put(req, resClone));
+        }
         return res;
       }).catch(() => caches.match(req, { ignoreSearch: true }))
     );
   } else {
+    // Cache-First cho tài nguyên tĩnh (ảnh, mp3, cdn)
     event.respondWith(
       caches.match(req, { ignoreSearch: true }).then(res => res || fetch(req))
     );
