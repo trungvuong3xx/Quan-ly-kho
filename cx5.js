@@ -1236,13 +1236,36 @@ function renderTongKetPhienTongKgCX5() {
 
   // 2) Quy cách dư từ server chưa có lượt nào trong phiên hiện tại
   tongKetPhienCX5.forEach(function (item) {
-    const daduocHien = danhSach.some(function (d) { return d.ten === item.ten; });
+    const daduocHien = danhSach.some(function (d) { 
+      return d.ten === item.ten && d.bao === item.bao && Math.abs(d.kg - item.kg) < 0.2; 
+    });
     if (!daduocHien) {
+      let bao = item.bao;
+      let kg = item.kg;
+      let trangThaiHtml = '<i class="ti ti-minus" style="color:var(--cream-soft);font-size:18px"></i>';
+
+      const cardKey = Object.keys(tongKgDataCX5).find(function(k) {
+         return tongKgDataCX5[k].ten === item.ten && tongKgDataCX5[k].homNay.bao === item.bao && Math.abs(tongKgDataCX5[k].homNay.kg - item.kg) < 0.2 && !appliedCards.has(k);
+      });
+
+      if (cardKey) {
+        const card = tongKgDataCX5[cardKey];
+        const chosen = card.cu.filter(function (c) { return c.checked; });
+        if (chosen.length > 0 && bao < 10 && !appliedCards.has(cardKey)) {
+          appliedCards.add(cardKey);
+          bao += chosen.reduce(function (s, c) { return s + c.bao; }, 0);
+          kg += chosen.reduce(function (s, c) { return s + c.kg; }, 0);
+          trangThaiHtml = '<i class="ti ti-layers-intersect" style="color:var(--accent-2);font-size:18px" title="Đã chọn ghép"></i>';
+        } else if (bao >= 10) {
+          trangThaiHtml = '<i class="ti ti-check" style="color:var(--success);font-size:18px" title="OK (≥10 bao)"></i>';
+        }
+      }
+
       danhSach.push({
         ten: item.ten,
-        bao: item.bao,
-        kg: Math.round(item.kg * 10) / 10,
-        trangThaiHtml: '<i class="ti ti-minus" style="color:var(--cream-soft);font-size:18px"></i>'
+        bao: bao,
+        kg: Math.round(kg * 10) / 10,
+        trangThaiHtml: trangThaiHtml
       });
     }
   });
