@@ -783,7 +783,7 @@
     <div id="cx5-tongkg-list"></div>
     <div class="cx5-box" style="margin-top:16px">
       <div class="cx5-box-top">
-        <div class="cx5-box-title">Bảng Tổng kết</div>
+        <div class="cx5-box-title" style="color:var(--brass); font-weight:700; font-size:15px; text-transform:uppercase;">Bảng Tổng kết</div>
         <button class="cx5-xoay-btn" onclick="xoayBangCX5('cx5-bang-tongkg-phien')" title="Xoay ngang">⤢</button>
       </div>
       <div id="cx5-bang-tongkg-phien-wrap" class="cx5-scroll">
@@ -895,6 +895,16 @@
     <div style="display:flex; gap:10px; margin-top:6px;">
       <button class="btn" style="flex:1;background:var(--neutral-solid);color:var(--cream)" id="cx5-xacnhan-nut-huy" onclick="dongXacNhanCX5(false)">Hủy</button>
       <button class="btn btn-red" style="flex:1" id="cx5-xacnhan-nut-ok" onclick="dongXacNhanCX5(true)">Xóa</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="cx5-overlay-nguongoc">
+  <div class="overlay-card">
+    <div class="overlay-title">Chi Tiết Nguồn Gốc</div>
+    <div id="cx5-ng-noidung" style="max-height:55vh;overflow:auto;margin:8px 0"></div>
+    <div style="display:flex; gap:10px; margin-top:6px;">
+      <button class="btn btn-full" style="background:var(--neutral-solid);color:var(--cream)" onclick="dongNguonGocCX5()">Đóng</button>
     </div>
   </div>
 </div>

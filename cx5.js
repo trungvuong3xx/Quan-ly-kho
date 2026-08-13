@@ -1060,10 +1060,29 @@ function moTongKgCX5(dsQC) {
           return effBao > 0 && effBao < 10 && c.v !== "X";
         });
 
-        const hnBao = homNayList.reduce(function (s, c) { return s + (c.effBao !== undefined ? c.effBao : c.bao); }, 0);
-        const hnKg = Math.round(homNayList.reduce(function (s, c) { return s + (c.effKg !== undefined ? c.effKg : c.kg); }, 0) * 100) / 100;
-        const homNayNeo = homNayList.length > 0
-          ? { row: homNayList[homNayList.length - 1].row, bao: hnBao, kg: hnKg }
+        const luotMapLocal = new Map();
+        phienCX5.forEach(function (r) {
+          if (r.msp === q.msp && r.ten === q.ten) {
+            if (!luotMapLocal.has(r.luot)) luotMapLocal.set(r.luot, []);
+            luotMapLocal.get(r.luot).push(r);
+          }
+        });
+        
+        let localHnBao = 0, localHnKg = 0;
+        const thuTuLocal = Array.from(luotMapLocal.keys());
+        for (let i = thuTuLocal.length - 1; i >= 0; i--) {
+          const rows = luotMapLocal.get(thuTuLocal[i]);
+          if (rows.length > 0 && rows.length < 10) {
+            localHnBao = rows.length;
+            localHnKg = rows.reduce(function (s, r) { return s + r.kg; }, 0);
+            break;
+          }
+        }
+
+        const hnBao = localHnBao > 0 ? localHnBao : homNayList.reduce(function (s, c) { return s + (c.effBao !== undefined ? c.effBao : c.bao); }, 0);
+        const hnKg = localHnBao > 0 ? Math.round(localHnKg * 10) / 10 : Math.round(homNayList.reduce(function (s, c) { return s + (c.effKg !== undefined ? c.effKg : c.kg); }, 0) * 100) / 100;
+        const homNayNeo = (localHnBao > 0 || homNayList.length > 0)
+          ? { row: (homNayList.length > 0 ? homNayList[homNayList.length - 1].row : null), bao: hnBao, kg: hnKg }
           : { row: null, bao: 0, kg: 0 };
 
         tongKgDataCX5[key] = {
@@ -1156,6 +1175,8 @@ function renderTongKetPhienTongKgCX5() {
     luotMap.get(r.luot).push(r);
   });
 
+  const appliedCards = new Set(); // Lưu vết để không cộng dồn dư vào nhiều lượt
+
   thuTuLuot.slice().reverse().forEach(function (lid) {
     const rows = luotMap.get(lid);
     const first = rows[0];
@@ -1172,8 +1193,9 @@ function renderTongKetPhienTongKgCX5() {
     if (cardKey && tongKgDataCX5[cardKey]) {
       const card = tongKgDataCX5[cardKey];
       const chosen = card.cu.filter(function (c) { return c.checked; });
-      if (chosen.length > 0) {
-        // Lượt này có chọn ghép pallet -> Thay thế số bao & kg bằng tổng sau ghép
+      if (chosen.length > 0 && bao < 10 && !appliedCards.has(cardKey)) {
+        // Chỉ cộng vào lượt đầu tiên đủ điều kiện (bao < 10)
+        appliedCards.add(cardKey);
         bao += chosen.reduce(function (s, c) { return s + c.bao; }, 0);
         kg += chosen.reduce(function (s, c) { return s + c.kg; }, 0);
         trangThaiHtml = '<i class="ti ti-layers-intersect" style="color:var(--accent-2);font-size:18px" title="Đã chọn ghép"></i>';
