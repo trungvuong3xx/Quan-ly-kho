@@ -1085,40 +1085,6 @@ function moTongKgCX5(dsQC) {
     }).catch(() => {});
   }
 }
-      .filter(function (c) {
-        const effBao = c.effBao !== undefined ? c.effBao : c.bao;
-        return effBao < 10 && c.v !== "X";
-      })
-      .map(function (c) {
-        const effBao = c.effBao !== undefined ? c.effBao : c.bao;
-        const effKg = c.effKg !== undefined ? c.effKg : c.kg;
-        return Object.assign({ checked: false, effBao: effBao, effKg: effKg }, c);
-      });
-
-    (duLieuQC.homNay || []).forEach(function (c) {
-      const effBao = c.effBao !== undefined ? c.effBao : c.bao;
-      const effKg = c.effKg !== undefined ? c.effKg : c.kg;
-      if (!tongKetPhienCX5.some(function (x) { return x.row === c.row; })) {
-        tongKetPhienCX5.push(Object.assign({ msp: q.msp, ten: q.ten, bao: effBao, kg: effKg }, c));
-      }
-    });
-
-    homNayList.forEach(function (homNay) {
-      const keyKhoi = key + "|" + homNay.row;
-      const effBao = homNay.effBao !== undefined ? homNay.effBao : homNay.bao;
-      const effKg = homNay.effKg !== undefined ? homNay.effKg : homNay.kg;
-      const homNayObj = Object.assign({}, homNay, { bao: effBao, kg: effKg });
-      tongKgDataCX5[keyKhoi] = {
-        msp: q.msp, ten: q.ten, homNay: homNayObj,
-        cu: cu.map(function (c) { return Object.assign({}, c); })
-      };
-    });
-  });
-
-  document.getElementById("cx5-doichieu").style.display = "none";
-  document.getElementById("cx5-tongkg").style.display = "block";
-  renderTongKgCX5();
-}
 
 function renderTongKgCX5() {
   const container = document.getElementById("cx5-tongkg-list");
