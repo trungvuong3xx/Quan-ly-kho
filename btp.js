@@ -245,8 +245,10 @@ function xoaPhienDoDangBTP() {
 
 async function batDauBTP() {
   const ngayEl = document.getElementById("btp-ngay");
-  ngayBTP = ngayEl ? ngayEl.value : new Date().toISOString().split("T")[0];
-  if (!ngayBTP) { showCanhBaoBTP("Vui lòng chọn ngày!"); return; }
+  if (ngayEl && !ngayEl.value) {
+    ngayEl.value = (typeof layNgayHomNayLocal === "function") ? layNgayHomNayLocal() : new Date().toISOString().split("T")[0];
+  }
+  ngayBTP = (ngayEl && ngayEl.value) ? ngayEl.value : ((typeof layNgayHomNayLocal === "function") ? layNgayHomNayLocal() : new Date().toISOString().split("T")[0]);
 
   const phienEl = document.getElementById("btp-phien");
   phienSoBTP = phienEl ? (parseInt(phienEl.value, 10) || 1) : 1;

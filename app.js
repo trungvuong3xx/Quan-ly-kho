@@ -241,6 +241,15 @@ function isNhap(loai) {
   return String(loai || "").startsWith("Nhập");
 }
 
+function layNgayHomNayLocal() {
+  const d = new Date();
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, '0');
+  return yyyy + '-' + mm + '-' + dd;
+}
+window.layNgayHomNayLocal = layNgayHomNayLocal;
+
 function chuyenTrang(id, el) {
   document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
   document.querySelectorAll(".bnav-btn").forEach(b => b.classList.remove("active"));
@@ -253,6 +262,13 @@ function chuyenTrang(id, el) {
     if (typeof dungBTP === "function") dungBTP();
   }
   if (id === "trangChu" && typeof capNhatTrangChu === "function") capNhatTrangChu();
+
+  // Tự động khởi tạo ngày hôm nay nếu ô chọn ngày đang trống
+  const today = layNgayHomNayLocal();
+  ["cx5-ngay", "cx1-ngay", "btp-ngay", "kk-ngay"].forEach(inputId => {
+    const inputEl = document.getElementById(inputId);
+    if (inputEl && !inputEl.value) inputEl.value = today;
+  });
 }
 
 // Điều hướng tới 1 tab từ nơi khác ngoài bottom-nav (nút tắt ở Trang chủ, banner tiếp tục...)

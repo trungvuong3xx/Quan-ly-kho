@@ -105,8 +105,11 @@ function xoaPhienDoDangCX1() {
 }
 
 async function batDauCX1() {
-  ngayCX1 = document.getElementById("cx1-ngay").value;
-  if (!ngayCX1) { alert("Vui lòng chọn ngày!"); return; }
+  const inputEl = document.getElementById("cx1-ngay");
+  if (inputEl && !inputEl.value) {
+    inputEl.value = (typeof layNgayHomNayLocal === "function") ? layNgayHomNayLocal() : new Date().toISOString().split("T")[0];
+  }
+  ngayCX1 = inputEl ? inputEl.value : ((typeof layNgayHomNayLocal === "function") ? layNgayHomNayLocal() : new Date().toISOString().split("T")[0]);
 
   let phienCu = null;
   try { phienCu = JSON.parse(localStorage.getItem("cx1_phien_dodang")); } catch (e) {}

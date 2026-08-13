@@ -159,9 +159,12 @@ function showCanhBaoCX5(text) {
   setTimeout(() => { el.style.display = "none"; }, 2200);
 }
 
-async function batDauCX5() {
-  ngayCX5 = document.getElementById("cx5-ngay").value;
-  if (!ngayCX5) { alert("Vui lòng chọn ngày!"); return; }
+function batDauCX5() {
+  const inputEl = document.getElementById("cx5-ngay");
+  if (inputEl && !inputEl.value) {
+    inputEl.value = (typeof layNgayHomNayLocal === "function") ? layNgayHomNayLocal() : new Date().toISOString().split("T")[0];
+  }
+  ngayCX5 = inputEl ? inputEl.value : ((typeof layNgayHomNayLocal === "function") ? layNgayHomNayLocal() : new Date().toISOString().split("T")[0]);
 
   let phienCu = null;
   try { phienCu = JSON.parse(localStorage.getItem("cx5_phien_dodang")); } catch (e) { }
@@ -176,10 +179,10 @@ async function batDauCX5() {
     return;
   }
 
-  await batDauPhienMoiCX5();
+  batDauPhienMoiCX5();
 }
 
-async function batDauPhienMoiCX5() {
+function batDauPhienMoiCX5() {
   phienCX5 = [];
   seqCX5 = 0;
   idPhienHienTaiC5 = Date.now() + "-" + Math.random().toString(36).slice(2);
@@ -195,10 +198,11 @@ async function batDauPhienMoiCX5() {
   document.getElementById("cx5-ngay-hienthi").textContent = ngayCX5;
   resetKhoaQCCX5();
 
-  await taiDanhSachQCX5(ngayCX5, false);
-
   renderBangChiTietCX5();
   renderBangTongHopCX5();
+
+  // Nạp danh sách QC ngầm phía sau (0ms không chặn UI)
+  taiDanhSachQCX5(ngayCX5, false).catch(() => {});
 }
 
 async function khoiPhucCX5(state) {
@@ -1973,11 +1977,11 @@ function bpQcEnterCX5() {
 window.bpQcEnterCX5 = bpQcEnterCX5;
 
 window.addEventListener("load", function () {
-  const now = new Date();
-  const todayStr = now.toISOString().split("T")[0];
+  const todayStr = (typeof layNgayHomNayLocal === "function") ? layNgayHomNayLocal() : new Date().toISOString().split("T")[0];
   const ngayInput = document.getElementById("cx5-ngay");
   if (ngayInput) ngayInput.value = todayStr;
 
+  const now = new Date();
   const monthKey = now.getMonth() + 1;
   const local = docMspCacheLocalCX5(monthKey, true);
   if (local && local.length > 0) {
