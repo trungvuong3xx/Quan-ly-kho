@@ -701,7 +701,7 @@
 
     <label>QC</label>
     <div class="cx5-ten-wrap" id="cx5-qc-tim-wrap">
-      <input type="text" id="cx5-ten" placeholder="Tìm QC..." autocomplete="off" readonly inputmode="none">
+      <input type="text" id="cx5-ten" placeholder="Tìm QC..." autocomplete="off" inputmode="none" oninput="onInputCX5()">
       <div id="cx5-dropdown" class="cx5-dropdown"></div>
     </div>
     <div id="cx5-qc-khoa" class="cx5-qc-khoa" style="display:none" onclick="moKhoaQCCX5()">
@@ -712,7 +712,7 @@
 
     <div id="cx5-kg-khu">
       <label>Kg</label>
-      <input type="text" id="cx5-kg" inputmode="none" readonly onkeydown="if(event.key==='Enter'){event.preventDefault();themDongCX5()}">
+      <input type="text" id="cx5-kg" inputmode="none" onkeydown="if(event.key==='Enter'){event.preventDefault();themDongCX5()}">
 
       <button class="btn btn-green btn-full" onclick="themDongCX5()">Thêm</button>
     </div>
@@ -756,13 +756,13 @@
 
       <label>Quy cách SX</label>
       <div class="cx5-ten-wrap" id="cx5-sx-qc-wrap">
-        <input type="text" id="cx5-sx-ten" placeholder="Gõ tên hoặc MSP bên SX..." autocomplete="off" readonly inputmode="none">
+        <input type="text" id="cx5-sx-ten" placeholder="Gõ tên hoặc MSP bên SX..." autocomplete="off" inputmode="none" oninput="onInputSXCX5()">
         <div id="cx5-sx-dropdown" class="cx5-dropdown"></div>
       </div>
       <input type="hidden" id="cx5-sx-msp">
 
       <div style="display:flex; gap:8px; margin-top:10px;">
-        <input type="text" id="cx5-sx-kg" placeholder="Số kg SX..." inputmode="none" readonly onkeydown="if(event.key==='Enter'){event.preventDefault();themDongSXCX5()}">
+        <input type="text" id="cx5-sx-kg" placeholder="Số kg SX..." inputmode="none" onkeydown="if(event.key==='Enter'){event.preventDefault();themDongSXCX5()}">
         <button class="btn btn-blue" style="flex-shrink:0; width:90px;" onclick="themDongSXCX5()"><i class="ti ti-plus"></i> Thêm</button>
       </div>
     </div>
@@ -856,13 +856,13 @@
     </div>
     <div id="cx5-sl-doi-qc-wrap" style="display:none;margin:8px 0;">
       <div class="cx5-ten-wrap">
-        <input type="text" id="cx5-sl-ten-tim" placeholder="Đổi thành quy cách..." autocomplete="off" readonly inputmode="none">
+        <input type="text" id="cx5-sl-ten-tim" placeholder="Đổi thành quy cách..." autocomplete="off" inputmode="none" oninput="onInputSLLuotCX5()">
         <div id="cx5-sl-dropdown" class="cx5-dropdown"></div>
       </div>
     </div>
     <div id="cx5-sl-chitiet" class="cx5-chitiet-kg" style="margin-top:10px"></div>
     <div style="display:flex;gap:8px;margin-top:14px">
-      <input type="text" id="cx5-sl-them-kg" inputmode="none" readonly placeholder="Thêm số kg..." onkeydown="if(event.key==='Enter'){event.preventDefault();themKgVaoLuotCX5()}">
+      <input type="text" id="cx5-sl-them-kg" inputmode="none" placeholder="Thêm số kg..." onkeydown="if(event.key==='Enter'){event.preventDefault();themKgVaoLuotCX5()}">
       <button class="btn btn-green" style="width:56px;flex-shrink:0" onclick="themKgVaoLuotCX5()"><i class="ti ti-plus"></i></button>
     </div>
     <button class="btn btn-full" style="background:var(--neutral-solid);color:var(--cream);margin-top:12px" onclick="dongSuaLuotCX5()">Đóng</button>
