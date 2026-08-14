@@ -1382,7 +1382,7 @@ async function dongBoGhepCX5() {
 
   try {
     const payloadGroups = groups.map(function (g) {
-      return { key: g.key, rowNeo: g.rowNeo, tongBao: g.tongBao, tongKg: g.tongKg, cuList: g.cuList };
+      return { key: g.key, rowNeo: g.rowNeo, baoNeo: g.baoNeo, tongBao: g.tongBao, tongKg: g.tongKg, cuList: g.cuList };
     });
     const r = await callApiCX5({
       action: "ghiGhepCX5",

@@ -12,6 +12,8 @@ Project-level behavioral and tooling guidelines.
 | `core-extensions` | Helpers: StringExtensions, NumberExtensions, EnumExtensions, XmlExtensions |
 | `logging` | Logging: LogEnter/LogLeave, Log/Warning/Error, [] formatting, | separator |
 | `codebase-memory` | MCP graph: search_graph, trace_path, detect_changes, index_repository |
+| `erp-igp-automation` | Quy trình tự động hóa nhập liệu chứng từ WorkFlow ERP iGP từ Google Sheets (Chỉ & Nhựa) |
+| `karpathy-guidelines` | Behavioral guidelines derived from Andrej Karpathy to reduce common LLM coding mistakes |
 
 ## Quick Reference
 
@@ -28,3 +30,4 @@ Project-level behavioral and tooling guidelines.
 
 1. `detect_changes()` → verify affected scope
 2. `index_repository(mode="full")` → sync knowledge graph
+3. Luôn rà soát lại toàn bộ logic ở các phần khác có liên quan đến đoạn code vừa được thêm/sửa/xóa để kịp thời đồng bộ, tránh phát sinh lỗi hiển thị hoặc sai lệch dữ liệu.
