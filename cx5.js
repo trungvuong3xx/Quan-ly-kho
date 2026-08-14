@@ -1200,7 +1200,9 @@ function renderTongKetPhienTongKgCX5() {
     let trangThaiHtml = '<i class="ti ti-minus" style="color:var(--cream-soft);font-size:18px" title="Chưa ghép"></i>';
 
     let cardKey = Object.keys(tongKgDataCX5).find(function (k) {
-      return k.indexOf(first.msp) !== -1 && tongKgDataCX5[k].homNay.bao === bao && Math.abs(tongKgDataCX5[k].homNay.kg - kg) < 0.2 && !appliedCards.has(k);
+      const kBao = tongKgDataCX5[k].homNay.bao - (tongKgDataCX5[k].daGhepBao || 0);
+      const kKg = tongKgDataCX5[k].homNay.kg - (tongKgDataCX5[k].daGhepKg || 0);
+      return k.indexOf(first.msp) !== -1 && kBao === bao && Math.abs(kKg - kg) < 0.2 && !appliedCards.has(k);
     });
     if (!cardKey) {
       cardKey = Object.keys(tongKgDataCX5).find(function (k) {
@@ -1211,11 +1213,20 @@ function renderTongKetPhienTongKgCX5() {
     if (cardKey && tongKgDataCX5[cardKey]) {
       const card = tongKgDataCX5[cardKey];
       const chosen = card.cu.filter(function (c) { return c.checked; });
-      if (chosen.length > 0 && bao < 10 && !appliedCards.has(cardKey)) {
+      let extraBao = 0, extraKg = 0;
+      if (chosen.length > 0) {
+        extraBao = chosen.reduce(function (s, c) { return s + c.bao; }, 0);
+        extraKg = chosen.reduce(function (s, c) { return s + c.kg; }, 0);
+      } else if (card.daGhepBao) {
+        extraBao = card.daGhepBao;
+        extraKg = card.daGhepKg;
+      }
+
+      if ((extraBao > 0 || extraKg > 0) && bao < 10 && !appliedCards.has(cardKey)) {
         // Chỉ cộng vào lượt đầu tiên đủ điều kiện (bao < 10)
         appliedCards.add(cardKey);
-        bao += chosen.reduce(function (s, c) { return s + c.bao; }, 0);
-        kg += chosen.reduce(function (s, c) { return s + c.kg; }, 0);
+        bao += extraBao;
+        kg += extraKg;
         trangThaiHtml = '<i class="ti ti-layers-intersect" style="color:var(--accent-2);font-size:18px" title="Đã chọn ghép"></i>';
       } else if (bao >= 10) {
         trangThaiHtml = '<i class="ti ti-check" style="color:var(--success);font-size:18px" title="OK (≥10 bao)"></i>';
@@ -1387,6 +1398,10 @@ async function dongBoGhepCX5() {
     groups.forEach(function (g) {
       const d = tongKgDataCX5[g.key];
       if (!d || !d.homNay) return;
+      
+      d.daGhepBao = (d.daGhepBao || 0) + (g.tongBao - d.homNay.bao);
+      d.daGhepKg = (d.daGhepKg || 0) + (g.tongKg - d.homNay.kg);
+
       d.homNay.bao = g.tongBao;
       d.homNay.kg = g.tongKg;
       const rowsDaGhep = g.cuList.map(function (c) { return c.row; });
