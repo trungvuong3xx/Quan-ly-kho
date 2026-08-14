@@ -586,6 +586,7 @@ function docCacKhoiLSC5_() {
   const data = sh.getRange(3, 2, numRows, 21).getValues();
 
   let cur = null;
+  let curNgay = "";
 
   function dongLai() {
     if (cur) {
@@ -599,9 +600,16 @@ function docCacKhoiLSC5_() {
   for (let i = 0; i < data.length; i++) {
     const r = data[i];
     const rowNum = 3 + i;
-    const ngayRaw = r[0];
+    let ngayRaw = r[0];
     const msp = r[1];
     const qc = r[2];
+
+    if (ngayRaw !== "" && ngayRaw !== null) {
+      curNgay = ngayRaw;
+    } else if (msp !== "" && msp !== null) {
+      ngayRaw = curNgay;
+    }
+
     const kgCells = r.slice(3, 15);
     const soBaoDong = kgCells.filter(function (v) { return v !== "" && v !== null; }).length;
     const tongCell = r[16];
@@ -609,7 +617,7 @@ function docCacKhoiLSC5_() {
     const kgGhepCell = r[19];
     const anCell = r[20];
 
-    if (ngayRaw !== "" && ngayRaw !== null && msp) {
+    if (msp !== "" && msp !== null) {
       dongLai();
       cur = {
         msp: String(msp).trim(),
