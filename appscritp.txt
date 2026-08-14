@@ -717,7 +717,7 @@ function ghiGhepCX5(payload) {
         const parts = g.key.split("|");
         const msp = parts[0], ten = parts[1];
         const match = blocks.slice().reverse().find(function (b) {
-          return b.msp === msp && b.ten === ten && (payload.dateStr ? b.ngay === payload.dateStr : true);
+          return b.msp === msp && b.ten === ten && (payload.dateStr ? b.ngay === payload.dateStr : true) && b.baoHieuLuc > 0 && b.baoHieuLuc < 10 && (!g.baoNeo || b.baoHieuLuc === g.baoNeo);
         });
         if (match) g.rowNeo = match.rowCuoiCung;
       }
@@ -788,13 +788,13 @@ function layChiTietNguonGocCX5(payload) {
     if (!Number.isInteger(row) || row < 3) return { error: "Dòng không hợp lệ" };
 
     const ss = SpreadsheetApp.getActiveSpreadsheet();
-    const sh = sh.getSheetByName("LSC5");
-    if (!sh) return { error: "Không tìm thấy sheet LSC5" };
+    const sheetLSC5 = ss.getSheetByName("LSC5");
+    if (!sheetLSC5) return { error: "Không tìm thấy sheet LSC5" };
 
-    const dsDong = [row].concat(chuoiThanhDsSo_(sh.getRange(row, 23).getValue()));
+    const dsDong = [row].concat(chuoiThanhDsSo_(sheetLSC5.getRange(row, 23).getValue()));
 
     const nguon = dsDong.map(function (r) {
-      const tt = docThongTinLuotLSC5_(sh, r);
+      const tt = docThongTinLuotLSC5_(sheetLSC5, r);
       return { row: r, ngay: tt.ngay, kgList: tt.kgList };
     });
 
