@@ -1405,7 +1405,11 @@ async function dongBoGhepCX5() {
       d.homNay.bao = g.tongBao;
       d.homNay.kg = g.tongKg;
       const rowsDaGhep = g.cuList.map(function (c) { return c.row; });
-      d.cu = d.cu.filter(function (c) { return rowsDaGhep.indexOf(c.row) === -1; });
+      Object.keys(tongKgDataCX5).forEach(function (k) {
+        if (tongKgDataCX5[k].cu) {
+          tongKgDataCX5[k].cu = tongKgDataCX5[k].cu.filter(function (c) { return rowsDaGhep.indexOf(c.row) === -1; });
+        }
+      });
 
       const phien = tongKetPhienCX5.find(function (x) { return x.row === d.homNay.row; });
       if (phien) { phien.bao = g.tongBao; phien.kg = g.tongKg; }
