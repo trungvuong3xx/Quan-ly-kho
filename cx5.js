@@ -1346,6 +1346,7 @@ async function dongBoGhepCX5() {
       key: key,
       rowNeo: d.homNay ? d.homNay.row : null,
       baoNeo: d.homNay ? d.homNay.bao : 0,
+      kgNeo: d.homNay ? d.homNay.kg : 0,
       tongBao: tongBao,
       tongKg: Math.round(tongKg * 100) / 100,
       cuList: chosen.map(function (c) { return { row: c.row, bao: c.bao, kg: c.kg }; })
@@ -1382,7 +1383,7 @@ async function dongBoGhepCX5() {
 
   try {
     const payloadGroups = groups.map(function (g) {
-      return { key: g.key, rowNeo: g.rowNeo, baoNeo: g.baoNeo, tongBao: g.tongBao, tongKg: g.tongKg, cuList: g.cuList };
+      return { key: g.key, rowNeo: g.rowNeo, baoNeo: g.baoNeo, kgNeo: g.kgNeo, tongBao: g.tongBao, tongKg: g.tongKg, cuList: g.cuList };
     });
     const r = await callApiCX5({
       action: "ghiGhepCX5",
