@@ -1786,7 +1786,7 @@ let banPhimQCPendingCX5 = null;
   const qcPanel = document.createElement("div");
   qcPanel.id = "cx5-bp-qc";
   qcPanel.className = "cx5-bp-panel";
-  const letters = ["A", "B", "D", "E", "R", "X", "/", "-", "m"];
+  const letters = ["A", "B", "D", "E", "R", "X", "/", ".", "P", "M"];
   const letterBarHtml = '<div class="cx5-bp-letter-bar">' +
     letters.map(l => '<div class="cx5-bp-letter-key" onclick="bpQcSoCX5(\'' + l + '\')">' + l + '</div>').join("") +
     '</div>';
