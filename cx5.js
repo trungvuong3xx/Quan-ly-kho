@@ -1398,17 +1398,20 @@ async function dongBoGhepCX5() {
     groups.forEach(function (g) {
       const d = tongKgDataCX5[g.key];
       if (!d || !d.homNay) return;
-      
+
       d.daGhepBao = (d.daGhepBao || 0) + (g.tongBao - d.homNay.bao);
       d.daGhepKg = (d.daGhepKg || 0) + (g.tongKg - d.homNay.kg);
 
       d.homNay.bao = g.tongBao;
       d.homNay.kg = g.tongKg;
+
+      // Xóa các dòng vừa ghép khỏi TẤT CẢ thẻ đang có (không chỉ thẻ neo hiện tại) —
+      // vì 1 quy cách có thể có nhiều thẻ neo (nhiều lượt hôm nay) và chúng dùng
+      // chung 1 nguồn "ứng viên ngày cũ", nếu chỉ dọn đúng thẻ này thì thẻ neo khác
+      // của cùng quy cách vẫn còn giữ ứng viên đã bị khóa (V=X) trên sheet rồi.
       const rowsDaGhep = g.cuList.map(function (c) { return c.row; });
-      Object.keys(tongKgDataCX5).forEach(function (k) {
-        if (tongKgDataCX5[k].cu) {
-          tongKgDataCX5[k].cu = tongKgDataCX5[k].cu.filter(function (c) { return rowsDaGhep.indexOf(c.row) === -1; });
-        }
+      Object.keys(tongKgDataCX5).forEach(function (otherKey) {
+        tongKgDataCX5[otherKey].cu = tongKgDataCX5[otherKey].cu.filter(function (c) { return rowsDaGhep.indexOf(c.row) === -1; });
       });
 
       const phien = tongKetPhienCX5.find(function (x) { return x.row === d.homNay.row; });
