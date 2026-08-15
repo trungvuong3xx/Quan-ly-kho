@@ -701,7 +701,8 @@
 
     <label>QC</label>
     <div class="cx5-ten-wrap" id="cx5-qc-tim-wrap">
-      <input type="text" id="cx5-ten" placeholder="Tìm QC..." autocomplete="off" inputmode="none" oninput="onInputCX5()">
+      <input type="text" id="cx5-ten" placeholder="Tìm QC..." autocomplete="off" inputmode="none" oninput="onInputCX5()" style="padding-right: 40px;">
+      <i class="ti ti-refresh" onclick="taiDanhSachQCX5(ngayCX5, true)" style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); color: var(--cream-soft); cursor: pointer; font-size: 18px;" title="Tải lại danh sách QC"></i>
       <div id="cx5-dropdown" class="cx5-dropdown"></div>
     </div>
     <div id="cx5-qc-khoa" class="cx5-qc-khoa" style="display:none" onclick="moKhoaQCCX5()">
