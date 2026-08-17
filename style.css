@@ -6,37 +6,54 @@
    ============================================================ */
 
 :root {
-  /* Colors */
-  --bg: #0d1117;              /* Nền đen đá Obsidian Slate thẳm */
-  --bg-deep: #05080c;         /* Nền cực sâu cho các ô tương phản cao */
-  --card: #161b22;            /* Thẻ Card lớp 1 — xám đá đen sang trọng */
-  --card-raised: #21262d;     /* Thẻ Card lớp 2 / input — xám đá kim loại */
-  --cream: #f0f6fc;           /* Chữ chính bạch kim siêu nét */
-  --cream-soft: #8b949e;      /* Chữ phụ xám bạc nhã nhặn */
-  --cream-faint: #484f58;     /* Placeholder & đường viền mờ */
-  --line: rgba(240, 246, 252, .14);
-  --line-soft: rgba(240, 246, 252, .08);
-  --brass: #f59e0b;           /* Accent chính — Cam Hổ Phách Amber Gold */
-  --brass-deep: #d97706;      /* Cam hổ phách đậm cho hover/active */
-  --brass-bg: rgba(245, 158, 11, .16);
-  --accent-2: #f59e0b;
-  --success: #3fb950;         /* Xanh ngọc lục bảo — nhập/tăng */
-  --success-bg: rgba(63, 185, 80, .16);
-  --danger: #f85149;          /* Đỏ san hô — xuất/giảm */
-  --danger-bg: rgba(248, 81, 73, .16);
-  --steel: #58a6ff;           /* Xanh Sapphire — thông tin */
-  --steel-bg: rgba(88, 166, 255, .16);
-  --neutral-hover: rgba(240, 246, 252, .10); /* Hover mờ */
-  --neutral-solid: rgba(255, 255, 255, .12); /* Nền tĩnh */
-  --overlay-bg: rgba(5, 8, 12, 0.72);
+  /* THEME TOKENS (New Design System) */
+  --bg-body: #f1f5f9; 
+  --surface: #ffffff;
+  --surface-grad: linear-gradient(145deg, #ffffff 0%, #f8fafc 100%);
+  --surface-glass: rgba(255, 255, 255, 0.85);
+  --text-main: #0f172a;
+  --text-muted: #64748b;
+  --text-lighter: #94a3b8;
+  --primary: #3b82f6;
+  --success: #10b981;
+  --danger: #ef4444;
+  --warning: #f59e0b;
+  --border: rgba(0, 0, 0, 0.08);
+  --border-card: rgba(0, 0, 0, 0.04);
+  --table-header-bg: #f8fafc;
+  --table-row-hover: #f1f5f9;
+  --shadow-card: 0 8px 24px rgba(0, 0, 0, 0.04);
+  --shadow-pressed: 0 4px 12px rgba(0, 0, 0, 0.03);
+  --badge-bg: rgba(15, 23, 42, 0.06);
 
-  /* 6 màu nút lưới Trang chủ — đồng bộ tươi sáng chuyên nghiệp */
-  --chi-1: #38bdf8; /* Tạo QR — Sky Blue */
-  --chi-2: #3fb950; /* Quét QR — Emerald Green */
-  --chi-3: #f85149; /* Kiểm kê — Coral Red */
-  --chi-4: #58a6ff; /* Chỉ For — Sapphire Blue */
-  --chi-5: #f59e0b; /* Chỉ X5 — Amber Gold */
-  --chi-6: #a855f7; /* Tồn kho — Royal Purple */
+  /* LEGACY THEME (Mapped to Modern Design Tokens) */
+  --bg: var(--bg-body);              
+  --bg-deep: var(--bg-body);         
+  --card: var(--surface);            
+  --card-raised: var(--surface-grad);     
+  --cream: var(--text-main);           
+  --cream-soft: var(--text-muted);      
+  --cream-faint: var(--text-lighter);     
+  --line: var(--border);
+  --line-soft: var(--border-card);
+  --brass: var(--warning);           
+  --brass-deep: #d97706;      
+  --brass-bg: rgba(245, 158, 11, 0.16);
+  --accent-2: var(--warning);
+  --success-bg: rgba(16, 185, 129, 0.16);
+  --danger-bg: rgba(239, 68, 68, 0.16);
+  --steel: var(--primary);           
+  --steel-bg: rgba(59, 130, 246, 0.16);
+  --neutral-hover: rgba(0, 0, 0, 0.05); 
+  --neutral-solid: var(--table-header-bg); 
+  --overlay-bg: rgba(0, 0, 0, 0.5);
+
+  --chi-1: #38bdf8; 
+  --chi-2: #3fb950; 
+  --chi-3: #f85149; 
+  --chi-4: #58a6ff; 
+  --chi-5: #f59e0b; 
+  --chi-6: #a855f7; 
 
   /* Spacing Tokens */
   --sp-1: 4px;
@@ -61,6 +78,30 @@
   --font-sans: 'IBM Plex Sans', Inter, Segoe UI, sans-serif;
   --font-mono: 'IBM Plex Mono', monospace;
   --font-display: 'Space Grotesk', 'IBM Plex Sans', sans-serif;
+}
+
+[data-theme="dark"] {
+  --bg-body: #010409;
+  --surface: #161b22;
+  --surface-grad: linear-gradient(145deg, #161b22 0%, #0d1117 100%);
+  --surface-glass: rgba(22, 27, 34, 0.85);
+  --text-main: #f0f6fc;
+  --text-muted: #8b949e;
+  --text-lighter: #484f58;
+  --primary: #3b82f6;
+  --success: #3fb950;
+  --danger: #f85149;
+  --warning: #d29922;
+  --border: rgba(255, 255, 255, 0.1);
+  --border-card: rgba(255, 255, 255, 0.05);
+  --table-header-bg: #0d1117;
+  --table-row-hover: #21262d;
+  --shadow-card: 0 10px 30px rgba(0, 0, 0, 0.4);
+  --shadow-pressed: 0 4px 15px rgba(0, 0, 0, 0.3);
+  --badge-bg: rgba(255, 255, 255, 0.1);
+  --neutral-hover: rgba(255, 255, 255, 0.1);
+  --neutral-solid: rgba(255, 255, 255, 0.12);
+  --overlay-bg: rgba(5, 8, 12, 0.72);
 }
 
 /* ============================================================
@@ -167,7 +208,7 @@ body {
   padding: 26px 22px 22px;
   margin-bottom: 20px;
   margin-top: 4px;
-  box-shadow: 0 6px 24px rgba(0, 0, 0, .14);
+  box-shadow: var(--shadow-card);
   overflow: visible;
   animation: fadeInUp 0.25s ease-out;
 }
@@ -214,8 +255,8 @@ input::placeholder { color: var(--cream-faint); font-family: 'IBM Plex Sans', sa
 
 input:focus {
   outline: none;
-  border-color: var(--brass);
-  box-shadow: 0 0 0 4px rgba(240, 146, 58, .22), 0 4px 14px rgba(0, 0, 0, .2);
+  border-color: var(--primary);
+  box-shadow: 0 0 0 4px var(--steel-bg), var(--shadow-pressed);
 }
 
 /* Ngày (date input) */
@@ -283,8 +324,8 @@ select:focus {
 }
 
 select option {
-  background: #161b22;
-  color: #f0f6fc;
+  background: var(--surface);
+  color: var(--text-main);
   font-size: 14px;
   padding: 10px;
 }
@@ -340,8 +381,8 @@ select option {
   top: calc(100% + 6px);
   left: 0;
   right: 0;
-  background: #181d25;
-  border: 1px solid rgba(245, 158, 11, 0.4);
+  background: var(--surface);
+  border: 1px solid var(--border);
   border-radius: 14px;
   box-shadow: 0 12px 36px rgba(0, 0, 0, 0.85), 0 0 20px rgba(245, 158, 11, 0.2);
   z-index: 9999;
@@ -421,25 +462,25 @@ select option {
   outline: none;
   -webkit-tap-highlight-color: transparent;
   user-select: none;
-  transition: all 0.15s ease;
+  transition: all 0.2s cubic-bezier(0.25, 1, 0.5, 1);
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  height: 40px;
-  padding: 0 12px;
+  height: 44px;
+  padding: 0 16px;
 }
 
-.btn-blue { background: var(--brass); color: var(--bg-deep); }
-.btn-blue:hover { background: var(--brass-deep); }
-.btn-blue:active { transform: translateY(1px); }
+.btn-blue { background: var(--primary); color: #fff; box-shadow: 0 4px 12px rgba(59, 130, 246, 0.25); }
+.btn-blue:hover { filter: brightness(1.1); box-shadow: 0 6px 16px rgba(59, 130, 246, 0.35); }
+.btn-blue:active { transform: translateY(1px); box-shadow: 0 2px 8px rgba(59, 130, 246, 0.2); }
 
-.btn-green { background: var(--success); color: #fff; }
-.btn-green:hover { filter: brightness(1.08); }
-.btn-green:active { transform: translateY(1px); }
+.btn-green { background: var(--success); color: #fff; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25); }
+.btn-green:hover { filter: brightness(1.1); box-shadow: 0 6px 16px rgba(16, 185, 129, 0.35); }
+.btn-green:active { transform: translateY(1px); box-shadow: 0 2px 8px rgba(16, 185, 129, 0.2); }
 
-.btn-red { background: var(--danger); color: #fff; }
-.btn-red:hover { filter: brightness(1.08); }
-.btn-red:active { transform: translateY(1px); }
+.btn-red { background: var(--danger); color: #fff; box-shadow: 0 4px 12px rgba(239, 68, 68, 0.25); }
+.btn-red:hover { filter: brightness(1.1); box-shadow: 0 6px 16px rgba(239, 68, 68, 0.35); }
+.btn-red:active { transform: translateY(1px); box-shadow: 0 2px 8px rgba(239, 68, 68, 0.2); }
 
 .btn-full {
   display: flex !important;
@@ -630,106 +671,20 @@ select option {
 }
 
 /* ── Glassmorphism Bottom Navigation Bar ── */
-.bottom-nav {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: 62px;
-  background: rgba(16, 22, 31, 0.82) !important;
-  backdrop-filter: blur(16px) saturate(180%);
-  -webkit-backdrop-filter: blur(16px) saturate(180%);
-  border-top: 1px solid rgba(255, 255, 255, 0.1) !important;
-  display: flex;
-  justify-content: space-around;
-  align-items: center;
-  z-index: 999;
-  box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.45);
-  padding: 0 8px;
-}
 
-.bnav-btn {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  color: var(--cream-soft);
-  font-size: 11px;
-  font-weight: 600;
-  border: none;
-  background: transparent;
-  padding: 6px 14px;
-  border-radius: 12px;
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-  cursor: pointer;
-}
-.bnav-btn i {
-  font-size: 20px;
-  margin-bottom: 2px;
-  transition: transform 0.25s ease, color 0.25s ease;
-}
-.bnav-btn.active {
-  color: var(--brass) !important;
-  background: rgba(245, 158, 11, 0.14) !important;
-  box-shadow: inset 0 0 10px rgba(245, 158, 11, 0.18);
-}
-.bnav-btn.active i {
-  transform: translateY(-2px) scale(1.1);
-  color: var(--brass) !important;
-}
+
+
+
+
+
 
 /* ── Trang Chủ Dashboard Grid Cards ── */
-.trangchu-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 12px;
-  margin-top: 8px;
-}
-.trangchu-card-btn {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 16px 12px;
-  background: var(--card-raised);
-  border: 1px solid var(--line-soft);
-  border-radius: 14px;
-  color: var(--cream);
-  font-size: 13px;
-  font-weight: 700;
-  cursor: pointer;
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-  position: relative;
-  overflow: hidden;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-}
-.trangchu-card-btn:hover {
-  transform: translateY(-3px);
-  border-color: var(--btn-accent, var(--brass));
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.35), 0 0 15px rgba(245, 158, 11, 0.15);
-}
-.trangchu-card-btn:active {
-  transform: scale(0.96);
-}
-.tc-icon-wrap {
-  width: 44px;
-  height: 44px;
-  border-radius: 12px;
-  background: rgba(255, 255, 255, 0.05);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-bottom: 8px;
-  font-size: 22px;
-  color: var(--btn-accent, var(--brass));
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: 0 0 12px rgba(245, 158, 11, 0.12);
-  transition: transform 0.25s ease, box-shadow 0.25s ease;
-}
-.trangchu-card-btn:hover .tc-icon-wrap {
-  transform: scale(1.1);
-  box-shadow: 0 0 16px var(--btn-accent, var(--brass));
-}
+
+
+
+
+
+
 
 /* ── Hiệu ứng Highlight Chớp Sáng Xanh Ngọc Dòng Mới Quét ── */
 @keyframes scanFlashNew {
@@ -1073,37 +1028,13 @@ table thead th,
 .custom-option:hover, .custom-option.active { background: var(--brass) !important; color: var(--bg-deep) !important; }
 
 /* Bottom Nav — thanh nổi bo tròn kính mờ (Glassmorphism), cách mép */
-.bottom-nav {
-  position: fixed; bottom: 14px; left: 14px; right: 14px;
-  z-index: 999; display: flex;
-  background: rgba(30, 42, 35, 0.82);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid var(--line);
-  border-radius: 24px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, .4);
-  padding: 8px 4px;
-}
 
-.bnav-btn {
-  flex: 1; background: none; border: none; cursor: pointer;
-  position: relative;
-  display: flex; flex-direction: column; align-items: center;
-  gap: 4px; padding: 6px 4px 10px; color: var(--cream-faint);
-  font-family: 'IBM Plex Sans', sans-serif; transition: color .15s;
-}
-.bnav-btn i { font-size: 21px; }
-.bnav-btn span { font-size: 10px; font-weight: 600; letter-spacing: .1px; text-transform: uppercase; }
-.bnav-btn.active { color: var(--brass); }
-.bnav-btn.active::after {
-  content: '';
-  position: absolute;
-  bottom: 0; left: 50%;
-  transform: translateX(-50%);
-  width: 24px; height: 3px;
-  border-radius: 2px;
-  background: var(--brass);
-}
+
+
+
+
+
+
 
 .page { padding-bottom: 88px; }
 
@@ -1576,14 +1507,11 @@ table thead th,
 .trangchu-grid .btn:nth-child(6) { border-left: 4px solid var(--chi-6) !important; }
 
 /* 2. Cải thiện độ rõ Icon Bottom Nav trên màn hình kho */
-.bnav-btn { color: var(--cream-soft); }
-.bnav-btn:hover { color: var(--cream); }
+
+
 
 /* 3. Hiệu ứng nhún bấm mượt tay (Touch Feedback) trên di động */
-.btn:active, .bnav-btn:active, .custom-select-btn:active, .cx5-bp-key:active {
-  transform: scale(0.96) !important;
-  transition: transform 0.08s ease !important;
-}
+.btn:active, 
 
 /* 4. Thư viện nút Xuất Excel & Hiệu ứng phản hồi quét mã */
 .btn-excel {
@@ -1834,3 +1762,68 @@ body.cam-active #btp-log-list {
   background-color: #10b981;
   box-shadow: 0 0 8px rgba(16, 185, 129, 0.7);
 }
+
+/* ============================================================
+   NEW MODERN DASHBOARD CLASSES (demo_ui.html)
+   ============================================================ */
+.device-frame { width: 100%; height: 100vh; position: relative; overflow: hidden; display: flex; flex-direction: column; background: var(--bg-body); }
+.header { padding: 44px 24px 16px; display: flex; justify-content: space-between; align-items: center; position: absolute; top: 0; left: 0; right: 0; z-index: 100; background: var(--surface-glass); backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px); border-bottom: 1px solid var(--border); transition: background 0.3s, border 0.3s; }
+.header-greeting { font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 2px; }
+.header-left .title { font-size: 26px; font-weight: 800; color: var(--text-main); letter-spacing: -0.5px; line-height: 1.1; margin-bottom:0; border:none; padding-bottom:0;}
+.theme-toggle { background: var(--surface); border: 1px solid var(--border); color: var(--text-main); border-radius: 50%; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 18px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+.theme-toggle:active { transform: scale(0.9); box-shadow: none; }
+.ptr-indicator { position: absolute; top: 70px; left: 0; right: 0; display: flex; justify-content: center; align-items: center; transition: transform 0.2s; z-index: 90; opacity: 0; pointer-events: none; }
+.ptr-indicator i { font-size: 26px; color: var(--text-muted); animation: spin 1s linear infinite; }
+@keyframes spin { 100% { transform: rotate(360deg); } }
+.scroll-area { flex: 1; overflow-y: auto; padding-top: 110px; padding-bottom: 90px; transition: transform 0.2s; }
+.scroll-area::-webkit-scrollbar { display: none; }
+.pending-session-card { margin: 0 24px 16px; background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.3); border-radius: 20px; padding: 16px; backdrop-filter: blur(10px); }
+.ps-header { display: flex; align-items: center; gap: 8px; font-weight: 700; color: var(--warning); margin-bottom: 6px; font-size: 13px; }
+.ps-desc { font-size: 12px; color: var(--text-main); margin-bottom: 12px; font-weight: 500; line-height: 1.4; }
+.ps-actions { display: flex; gap: 8px; }
+.ps-actions button { flex: 1; padding: 10px; border-radius: 12px; font-weight: 700; font-size: 12px; border: none; cursor: pointer; transition: 0.2s; }
+.btn-ps-cancel { background: var(--bg-body); color: var(--text-main); border: 1px solid var(--border); }
+.btn-ps-resume { background: var(--warning); color: #fff; box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3); }
+.ps-actions button:active { transform: scale(0.95); }
+.section-title { font-size: 12px; font-weight: 800; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin: 0 24px 10px; display: flex; align-items: center; gap: 6px; }
+.recent-scroll { display: flex; overflow-x: auto; padding: 0 24px 20px; gap: 14px; scroll-snap-type: x mandatory; }
+.recent-scroll::-webkit-scrollbar { display: none; }
+.recent-item { min-width: 62px; display: flex; flex-direction: column; align-items: center; cursor: pointer; transition: transform 0.2s; scroll-snap-align: start; }
+.recent-item:active { transform: scale(0.9); }
+.recent-icon { width: 52px; height: 52px; border-radius: 18px; background: var(--surface-grad); border: 1px solid var(--border-card); display: flex; align-items: center; justify-content: center; font-size: 24px; box-shadow: var(--shadow-card); margin-bottom: 8px; }
+.recent-label { font-size: 10px; font-weight: 600; color: var(--text-main); text-align: center; white-space: nowrap; }
+.dashboard-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; padding: 0 24px 24px; }
+.grid-card { background: var(--surface-grad); border: 1px solid var(--border-card); border-radius: 20px; padding: 16px 14px; display: flex; flex-direction: column; align-items: flex-start; box-shadow: var(--shadow-card); transition: transform 0.2s cubic-bezier(0.25, 1, 0.5, 1), box-shadow 0.2s; cursor: pointer; position: relative; overflow: hidden; }
+.grid-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px; background: linear-gradient(90deg, rgba(255,255,255,0.6), transparent); opacity: 0.8; }
+.grid-card:active { transform: scale(0.94); box-shadow: var(--shadow-pressed); }
+.grid-icon { width: 44px; height: 44px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 22px; color: white; margin-bottom: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.12); }
+.text-icon { font-weight: 800; font-size: 20px; font-style: italic; letter-spacing: -1px; }
+.grid-title { font-size: 13px; font-weight: 800; color: var(--text-main); margin-bottom: 6px; line-height: 1.3; }
+.grid-badge { display: inline-block; font-size: 9px; font-weight: 700; padding: 4px 6px; border-radius: 6px; background: var(--badge-bg); color: var(--text-muted); letter-spacing: 0.2px; text-transform: uppercase; }
+.grid-badge.highlight { color: var(--primary); background: rgba(59, 130, 246, 0.15); }
+.grid-badge.alert { color: var(--danger); background: rgba(239, 68, 68, 0.15); }
+.grid-card.full-width { grid-column: span 2; flex-direction: row; align-items: center; padding: 14px 16px; }
+.grid-card.full-width .grid-icon { margin-bottom: 0; margin-right: 14px; width: 40px; height: 40px; font-size: 20px; }
+.grid-card.full-width .grid-text { flex: 1; }
+.bottom-nav { display: flex; justify-content: space-around; align-items: center; padding: 10px 4px 26px; position: fixed; bottom: 0; left: 0; right: 0; z-index: 100; background: var(--surface-glass); backdrop-filter: blur(30px); -webkit-backdrop-filter: blur(30px); border-top: 1px solid var(--border); border-radius: 0 0 40px 40px; transition: background 0.3s, border 0.3s; box-shadow: 0 -4px 20px rgba(0,0,0,0.05); }
+.nav-item { display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--text-muted); cursor: pointer; transition: color 0.2s; width: 64px; background:transparent; border:none; padding:0; }
+.nav-item.active { color: var(--primary); }
+.nav-icon { font-size: 22px; margin-bottom: 4px; transition: transform 0.2s; }
+.nav-item:active .nav-icon { transform: scale(0.85); }
+.nav-label { font-size: 10px; font-weight: 700; letter-spacing: 0.2px; white-space: nowrap; }
+.modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1000; display: flex; align-items: flex-end; opacity: 0; pointer-events: none; transition: opacity 0.3s; }
+.modal-overlay.active { opacity: 1; pointer-events: all; }
+.modal-sheet { width: 100%; background: var(--surface); border-radius: 30px 30px 0 0; padding: 30px 24px 100px; transform: translateY(100%); transition: transform 0.3s cubic-bezier(0.25, 1, 0.5, 1); box-shadow: 0 -10px 40px rgba(0,0,0,0.2); position: relative; }
+.modal-overlay.active .modal-sheet { transform: translateY(0); }
+.modal-close { position: absolute; top: 20px; right: 24px; width: 32px; height: 32px; background: var(--bg-body); border-radius: 50%; display: flex; justify-content: center; align-items: center; cursor: pointer; color: var(--text-muted); font-size: 18px; transition: 0.2s; }
+.modal-close:active { transform: scale(0.9); }
+.modal-title { font-size: 20px; font-weight: 800; margin-bottom: 24px; color: var(--text-main); border:none; padding-bottom:0; font-family: 'Inter', sans-serif;}
+
+/* Override margin/padding of body for new design */
+body { padding: 0 !important; background: var(--bg-body) !important; color: var(--text-main) !important; font-family: 'Inter', 'IBM Plex Sans', sans-serif; }
+#app-viewport { width: 100vw; height: 100vh; position: relative; overflow: hidden; display: flex; flex-direction: column; background: var(--bg-body); }
+.page { flex: 1; height: 100%; position: absolute; inset: 0; padding: 0; max-width: 100%; overflow: hidden; display: none; flex-direction: column; }
+.page.active { display: flex; }
+/* Non-home pages still need scrolling */
+.page:not(#trangChu) { padding: 80px 16px 100px !important; overflow-y: auto !important; display: none; }
+.page:not(#trangChu).active { display: block; }

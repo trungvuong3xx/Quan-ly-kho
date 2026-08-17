@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Quản lý Kho</title>
-  <link rel="stylesheet" href="style.css?v=20260809-ultra">
+  <title>Trung Vương - Sổ Cái Kho Vận</title>
+  <link rel="stylesheet" href="style.css?v=1786952889112">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@zxing/library@0.19.1/umd/index.min.js"></script>
@@ -129,100 +129,171 @@
 
 <div id="app-viewport">
 
-<div class="bottom-nav">
-  <button class="bnav-btn active" data-page="trangChu" onclick="chuyenTrang('trangChu', this)">
-    <i class="ti ti-home" aria-hidden="true"></i>
-    <span>Trang chủ</span>
+
+<div class="bottom-nav" id="bottom-nav">
+  <button class="nav-item active" data-page="trangChu" onclick="chuyenTrang('trangChu', this)">
+    <i class="ti ti-home nav-icon" aria-hidden="true"></i>
+    <div class="nav-label">TRANG CHỦ</div>
   </button>
-  <button class="bnav-btn" data-page="chiX5" onclick="chuyenTrang('chiX5', this)">
-    <i class="ti ti-scale" aria-hidden="true"></i>
-    <span>Chỉ X5</span>
+  <button class="nav-item" data-page="chiX5" onclick="chuyenTrang('chiX5', this)">
+    <div class="text-icon nav-icon" style="font-size: 20px;">X5</div>
+    <div class="nav-label">CHỈ X5</div>
   </button>
-  <button class="bnav-btn" data-page="quetQR" onclick="chuyenTrang('quetQR', this)">
-    <i class="ti ti-scan" aria-hidden="true"></i>
-    <span>Quét QR</span>
+  <button class="nav-item" data-page="quetQR" onclick="chuyenTrang('quetQR', this)">
+    <i class="ti ti-scan nav-icon" aria-hidden="true"></i>
+    <div class="nav-label">QUÉT QR</div>
   </button>
-  <button class="bnav-btn" data-page="btpPage" onclick="chuyenTrang('btpPage', this)">
-    <i class="ti ti-box" aria-hidden="true"></i>
-    <span>BTP</span>
+  <button class="nav-item" data-page="btpPage" onclick="chuyenTrangKhongNav('btpPage')">
+    <i class="ti ti-box nav-icon" aria-hidden="true"></i>
+    <div class="nav-label">BTP</div>
   </button>
-  <button class="bnav-btn" data-page="chiFor" onclick="chuyenTrang('chiFor', this)">
-    <i class="ti ti-package" aria-hidden="true"></i>
-    <span>Chỉ FOR</span>
+  <button class="nav-item" data-page="chiFor" onclick="chuyenTrang('chiFor', this)">
+    <div class="text-icon nav-icon" style="font-size: 20px;">X1</div>
+    <div class="nav-label">CHỈ X1</div>
   </button>
 </div>
+
 
 <div class="canh-bao" id="canh-bao"></div>
 <div class="mang-status" id="mang-status"></div>
 
-<div id="trangChu" class="page active">
-  <div class="card" id="phien-dodang-card" style="display:none">
-    <h3>Phiên dở dang</h3>
-    <div id="phien-dodang-noidung"></div>
-    <div class="flex gap-2 mt-3">
-      <button class="btn btn-green" style="flex:1" onclick="tiepTucPhienChiFor()">Tiếp tục</button>
-      <button class="btn btn-red" style="flex:1" onclick="huyPhienChiFor()">Huỷ bỏ</button>
-    </div>
-  </div>
-  <div class="card" id="phien-dodang-card-x5" style="display:none">
-    <h3>Phiên dở dang</h3>
-    <div id="phien-dodang-noidung-x5"></div>
-    <div class="flex gap-2 mt-3">
-      <button class="btn btn-green" style="flex:1" onclick="tiepTucPhienChiX5()">Tiếp tục</button>
-      <button class="btn btn-red" style="flex:1" onclick="huyPhienChiX5()">Huỷ bỏ</button>
-    </div>
-  </div>
-  <div class="card" id="phien-dodang-card-btp" style="display:none">
-    <h3>Phiên BTP dở dang</h3>
-    <div id="phien-dodang-noidung-btp"></div>
-    <div class="flex gap-2 mt-3">
-      <button class="btn btn-green" style="flex:1" onclick="tiepTucPhienBTP()">Tiếp tục</button>
-      <button class="btn btn-red" style="flex:1" onclick="huyPhienBTP()">Huỷ bỏ</button>
-    </div>
-  </div>
-  <div class="card">
-    <h3>Quản Lý Kho</h3>
 
-    <div class="trangchu-grid">
-      <button class="trangchu-card-btn" style="--btn-accent: var(--chi-1);" onclick="chuyenTrangKhongNav('taoQR')">
-        <div class="tc-icon-wrap"><i class="ti ti-qrcode"></i></div>
-        <span>Tạo QR</span>
-      </button>
-      <button class="trangchu-card-btn" style="--btn-accent: var(--chi-2);" onclick="diToiTab('quetQR')">
-        <div class="tc-icon-wrap"><i class="ti ti-scan"></i></div>
-        <span>Quét QR</span>
-      </button>
-      <button class="trangchu-card-btn" style="--btn-accent: var(--chi-3);" onclick="diToiTab('kiemKe')">
-        <div class="tc-icon-wrap"><i class="ti ti-clipboard-check"></i></div>
-        <span>Kiểm kê</span>
-      </button>
-      <button class="trangchu-card-btn" style="--btn-accent: var(--chi-4);" onclick="diToiTab('chiFor')">
-        <div class="tc-icon-wrap"><i class="ti ti-package"></i></div>
-        <span>Chỉ For</span>
-      </button>
-      <button class="trangchu-card-btn" style="--btn-accent: var(--chi-5);" onclick="diToiTab('chiX5')">
-        <div class="tc-icon-wrap"><i class="ti ti-scale"></i></div>
-        <span>Chỉ X5</span>
-      </button>
-      <button class="trangchu-card-btn" style="--btn-accent: var(--brass);" onclick="chuyenTrangKhongNav('btpPage')">
-        <div class="tc-icon-wrap"><i class="ti ti-box"></i></div>
-        <span>BTP</span>
-      </button>
-      <button class="trangchu-card-btn" style="--btn-accent: var(--chi-6); grid-column: span 2;" id="btn-ton-kho" onclick="tkMoTonKho()">
-        <div class="tc-icon-wrap"><i class="ti ti-database"></i></div>
-        <span>Tồn Kho Tất Cả</span>
-      </button>
-    </div>
+<!-- Glass Header -->
+<div class="header" id="header" style="display:flex;">
+  <div class="header-left">
+    <div class="header-greeting" id="header-greeting">Xin chào, Admin</div>
+    <div class="title" id="header-title">Trung Vương</div>
   </div>
-  <div class="card">
-    <button class="btn btn-full" style="background:var(--neutral-solid);color:var(--cream);font-weight:700;font-size:15px;" onclick="if(typeof toggleChonLichSuTrangChu==='function') toggleChonLichSuTrangChu(); else { var m=document.getElementById('lichsu-menu-trangchu'); if(m) m.style.display=(m.style.display==='none'||!m.style.display)?'flex':'none'; }"><i class="ti ti-history"></i> Xem Lịch Sử</button>
-    <div id="lichsu-menu-trangchu" style="display:none; flex-direction:column; gap:8px; margin-top:10px;">
-      <button class="btn btn-full" style="background:var(--card-raised);color:var(--cream);border:1px solid var(--line-soft);" onclick="moLichSuChon('btp')"><i class="ti ti-box"></i> Lịch sử BTP</button>
-      <button class="btn btn-full" style="background:var(--card-raised);color:var(--cream);border:1px solid var(--line-soft);" onclick="moLichSuChon('for')"><i class="ti ti-package"></i> Lịch sử Chỉ FOR</button>
-      <button class="btn btn-full" style="background:var(--card-raised);color:var(--cream);border:1px solid var(--line-soft);" onclick="moLichSuChon('x5')"><i class="ti ti-scale"></i> Lịch sử Chỉ X5</button>
+  <div class="header-right">
+    <button class="theme-toggle" id="btn-theme" title="Chuyển Sáng/Tối">
+      <i class="ti ti-moon"></i>
+    </button>
+  </div>
+</div>
+
+<div id="trangChu" class="page active">
+  <div class="ptr-indicator" id="ptr-indicator">
+    <i class="ti ti-loader"></i>
+  </div>
+  
+  <div class="scroll-area" id="scroll-area">
+    <!-- PENDING SESSIONS -->
+    <div class="pending-session-card" id="phien-dodang-card" style="display:none">
+      <div class="ps-header">
+        <i class="ti ti-alert-circle" style="font-size: 18px;"></i>
+        <span>Phiên Chỉ FOR dở dang</span>
+      </div>
+      <div class="ps-desc" id="phien-dodang-noidung"></div>
+      <div class="ps-actions">
+        <button class="btn-ps-cancel" onclick="huyPhienChiFor()">Huỷ bỏ</button>
+        <button class="btn-ps-resume" onclick="tiepTucPhienChiFor()">Tiếp tục</button>
+      </div>
+    </div>
+    
+    <div class="pending-session-card" id="phien-dodang-card-x5" style="display:none">
+      <div class="ps-header">
+        <i class="ti ti-alert-circle" style="font-size: 18px;"></i>
+        <span>Phiên Chỉ X5 dở dang</span>
+      </div>
+      <div class="ps-desc" id="phien-dodang-noidung-x5"></div>
+      <div class="ps-actions">
+        <button class="btn-ps-cancel" onclick="huyPhienChiX5()">Huỷ bỏ</button>
+        <button class="btn-ps-resume" onclick="tiepTucPhienChiX5()">Tiếp tục</button>
+      </div>
+    </div>
+    
+    <div class="pending-session-card" id="phien-dodang-card-btp" style="display:none">
+      <div class="ps-header">
+        <i class="ti ti-alert-circle" style="font-size: 18px;"></i>
+        <span>Phiên BTP dở dang</span>
+      </div>
+      <div class="ps-desc" id="phien-dodang-noidung-btp"></div>
+      <div class="ps-actions">
+        <button class="btn-ps-cancel" onclick="huyPhienBTP()">Huỷ bỏ</button>
+        <button class="btn-ps-resume" onclick="tiepTucPhienBTP()">Tiếp tục</button>
+      </div>
+    </div>
+
+    <div class="section-title">Thao Tác Nhanh</div>
+    <div class="recent-scroll">
+      <div class="recent-item" onclick="chuyenTrangKhongNav('taoQR')">
+        <div class="recent-icon" style="color: #2563eb;"><i class="ti ti-qrcode"></i></div>
+        <div class="recent-label">Tạo QR</div>
+      </div>
+      <div class="recent-item" onclick="chuyenTrang('quetQR', document.querySelector('.nav-item[data-page=quetQR]'))">
+        <div class="recent-icon" style="color: #4f46e5;"><i class="ti ti-scan"></i></div>
+        <div class="recent-label">Quét QR</div>
+      </div>
+      <div class="recent-item" onclick="chuyenTrangKhongNav('kiemKe')">
+        <div class="recent-icon" style="color: #0ea5e9;"><i class="ti ti-clipboard-check"></i></div>
+        <div class="recent-label">Kiểm Kê</div>
+      </div>
+      <div class="recent-item" onclick="chuyenTrang('chiFor', document.querySelector('.nav-item[data-page=chiFor]'))">
+        <div class="recent-icon" style="color: #6366f1;"><div class="text-icon">X1</div></div>
+        <div class="recent-label">Chỉ X1</div>
+      </div>
+    </div>
+
+    <div class="section-title" style="margin-top:8px"><i class="ti ti-arrows-maximize" style="color:var(--primary)"></i> Nhập Xuất & Kiểm Kê</div>
+    <div class="dashboard-grid">
+      <div class="grid-card" onclick="chuyenTrangKhongNav('taoQR')">
+        <div class="grid-icon" style="background: linear-gradient(135deg, #60a5fa, #2563eb);"><i class="ti ti-qrcode"></i></div>
+        <div class="grid-title">Tạo QR Code</div>
+        <div class="grid-badge">MỚI</div>
+      </div>
+      <div class="grid-card" onclick="chuyenTrang('quetQR', document.querySelector('.nav-item[data-page=quetQR]'))">
+        <div class="grid-icon" style="background: linear-gradient(135deg, #818cf8, #4f46e5);"><i class="ti ti-scan"></i></div>
+        <div class="grid-title">Quét QR</div>
+        <div class="grid-badge highlight">NHANH</div>
+      </div>
+      <div class="grid-card full-width" onclick="chuyenTrangKhongNav('kiemKe')">
+        <div class="grid-icon" style="background: linear-gradient(135deg, #38bdf8, #0ea5e9);"><i class="ti ti-clipboard-check"></i></div>
+        <div class="grid-text">
+          <div class="grid-title" style="margin-bottom:0">Kiểm Kê Kho</div>
+        </div>
+        <div class="grid-badge">HÔM NAY</div>
+      </div>
+    </div>
+
+    <div class="section-title"><i class="ti ti-building-warehouse" style="color:var(--primary)"></i> Khu Vực Lưu Trữ</div>
+    <div class="dashboard-grid">
+      <div class="grid-card" onclick="chuyenTrang('chiFor', document.querySelector('.nav-item[data-page=chiFor]'))">
+        <div class="grid-icon" style="background: linear-gradient(135deg, #818cf8, #6366f1);"><div class="text-icon">X1</div></div>
+        <div class="grid-title">Chỉ X1</div>
+        <div class="grid-badge">12 LÔ CHỜ</div>
+      </div>
+      <div class="grid-card" onclick="chuyenTrang('chiX5', document.querySelector('.nav-item[data-page=chiX5]'))">
+        <div class="grid-icon" style="background: linear-gradient(135deg, #60a5fa, #3b82f6);"><div class="text-icon">X5</div></div>
+        <div class="grid-title">Chỉ X5</div>
+        <div class="grid-badge highlight">CẬP NHẬT</div>
+      </div>
+      <div class="grid-card full-width" onclick="chuyenTrangKhongNav('btpPage')">
+        <div class="grid-icon" style="background: linear-gradient(135deg, #a78bfa, #7c3aed);"><i class="ti ti-box"></i></div>
+        <div class="grid-text">
+          <div class="grid-title" style="margin-bottom:0">Bán Thành Phẩm (BTP)</div>
+        </div>
+        <div class="grid-badge alert">5 LỖI</div>
+      </div>
+    </div>
+
+    <div class="section-title"><i class="ti ti-chart-bar" style="color:var(--primary)"></i> Dữ Liệu & Báo Cáo</div>
+    <div class="dashboard-grid">
+      <div class="grid-card full-width" onclick="tkMoTonKho()">
+        <div class="grid-icon" style="background: linear-gradient(135deg, #2dd4bf, #14b8a6);"><i class="ti ti-database"></i></div>
+        <div class="grid-text">
+          <div class="grid-title" style="margin-bottom:0">Tra Tồn Kho</div>
+        </div>
+      </div>
+      <div class="grid-card full-width" onclick="openLichSuModal()">
+        <div class="grid-icon" style="background: linear-gradient(135deg, #94a3b8, #64748b);"><i class="ti ti-history"></i></div>
+        <div class="grid-text">
+          <div class="grid-title" style="margin-bottom:0">Xem Lịch Sử</div>
+        </div>
+      </div>
     </div>
   </div>
 </div>
+
 
 <div id="lichSu" class="page">
   <div class="card">
@@ -946,5 +1017,129 @@
 <script src="cx5.js?v=20260814-v51"></script>
 <script src="btp.js?v=20260814-v51"></script>
 <script src="tonkho.js?v=20260814-v51"></script>
+
+<!-- BOTTOM SHEET MODAL LỊCH SỬ -->
+<div class="modal-overlay" id="modal-overlay" onclick="closeLichSuModal(event)">
+  <div class="modal-sheet" onclick="event.stopPropagation()">
+    <div class="modal-close" onclick="closeLichSuModal()"><i class="ti ti-x"></i></div>
+    <div class="modal-title">Lịch Sử Quét</div>
+    <div style="display:flex; flex-direction:column; gap:12px;">
+      <div onclick="closeLichSuModal(); moLichSuChon('btp')" style="padding:16px; background:var(--bg-body); border-radius:16px; border:1px solid var(--border); font-weight:700; color:var(--text-main); display:flex; align-items:center; gap:12px; cursor: pointer;">
+        <i class="ti ti-box" style="font-size:24px; color:var(--primary)"></i> Lịch sử BTP
+      </div>
+      <div onclick="closeLichSuModal(); moLichSuChon('for')" style="padding:16px; background:var(--bg-body); border-radius:16px; border:1px solid var(--border); font-weight:700; color:var(--text-main); display:flex; align-items:center; gap:12px; cursor: pointer;">
+        <div class="text-icon" style="font-size:20px; color:var(--primary); width:24px; text-align:center">X1</div> Lịch sử Chỉ X1
+      </div>
+      <div onclick="closeLichSuModal(); moLichSuChon('x5')" style="padding:16px; background:var(--bg-body); border-radius:16px; border:1px solid var(--border); font-weight:700; color:var(--text-main); display:flex; align-items:center; gap:12px; cursor: pointer;">
+        <div class="text-icon" style="font-size:20px; color:var(--primary); width:24px; text-align:center">X5</div> Lịch sử Chỉ X5
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Dashboard Modal
+  const modalLichSu = document.getElementById('modal-overlay');
+  function openLichSuModal() {
+    if (navigator.vibrate) navigator.vibrate(30);
+    modalLichSu.classList.add('active');
+  }
+  function closeLichSuModal(e) {
+    if (e && e.target !== modalLichSu) return;
+    modalLichSu.classList.remove('active');
+  }
+
+  // Dashboard UX logic
+  document.addEventListener('DOMContentLoaded', () => {
+    function updateGreeting() {
+      const hour = new Date().getHours();
+      let greeting = 'Chào buổi tối';
+      if (hour >= 5 && hour < 12) greeting = 'Chào buổi sáng';
+      else if (hour >= 12 && hour < 18) greeting = 'Chào buổi chiều';
+      const el = document.getElementById('header-greeting');
+      if(el) el.innerText = greeting + ', Admin';
+    }
+    updateGreeting();
+
+    const btnTheme = document.getElementById('btn-theme');
+    const htmlEl = document.documentElement;
+    if(btnTheme) {
+      btnTheme.addEventListener('click', () => {
+        if (htmlEl.getAttribute('data-theme') === 'dark') {
+          htmlEl.setAttribute('data-theme', 'light');
+          btnTheme.innerHTML = '<i class="ti ti-moon"></i>';
+        } else {
+          htmlEl.setAttribute('data-theme', 'dark');
+          btnTheme.innerHTML = '<i class="ti ti-sun"></i>';
+        }
+        if (navigator.vibrate) navigator.vibrate(50);
+      });
+    }
+
+    let startY = 0;
+    const scrollArea = document.getElementById('scroll-area');
+    const ptr = document.getElementById('ptr-indicator');
+    if(scrollArea && ptr) {
+      scrollArea.addEventListener('touchstart', e => {
+        if (scrollArea.scrollTop === 0) startY = e.touches[0].clientY;
+      });
+      scrollArea.addEventListener('touchmove', e => {
+        if (startY > 0) {
+          let delta = e.touches[0].clientY - startY;
+          if (delta > 0 && scrollArea.scrollTop === 0) {
+            e.preventDefault();
+            let pull = Math.min(delta / 2, 60);
+            scrollArea.style.transform = `translateY(${pull}px)`;
+            ptr.style.opacity = Math.min(pull / 60, 1);
+            ptr.style.transform = `translateY(${pull - 20}px)`;
+          }
+        }
+      });
+      scrollArea.addEventListener('touchend', e => {
+        if (startY > 0 && scrollArea.style.transform !== '') {
+          ptr.classList.add('loading');
+          if (navigator.vibrate) navigator.vibrate(20);
+          setTimeout(() => {
+            scrollArea.style.transform = '';
+            ptr.style.opacity = 0;
+            ptr.style.transform = '';
+            ptr.classList.remove('loading');
+            if(window.thongBao) window.thongBao("Đã đồng bộ dữ liệu mới nhất", "success");
+          }, 1000);
+        }
+        startY = 0;
+      });
+    }
+
+    // Override chuyenTrang to hide/show header
+    const oldChuyenTrang = window.chuyenTrang;
+    window.chuyenTrang = function(idTab, btn) {
+      const header = document.getElementById('header');
+      if(header) {
+        if(idTab === 'trangChu') header.style.display = 'flex';
+        else header.style.display = 'none';
+      }
+      if(oldChuyenTrang) oldChuyenTrang(idTab, btn);
+      
+      // Fix active state of bottom nav items
+      document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+      if(btn) btn.classList.add('active');
+    };
+    
+    const oldChuyenTrangKhongNav = window.chuyenTrangKhongNav;
+    window.chuyenTrangKhongNav = function(idTab) {
+      const header = document.getElementById('header');
+      if(header) {
+        if(idTab === 'trangChu') header.style.display = 'flex';
+        else header.style.display = 'none';
+      }
+      if(oldChuyenTrangKhongNav) oldChuyenTrangKhongNav(idTab);
+      // Ensure bottom nav disappears correctly
+      const bnav = document.getElementById('bottom-nav');
+      if(bnav && idTab !== 'trangChu') bnav.style.display = 'none';
+      else if(bnav && idTab === 'trangChu') bnav.style.display = 'flex';
+    };
+  });
+</script>
 </body>
 </html>
