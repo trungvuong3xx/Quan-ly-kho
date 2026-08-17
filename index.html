@@ -131,7 +131,43 @@
 
 
 <div class="bottom-nav" id="bottom-nav">
-  
+  <button class="nav-item active" data-page="trangChu" onclick="chuyenTrang('trangChu', this)">
+    <i class="ti ti-home nav-icon" aria-hidden="true"></i>
+    <div class="nav-label">TRANG CHỦ</div>
+  </button>
+  <button class="nav-item" data-page="chiX5" onclick="chuyenTrang('chiX5', this)">
+    <div class="text-icon nav-icon" style="font-size: 20px;">X5</div>
+    <div class="nav-label">CHỈ X5</div>
+  </button>
+  <button class="nav-item" data-page="quetQR" onclick="chuyenTrang('quetQR', this)">
+    <i class="ti ti-scan nav-icon" aria-hidden="true"></i>
+    <div class="nav-label">QUÉT QR</div>
+  </button>
+  <button class="nav-item" data-page="btpPage" onclick="chuyenTrang('btpPage', this)">
+    <i class="ti ti-box nav-icon" aria-hidden="true"></i>
+    <div class="nav-label">BTP</div>
+  </button>
+  <button class="nav-item" data-page="chiFor" onclick="chuyenTrang('chiFor', this)">
+    <div class="text-icon nav-icon" style="font-size: 20px;">X1</div>
+    <div class="nav-label">CHỈ X1</div>
+  </button>
+</div>
+
+
+<div class="canh-bao" id="canh-bao"></div>
+<div class="mang-status" id="mang-status"></div>
+
+
+<!-- Glass Header -->
+<div class="header" id="header" style="display:flex;">
+  <div class="header-left">
+    <div class="header-greeting" id="header-greeting">Xin chào, Admin</div>
+    <div class="title" id="header-title">Trung Vương</div>
+  </div>
+  <div class="header-right" style="display:flex; gap:12px; align-items:center;">
+    <button class="theme-toggle" id="btn-home-global" onclick="diToiTab('trangChu')" title="Về trang chủ">
+      <i class="ti ti-home"></i>
+    </button>
     <button class="theme-toggle" id="btn-theme" title="Chuyển Sáng/Tối">
       <i class="ti ti-moon"></i>
     </button>
@@ -234,7 +270,7 @@
         <div class="grid-title">Chỉ X5</div>
         <div class="grid-badge highlight">CẬP NHẬT</div>
       </div>
-      <div class="grid-card full-width" onclick="chuyenTrang('btpPage', this)">
+      <div class="grid-card full-width" onclick="chuyenTrangKhongNav('btpPage')">
         <div class="grid-icon" style="background: linear-gradient(135deg, #a78bfa, #7c3aed);"><i class="ti ti-box"></i></div>
         <div class="grid-text">
           <div class="grid-title" style="margin-bottom:0">Bán Thành Phẩm (BTP)</div>
@@ -834,7 +870,7 @@
     </div>
     <button id="cx5-btn-ghep" class="btn btn-blue btn-full" style="margin-top:12px" onclick="dongBoGhepCX5()"><i class="ti ti-refresh"></i> Đồng bộ Bảng Tổng kết</button>
     <button class="btn btn-full bg-neutral-solid text-cream mt-2" onclick="quayLaiDoiChieuCX5()"><i class="ti ti-arrow-left"></i> Quay lại đối chiếu</button>
-    <button class="btn btn-full" style="background:transparent;border:1px solid var(--line-soft);color:var(--cream-soft);margin-top:6px" onclick="boQuaTongKgCX5()"><i class="ti ti-home"></i> Trang chủ</button>
+    
   </div>
 </div>
 
@@ -1091,11 +1127,8 @@
     const oldChuyenTrangKhongNav = window.chuyenTrangKhongNav;
     window.chuyenTrangKhongNav = function(idTab) {
       if(oldChuyenTrangKhongNav) oldChuyenTrangKhongNav(idTab);
-      // Removed the code that hides bottom-nav to ensure it stays visible on BTP and other pages
     };
   });
 </script>
 </body>
 </html>
-
-
