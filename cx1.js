@@ -280,7 +280,7 @@ function taoHangKetQuaCX1(danhSach) {
     hangDot += `
   <tr>
     <td style="padding:10px;border-bottom:1px solid var(--line-soft);color:var(--brass);font-weight:700"> ${item.dot}</td>
-    <td style="padding:10px;border-bottom:1px solid var(--line-soft)">${item.msp}</td>
+    <td style="padding:10px;border-bottom:1px solid var(--line-soft);display:none">${item.msp}</td>
     <td style="padding:10px;border-bottom:1px solid var(--line-soft)">${item.qc}</td>
     <td style="padding:10px;border-bottom:1px solid var(--line-soft);text-align:center">${item.soLuong}</td>
     <td style="padding:10px;border-bottom:1px solid var(--line-soft);text-align:right;font-weight:700;color:var(--success)">${item.tongKG.toFixed(1)}</td>
@@ -289,7 +289,7 @@ function taoHangKetQuaCX1(danhSach) {
   hangDot += `
   <tr>
     <td style="padding:10px;font-weight:700;color:var(--brass);background:var(--card-raised)">TỔNG</td>
-    <td style="padding:10px;background:var(--card-raised)"></td>
+    <td style="padding:10px;background:var(--card-raised);display:none"></td>
     <td style="padding:10px;background:var(--card-raised)"></td>
     <td style="padding:10px;text-align:center;font-weight:700;color:var(--brass);background:var(--card-raised)">${tongQRAll}</td>
     <td style="padding:10px;text-align:right;font-weight:700;color:var(--brass);background:var(--card-raised)">${tongKGAll.toFixed(1)}</td>
@@ -299,7 +299,7 @@ function taoHangKetQuaCX1(danhSach) {
   Object.values(tongGomLoaiMa).forEach(item => {
     hangGom += `
   <tr>
-    <td style="padding:10px;border-bottom:1px solid var(--line-soft)">${item.msp}</td>
+    <td style="padding:10px;border-bottom:1px solid var(--line-soft);display:none">${item.msp}</td>
     <td style="padding:10px;border-bottom:1px solid var(--line-soft)">${item.qc}</td>
     <td style="padding:10px;border-bottom:1px solid var(--line-soft);text-align:center;font-weight:700">${item.soLuong}</td>
     <td style="padding:10px;border-bottom:1px solid var(--line-soft);text-align:right;font-weight:700;color:var(--success)">${item.tongKG.toFixed(1)}</td>
@@ -307,7 +307,7 @@ function taoHangKetQuaCX1(danhSach) {
   });
   hangGom += `
   <tr>
-    <td colspan="2" style="padding:10px;font-weight:700;color:var(--steel);background:var(--card-raised)">TỔNG</td>
+    <td colspan="1" style="padding:10px;font-weight:700;color:var(--steel);background:var(--card-raised)">TỔNG</td>
     <td style="padding:10px;text-align:center;font-weight:700;color:var(--steel);background:var(--card-raised)">${tongQRAll}</td>
     <td style="padding:10px;text-align:right;font-weight:700;color:var(--steel);background:var(--card-raised)">${tongKGAll.toFixed(1)}</td>
   </tr>`;

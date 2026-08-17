@@ -670,8 +670,11 @@ function layUngVienGhepCX5(payload) {
       const item = {
         row: b.rowCuoiCung,
         ngay: b.ngay,
-        bao: b.baoHieuLuc,
-        kg: Math.round(b.kgHieuLuc * 100) / 100
+        bao: b.bao,
+        kg: Math.round(b.kg * 100) / 100,
+        effBao: b.baoHieuLuc,
+        effKg: Math.round(b.kgHieuLuc * 100) / 100,
+        v: b.daAn ? "X" : ""
       };
       if (b.ngay === dateStr) {
         result[key].homNay.push(item);
@@ -703,13 +706,19 @@ function ghiGhepCX5(payload) {
     // 1) Ghi dữ liệu lượt nhập phiên hôm nay vào LSC5 (kiểm tra chống trùng)
     const sessionEntries = (payload && payload.sessionEntries) ? payload.sessionEntries : [];
     const existingBlocks = docCacKhoiLSC5_();
-    const existingKeys = new Set(existingBlocks.map(b => b.ngay + "|" + b.msp));
+    
+    const existingCounts = {};
+    existingBlocks.forEach(function (b) {
+      const key = b.ngay + "|" + b.msp + "|" + b.bao + "|" + Math.round(b.kg * 100)/100;
+      existingCounts[key] = (existingCounts[key] || 0) + 1;
+    });
 
     sessionEntries.forEach(function (se) {
-      const checkKey = se.dateStr + "|" + se.msp;
-      if (!existingKeys.has(checkKey)) {
+      const checkKey = se.dateStr + "|" + se.msp + "|" + se.bao + "|" + Math.round(se.kg * 100)/100;
+      if (existingCounts[checkKey] > 0) {
+        existingCounts[checkKey]--;
+      } else {
         ghiLichSuC5(se);
-        existingKeys.add(checkKey);
       }
     });
 
@@ -725,7 +734,7 @@ function ghiGhepCX5(payload) {
         const parts = g.key.split("|");
         const msp = parts[0], ten = parts[1];
         const match = blocks.slice().reverse().find(function (b) {
-          return b.msp === msp && b.ten === ten && (payload.dateStr ? b.ngay === payload.dateStr : true) && b.baoHieuLuc > 0 && b.baoHieuLuc < 10 && (!g.baoNeo || b.baoHieuLuc === g.baoNeo);
+          return b.msp === msp && b.ten === ten && (payload.dateStr ? b.ngay === payload.dateStr : true) && b.baoHieuLuc > 0 && b.baoHieuLuc < 10 && (!g.baoNeo || b.baoHieuLuc === g.baoNeo) && (!g.kgNeo || Math.abs(b.kgHieuLuc - g.kgNeo) < 0.2);
         });
         if (match) g.rowNeo = match.rowCuoiCung;
       }
@@ -760,7 +769,6 @@ function ghiGhepCX5(payload) {
         }
       }
       (g.cuList || []).forEach(function (item) {
-        sh.getRange(item.row, 20, 1, 2).setValues([[item.bao, Math.round(item.kg * 100) / 100]]);
         sh.getRange(item.row, 22).setValue("X");
       });
     });
