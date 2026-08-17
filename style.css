@@ -7,21 +7,21 @@
 
 :root {
   /* THEME TOKENS (New Design System) */
-  --bg-body: #f1f5f9; 
+  --bg-body: #f9f7f1; 
   --surface: #ffffff;
-  --surface-grad: linear-gradient(145deg, #ffffff 0%, #f8fafc 100%);
+  --surface-grad: linear-gradient(145deg, #ffffff 0%, #fdfbf7 100%);
   --surface-glass: rgba(255, 255, 255, 0.85);
-  --text-main: #0f172a;
-  --text-muted: #64748b;
-  --text-lighter: #94a3b8;
+  --text-main: #27272a;
+  --text-muted: #71717a;
+  --text-lighter: #a1a1aa;
   --primary: #3b82f6;
   --success: #10b981;
   --danger: #ef4444;
   --warning: #f59e0b;
   --border: rgba(0, 0, 0, 0.08);
   --border-card: rgba(0, 0, 0, 0.04);
-  --table-header-bg: #f8fafc;
-  --table-row-hover: #f1f5f9;
+  --table-header-bg: #f4f1e8;
+  --table-row-hover: #efebd8;
   --shadow-card: 0 8px 24px rgba(0, 0, 0, 0.04);
   --shadow-pressed: 0 4px 12px rgba(0, 0, 0, 0.03);
   --badge-bg: rgba(15, 23, 42, 0.06);
@@ -81,21 +81,21 @@
 }
 
 [data-theme="dark"] {
-  --bg-body: #010409;
-  --surface: #161b22;
-  --surface-grad: linear-gradient(145deg, #161b22 0%, #0d1117 100%);
-  --surface-glass: rgba(22, 27, 34, 0.85);
-  --text-main: #f0f6fc;
-  --text-muted: #8b949e;
-  --text-lighter: #484f58;
+  --bg-body: #0f172a;
+  --surface: #1e293b;
+  --surface-grad: linear-gradient(145deg, #1e293b 0%, #0f172a 100%);
+  --surface-glass: rgba(30, 41, 59, 0.85);
+  --text-main: #e2e8f0;
+  --text-muted: #94a3b8;
+  --text-lighter: #64748b;
   --primary: #3b82f6;
   --success: #3fb950;
   --danger: #f85149;
   --warning: #d29922;
   --border: rgba(255, 255, 255, 0.1);
   --border-card: rgba(255, 255, 255, 0.05);
-  --table-header-bg: #0d1117;
-  --table-row-hover: #21262d;
+  --table-header-bg: #1e293b;
+  --table-row-hover: #334155;
   --shadow-card: 0 10px 30px rgba(0, 0, 0, 0.4);
   --shadow-pressed: 0 4px 15px rgba(0, 0, 0, 0.3);
   --badge-bg: rgba(255, 255, 255, 0.1);
@@ -1831,6 +1831,7 @@ body { padding: 0 !important; background: var(--bg-body) !important; color: var(
 /* Non-home pages still need scrolling */
 .page:not(#trangChu) { padding: 80px 16px 100px !important; overflow-y: auto !important; display: none; }
 .page:not(#trangChu).active { display: block; }
+
 
 
 
