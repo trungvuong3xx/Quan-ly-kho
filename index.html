@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html>
 <head>
   <meta charset="UTF-8">
@@ -131,40 +131,7 @@
 
 
 <div class="bottom-nav" id="bottom-nav">
-  <button class="nav-item active" data-page="trangChu" onclick="chuyenTrang('trangChu', this)">
-    <i class="ti ti-home nav-icon" aria-hidden="true"></i>
-    <div class="nav-label">TRANG CHỦ</div>
-  </button>
-  <button class="nav-item" data-page="chiX5" onclick="chuyenTrang('chiX5', this)">
-    <div class="text-icon nav-icon" style="font-size: 20px;">X5</div>
-    <div class="nav-label">CHỈ X5</div>
-  </button>
-  <button class="nav-item" data-page="quetQR" onclick="chuyenTrang('quetQR', this)">
-    <i class="ti ti-scan nav-icon" aria-hidden="true"></i>
-    <div class="nav-label">QUÉT QR</div>
-  </button>
-  <button class="nav-item" data-page="btpPage" onclick="chuyenTrangKhongNav('btpPage')">
-    <i class="ti ti-box nav-icon" aria-hidden="true"></i>
-    <div class="nav-label">BTP</div>
-  </button>
-  <button class="nav-item" data-page="chiFor" onclick="chuyenTrang('chiFor', this)">
-    <div class="text-icon nav-icon" style="font-size: 20px;">X1</div>
-    <div class="nav-label">CHỈ X1</div>
-  </button>
-</div>
-
-
-<div class="canh-bao" id="canh-bao"></div>
-<div class="mang-status" id="mang-status"></div>
-
-
-<!-- Glass Header -->
-<div class="header" id="header" style="display:flex;">
-  <div class="header-left">
-    <div class="header-greeting" id="header-greeting">Xin chào, Admin</div>
-    <div class="title" id="header-title">Trung Vương</div>
-  </div>
-  <div class="header-right">
+  
     <button class="theme-toggle" id="btn-theme" title="Chuyển Sáng/Tối">
       <i class="ti ti-moon"></i>
     </button>
@@ -267,7 +234,7 @@
         <div class="grid-title">Chỉ X5</div>
         <div class="grid-badge highlight">CẬP NHẬT</div>
       </div>
-      <div class="grid-card full-width" onclick="chuyenTrangKhongNav('btpPage')">
+      <div class="grid-card full-width" onclick="chuyenTrang('btpPage', this)">
         <div class="grid-icon" style="background: linear-gradient(135deg, #a78bfa, #7c3aed);"><i class="ti ti-box"></i></div>
         <div class="grid-text">
           <div class="grid-title" style="margin-bottom:0">Bán Thành Phẩm (BTP)</div>
@@ -300,7 +267,7 @@
     <h3>Lịch Sử Chỉ For</h3>
     <div id="lichsu-list"></div>
     <button class="btn btn-excel btn-full mt-3" onclick="xuatExcelLichSuCX1()"><i class="ti ti-file-spreadsheet"></i> Xuất File Excel Lịch Sử</button>
-    <button class="btn btn-full bg-neutral-solid text-cream mt-2" onclick="diToiTab('trangChu')"><i class="ti ti-arrow-left"></i> Trang chủ</button>
+    
   </div>
 </div>
 
@@ -330,7 +297,7 @@
 
     <div id="tk-ket-qua"></div>
 
-    <button class="btn btn-full" style="background:var(--neutral-solid);color:var(--cream);margin-top:14px" onclick="diToiTab('trangChu')"><i class="ti ti-arrow-left"></i> Trang chủ</button>
+    
   </div>
 </div>
 
@@ -506,7 +473,7 @@
     </div>
 
     <div class="flex flex-col gap-2 w-full">
-      <button id="btn-flash-cx1" class="btn btn-full bg-neutral-solid text-cream" onclick="toggleFlashCX1()">Bật/Tắt đèn</button>
+      <button id="btn-flash-cx1" class="btn btn-full" style="background:var(--surface-grad); border:1px solid var(--border); color:var(--text-main);" onclick="toggleFlashCX1()">Bật/Tắt đèn</button>
       <button id="btn-dung-tieptuc-cx1" class="btn btn-red btn-full" onclick="toggleDungTiepTuc()">Dừng quét</button>
       <button class="btn btn-green btn-full" onclick="ketThucCX1()">Kết Thúc</button>
     </div>
@@ -592,7 +559,7 @@
       </div>
     </div>
     <button class="btn btn-blue btn-full" onclick="batDauBTP()">Bắt đầu Quét Camera</button>
-    <button class="btn btn-full" style="background:var(--card-raised); color:var(--cream); border:1px solid var(--line); margin-top:8px" onclick="chuyenTrangKhongNav('trangChu')"><i class="ti ti-arrow-left"></i> Trang chủ</button>
+    
   </div>
 
   <div id="btp-cam" class="card" style="display:none; overflow:hidden; padding:12px 12px 10px; margin-bottom:0;">
@@ -691,7 +658,7 @@
     </div>
     <div style="display:flex; gap:8px; margin-top:8px;">
       <button class="btn btn-excel" style="flex:1; height:38px; font-size:13px; margin:0;" onclick="xuatExcelBTP()"><i class="ti ti-file-spreadsheet"></i> Xuất Excel</button>
-      <button class="btn" style="flex:1; height:38px; font-size:13px; margin:0; background:var(--card-raised); color:var(--cream); border:1px solid var(--line);" onclick="chuyenTrangKhongNav('trangChu')"><i class="ti ti-arrow-left"></i> Trang chủ</button>
+      
     </div>
   </div>
 </div>
@@ -704,7 +671,7 @@
     </div>
     <input type="text" id="lichsu-btp-tim" placeholder="Tìm theo ngày, mã BTP, loại..." oninput="renderLichSuBTP()" style="margin-bottom:12px">
     <div id="lichsu-btp-list"></div>
-    <button class="btn btn-full" style="background:var(--card-raised); color:var(--cream); border:1px solid var(--line); margin-top:14px" onclick="chuyenTrangKhongNav('trangChu')"><i class="ti ti-arrow-left"></i> Trang chủ</button>
+    
   </div>
 </div>
 
@@ -760,7 +727,7 @@
     <label>Ngày</label>
     <input type="date" id="cx5-ngay">
     <button class="btn btn-blue btn-full" onclick="batDauCX5()">Bắt đầu</button>
-    <button class="btn btn-full" style="background:var(--neutral-solid);color:var(--cream)" onclick="diToiTab('trangChu')">Trang chủ</button>
+    
   </div>
 
   <div id="cx5-nhap" class="card" style="display:none">
@@ -816,7 +783,7 @@
     </div>
 
     <button class="btn btn-blue btn-full" onclick="ketThucPhienCX5()">Đối chiếu</button>
-    <button class="btn btn-full" style="background:var(--neutral-solid);color:var(--cream)" onclick="diToiTab('trangChu')">Trang chủ</button>
+    
   </div>
 
   <div id="cx5-doichieu" class="card" style="display:none">
@@ -878,7 +845,7 @@
     <div id="lichsu-x5-list"></div>
     <button class="btn btn-excel btn-full mt-3" onclick="xuatExcelLichSuCX5()"><i class="ti ti-file-spreadsheet"></i> Xuất File Excel Lịch Sử X5</button>
     <button class="btn btn-red btn-full" style="margin-top:8px" onclick="xoaTatCaLichSuCX5()">Xóa tất cả lịch sử</button>
-    <button class="btn btn-full bg-neutral-solid text-cream mt-2" onclick="diToiTab('trangChu')">Trang chủ</button>
+    
   </div>
 </div>
 
@@ -1114,11 +1081,6 @@
     // Override chuyenTrang to hide/show header
     const oldChuyenTrang = window.chuyenTrang;
     window.chuyenTrang = function(idTab, btn) {
-      const header = document.getElementById('header');
-      if(header) {
-        if(idTab === 'trangChu') header.style.display = 'flex';
-        else header.style.display = 'none';
-      }
       if(oldChuyenTrang) oldChuyenTrang(idTab, btn);
       
       // Fix active state of bottom nav items
@@ -1128,18 +1090,12 @@
     
     const oldChuyenTrangKhongNav = window.chuyenTrangKhongNav;
     window.chuyenTrangKhongNav = function(idTab) {
-      const header = document.getElementById('header');
-      if(header) {
-        if(idTab === 'trangChu') header.style.display = 'flex';
-        else header.style.display = 'none';
-      }
       if(oldChuyenTrangKhongNav) oldChuyenTrangKhongNav(idTab);
-      // Ensure bottom nav disappears correctly
-      const bnav = document.getElementById('bottom-nav');
-      if(bnav && idTab !== 'trangChu') bnav.style.display = 'none';
-      else if(bnav && idTab === 'trangChu') bnav.style.display = 'flex';
+      // Removed the code that hides bottom-nav to ensure it stays visible on BTP and other pages
     };
   });
 </script>
 </body>
 </html>
+
+
