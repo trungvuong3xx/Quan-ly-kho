@@ -202,7 +202,15 @@ body {
   padding-bottom: 100px;
 }
 
-.page.active { display: block; }
+.page.active {
+  display: block;
+  animation: pageFadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes pageFadeIn {
+  from { opacity: 0; transform: translateY(15px); }
+  to { opacity: 1; transform: translateY(0); }
+}
 
 .card {
   position: relative;
@@ -1831,6 +1839,7 @@ body { padding: 0 !important; background: var(--bg-body) !important; color: var(
 /* Non-home pages still need scrolling */
 .page:not(#trangChu) { padding: 80px 16px 100px !important; overflow-y: auto !important; display: none; }
 .page:not(#trangChu).active { display: block; }
+
 
 
 
