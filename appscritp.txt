@@ -735,7 +735,7 @@ function ghiGhepCX5(payload) {
         const parts = g.key.split("|");
         const msp = parts[0], ten = parts[1];
         const match = blocks.slice().reverse().find(function (b) {
-          return b.msp === msp && b.ten === ten && (payload.dateStr ? b.ngay === payload.dateStr : true) && b.baoHieuLuc > 0 && b.baoHieuLuc < 10 && (!g.baoNeo || b.baoHieuLuc === g.baoNeo) && (!g.kgNeo || Math.abs(b.kgHieuLuc - g.kgNeo) < 0.2);
+          return b.msp === msp && b.ten === ten && (payload.dateStr ? b.ngay === payload.dateStr : true) && b.baoHieuLuc > 0 && (!g.baoNeo || b.baoHieuLuc === g.baoNeo) && (!g.kgNeo || Math.abs(b.kgHieuLuc - g.kgNeo) < 0.2);
         });
         if (match) g.rowNeo = match.rowCuoiCung;
       }

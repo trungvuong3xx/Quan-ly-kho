@@ -1061,8 +1061,7 @@ function moTongKgCX5(dsQC) {
         const duLieuQC = res[key] || { homNay: [], cu: [] };
         
         const homNayList = (duLieuQC.homNay || []).filter(function (c) {
-          const effBao = c.effBao !== undefined ? c.effBao : c.bao;
-          return effBao < 10 && c.v !== "X";
+          return c.v !== "X";
         });
 
         const cu = (duLieuQC.cu || []).filter(function (c) {
@@ -1084,7 +1083,7 @@ function moTongKgCX5(dsQC) {
         const localCandidates = [];
         for (let i = 0; i < thuTuLocal.length; i++) {
           const rows = luotMapLocal.get(thuTuLocal[i]);
-          if (rows.length > 0 && rows.length < 10) {
+          if (rows.length > 0) {
             localCandidates.push({
               bao: rows.length,
               kg: Math.round(rows.reduce(function (s, r) { return s + r.kg; }, 0) * 10) / 10,
