@@ -49,7 +49,7 @@ function luuPhienDoDangCX5() {
     localStorage.setItem("cx5_phien_dodang", JSON.stringify({
       phienCX5, ngayCX5, capNhat: new Date().toISOString(),
       idPhienHienTaiC5, seqCX5, doiChieuCX5, dangKetThucCX5,
-      luotDemCX5, luotHienTaiCX5
+      luotDemCX5, luotHienTaiCX5, tongKgDataCX5
     }));
   } catch (e) { }
   luuPhienVaoLichSuCX5();
@@ -214,6 +214,7 @@ async function khoiPhucCX5(state) {
   dangKetThucCX5 = !!state.dangKetThucCX5;
   luotDemCX5 = state.luotDemCX5 || phienCX5.reduce((m, r) => Math.max(m, r.luot || 0), 0);
   luotHienTaiCX5 = state.luotHienTaiCX5 || null;
+  tongKgDataCX5 = state.tongKgDataCX5 || {};
 
   document.getElementById("cx5-form").style.display = "none";
   document.getElementById("cx5-doichieu").style.display = "none";
@@ -1041,6 +1042,8 @@ function moTongKgCX5(dsQC) {
   if (dsQC && dsQC.length > 0) {
     callApiCX5({ action: "layUngVienGhepCX5", payload: { dsQC: dsQC, dateStr: ngayCX5 } }).then(res => {
       if (!res || res.error) return;
+      
+      const oldState = Object.assign({}, tongKgDataCX5);
       tongKgDataCX5 = {};
       tongKetPhienCX5 = [];
       const daXuLyQC = new Set();
@@ -1069,25 +1072,39 @@ function moTongKgCX5(dsQC) {
         });
         
         const anchorCandidates = [];
-        homNayList.forEach(c => {
-           anchorCandidates.push({
-             row: c.row,
-             bao: c.effBao !== undefined ? c.effBao : c.bao,
-             kg: c.effKg !== undefined ? c.effKg : c.kg
-           });
-        });
         
         const thuTuLocal = Array.from(luotMapLocal.keys());
+        const localCandidates = [];
         for (let i = 0; i < thuTuLocal.length; i++) {
           const rows = luotMapLocal.get(thuTuLocal[i]);
           if (rows.length > 0 && rows.length < 10) {
-            anchorCandidates.push({
-              row: null,
+            localCandidates.push({
               bao: rows.length,
-              kg: Math.round(rows.reduce(function (s, r) { return s + r.kg; }, 0) * 10) / 10
+              kg: Math.round(rows.reduce(function (s, r) { return s + r.kg; }, 0) * 10) / 10,
+              matched: false
             });
           }
         }
+        
+        homNayList.forEach(c => {
+           const cBao = c.effBao !== undefined ? c.effBao : c.bao;
+           const cKg = c.effKg !== undefined ? c.effKg : c.kg;
+           
+           anchorCandidates.push({
+             row: c.row,
+             bao: cBao,
+             kg: cKg
+           });
+           
+           const lIdx = localCandidates.findIndex(lc => !lc.matched && lc.bao === cBao && Math.abs(lc.kg - cKg) <= 0.2);
+           if (lIdx >= 0) localCandidates[lIdx].matched = true;
+        });
+
+        localCandidates.forEach(lc => {
+            if (!lc.matched) {
+                anchorCandidates.push({ row: null, bao: lc.bao, kg: lc.kg });
+            }
+        });
 
         if (anchorCandidates.length === 0) {
            anchorCandidates.push({ row: null, bao: 0, kg: 0 });
@@ -1096,24 +1113,49 @@ function moTongKgCX5(dsQC) {
         anchorCandidates.forEach((anchor, idx) => {
           if (anchor.bao > 0 || cu.length > 0) {
             const cardKey = key + "|" + idx;
+            
+            let existingCard = oldState[cardKey];
+            if (existingCard && existingCard.homNay && existingCard.homNay.bao === anchor.bao && Math.abs(existingCard.homNay.kg - anchor.kg) <= 0.2) {
+                delete oldState[cardKey];
+            } else {
+                const foundKey = Object.keys(oldState).find(k => {
+                    const oc = oldState[k];
+                    return k.startsWith(key + "|") && oc.homNay && oc.homNay.bao === anchor.bao && Math.abs(oc.homNay.kg - anchor.kg) <= 0.2;
+                });
+                if (foundKey) {
+                    existingCard = oldState[foundKey];
+                    delete oldState[foundKey];
+                } else {
+                    existingCard = null;
+                }
+            }
+
             tongKgDataCX5[cardKey] = {
               ten: q.ten,
               msp: q.msp,
               homNay: anchor,
               cu: cu.map(function (c) {
+                let isChecked = false;
+                if (existingCard && existingCard.cu) {
+                    const oldCu = existingCard.cu.find(oc => oc.row === c.row);
+                    if (oldCu) isChecked = oldCu.checked;
+                }
                 return {
                   row: c.row, ngay: c.ngay,
                   bao: c.effBao !== undefined ? c.effBao : c.bao,
                   kg: c.effKg !== undefined ? c.effKg : c.kg,
-                  checked: false
+                  checked: isChecked
                 };
-              })
+              }),
+              daGhepBao: existingCard ? existingCard.daGhepBao : 0,
+              daGhepKg: existingCard ? existingCard.daGhepKg : 0
             };
           }
         });
       });
 
       renderTongKgCX5();
+      luuPhienDoDangCX5();
     }).catch(() => {});
   }
 }
@@ -1301,6 +1343,7 @@ function toggleGhepCX5(key, idx) {
   if (!d || !d.cu[idx]) return;
   d.cu[idx].checked = !d.cu[idx].checked;
   renderTongKgCX5();
+  luuPhienDoDangCX5();
 }
 window.toggleGhepCX5 = toggleGhepCX5;
 
@@ -1318,6 +1361,7 @@ function xoaUngVienGhepCX5(key, idx) {
         tongKgDataCX5[keyKhoi].cu = tongKgDataCX5[keyKhoi].cu.filter(function (c) { return c.row !== candidate.row; });
       });
       renderTongKgCX5();
+      luuPhienDoDangCX5();
     } catch (e) {
       showCanhBaoCX5("Mất mạng — thử lại: " + e.message);
     } finally {
@@ -1418,6 +1462,7 @@ async function dongBoGhepCX5() {
 
     showCanhBaoCX5("Đã đồng bộ dữ liệu phiên và ghép pallet vào Sheet LSC5 thành công!");
     renderTongKgCX5();
+    luuPhienDoDangCX5();
   } catch (e) {
     showLoading(false);
     if (btn) { btn.disabled = false; btn.innerHTML = '<i class="ti ti-refresh"></i> Đồng bộ Bảng Tổng kết'; }
@@ -1593,7 +1638,8 @@ function luuPhienVaoLichSuCX5() {
     doiChieuCX5: doiChieuCX5,
     dangKetThucCX5: dangKetThucCX5,
     luotDemCX5: luotDemCX5,
-    luotHienTaiCX5: luotHienTaiCX5
+    luotHienTaiCX5: luotHienTaiCX5,
+    tongKgDataCX5: tongKgDataCX5
   };
   if (idx >= 0) list[idx] = banGhi; else list.push(banGhi);
   luuLichSuCX5(list);
