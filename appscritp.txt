@@ -559,6 +559,7 @@ function ghiLichSuC5(payload) {
 
       const tongKg = kgList.reduce(function (s, v) { return s + (Number(v) || 0); }, 0);
       sh.getRange(dongCuoiCung, 18).setValue(Math.round(tongKg * 100) / 100);
+      sh.getRange(dongCuoiCung, 20, 1, 2).setValues([[kgList.length, Math.round(tongKg * 100) / 100]]);
     });
   } catch (e) {}
 }
@@ -768,9 +769,9 @@ function ghiGhepCX5(payload) {
           sh.getRange(g.rowNeo, 23).setValue(Array.from(wMoi).join(","));
         }
       }
-      (g.cuList || []).forEach(function (item) {
-        sh.getRange(item.row, 22).setValue("X");
-      });
+        (g.cuList || []).forEach(function (item) {
+          sh.getRange(item.row, 22).setValue("X");
+        });
     });
 
     return { success: true };

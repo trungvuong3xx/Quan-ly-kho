@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html>
 <head>
   <meta charset="UTF-8">
@@ -783,12 +783,18 @@
     </div>
     <input type="hidden" id="cx5-msp">
 
-    <div id="cx5-kg-khu">
-      <label>Kg</label>
-      <input type="text" id="cx5-kg" inputmode="none" onkeydown="if(event.key==='Enter'){event.preventDefault();themDongCX5()}">
-
-      <button class="btn btn-green btn-full" onclick="themDongCX5()">Thêm</button>
+    <div style="display: flex; gap: 10px; margin-bottom: 12px;">
+      <div style="flex: 1;">
+        <label>Bao</label>
+        <input type="text" id="cx5-bao" value="1" inputmode="none" onkeydown="if(event.key==='Enter'){event.preventDefault();document.getElementById('cx5-kg').focus()}">
+      </div>
+      <div style="flex: 1;">
+        <label>Kg</label>
+        <input type="text" id="cx5-kg" inputmode="none" onkeydown="if(event.key==='Enter'){event.preventDefault();themDongCX5()}">
+      </div>
     </div>
+
+    <button class="btn btn-green btn-full" onclick="themDongCX5()">Thêm</button>
 
     <div class="cx5-box">
       <div class="cx5-box-top">

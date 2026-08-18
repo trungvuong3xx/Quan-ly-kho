@@ -360,28 +360,35 @@ function themDongCX5() {
   const msp = document.getElementById("cx5-msp").value;
   const ten = document.getElementById("cx5-ten").value.trim();
   const kg = parseFloat(document.getElementById("cx5-kg").value);
+  let bao = parseInt(document.getElementById("cx5-bao") ? document.getElementById("cx5-bao").value : "1", 10);
+  if (isNaN(bao) || bao < 1) bao = 1;
+
   if (!msp || !ten) { showCanhBaoCX5("Chưa chọn quy cách hợp lệ"); return; }
   if (!kg || kg <= 0) { showCanhBaoCX5("Nhập số kg hợp lệ"); return; }
   if (kg > CX5_KG_MAX) { showCanhBaoCX5("Số kg quá lớn (trên " + CX5_KG_MAX + "kg), kiểm tra lại"); return; }
 
-  hoanTatThemDongCX5(msp, ten, kg);
-}
-
-function hoanTatThemDongCX5(msp, ten, kg) {
-  // Bình thường lượt đã được tạo khi chọn quy cách (chonQCX5). Đây chỉ là lưới an toàn
-  // cho trường hợp hiếm khi chưa có lượt hiện tại (vd lỗi khôi phục phiên).
   if (!luotHienTaiCX5 || luotHienTaiCX5.msp !== msp || luotHienTaiCX5.ten !== ten) {
     luotDemCX5 += 1;
     luotHienTaiCX5 = { msp, ten, id: luotDemCX5 };
   }
 
+  const kgMoiBao = Math.round((kg / bao) * 100) / 100;
+  let kgTong = 0;
+  for (let i = 0; i < bao - 1; i++) {
+    seqCX5 += 1;
+    phienCX5.push({ seq: seqCX5, msp, ten, kg: kgMoiBao, luot: luotHienTaiCX5.id, thoiGian: new Date(), daDongBo: false });
+    kgTong += kgMoiBao;
+  }
+  const kgCuoiCung = Math.round((kg - kgTong) * 100) / 100;
   seqCX5 += 1;
-  phienCX5.push({ seq: seqCX5, msp, ten, kg, luot: luotHienTaiCX5.id, thoiGian: new Date(), daDongBo: false });
+  phienCX5.push({ seq: seqCX5, msp, ten, kg: kgCuoiCung, luot: luotHienTaiCX5.id, thoiGian: new Date(), daDongBo: false });
+
   luuPhienDoDangCX5();
   renderBangChiTietCX5();
   renderBangTongHopCX5();
 
   document.getElementById("cx5-kg").value = "";
+  if (document.getElementById("cx5-bao")) document.getElementById("cx5-bao").value = "1";
   document.getElementById("cx5-kg").focus();
 }
 
@@ -1859,7 +1866,7 @@ let banPhimQCPendingCX5 = null;
   document.addEventListener("focus", function (e) {
     const el = e.target;
     if (!el || el.tagName !== "INPUT") return;
-    if (el.id === "cx5-kg" || el.id === "cx5-sl-them-kg" || el.id === "cx5-sx-kg" || el.classList.contains("cx5-sx-input")) {
+    if (el.id === "cx5-kg" || el.id === "cx5-bao" || el.id === "cx5-sl-them-kg" || el.id === "cx5-sx-kg" || el.classList.contains("cx5-sx-input")) {
       moBanPhimCX5(el, "kg");
     } else if (el.id === "cx5-ten" || el.id === "cx5-sx-ten" || el.id === "cx5-sl-ten-tim") {
       moBanPhimCX5(el, "qc");
