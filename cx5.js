@@ -1285,11 +1285,20 @@ function renderTongKetPhienTongKgCX5() {
       trangThaiHtml = '<i class="ti ti-check" style="color:var(--success);font-size:18px" title="Đã đồng bộ"></i>';
     }
 
+    let bagInfo = "";
+    if (rows.length >= 1) {
+      bagInfo = rows[0].kg.toFixed(1);
+      if (rows.length >= 6) {
+        bagInfo += "-" + rows[5].kg.toFixed(1);
+      }
+    }
+
     danhSach.push({
       ten: first.ten,
       bao: bao,
       kg: Math.round(kg * 10) / 10,
-      trangThaiHtml: trangThaiHtml
+      trangThaiHtml: trangThaiHtml,
+      bagInfo: bagInfo
     });
   });
 
@@ -1324,7 +1333,8 @@ function renderTongKetPhienTongKgCX5() {
         ten: item.ten,
         bao: bao,
         kg: Math.round(kg * 10) / 10,
-        trangThaiHtml: trangThaiHtml
+        trangThaiHtml: trangThaiHtml,
+        bagInfo: ""
       });
     }
   });
@@ -1335,8 +1345,12 @@ function renderTongKetPhienTongKgCX5() {
   }
 
   tbody.innerHTML = danhSach.map(function (item) {
+    let tenHtml = escHtmlCX5(item.ten);
+    if (item.bagInfo) {
+      tenHtml += '<br><span style="font-size:11px;color:var(--cream-soft)">' + item.bagInfo + '</span>';
+    }
     return "<tr>" +
-      "<td>" + escHtmlCX5(item.ten) + "</td>" +
+      "<td>" + tenHtml + "</td>" +
       "<td>" + item.bao + "</td>" +
       "<td>" + item.kg.toFixed(1) + "</td>" +
       '<td style="text-align:center">' + item.trangThaiHtml + "</td>" +
