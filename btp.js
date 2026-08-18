@@ -158,12 +158,13 @@ function capNhatLogBTP() {
 
   const newestFirst = phienBTP.slice().reverse();
   container.innerHTML = newestFirst.map((item, idx) => {
-    const stt = phienBTP.length - idx;
+    const dot = item.dotQuet || 1;
     const originalIndex = phienBTP.length - 1 - idx;
     const gio = item.thoiGian ? new Date(item.thoiGian).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit", second: "2-digit" }) : "";
     const flashClass = idx === 0 ? ' scan-flash-new' : '';
-    return `<div class="${flashClass}" style="display:flex; justify-content:space-between; align-items:center; padding:4px 0; border-bottom:1px solid rgba(255,255,255,0.06); font-size:12px; border-radius:6px;">
-      <span style="color:var(--steel); font-weight:700; width:26px;">${stt}</span>
+
+    return `<div class="${flashClass}" style="display:flex; justify-content:space-between; align-items:center; padding:4px 0; border-bottom:1px solid var(--line-soft); font-size:12px; border-radius:6px;">
+      <span style="color:var(--steel); font-weight:700; width:26px;">${dot}</span>
       <span style="color:var(--brass); font-weight:800; flex:1; text-align:left; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${item.msp || '—'}</span>
       <span style="color:var(--success); font-weight:700; width:45px; text-align:center;">${item.kg || 0}</span>
       <span style="color:var(--cream-soft); font-size:11px; width:50px; text-align:right;">${gio}</span>
@@ -322,7 +323,7 @@ function dungBTP() {
 
 async function tiepTucBTP() {
   document.body.classList.add("cam-active");
-  demSoDotBTP = (demSoDotBTP || 0) + 1;
+  const daQuetTrongDotNay = phienBTP.some(function(item) { return item.dotQuet === demSoDotBTP; }); if (daQuetTrongDotNay || (demSoDotBTP || 0) === 0) { demSoDotBTP = (demSoDotBTP || 0) + 1; }
   dangQuetBTP = true;
   document.getElementById("btp-status").innerHTML = '<i class="ti ti-radar" style="color:var(--success)"></i> Đang quét Đợt ' + demSoDotBTP + '...';
   try {
@@ -574,7 +575,7 @@ function hienKetQuaBTP() {
 
 async function quetTiepBTP() {
   document.body.classList.add("cam-active");
-  demSoDotBTP = (demSoDotBTP || 0) + 1;
+  const daQuetTrongDotNay = phienBTP.some(function(item) { return item.dotQuet === demSoDotBTP; }); if (daQuetTrongDotNay || (demSoDotBTP || 0) === 0) { demSoDotBTP = (demSoDotBTP || 0) + 1; }
   dangQuetBTP = true;
   denPinBatBTP = false;
 
@@ -995,4 +996,6 @@ async function tuDongDongBoPendingBTP() {
 
 window.addEventListener("load", tuDongDongBoPendingBTP);
 window.addEventListener("online", tuDongDongBoPendingBTP);
+
+
 

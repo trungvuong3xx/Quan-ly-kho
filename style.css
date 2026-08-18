@@ -1,8 +1,8 @@
-﻿@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap');
 
 /* ============================================================
-   THEME: "Obsidian & Amber Gold" — Đen đá Obsidian Slate,
-   chữ bạch kim nhã nhặn, accent Cam Hổ Phách Gold hiện đại.
+   THEME: "Obsidian & Amber Gold" � �en d� Obsidian Slate,
+   ch? b?ch kim nh� nh?n, accent Cam H? Ph�ch Gold hi?n d?i.
    ============================================================ */
 
 :root {
@@ -18,11 +18,11 @@
   --success: #10b981;
   --danger: #ef4444;
   --warning: #f59e0b;
-  --border: rgba(0, 0, 0, 0.08);
-  --border-card: rgba(0, 0, 0, 0.04);
-  --table-header-bg: #f4f1e8;
+  --border: rgba(0, 0, 0, 0.25);
+  --border-card: rgba(0, 0, 0, 0.15);
+  --table-header-bg: #e2dfd4;
   --table-row-hover: #efebd8;
-  --shadow-card: 0 8px 24px rgba(0, 0, 0, 0.04);
+  --shadow-card: 0 4px 16px rgba(0, 0, 0, 0.12);
   --shadow-pressed: 0 4px 12px rgba(0, 0, 0, 0.03);
   --badge-bg: rgba(15, 23, 42, 0.06);
 
@@ -271,7 +271,7 @@ input:focus {
   box-shadow: 0 0 0 4px var(--steel-bg), var(--shadow-pressed);
 }
 
-/* Ngày (date input) */
+/* Ng�y (date input) */
 input[type=date] {
   width: 100%;
   height: 40px;
@@ -530,7 +530,7 @@ select option {
 .stock-row .ivalue { color: var(--steel); }
 .stock-ton .ivalue { color: var(--success); }
 
-/* QR Form — luôn nền trắng để in nhãn thật, không đổi theo theme app */
+/* QR Form � lu�n n?n tr?ng d? in nh�n th?t, kh�ng d?i theo theme app */
 .qr-grid { display: grid; grid-template-columns: 1fr; gap: 6px; }
 
 .qr-item {
@@ -682,7 +682,7 @@ select option {
   100% { transform: scale(0.9); opacity: 1; }
 }
 
-/* ── Glassmorphism Bottom Navigation Bar ── */
+/* -- Glassmorphism Bottom Navigation Bar -- */
 
 
 
@@ -690,7 +690,7 @@ select option {
 
 
 
-/* ── Trang Chủ Dashboard Grid Cards ── */
+/* -- Trang Ch? Dashboard Grid Cards -- */
 
 
 
@@ -698,7 +698,7 @@ select option {
 
 
 
-/* ── Hiệu ứng Highlight Chớp Sáng Xanh Ngọc Dòng Mới Quét ── */
+/* -- Hi?u ?ng Highlight Ch?p S�ng Xanh Ng?c D�ng M?i Qu�t -- */
 @keyframes scanFlashNew {
   0% {
     background-color: rgba(63, 185, 80, 0.45) !important;
@@ -713,7 +713,7 @@ select option {
   animation: scanFlashNew 0.75s ease-out 1;
 }
 
-/* ── Sticky Table Headers ── */
+/* -- Sticky Table Headers -- */
 table thead th,
 .cx5-table th,
 .sticky-header th {
@@ -724,7 +724,7 @@ table thead th,
   border-bottom: 2px solid var(--border) !important;
 }
 
-/* ── Generic Camera HUD Viewfinder (Dùng chung cho Quét QR, CX1, Kiểm kê) ── */
+/* -- Generic Camera HUD Viewfinder (D�ng chung cho Qu�t QR, CX1, Ki?m k�) -- */
 .cam-viewfinder {
   position: absolute;
   top: 0;
@@ -1039,7 +1039,7 @@ table thead th,
 .custom-option:last-child { border-bottom: none; }
 .custom-option:hover, .custom-option.active { background: var(--brass) !important; color: var(--bg-deep) !important; }
 
-/* Bottom Nav — thanh nổi bo tròn kính mờ (Glassmorphism), cách mép */
+/* Bottom Nav � thanh n?i bo tr�n k�nh m? (Glassmorphism), c�ch m�p */
 
 
 
@@ -1052,7 +1052,7 @@ table thead th,
 
 @keyframes spin { to { transform: rotate(360deg); } }
 
-/* Icon loading dùng chung — đồng bộ màu với theme qua CSS variable thay vì mã màu cứng */
+/* Icon loading d�ng chung � d?ng b? m�u v?i theme qua CSS variable thay v� m� m�u c?ng */
 .spinner-loading {
   border: 3px solid var(--neutral-solid);
   border-top-color: var(--brass);
@@ -1065,7 +1065,7 @@ table thead th,
 .spinner-loading.lg { width: 40px; height: 40px; }
 
 /* ============================================================
-   CHỈ X5
+   CH? X5
    ============================================================ */
 .cx5-ten-wrap { position: relative; }
 
@@ -1325,8 +1325,8 @@ table thead th,
   margin-bottom: 12px;
 }
 
-/* Xoay ngang bảng CX5 = overlay toàn màn hình riêng, chỉ 1 bảng/lần nên không thể đè nhau,
-   nút đóng nằm ngoài phần tử bị xoay nên luôn bấm được. */
+/* Xoay ngang b?ng CX5 = overlay to�n m�n h�nh ri�ng, ch? 1 b?ng/l?n n�n kh�ng th? d� nhau,
+   n�t d�ng n?m ngo�i ph?n t? b? xoay n�n lu�n b?m du?c. */
 .cx5-xoay-overlay {
   display: none;
   position: fixed; inset: 0;
@@ -1396,7 +1396,7 @@ table thead th,
 }
 
 /* ============================================================
-   BÀN PHÍM ẢO CHỈ X5 (Quy cách / Kg)
+   B�N PH�M ?O CH? X5 (Quy c�ch / Kg)
    ============================================================ */
 .cx5-bp-panel {
   position: fixed; left: 0; right: 0; bottom: 0; z-index: 10500;
@@ -1490,10 +1490,10 @@ table thead th,
 }
 
 /* ============================================================
-   TINH CHỈNH NÂNG CẤP THEME (Đồng bộ 6 nút, Kính mờ & Viền nổi)
+   TINH CH?NH N�NG C?P THEME (�?ng b? 6 n�t, K�nh m? & Vi?n n?i)
    ============================================================ */
 
-/* 1. Điểm nhấn 6 màu cho các nút tính năng Trang chủ */
+/* 1. �i?m nh?n 6 m�u cho c�c n�t t�nh nang Trang ch? */
 .trangchu-grid .btn {
   background: var(--card-raised) !important;
   color: var(--cream) !important;
@@ -1518,14 +1518,14 @@ table thead th,
 .trangchu-grid .btn:nth-child(5) { border-left: 4px solid var(--chi-5) !important; }
 .trangchu-grid .btn:nth-child(6) { border-left: 4px solid var(--chi-6) !important; }
 
-/* 2. Cải thiện độ rõ Icon Bottom Nav trên màn hình kho */
+/* 2. C?i thi?n d? r� Icon Bottom Nav tr�n m�n h�nh kho */
 
 
 
-/* 3. Hiệu ứng nhún bấm mượt tay (Touch Feedback) trên di động */
+/* 3. Hi?u ?ng nh�n b?m mu?t tay (Touch Feedback) tr�n di d?ng */
 .btn:active, 
 
-/* 4. Thư viện nút Xuất Excel & Hiệu ứng phản hồi quét mã */
+/* 4. Thu vi?n n�t Xu?t Excel & Hi?u ?ng ph?n h?i qu�t m� */
 .btn-excel {
   background: #107c41 !important;
   color: #ffffff !important;
@@ -1563,7 +1563,7 @@ table thead th,
   100% { box-shadow: 0 0 0 0 rgba(82, 196, 26, 0); }
 }
 
-/* ── Xóa hoàn toàn thanh cuộn (scrollbar) trên toàn bộ ứng dụng & trình duyệt ── */
+/* -- X�a ho�n to�n thanh cu?n (scrollbar) tr�n to�n b? ?ng d?ng & tr�nh duy?t -- */
 html, body, *, ::-webkit-scrollbar {
   -ms-overflow-style: none !important;
   scrollbar-width: none !important;
@@ -1586,7 +1586,7 @@ body::-webkit-scrollbar {
   background: transparent !important;
 }
 
-/* ── Cố định thẻ quét camera BTP vừa khít 100% màn hình, mở rộng nhật ký quét ── */
+/* -- C? d?nh th? qu�t camera BTP v?a kh�t 100% m�n h�nh, m? r?ng nh?t k� qu�t -- */
 body.cam-active {
   position: fixed !important;
   top: 0 !important;
@@ -1651,7 +1651,7 @@ body.cam-active #btp-log-list {
   overflow-y: auto !important;
 }
 
-/* ── BTP Camera Viewfinder Brackets & Laser Scan Line ── */
+/* -- BTP Camera Viewfinder Brackets & Laser Scan Line -- */
 .btp-viewfinder {
   position: absolute;
   top: 0;
@@ -1703,14 +1703,14 @@ body.cam-active #btp-log-list {
 
 
 
-/* ── Ép cố định giao diện ứng dụng chiều dọc 100% không cho xoay theo cảm biến điện thoại ── */
+/* -- �p c? d?nh giao di?n ?ng d?ng chi?u d?c 100% kh�ng cho xoay theo c?m bi?n di?n tho?i -- */
 #app-viewport {
   width: 100%;
   height: 100%;
   box-sizing: border-box;
 }
 
-/* ── Linh kiện Công Tắc Gạt (Toggle Switch Component) ── */
+/* -- Linh ki?n C�ng T?c G?t (Toggle Switch Component) -- */
 .toggle-switch {
   position: relative;
   display: inline-block;
