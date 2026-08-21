@@ -89,6 +89,7 @@ function khiQuetDuocMa(result) {
   });
   document.getElementById("cx1-dem").textContent = "Đã quét: " + phienCX1.length + " mã";
   luuPhienDoDangCX1();
+  capNhatLogCX1();
 }
 
 function luuPhienDoDangCX1() {
@@ -137,6 +138,7 @@ async function batDauCX1() {
   document.getElementById("btn-flash-cx1").style.background = "var(--neutral)";
   document.getElementById("btn-flash-cx1").style.color = "var(--cream)";
   document.getElementById("btn-flash-cx1").textContent = "Bật đèn pin";
+  capNhatLogCX1();
 
   const btnToggle = document.getElementById("btn-dung-tieptuc-cx1");
   btnToggle.textContent = "Dừng quét";
@@ -250,6 +252,83 @@ async function ketThucCX1() {
   luuVaoLichSuCX1();
 }
 
+function nhapTayCX1(dot, msp, qc) {
+  const kgStr = prompt("Nhập số KG cho " + (qc || msp) + " (Đợt " + dot + "):");
+  if (!kgStr) return;
+  const kg = parseFloat(kgStr);
+  if (isNaN(kg) || kg <= 0) {
+    showCanhBaoCX1("Số KG không hợp lệ!");
+    return;
+  }
+  const id = "MANUAL_" + Date.now();
+  phienCX1.push({
+    id: id, msp: msp, qc: qc,
+    kg: kg, thoiGian: new Date(), dotQuet: dot
+  });
+  document.getElementById("cx1-dem").textContent = "Đã quét: " + phienCX1.length + " mã";
+  luuPhienDoDangCX1();
+  hienKetQuaCX1(); // to re-render the table
+  
+  if (dangQuetCX1 || (document.getElementById("cx1-cam") && document.getElementById("cx1-cam").style.display !== "none")) {
+    capNhatLogCX1();
+  }
+}
+window.nhapTayCX1 = nhapTayCX1;
+
+function xoaMaCX1(index, ev) {
+  if (ev) ev.stopPropagation();
+  if (index < 0 || index >= phienCX1.length) return;
+  const item = phienCX1[index];
+  const tenMa = item ? (item.msp || item.id) : "mã này";
+  
+  const doXoa = () => {
+    phienCX1.splice(index, 1);
+    luuPhienDoDangCX1();
+    capNhatLogCX1();
+    const demEl = document.getElementById("cx1-dem");
+    if (demEl) demEl.textContent = "Đã quét: " + phienCX1.length + " mã";
+    if (document.getElementById("cx1-ketqua") && document.getElementById("cx1-ketqua").style.display !== "none") {
+      hienKetQuaCX1();
+    }
+    showCanhBaoCX1("Đã xóa " + tenMa);
+  };
+  
+  if (confirm("Xóa mã " + tenMa + " khỏi phiên quét?")) {
+    doXoa();
+  }
+}
+window.xoaMaCX1 = xoaMaCX1;
+
+function capNhatLogCX1() {
+  const container = document.getElementById("cx1-log-list");
+  const countEl = document.getElementById("cx1-log-count");
+
+  if (countEl) countEl.textContent = phienCX1.length + " mã";
+  if (!container) return;
+  if (phienCX1.length === 0) {
+    container.innerHTML = '<div style="color:var(--cream-soft); font-size:12px; text-align:center; padding:8px 0;">Chưa có mã nào được quét</div>';
+    return;
+  }
+
+  const newestFirst = phienCX1.slice().reverse();
+  container.innerHTML = newestFirst.map((item, idx) => {
+    const dot = item.dotQuet || 1;
+    const originalIndex = phienCX1.length - 1 - idx;
+    const gio = item.thoiGian ? new Date(item.thoiGian).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit", second: "2-digit" }) : "";
+    const flashClass = idx === 0 ? ' scan-flash-new' : '';
+
+    return \`<div class="\${flashClass}" style="display:flex; justify-content:space-between; align-items:center; padding:4px 0; border-bottom:1px solid var(--line-soft); font-size:12px; border-radius:6px;">
+      <span style="color:var(--steel); font-weight:700; width:26px;">\${dot}</span>
+      <span style="color:var(--brass); font-weight:800; flex:1; text-align:left; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">\${item.msp || item.qc || '—'}</span>
+      <span style="color:var(--success); font-weight:700; width:45px; text-align:center;">\${item.kg || 0}</span>
+      <span style="color:var(--cream-soft); font-size:11px; width:50px; text-align:right;">\${gio}</span>
+      <button class="cx5-del-btn" onclick="xoaMaCX1(\${originalIndex}, event)" title="Xóa mã này" style="margin-left:4px; background:none; border:none; color:var(--red); cursor:pointer; padding:2px 4px;">
+        <i class="ti ti-trash"></i>
+      </button>
+    </div>\`;
+  }).join("");
+}
+
 function taoHangKetQuaCX1(danhSach) {
   let tongDotCuaPhien = {};
   let tongGomLoaiMa = {};
@@ -260,16 +339,24 @@ function taoHangKetQuaCX1(danhSach) {
     tongQRAll += 1;
     tongKGAll += r.kg;
 
-    const keyDot = r.dotQuet + "|" + r.msp + "|" + r.qc;
+    const keyDot = r.dotQuet + "|" + r.msp;
     if (!tongDotCuaPhien[keyDot]) {
       tongDotCuaPhien[keyDot] = { dot: r.dotQuet, msp: r.msp, qc: r.qc, soLuong: 0, tongKG: 0 };
+    } else {
+      if (r.qc && (!tongDotCuaPhien[keyDot].qc || r.qc.length < tongDotCuaPhien[keyDot].qc.length)) {
+        tongDotCuaPhien[keyDot].qc = r.qc;
+      }
     }
     tongDotCuaPhien[keyDot].soLuong += 1;
     tongDotCuaPhien[keyDot].tongKG += r.kg;
 
-    const keyGom = r.msp + "|" + r.qc;
+    const keyGom = r.msp;
     if (!tongGomLoaiMa[keyGom]) {
       tongGomLoaiMa[keyGom] = { msp: r.msp, qc: r.qc, soLuong: 0, tongKG: 0 };
+    } else {
+      if (r.qc && (!tongGomLoaiMa[keyGom].qc || r.qc.length < tongGomLoaiMa[keyGom].qc.length)) {
+        tongGomLoaiMa[keyGom].qc = r.qc;
+      }
     }
     tongGomLoaiMa[keyGom].soLuong += 1;
     tongGomLoaiMa[keyGom].tongKG += r.kg;
@@ -281,7 +368,12 @@ function taoHangKetQuaCX1(danhSach) {
   <tr>
     <td style="padding:10px;border-bottom:1px solid var(--line-soft);color:var(--brass);font-weight:700"> ${item.dot}</td>
 
-    <td style="padding:10px;border-bottom:1px solid var(--line-soft)">${item.qc}</td>
+    <td style="padding:10px;border-bottom:1px solid var(--line-soft)">
+      ${item.qc}
+      <button onclick="nhapTayCX1(${item.dot}, '${item.msp}', '${item.qc}')" style="background:none;border:none;color:var(--blue);cursor:pointer;padding:0 5px;margin-left:5px;" title="Nhập tay KG">
+        <i class="ti ti-pencil"></i>
+      </button>
+    </td>
     <td style="padding:10px;border-bottom:1px solid var(--line-soft);text-align:center">${item.soLuong}</td>
     <td style="padding:10px;border-bottom:1px solid var(--line-soft);text-align:right;font-weight:700;color:var(--success)">${item.tongKG.toFixed(1)}</td>
   </tr>`;
@@ -358,6 +450,7 @@ function quetMoiCX1() {
   xoaPhienDoDangCX1();
   document.getElementById("cx1-ketqua").style.display = "none";
   document.getElementById("cx1-form").style.display = "block";
+  capNhatLogCX1();
 }
 
 function showCanhBaoCX1(text) {
@@ -387,6 +480,7 @@ async function khoiPhucCX1(state) {
   document.getElementById("btn-flash-cx1").style.background = "var(--neutral)";
   document.getElementById("btn-flash-cx1").style.color = "var(--cream)";
   document.getElementById("btn-flash-cx1").textContent = "Bật đèn pin";
+  capNhatLogCX1();
 
   const btnToggle = document.getElementById("btn-dung-tieptuc-cx1");
   btnToggle.textContent = "Dừng quét";
