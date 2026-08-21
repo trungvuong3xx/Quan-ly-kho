@@ -253,25 +253,61 @@ async function ketThucCX1() {
 }
 
 function nhapTayCX1(dot, msp, qc) {
-  const kgStr = prompt("Nhập số KG cho " + (qc || msp) + " (Đợt " + dot + "):");
-  if (!kgStr) return;
-  const kg = parseFloat(kgStr);
-  if (isNaN(kg) || kg <= 0) {
-    showCanhBaoCX1("Số KG không hợp lệ!");
-    return;
+  let modal = document.getElementById("cx1-nhap-tay-modal");
+  if (!modal) {
+    modal = document.createElement("div");
+    modal.id = "cx1-nhap-tay-modal";
+    modal.className = "overlay";
+    modal.innerHTML = `
+      <div class="overlay-card" style="text-align:center;">
+        <div class="overlay-title" style="text-align:center;">Nhập số KG</div>
+        <div style="color:var(--cream-soft);font-size:14px;margin:10px 0 18px;line-height:1.5;" id="cx1-nhap-tay-text"></div>
+        <input type="number" id="cx1-nhap-tay-input" class="tk-input" style="text-align:center;font-size:20px;padding:12px;margin-bottom:20px;width:100%;box-sizing:border-box;background:var(--bg);color:var(--cream);border:1px solid var(--line);border-radius:10px;" placeholder="Ví dụ: 700.5">
+        <div style="display:flex; gap:10px;">
+          <button class="btn" style="flex:1;background:var(--card-raised);color:var(--cream);border:1px solid var(--line);" onclick="dongNhapTayCX1(false)">Hủy</button>
+          <button class="btn btn-blue" style="flex:1" onclick="dongNhapTayCX1(true)">Xác nhận</button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(modal);
   }
-  const id = "MANUAL_" + Date.now();
-  phienCX1.push({
-    id: id, msp: msp, qc: qc,
-    kg: kg, thoiGian: new Date(), dotQuet: dot
-  });
-  document.getElementById("cx1-dem").textContent = "Đã quét: " + phienCX1.length + " mã";
-  luuPhienDoDangCX1();
-  hienKetQuaCX1(); // to re-render the table
+
+  const textEl = document.getElementById("cx1-nhap-tay-text");
+  const inputEl = document.getElementById("cx1-nhap-tay-input");
+  textEl.textContent = "Nhập số KG cho " + (qc || msp) + " (Đợt " + dot + "):";
+  inputEl.value = "";
   
-  if (dangQuetCX1 || (document.getElementById("cx1-cam") && document.getElementById("cx1-cam").style.display !== "none")) {
-    capNhatLogCX1();
-  }
+  modal.classList.add("show");
+  setTimeout(() => inputEl.focus(), 100);
+
+  window.dongNhapTayCX1 = function(isOk) {
+    modal.classList.remove("show");
+    if (!isOk) return;
+    
+    const kgStr = inputEl.value;
+    if (!kgStr) return;
+    const kg = parseFloat(kgStr);
+    if (isNaN(kg) || kg <= 0) {
+      showCanhBaoCX1("Số KG không hợp lệ!");
+      return;
+    }
+    
+    const id = "MANUAL_" + Date.now();
+    phienCX1.push({
+      id: id, msp: msp, qc: qc,
+      kg: kg, thoiGian: new Date(), dotQuet: dot
+    });
+    
+    const demEl = document.getElementById("cx1-dem");
+    if(demEl) demEl.textContent = "Đã quét: " + phienCX1.length + " mã";
+    
+    luuPhienDoDangCX1();
+    hienKetQuaCX1(); // to re-render the table
+    
+    if (dangQuetCX1 || (document.getElementById("cx1-cam") && document.getElementById("cx1-cam").style.display !== "none")) {
+      capNhatLogCX1();
+    }
+  };
 }
 window.nhapTayCX1 = nhapTayCX1;
 
@@ -319,7 +355,7 @@ function capNhatLogCX1() {
 
     return `<div class="${flashClass}" style="display:flex; justify-content:space-between; align-items:center; padding:4px 0; border-bottom:1px solid var(--line-soft); font-size:12px; border-radius:6px;">
       <span style="color:var(--steel); font-weight:700; width:26px;">${dot}</span>
-      <span style="color:var(--brass); font-weight:800; flex:1; text-align:left; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${item.msp || item.qc || '—'}</span>
+      <span style="color:var(--brass); font-weight:800; flex:1; text-align:left; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${item.qc || item.msp || '—'}</span>
       <span style="color:var(--success); font-weight:700; width:45px; text-align:center;">${item.kg || 0}</span>
       <span style="color:var(--cream-soft); font-size:11px; width:50px; text-align:right;">${gio}</span>
       <button class="cx5-del-btn" onclick="xoaMaCX1(${originalIndex}, event)" title="Xóa mã này" style="margin-left:4px; background:none; border:none; color:var(--red); cursor:pointer; padding:2px 4px;">
@@ -370,12 +406,14 @@ function taoHangKetQuaCX1(danhSach) {
 
     <td style="padding:10px;border-bottom:1px solid var(--line-soft)">
       ${item.qc}
-      <button onclick="nhapTayCX1(${item.dot}, '${item.msp}', '${item.qc}')" style="background:none;border:none;color:var(--blue);cursor:pointer;padding:0 5px;margin-left:5px;" title="Nhập tay KG">
+    </td>
+    <td style="padding:10px;border-bottom:1px solid var(--line-soft);text-align:center">${item.soLuong}</td>
+    <td style="padding:10px;border-bottom:1px solid var(--line-soft);text-align:right;font-weight:700;color:var(--success)">
+      ${item.tongKG.toFixed(1)}
+      <button onclick="nhapTayCX1(${item.dot}, '${item.msp}', '${item.qc}')" style="background:none;border:none;color:var(--blue);cursor:pointer;padding:0 0 0 8px;margin:0;" title="Nhập tay KG">
         <i class="ti ti-pencil"></i>
       </button>
     </td>
-    <td style="padding:10px;border-bottom:1px solid var(--line-soft);text-align:center">${item.soLuong}</td>
-    <td style="padding:10px;border-bottom:1px solid var(--line-soft);text-align:right;font-weight:700;color:var(--success)">${item.tongKG.toFixed(1)}</td>
   </tr>`;
   });
   hangDot += `

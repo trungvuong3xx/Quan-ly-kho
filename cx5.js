@@ -151,10 +151,19 @@ async function taiDanhSachQCX5(dateStr, forceRefresh) {
   }
 }
 
-function showCanhBaoCX5(text) {
+function showCanhBaoCX5(text, type = "error") {
   const el = document.getElementById("canh-bao");
   if (!el) return;
   el.textContent = text;
+  
+  if (type === "success") {
+    el.style.backgroundColor = "var(--success)";
+    el.style.boxShadow = "0 8px 24px rgba(16, 185, 129, .25)";
+  } else {
+    el.style.backgroundColor = "var(--danger)";
+    el.style.boxShadow = "0 8px 24px rgba(220, 38, 38, .25)";
+  }
+  
   el.style.display = "block";
   setTimeout(() => { el.style.display = "none"; }, 2200);
 }
@@ -1030,8 +1039,8 @@ async function dongBoTatCaCX5() {
   renderDoiChieuCX5();
   if (typeof capNhatTrangThaiMang === "function") capNhatTrangThaiMang();
 
-  if (thatBai === 0) showCanhBaoCX5("Đã đồng bộ " + thanhCong + " quy cách vào Sheet Tháng!");
-  else showCanhBaoCX5("Đồng bộ " + thanhCong + " thành công, " + thatBai + " lỗi");
+  if (thatBai === 0) showCanhBaoCX5("Đồng bộ thành công " + thanhCong + " quy cách!", "success");
+  else showCanhBaoCX5("Đồng bộ: " + thanhCong + " OK, " + thatBai + " Lỗi", "error");
   // TÁCH BIỆT HOÀN TOÀN: Bảng đối chiếu chỉ đồng bộ dữ liệu vào Sheet Tháng, không tự chuyển sang LSC5
 }
 
@@ -1087,7 +1096,8 @@ function moTongKgCX5(dsQC) {
             localCandidates.push({
               bao: rows.length,
               kg: Math.round(rows.reduce(function (s, r) { return s + r.kg; }, 0) * 10) / 10,
-              matched: false
+              matched: false,
+              rows: rows
             });
           }
         }
@@ -1096,24 +1106,29 @@ function moTongKgCX5(dsQC) {
            const cBao = c.effBao !== undefined ? c.effBao : c.bao;
            const cKg = c.effKg !== undefined ? c.effKg : c.kg;
            
+           let matchedRows = null;
+           const lIdx = localCandidates.findIndex(lc => !lc.matched && lc.bao === cBao && Math.abs(lc.kg - cKg) <= 0.2);
+           if (lIdx >= 0) {
+               localCandidates[lIdx].matched = true;
+               matchedRows = localCandidates[lIdx].rows;
+           }
+
            anchorCandidates.push({
              row: c.row,
              bao: cBao,
-             kg: cKg
+             kg: cKg,
+             rows: matchedRows
            });
-           
-           const lIdx = localCandidates.findIndex(lc => !lc.matched && lc.bao === cBao && Math.abs(lc.kg - cKg) <= 0.2);
-           if (lIdx >= 0) localCandidates[lIdx].matched = true;
         });
 
         localCandidates.forEach(lc => {
             if (!lc.matched) {
-                anchorCandidates.push({ row: null, bao: lc.bao, kg: lc.kg });
+                anchorCandidates.push({ row: null, bao: lc.bao, kg: lc.kg, rows: lc.rows });
             }
         });
 
         if (anchorCandidates.length === 0) {
-           anchorCandidates.push({ row: null, bao: 0, kg: 0 });
+           anchorCandidates.push({ row: null, bao: 0, kg: 0, rows: null });
         }
 
         anchorCandidates.forEach((anchor, idx) => {
@@ -1201,8 +1216,21 @@ function renderTongKgCX5() {
         '</div>';
     }).join("");
 
+    let bagInfoText = "";
+    if (d.homNay.rows) {
+      const len = d.homNay.rows.length;
+      if (len === 1) bagInfoText = d.homNay.rows[0].kg.toFixed(1);
+      else if (len === 2) bagInfoText = d.homNay.rows[0].kg.toFixed(1) + "-" + d.homNay.rows[1].kg.toFixed(1);
+      else if (len === 3 || len === 4) bagInfoText = d.homNay.rows[0].kg.toFixed(1) + "-" + d.homNay.rows[2].kg.toFixed(1);
+      else if (len === 5 || len === 6) bagInfoText = d.homNay.rows[0].kg.toFixed(1) + "-" + d.homNay.rows[3].kg.toFixed(1);
+      else if (len === 7 || len === 8) bagInfoText = d.homNay.rows[0].kg.toFixed(1) + "-" + d.homNay.rows[4].kg.toFixed(1);
+      else if (len >= 9) bagInfoText = d.homNay.rows[0].kg.toFixed(1) + "-" + d.homNay.rows[5].kg.toFixed(1);
+    }
+
     return '<div class="cx5-dc-card">' +
-      '<div class="cx5-dc-ten">' + escHtmlCX5(d.ten) + '</div>' +
+      '<div class="cx5-dc-ten">' + escHtmlCX5(d.ten) + 
+      (bagInfoText ? ' <span style="font-size:14px;font-weight:normal;color:var(--accent-2);margin-left:8px;">' + bagInfoText + '</span>' : '') +
+      '</div>' +
       '<div class="cx5-dc-kho">Hôm nay: <b>' + d.homNay.kg.toFixed(1) + 'kg (' + d.homNay.bao + ' bao)</b></div>' +
       (dsCu
         ? '<div style="margin-top:8px">' + dsCu + '</div>'
@@ -1480,7 +1508,7 @@ async function dongBoGhepCX5() {
       if (phien) { phien.bao = g.tongBao; phien.kg = g.tongKg; }
     });
 
-    showCanhBaoCX5("Đã đồng bộ dữ liệu phiên và ghép pallet vào Sheet LSC5 thành công!");
+    showCanhBaoCX5("Đồng bộ LSC5 thành công!", "success");
     renderTongKgCX5();
     luuPhienDoDangCX5();
   } catch (e) {
@@ -2004,7 +2032,7 @@ function chonQCSLLuotCX5(item) {
   closeDropdownSLLuotCX5();
   const wrap = document.getElementById("cx5-sl-doi-qc-wrap");
   if (wrap) wrap.style.display = "none";
-  showCanhBaoCX5("Đã đổi quy cách lượt sang: " + item.ten);
+  showCanhBaoCX5("Đã đổi QC: " + item.ten, "success");
 }
 
 function bpGiaTriCX5() {
