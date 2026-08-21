@@ -1102,6 +1102,7 @@ function moTongKgCX5(dsQC) {
           }
         }
         
+        // Pass 1: Khớp chính xác (exact match)
         homNayList.forEach(c => {
            const cBao = c.effBao !== undefined ? c.effBao : c.bao;
            const cKg = c.effKg !== undefined ? c.effKg : c.kg;
@@ -1119,6 +1120,17 @@ function moTongKgCX5(dsQC) {
              kg: cKg,
              rows: matchedRows
            });
+        });
+
+        // Pass 2: Khớp bù (fallback match) cho các pallet đã bị thay đổi số bao/kg (ví dụ: đã ghép)
+        anchorCandidates.forEach(anchor => {
+           if (!anchor.rows) {
+               const lIdx = localCandidates.findIndex(lc => !lc.matched);
+               if (lIdx >= 0) {
+                   localCandidates[lIdx].matched = true;
+                   anchor.rows = localCandidates[lIdx].rows;
+               }
+           }
         });
 
         localCandidates.forEach(lc => {
