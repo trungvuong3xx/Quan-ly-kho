@@ -1,4 +1,4 @@
-const CACHE_NAME = 'quan-ly-kho-auto-update-v4';
+const CACHE_NAME = 'quan-ly-kho-auto-update-v5';
 const urlsToCache = [
   './',
   './index.html',

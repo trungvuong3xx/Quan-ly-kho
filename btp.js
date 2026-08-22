@@ -299,11 +299,13 @@ async function batDauPhienMoiBTP() {
   }
 
   try {
-    zxingReaderBTP = await khoiTaoCameraFast("btp-reader", (txt) => {
-      if (txt && dangQuetBTP) {
-        khiQuetDuocMaBTP({ getText: () => txt });
-      }
-    });
+    if (!zxingReaderBTP) {
+      zxingReaderBTP = await khoiTaoCameraFast("btp-reader", (txt) => {
+        if (txt && dangQuetBTP) {
+          khiQuetDuocMaBTP({ getText: () => txt });
+        }
+      });
+    }
   } catch (e) {
     showCanhBaoBTP("Lỗi camera: " + e);
     dungBTP();
@@ -313,10 +315,11 @@ async function batDauPhienMoiBTP() {
 function dungBTP() {
   document.body.classList.remove("cam-active");
   dangQuetBTP = false;
-  if (typeof dungCameraFast === "function" && zxingReaderBTP) {
-    dungCameraFast("btp-reader", zxingReaderBTP);
-  }
-  zxingReaderBTP = null;
+  // Giữ nguyên phần cứng camera chạy ngầm để bật lại tức thì
+  // if (typeof dungCameraFast === "function" && zxingReaderBTP) {
+  //   dungCameraFast("btp-reader", zxingReaderBTP);
+  // }
+  // zxingReaderBTP = null;
   const statusEl = document.getElementById("btp-status");
   if (statusEl) statusEl.innerHTML = '<i class="ti ti-player-pause" style="color:var(--red)"></i> Đã dừng quét (Đợt ' + (demSoDotBTP || 1) + ')';
 }
@@ -327,11 +330,13 @@ async function tiepTucBTP() {
   dangQuetBTP = true;
   document.getElementById("btp-status").innerHTML = '<i class="ti ti-radar" style="color:var(--success)"></i> Đang quét Đợt ' + demSoDotBTP + '...';
   try {
-    zxingReaderBTP = await khoiTaoCameraFast("btp-reader", (txt) => {
-      if (txt && dangQuetBTP) {
-        khiQuetDuocMaBTP({ getText: () => txt });
-      }
-    });
+    if (!zxingReaderBTP) {
+      zxingReaderBTP = await khoiTaoCameraFast("btp-reader", (txt) => {
+        if (txt && dangQuetBTP) {
+          khiQuetDuocMaBTP({ getText: () => txt });
+        }
+      });
+    }
   } catch (e) {
     alert("Lỗi camera: " + e);
     dungBTP();
@@ -590,11 +595,13 @@ async function quetTiepBTP() {
   }
 
   try {
-    zxingReaderBTP = await khoiTaoCameraFast("btp-reader", (txt) => {
-      if (txt && dangQuetBTP) {
-        khiQuetDuocMaBTP({ getText: () => txt });
-      }
-    });
+    if (!zxingReaderBTP) {
+      zxingReaderBTP = await khoiTaoCameraFast("btp-reader", (txt) => {
+        if (txt && dangQuetBTP) {
+          khiQuetDuocMaBTP({ getText: () => txt });
+        }
+      });
+    }
   } catch (e) {
     alert("Lỗi camera: " + e);
     dungBTP();
@@ -646,11 +653,13 @@ async function khoiPhucBTP(state) {
   }
 
   try {
-    zxingReaderBTP = await khoiTaoCameraFast("btp-reader", (txt) => {
-      if (txt && dangQuetBTP) {
-        khiQuetDuocMaBTP({ getText: () => txt });
-      }
-    });
+    if (!zxingReaderBTP) {
+      zxingReaderBTP = await khoiTaoCameraFast("btp-reader", (txt) => {
+        if (txt && dangQuetBTP) {
+          khiQuetDuocMaBTP({ getText: () => txt });
+        }
+      });
+    }
   } catch (e) {
     alert("Lỗi camera: " + e);
     dungBTP();

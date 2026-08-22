@@ -606,8 +606,9 @@
     
   </div>
 
-  <div id="btp-cam" class="card" style="display:none; overflow:hidden; padding:12px 12px 10px; margin-bottom:0;">
-    <div class="flex justify-between items-center mb-2">
+  <div id="btp-cam" style="display:none; padding-bottom:12px;">
+    <div style="position: sticky; top: 0; z-index: 10; background: var(--bg-deep); padding: 12px 12px 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.3);">
+      <div class="flex justify-between items-center mb-2">
       <span id="btp-status" style="font-weight:700">🟢 Đang quét...</span>
       <span id="btp-dem" style="background:var(--brass); color:var(--bg-deep); font-weight:800; font-size:14px; padding:4px 12px; border-radius:20px; box-shadow:0 3px 10px rgba(245,158,11,0.45); letter-spacing:0.3px;">Đã quét: 0 mã</span>
     </div>
@@ -643,12 +644,13 @@
       <button class="btn btn-green" style="width:100%; height:38px; font-size:14px; margin:0;" onclick="xemKetQuaBTP()"><i class="ti ti-list-check"></i> Xem kết quả</button>
     </div>
 
-    <div id="btp-log-container" style="margin-top:8px; background:var(--card-raised); border-radius:12px; padding:8px 10px; border:1px solid var(--line-soft); display:flex; flex-direction:column; flex:1 1 auto;">
+    </div>
+    <div id="btp-log-container" style="margin: 12px 12px 0 12px; background:var(--card-raised); border-radius:12px; padding:8px 10px; border:1px solid var(--line-soft); display:flex; flex-direction:column; flex:1 1 auto;">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px; border-bottom:1px solid var(--line); padding-bottom:4px; gap:8px;">
         <span style="font-size:12px; font-weight:800; color:var(--brass); letter-spacing:0.5px; white-space:nowrap;"><i class="ti ti-clipboard-list"></i> NHẬT KÝ QUÉT BTP</span>
         <span id="btp-log-count" style="font-size:12px; font-weight:700; color:var(--steel); white-space:nowrap;">0 mã</span>
       </div>
-      <div id="btp-log-list" style="max-height:260px; min-height:120px; overflow-y:auto; padding-right:4px; flex:1 1 auto;">
+      <div id="btp-log-list" style="min-height:120px; padding-right:4px;">
         <div style="color:var(--cream-soft); font-size:12px; text-align:center; padding:6px 0;">Chưa có mã nào được quét</div>
       </div>
     </div>
@@ -1032,12 +1034,12 @@
 
 </div><!-- /#app-viewport -->
 
-<script src="app.js?v=20260822-v54"></script>
-<script src="kiemke.js?v=20260822-v54"></script>
-<script src="cx1.js?v=20260822-v54"></script>
-<script src="cx5.js?v=20260822-v54"></script>
-<script src="btp.js?v=20260822-v54"></script>
-<script src="tonkho.js?v=20260822-v54"></script>
+<script src="app.js?v=20260822-v55"></script>
+<script src="kiemke.js?v=20260822-v55"></script>
+<script src="cx1.js?v=20260822-v55"></script>
+<script src="cx5.js?v=20260822-v55"></script>
+<script src="btp.js?v=20260822-v55"></script>
+<script src="tonkho.js?v=20260822-v55"></script>
 
 <!-- BOTTOM SHEET MODAL LỊCH SỬ -->
 <div class="modal-overlay" id="modal-overlay" onclick="closeLichSuModal(event)">
