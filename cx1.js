@@ -130,6 +130,7 @@ async function batDauCX1() {
   idPhienHienTai = Date.now() + "-" + Math.random().toString(36).slice(2);
   soLuongDaGuiHienTai = 0;
 
+  document.body.classList.add("cam-active");
   document.getElementById("cx1-form").style.display = "none";
   document.getElementById("cx1-cam").style.display = "block";
   document.getElementById("cx1-ketqua").style.display = "none";
@@ -517,6 +518,7 @@ async function khoiPhucCX1(state) {
   dangQuetCX1 = true;
   denPinBat = false;
 
+  document.body.classList.add("cam-active");
   document.getElementById("cx1-form").style.display = "none";
   document.getElementById("cx1-cam").style.display = "block";
   document.getElementById("cx1-ketqua").style.display = "none";

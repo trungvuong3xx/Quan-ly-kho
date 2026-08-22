@@ -1595,21 +1595,24 @@ body.cam-active {
   touch-action: none !important;
 }
 
-body.cam-active #btpPage {
+body.cam-active #btpPage,
+body.cam-active #chiFor {
+  background: var(--bg-deep) !important;
   height: calc(100dvh - 65px) !important;
-  padding: 6px 10px !important;
+  padding: 0 !important;
   display: flex !important;
   flex-direction: column !important;
   box-sizing: border-box !important;
   overflow: hidden !important;
 }
 
-body.cam-active #btp-cam {
+body.cam-active #btp-cam,
+body.cam-active #cx1-cam {
   display: flex !important;
   flex-direction: column !important;
   flex: 1 1 auto !important;
   height: 100% !important;
-  padding: 10px 12px !important;
+  padding: 12px 0 0 0 !important;
   margin: 0 !important;
   box-sizing: border-box !important;
   justify-content: flex-start !important;
@@ -1617,29 +1620,32 @@ body.cam-active #btp-cam {
   overflow: hidden !important;
 }
 
-body.cam-active #btp-video-box {
+body.cam-active #btp-video-box,
+body.cam-active .video-container {
   flex: 0 0 auto !important;
   height: 215px !important;
   padding-bottom: 0 !important;
   margin-bottom: 0 !important;
-  border-radius: 14px !important;
+  border-radius: 0 !important; border: none !important;
   position: relative !important;
   overflow: hidden !important;
 }
 
-body.cam-active #btp-log-container {
+body.cam-active #btp-log-container,
+body.cam-active #cx1-log-container {
   flex: 1 1 auto !important;
   display: flex !important;
   flex-direction: column !important;
   margin-top: 0 !important;
-  padding: 6px 10px !important;
+  padding: 0 !important;
   overflow: hidden !important;
   max-height: none !important;
   min-height: 120px !important;
   border-radius: 12px !important;
 }
 
-body.cam-active #btp-log-list {
+body.cam-active #btp-log-list,
+body.cam-active #cx1-log-list {
   flex: 1 1 auto !important;
   max-height: none !important;
   height: 100% !important;
