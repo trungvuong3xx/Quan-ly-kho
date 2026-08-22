@@ -25,6 +25,8 @@ Project-level behavioral and tooling guidelines.
 
 1. Invoke `codebase-memory` skill → `search_graph` + `trace_path(direction="inbound")`
 2. Read `logging` skill for any function you write or modify
+3. **[CODE PROTECTION]** Always invoke `karpathy-guidelines` (Rule 3: Surgical Changes) and `full-output-enforcement` to ensure you NEVER delete or format unrelated code.
+4. **[SURGICAL TOOL]** ALWAYS use the `multi_replace_file_content` tool to edit only the specific lines needed, avoiding full file replacements.
 
 **After code changes:**
 
