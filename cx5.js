@@ -1236,12 +1236,14 @@ function renderTongKgCX5() {
       const lopMo = daChonOKhoiKhac ? " cx5-tk-row-disabled" : "";
       const hienBao = c.effBao !== undefined ? c.effBao : c.bao;
       const hienKg = c.effKg !== undefined ? c.effKg : c.kg;
+      const parts = c.ngay.split('-');
+      const ngayHienThi = parts.length === 3 ? parts[2] + '-' + parts[1] : c.ngay;
       return '<div class="cx5-tk-row" style="display:flex;align-items:center;gap:8px;padding:6px 0">' +
         '<input type="checkbox" ' + (c.checked ? "checked" : "") + disabled + ' onchange="toggleGhepCX5(\'' + key + '\',' + idx + ')">' +
-        '<span class="' + lopMo + '" style="flex:1;font-size:13px">Ngày ' + c.ngay + ': ' +
-        '<span class="cx5-tk-kg-chip" onclick="xemNguonGocCX5(' + c.row + ')">' + hienKg.toFixed(1) + 'kg (' + hienBao + ' bao)</span>' +
-        (daChonOKhoiKhac ? ' · Đã chọn ở khối khác' : '') + '</span>' +
-        '<button type="button" class="cx5-tk-xoa"' + disabled + ' title="Ẩn vĩnh viễn (ghi V=X)" aria-label="Ẩn ứng viên này" onclick="xoaUngVienGhepCX5(\'' + key + '\',' + idx + ')"><i class="ti ti-x"></i></button>' +
+        '<span class="' + lopMo + '" style="flex:1;font-size:13px">' + ngayHienThi + ': ' +
+        '<span class="cx5-tk-kg-chip" onclick="xemNguonGocCX5(' + c.row + ')">' + hienKg.toFixed(1) + '(' + hienBao + ')</span>' +
+        (daChonOKhoiKhac ? ' (đã chọn)' : '') + '</span>' +
+        '<button type="button" class="cx5-tk-xoa"' + disabled + ' title="Ẩn vĩnh viễn" aria-label="Ẩn" onclick="xoaUngVienGhepCX5(\'' + key + '\',' + idx + ')"><i class="ti ti-x"></i></button>' +
         '</div>';
     }).join("");
 
@@ -1256,32 +1258,24 @@ function renderTongKgCX5() {
       else if (len >= 9) bagInfoText = d.homNay.rows[0].kg.toFixed(1) + "-" + d.homNay.rows[5].kg.toFixed(1);
     }
 
+    const dongTenHtml = '<div style="display: flex; justify-content: space-between; align-items: center;">' +
+      '<div>' +
+      '<span style="font-weight: 600; color: var(--text-main); font-size: 15px;">' + escHtmlCX5(d.ten) + '</span>' +
+      (bagInfoText ? '<span style="font-size:13px; color:var(--accent-2); margin-left:6px;">' + bagInfoText + '</span>' : '') +
+      '</div>' +
+      '<div style="text-align: right; font-weight: 600; color: var(--brass); font-size: 14px;">' +
+      (!dsCu ? tongKg.toFixed(1) + ' (' + tongBao + ')' : d.homNay.kg.toFixed(1) + ' (' + d.homNay.bao + ')') +
+      '</div>' +
+      '</div>';
+
     if (!dsCu) {
-      return '<div style="padding: 10px 0; border-bottom: 1px solid var(--line-soft); display: flex; justify-content: space-between; align-items: center;">' +
-        '<div>' +
-        '<div style="font-weight: 600; color: var(--text-main); font-size: 15px;">' + escHtmlCX5(d.ten) + '</div>' +
-        (bagInfoText ? '<div style="font-size:13px; color:var(--accent-2); margin-top:2px;">' + bagInfoText + '</div>' : '') +
-        '</div>' +
-        '<div style="text-align: right;">' +
-        '<div style="font-weight: 600; color: var(--brass); font-size: 15px;">' + tongKg.toFixed(1) + 'kg</div>' +
-        '<div style="font-size: 12px; color: var(--steel);">' + tongBao + ' bao</div>' +
-        '</div>' +
-        '</div>';
+      return '<div style="padding: 10px 0; border-bottom: 1px solid var(--line-soft);">' + dongTenHtml + '</div>';
     } else {
       return '<div style="padding: 12px 0; border-bottom: 1px solid var(--line-soft);">' +
-        '<div style="display: flex; justify-content: space-between; align-items: flex-start;">' +
-        '<div>' +
-        '<div style="font-weight: 600; color: var(--text-main); font-size: 15px;">' + escHtmlCX5(d.ten) + '</div>' +
-        (bagInfoText ? '<div style="font-size:13px; color:var(--accent-2); margin-top:2px;">' + bagInfoText + '</div>' : '') +
-        '</div>' +
-        '<div style="text-align: right; font-size: 13px;">' +
-        '<div style="color: var(--steel);">Hôm nay</div>' +
-        '<div style="font-weight: 600;">' + d.homNay.kg.toFixed(1) + 'kg (' + d.homNay.bao + 'b)</div>' +
-        '</div>' +
-        '</div>' +
-        '<div style="margin-top:8px">' + dsCu + '</div>' +
+        dongTenHtml +
+        '<div style="margin-top:4px">' + dsCu + '</div>' +
         '<div style="margin-top: 8px; text-align: right; font-size: 14px;">' +
-        'Tổng: <b style="color: var(--brass);">' + tongKg.toFixed(1) + 'kg (' + tongBao + ' bao)</b>' +
+        'Tổng: <b style="color: var(--brass);">' + tongKg.toFixed(1) + ' (' + tongBao + ')</b>' +
         '</div>' +
         '</div>';
     }
