@@ -1841,7 +1841,7 @@ body { padding: 0 !important; background: var(--bg-body) !important; color: var(
 .page { flex: 1; height: 100%; position: absolute; inset: 0; padding: 0; max-width: 100%; overflow: hidden; display: none; flex-direction: column; }
 .page.active { display: flex; }
 /* Non-home pages still need scrolling */
-.page:not(#trangChu) { padding: 80px 8px 100px !important; overflow-y: auto !important; display: none; }
+.page:not(#trangChu) { padding: 20px 8px 100px !important; overflow-y: auto !important; display: none; }
 .page:not(#trangChu).active { display: block; }
 
 
@@ -1849,4 +1849,4 @@ body { padding: 0 !important; background: var(--bg-body) !important; color: var(
 
 
 
-#trangChu { padding-top: 80px !important; }
+

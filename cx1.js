@@ -452,6 +452,7 @@ function taoHangKetQuaCX1(danhSach) {
 }
 
 function hienKetQuaCX1() {
+  document.body.classList.remove("cam-active");
   const { hangDot, hangGom } = taoHangKetQuaCX1(phienCX1);
   document.getElementById("cx1-tbody-dot").innerHTML = hangDot;
   document.getElementById("cx1-tbody-gom").innerHTML = hangGom;
@@ -468,6 +469,7 @@ async function quetTiepCX1() {
 
   document.getElementById("cx1-ketqua").style.display = "none";
   document.getElementById("cx1-cam").style.display = "block";
+  document.body.classList.add("cam-active");
   document.getElementById("cx1-status").textContent = "Đang quét Đợt " + demSoDot + "...";
 
   const btnToggle = document.getElementById("btn-dung-tieptuc-cx1");
