@@ -214,13 +214,8 @@ body {
 
 .card {
   position: relative;
-  background: var(--card);
-  border: 1px solid var(--line-soft);
-  border-radius: 20px;
-  padding: 26px 22px 22px;
+  padding: 0;
   margin-bottom: 20px;
-  margin-top: 4px;
-  box-shadow: var(--shadow-card);
   overflow: visible;
   animation: fadeInUp 0.25s ease-out;
 }
@@ -1837,7 +1832,7 @@ body { padding: 0 !important; background: var(--bg-body) !important; color: var(
 .page { flex: 1; height: 100%; position: absolute; inset: 0; padding: 0; max-width: 100%; overflow: hidden; display: none; flex-direction: column; }
 .page.active { display: flex; }
 /* Non-home pages still need scrolling */
-.page:not(#trangChu) { padding: 80px 16px 100px !important; overflow-y: auto !important; display: none; }
+.page:not(#trangChu) { padding: 80px 8px 100px !important; overflow-y: auto !important; display: none; }
 .page:not(#trangChu).active { display: block; }
 
 
