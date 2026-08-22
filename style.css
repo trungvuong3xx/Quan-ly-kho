@@ -1612,7 +1612,7 @@ body.cam-active #cx1-cam {
   flex-direction: column !important;
   flex: 1 1 auto !important;
   height: 100% !important;
-  padding: 12px 0 0 0 !important;
+  padding: 4px 0 0 0 !important;
   margin: 0 !important;
   box-sizing: border-box !important;
   justify-content: flex-start !important;
@@ -1623,23 +1623,25 @@ body.cam-active #cx1-cam {
 body.cam-active #btp-video-box,
 body.cam-active .video-container {
   flex: 0 0 auto !important;
-  height: 215px !important;
+  height: 220px !important;
   padding-bottom: 0 !important;
-  margin-bottom: 0 !important;
-  border-radius: 0 !important; border: none !important;
+  margin: 0 12px 8px 12px !important;
+  border-radius: 14px !important;
+  border: none !important;
   position: relative !important;
   overflow: hidden !important;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2) !important;
 }
 
 body.cam-active #btp-log-container,
-body.cam-active #cx1-log-container {
+  body.cam-active #cx1-log-container {
     flex: 1 1 auto !important;
     display: flex !important;
     flex-direction: column !important;
     margin: 8px 12px 12px 12px !important;
-  padding: 0 !important;
-  overflow: hidden !important;
-  max-height: none !important;
+    padding: 10px 14px !important;
+    overflow: hidden !important;
+    max-height: none !important;
   min-height: 120px !important;
   border-radius: 12px !important;
 }
