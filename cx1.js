@@ -145,11 +145,13 @@ async function batDauCX1() {
   btnToggle.className = "btn btn-red btn-full";
 
   try {
-    zxingReaderCX1 = await khoiTaoCameraFast("cx1-reader", (txt) => {
-      if (txt && dangQuetCX1) {
-        khiQuetDuocMa({ getText: () => txt });
-      }
-    });
+    if (!zxingReaderCX1) {
+      zxingReaderCX1 = await khoiTaoCameraFast("cx1-reader", (txt) => {
+        if (txt && dangQuetCX1) {
+          khiQuetDuocMa({ getText: () => txt });
+        }
+      });
+    }
   } catch(e) {
     alert("Lỗi camera: " + e);
     dungCX1();
@@ -158,8 +160,9 @@ async function batDauCX1() {
 
 function dungCX1() {
   dangQuetCX1 = false;
-  dungCameraFast("cx1-reader", zxingReaderCX1);
-  zxingReaderCX1 = null;
+  // Giữ nguyên phần cứng camera chạy ngầm để bật lại tức thì
+  // dungCameraFast("cx1-reader", zxingReaderCX1);
+  // zxingReaderCX1 = null;
   document.getElementById("cx1-status").textContent = "Đã dừng Đợt " + demSoDot;
 }
 
@@ -172,11 +175,13 @@ async function tiepTucCX1() {
   document.getElementById("btn-flash-cx1").style.color = "var(--cream)";
   document.getElementById("btn-flash-cx1").textContent = "Bật đèn pin";
   try {
-    zxingReaderCX1 = await khoiTaoCameraFast("cx1-reader", (txt) => {
-      if (txt && dangQuetCX1) {
-        khiQuetDuocMa({ getText: () => txt });
-      }
-    });
+    if (!zxingReaderCX1) {
+      zxingReaderCX1 = await khoiTaoCameraFast("cx1-reader", (txt) => {
+        if (txt && dangQuetCX1) {
+          khiQuetDuocMa({ getText: () => txt });
+        }
+      });
+    }
   } catch(e) {
     alert("Lỗi camera: " + e);
     dungCX1();
@@ -469,11 +474,13 @@ async function quetTiepCX1() {
   btnToggle.className = "btn btn-red btn-full";
 
   try {
-    zxingReaderCX1 = await khoiTaoCameraFast("cx1-reader", (txt) => {
-      if (txt && dangQuetCX1) {
-        khiQuetDuocMa({ getText: () => txt });
-      }
-    });
+    if (!zxingReaderCX1) {
+      zxingReaderCX1 = await khoiTaoCameraFast("cx1-reader", (txt) => {
+        if (txt && dangQuetCX1) {
+          khiQuetDuocMa({ getText: () => txt });
+        }
+      });
+    }
   } catch(e) {
     alert("Lỗi camera: " + e);
     dungCX1();
