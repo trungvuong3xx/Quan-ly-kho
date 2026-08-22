@@ -782,7 +782,7 @@ function renderDoiChieuCX5() {
   if (filteredItems.length === 0) {
     html += '<div style="text-align:center;color:var(--cream-soft);padding:16px 0">Không có quy cách nào trong mục này</div>';
   } else {
-    html += '<div class="cx5-scroll"><table class="cx5-table cx5-dc-table">' +
+    html += '<div class="cx5-scroll" style="max-height: 380px;"><table class="cx5-table cx5-dc-table">' +
       '<thead><tr><th>QC</th><th>Kho</th><th>SX</th><th>Loại</th></tr></thead><tbody>';
     html += filteredItems.map(it => {
       const { key, kho, dc, sxTong, khoKgNorm, khop, conDeDongBo, loaiTrangThai } = it;
@@ -812,15 +812,32 @@ function renderDoiChieuCX5() {
         '<td style="text-align:center">' + iconHtml + '</td>' +
         '</tr>';
     }).join("");
-    html += '</tbody></table></div>';
+    
+    let sumKho = 0;
+    let sumSx = 0;
+    filteredItems.forEach(it => {
+      sumKho += it.khoKgNorm;
+      sumSx += it.sxTong;
+    });
+
+    let tfootHtml = '<tfoot style="position: sticky; bottom: 0; background: var(--card-raised); z-index: 2; border-top: 2px solid var(--line); font-weight: bold;">' +
+      '<tr>' +
+      '<td style="text-align: right; color: var(--steel);">Tổng:</td>' +
+      '<td style="color: var(--success);">' + sumKho.toFixed(1) + '</td>' +
+      '<td style="color: var(--brass);">' + sumSx.toFixed(1) + '</td>' +
+      '<td></td>' +
+      '</tr>' +
+      '</tfoot>';
+
+    html += '</tbody>' + tfootHtml + '</table></div>';
   }
 
-  html += '<button class="btn btn-full" style="background:var(--neutral-solid);color:var(--cream);margin-top:12px" ' +
-    ' onclick="xemTongKgGhepPalletCX5()"><i class="ti ti-layers-intersect"></i> Tổng kg pallet</button>';
-
-  html += '<button id="cx5-btn-dongbo-tatca" class="btn btn-blue btn-full" style="margin-top:8px" ' + (coTheDongBo ? "" : "disabled") + ' onclick="dongBoTatCaCX5()"><i class="ti ti-refresh"></i> Đồng bộ</button>';
-
   container.innerHTML = html;
+
+  const btnDongBo = document.getElementById("cx5-btn-dongbo-tatca");
+  if (btnDongBo) {
+    btnDongBo.disabled = !coTheDongBo;
+  }
 }
 
 // ── Overlay chi tiết đối chiếu (khi click hàng trong bảng) ──
