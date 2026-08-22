@@ -1256,16 +1256,35 @@ function renderTongKgCX5() {
       else if (len >= 9) bagInfoText = d.homNay.rows[0].kg.toFixed(1) + "-" + d.homNay.rows[5].kg.toFixed(1);
     }
 
-    return '<div class="cx5-dc-card">' +
-      '<div class="cx5-dc-ten">' + escHtmlCX5(d.ten) + 
-      (bagInfoText ? ' <span style="font-size:14px;font-weight:normal;color:var(--accent-2);margin-left:8px;">' + bagInfoText + '</span>' : '') +
-      '</div>' +
-      '<div class="cx5-dc-kho">Hôm nay: <b>' + d.homNay.kg.toFixed(1) + 'kg (' + d.homNay.bao + ' bao)</b></div>' +
-      (dsCu
-        ? '<div style="margin-top:8px">' + dsCu + '</div>'
-        : '<div style="margin-top:8px;color:var(--cream-soft);font-size:12px">Không có ngày cũ nào còn dư</div>') +
-      '<div class="cx5-dc-tong cx5-tk-tong" style="margin-top:8px">Tổng: <b>' + tongKg.toFixed(1) + 'kg (' + tongBao + ' bao)</b></div>' +
-      '</div>';
+    if (!dsCu) {
+      return '<div style="padding: 10px 0; border-bottom: 1px solid var(--line-soft); display: flex; justify-content: space-between; align-items: center;">' +
+        '<div>' +
+        '<div style="font-weight: 600; color: var(--text-main); font-size: 15px;">' + escHtmlCX5(d.ten) + '</div>' +
+        (bagInfoText ? '<div style="font-size:13px; color:var(--accent-2); margin-top:2px;">' + bagInfoText + '</div>' : '') +
+        '</div>' +
+        '<div style="text-align: right;">' +
+        '<div style="font-weight: 600; color: var(--brass); font-size: 15px;">' + tongKg.toFixed(1) + 'kg</div>' +
+        '<div style="font-size: 12px; color: var(--steel);">' + tongBao + ' bao</div>' +
+        '</div>' +
+        '</div>';
+    } else {
+      return '<div style="padding: 12px 0; border-bottom: 1px solid var(--line-soft);">' +
+        '<div style="display: flex; justify-content: space-between; align-items: flex-start;">' +
+        '<div>' +
+        '<div style="font-weight: 600; color: var(--text-main); font-size: 15px;">' + escHtmlCX5(d.ten) + '</div>' +
+        (bagInfoText ? '<div style="font-size:13px; color:var(--accent-2); margin-top:2px;">' + bagInfoText + '</div>' : '') +
+        '</div>' +
+        '<div style="text-align: right; font-size: 13px;">' +
+        '<div style="color: var(--steel);">Hôm nay</div>' +
+        '<div style="font-weight: 600;">' + d.homNay.kg.toFixed(1) + 'kg (' + d.homNay.bao + 'b)</div>' +
+        '</div>' +
+        '</div>' +
+        '<div style="margin-top:8px">' + dsCu + '</div>' +
+        '<div style="margin-top: 8px; text-align: right; font-size: 14px;">' +
+        'Tổng: <b style="color: var(--brass);">' + tongKg.toFixed(1) + 'kg (' + tongBao + ' bao)</b>' +
+        '</div>' +
+        '</div>';
+    }
   }).join("");
 
   container.innerHTML = html;
