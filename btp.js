@@ -313,7 +313,7 @@ async function batDauPhienMoiBTP() {
 }
 
 function dungBTP() {
-  document.body.classList.remove("cam-active");
+  // document.body.classList.remove("cam-active");
   dangQuetBTP = false;
   // Giữ nguyên phần cứng camera chạy ngầm để bật lại tức thì
   // if (typeof dungCameraFast === "function" && zxingReaderBTP) {

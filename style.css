@@ -1588,15 +1588,15 @@ body.cam-active {
   left: 0 !important;
   right: 0 !important;
   bottom: 0 !important;
-  width: 100vw !important;
+  width: 100% !important;
   height: 100vh !important;
   height: 100dvh !important;
   overflow: hidden !important;
   touch-action: none !important;
 }
 
-body.cam-active #btpPage,
-body.cam-active #chiFor {
+body.cam-active #btpPage.active,
+body.cam-active #chiFor.active {
   background: var(--bg-deep) !important;
   height: calc(100dvh - 65px) !important;
   padding: 0 !important;
@@ -1633,10 +1633,10 @@ body.cam-active .video-container {
 
 body.cam-active #btp-log-container,
 body.cam-active #cx1-log-container {
-  flex: 1 1 auto !important;
-  display: flex !important;
-  flex-direction: column !important;
-  margin-top: 0 !important;
+    flex: 1 1 auto !important;
+    display: flex !important;
+    flex-direction: column !important;
+    margin: 8px 12px 12px 12px !important;
   padding: 0 !important;
   overflow: hidden !important;
   max-height: none !important;
