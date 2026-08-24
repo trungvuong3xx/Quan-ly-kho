@@ -2035,29 +2035,48 @@ function khoiTaoGiongNoiCX5() {
   const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
   const rec = new SpeechRec();
   rec.lang = 'vi-VN';
-  rec.interimResults = false;
+  rec.interimResults = true;
   rec.maxAlternatives = 1;
 
   rec.onresult = function(e) {
-    let transcript = e.results[0][0].transcript.toLowerCase();
+    let finalTranscript = '';
+    let interimTranscript = '';
     
-    // Tiền xử lý văn bản thành số. Ví dụ: "mười lăm phẩy năm" -> "15.5", "hai mươi" -> "20"
-    // Các quy tắc convert đơn giản
-    transcript = transcript.replace(/phẩy/g, '.').replace(/chấm/g, '.');
-    
-    // Nếu có chứa chữ số, cố gắng lọc lấy phần số
-    // (Google thường trả về "15.5" nếu đọc "mười lăm phẩy năm")
-    const match = transcript.match(/\d+(\.\d+)?/);
-    if (match) {
-      const num = parseFloat(match[0]);
-      if (!isNaN(num) && num > 0) {
-        document.getElementById('cx5-kg').value = num;
-        // Tự động bấm thêm
-        themDongCX5();
-        showCanhBaoCX5("Đã thêm: " + num + " kg", "success");
+    for (let i = e.resultIndex; i < e.results.length; ++i) {
+      if (e.results[i].isFinal) {
+        finalTranscript += e.results[i][0].transcript;
+      } else {
+        interimTranscript += e.results[i][0].transcript;
       }
-    } else {
-      showCanhBaoCX5("Không nhận diện được số: " + transcript);
+    }
+
+    // Hiển thị Realtime số đang đọc vào ô Kg
+    if (interimTranscript) {
+      let txt = interimTranscript.toLowerCase().replace(/phẩy/g, '.').replace(/chấm/g, '.');
+      const match = txt.match(/\d+(\.\d+)?/);
+      if (match) {
+        const num = parseFloat(match[0]);
+        if (!isNaN(num) && num > 0) {
+          document.getElementById('cx5-kg').value = num;
+        }
+      }
+    }
+
+    // Chốt đơn khi thả tay hoặc ngắt tiếng
+    if (finalTranscript) {
+      let txt = finalTranscript.toLowerCase().replace(/phẩy/g, '.').replace(/chấm/g, '.');
+      const match = txt.match(/\d+(\.\d+)?/);
+      if (match) {
+        const num = parseFloat(match[0]);
+        if (!isNaN(num) && num > 0) {
+          document.getElementById('cx5-kg').value = num;
+          // Tự động bấm thêm
+          themDongCX5();
+          showCanhBaoCX5("Đã thêm: " + num + " kg", "success");
+        }
+      } else {
+        showCanhBaoCX5("Không nhận diện được số: " + finalTranscript);
+      }
     }
   };
 
