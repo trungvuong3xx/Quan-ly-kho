@@ -1850,3 +1850,34 @@ body { padding: 0 !important; background: var(--bg-body) !important; color: var(
 
 
 
+.cx5-mic-btn {
+  background: var(--brass);
+  color: var(--bg-deep);
+  border: none;
+  border-radius: 20px;
+  padding: 6px 14px;
+  font-family: 'Space Grotesk', sans-serif;
+  font-weight: 700;
+  font-size: 13px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+.cx5-mic-btn:active {
+  transform: scale(0.95);
+  opacity: 0.9;
+}
+.cx5-mic-btn.listening {
+  background: var(--danger);
+  color: #fff;
+  animation: pulse-mic 1s infinite;
+}
+@keyframes pulse-mic {
+  0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.7); }
+  50% { transform: scale(1.05); box-shadow: 0 0 0 10px rgba(220, 38, 38, 0); }
+  100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(220, 38, 38, 0); }
+}

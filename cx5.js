@@ -1900,7 +1900,10 @@ let banPhimQCPendingCX5 = null;
   kgPanel.id = "cx5-bp-kg";
   kgPanel.className = "cx5-bp-panel";
   kgPanel.innerHTML =
-    '<span class="cx5-bp-close" onclick="dongBanPhimCX5()">Đóng bàn phím ▾</span>' +
+    '<div style="display:flex; justify-content:space-between; align-items:center; padding-bottom:8px;">' +
+    '<span class="cx5-bp-close" onclick="dongBanPhimCX5()">Đóng bàn phím ⬇</span>' +
+    '<button id="cx5-mic-btn" class="cx5-mic-btn"><i class="ti ti-microphone"></i> Giữ đọc số Kg</button>' +
+    '</div>' +
     '<div class="cx5-bp-grid">' +
     '<div class="cx5-bp-key" onclick="bpKgSoCX5(\'7\')">7</div>' +
     '<div class="cx5-bp-key" onclick="bpKgSoCX5(\'8\')">8</div>' +
@@ -1918,6 +1921,27 @@ let banPhimQCPendingCX5 = null;
     '<div class="cx5-bp-key" onclick="bpKgSoCX5(\'.\')">.</div>' +
     "</div>";
   document.body.appendChild(kgPanel);
+
+  // Thêm sự kiện cho nút Micro
+  const micBtn = document.getElementById("cx5-mic-btn");
+  if (micBtn) {
+    micBtn.addEventListener("mousedown", batDauNgheCX5);
+    micBtn.addEventListener("mouseup", dungNgheCX5);
+    micBtn.addEventListener("mouseleave", dungNgheCX5);
+    
+    micBtn.addEventListener("touchstart", function(e) {
+      e.preventDefault(); // Ngăn hành vi cuộn/click mặc định trên mobile
+      batDauNgheCX5(e);
+    }, {passive: false});
+    micBtn.addEventListener("touchend", function(e) {
+      e.preventDefault();
+      dungNgheCX5(e);
+    }, {passive: false});
+    micBtn.addEventListener("touchcancel", function(e) {
+      e.preventDefault();
+      dungNgheCX5(e);
+    }, {passive: false});
+  }
 
   const qcPanel = document.createElement("div");
   qcPanel.id = "cx5-bp-qc";
@@ -1997,6 +2021,93 @@ function dongBanPhimCX5() {
   closeDropdownSLLuotCX5();
 }
 window.dongBanPhimCX5 = dongBanPhimCX5;
+
+// --- NHẬP LIỆU BẰNG GIỌNG NÓI (SPEECH-TO-TEXT) CX5 ---
+let cx5SpeechRec = null;
+let cx5DangNghe = false;
+let cx5MicBtnEl = null;
+
+function khoiTaoGiongNoiCX5() {
+  if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+    showCanhBaoCX5("Trình duyệt không hỗ trợ nhận diện giọng nói.");
+    return null;
+  }
+  const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+  const rec = new SpeechRec();
+  rec.lang = 'vi-VN';
+  rec.interimResults = false;
+  rec.maxAlternatives = 1;
+
+  rec.onresult = function(e) {
+    let transcript = e.results[0][0].transcript.toLowerCase();
+    
+    // Tiền xử lý văn bản thành số. Ví dụ: "mười lăm phẩy năm" -> "15.5", "hai mươi" -> "20"
+    // Các quy tắc convert đơn giản
+    transcript = transcript.replace(/phẩy/g, '.').replace(/chấm/g, '.');
+    
+    // Nếu có chứa chữ số, cố gắng lọc lấy phần số
+    // (Google thường trả về "15.5" nếu đọc "mười lăm phẩy năm")
+    const match = transcript.match(/\d+(\.\d+)?/);
+    if (match) {
+      const num = parseFloat(match[0]);
+      if (!isNaN(num) && num > 0) {
+        document.getElementById('cx5-kg').value = num;
+        // Tự động bấm thêm
+        themDongCX5();
+        showCanhBaoCX5("Đã thêm: " + num + " kg", "success");
+      }
+    } else {
+      showCanhBaoCX5("Không nhận diện được số: " + transcript);
+    }
+  };
+
+  rec.onerror = function(e) {
+    // Không hiện lỗi nếu user cố tình thả tay quá nhanh (no-speech)
+    if (e.error !== 'no-speech' && e.error !== 'aborted') {
+      showCanhBaoCX5("Lỗi giọng nói: " + e.error);
+    }
+  };
+
+  rec.onend = function() {
+    cx5DangNghe = false;
+    if (cx5MicBtnEl) cx5MicBtnEl.classList.remove("listening");
+  };
+
+  return rec;
+}
+
+function batDauNgheCX5(e) {
+  if (e) e.preventDefault();
+  
+  // Kiểm tra xem đã khóa Quy cách chưa, nếu chưa thì cảnh báo
+  const khoaQC = document.getElementById("cx5-qc-khoa").style.display !== "none";
+  if (!khoaQC) {
+    showCanhBaoCX5("Vui lòng CHỌN và KHÓA một Quy cách trước khi đọc số Kg!");
+    return;
+  }
+
+  cx5MicBtnEl = document.getElementById("cx5-mic-btn");
+  if (!cx5SpeechRec) cx5SpeechRec = khoiTaoGiongNoiCX5();
+  if (!cx5SpeechRec) return;
+
+  if (cx5DangNghe) return;
+  cx5DangNghe = true;
+  if (cx5MicBtnEl) cx5MicBtnEl.classList.add("listening");
+
+  try { 
+    cx5SpeechRec.start(); 
+  } catch (err) {
+    // Lỗi start khi đang chạy
+  }
+}
+
+function dungNgheCX5(e) {
+  if (e) e.preventDefault();
+  if (cx5SpeechRec && cx5DangNghe) {
+    try { cx5SpeechRec.stop(); } catch (err) {}
+  }
+}
+// ----------------------------------------------------
 
 function moDoiQCLuotCX5() {
   const wrap = document.getElementById("cx5-sl-doi-qc-wrap");
