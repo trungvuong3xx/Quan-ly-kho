@@ -2105,7 +2105,7 @@ function khoiTaoGiongNoiCX5() {
         document.getElementById('cx5-kg').value = num;
         // Tự động bấm thêm
         themDongCX5();
-        showCanhBaoCX5("Đã thêm: " + num + " kg", "success");
+        showCanhBaoCX5("Đã thêm: " + num + " kg (Nghe được: " + finalTranscript + ")", "success");
       } else {
         showCanhBaoCX5("Không nhận diện được số: " + finalTranscript);
         document.getElementById('cx5-kg').value = ""; // Xóa trắng vì không hiểu
