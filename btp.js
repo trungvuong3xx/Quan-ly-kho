@@ -68,7 +68,7 @@ function docGiongNoiBTP(msp, kg) {
   
   const msg = new SpeechSynthesisUtterance(text);
   msg.lang = 'vi-VN';
-  msg.rate = 2.5; 
+  msg.rate = 2.0;
   
   window.__speechUtterances.push(msg);
   msg.onend = function() {
@@ -121,6 +121,7 @@ function nhapThuCongBTP(src) {
     showCanhBaoBTP("⚠️ Mã QR đã tồn tại trong phiên quét!");
     hienVienFeedbackBTP("duplicate");
     if (typeof window.phatVibrateError === "function") window.phatVibrateError();
+    showCanhBaoBTP("Trùng mã! Mã này đã được quét.");
     return;
   }
 
@@ -230,6 +231,11 @@ function khiQuetDuocMaBTP(result) {
   if (!choPhepTrung && phienBTP.some(item => item.rawQR.toLowerCase() === data.rawQR.toLowerCase())) {
     hienVienFeedbackBTP("duplicate");
     if (typeof window.phatVibrateError === "function") window.phatVibrateError();
+    showCanhBaoBTP("Trùng mã! Mã này đã được quét.");
+    
+    // Nếu quét trùng, phạt khóa mã này lâu hơn (2 giây) để tránh chớp đỏ liên tục nếu lỡ để quên camera
+    mapKhoaBTP.set(data.rawQR, Date.now() + 1500); 
+    
     return;
   }
 
