@@ -128,8 +128,8 @@ function nhapThuCongBTP(src) {
 
   hienVienFeedbackBTP("success");
 
-  if (typeof window.phatTiengBip === "function") window.phatTiengBip();
-  else if (typeof phatTiengBip === "function") phatTiengBip();
+  // Đọc TTS luôn, không phát tiếng bíp cũ nữa
+  docGiongNoiBTP(data.msp, data.kg);
 
   if (typeof window.phatVibrateSuccess === "function") window.phatVibrateSuccess();
 
@@ -233,10 +233,10 @@ function khiQuetDuocMaBTP(result) {
   }
 
   hienVienFeedbackBTP("success");
-  if (typeof window.phatTiengBip === "function") window.phatTiengBip();
-  else if (typeof phatTiengBip === "function") phatTiengBip();
+  
   if (typeof window.phatVibrateSuccess === "function") window.phatVibrateSuccess();
 
+  // Chỉ dùng TTS, bỏ qua tiếng bíp cũ
   docGiongNoiBTP(data.msp, data.kg);
 
   phienBTP.push({
