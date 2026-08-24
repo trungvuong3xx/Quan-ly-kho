@@ -2050,32 +2050,37 @@ function khoiTaoGiongNoiCX5() {
       }
     }
 
+    // Hàm dùng chung để parse số từ text
+    function parseKg(text) {
+      // Đổi phẩy, chấm, dấu phẩy sang . và xóa toàn bộ khoảng trắng
+      let txt = text.toLowerCase().replace(/phẩy/g, '.').replace(/chấm/g, '.').replace(/,/g, '.').replace(/\s+/g, '');
+      const match = txt.match(/\d+(\.\d+)?/);
+      if (match) return parseFloat(match[0]);
+      return null;
+    }
+
     // Hiển thị Realtime số đang đọc vào ô Kg
     if (interimTranscript) {
-      let txt = interimTranscript.toLowerCase().replace(/phẩy/g, '.').replace(/chấm/g, '.');
-      const match = txt.match(/\d+(\.\d+)?/);
-      if (match) {
-        const num = parseFloat(match[0]);
-        if (!isNaN(num) && num > 0) {
-          document.getElementById('cx5-kg').value = num;
-        }
+      const num = parseKg(interimTranscript);
+      if (num !== null) {
+        document.getElementById('cx5-kg').value = num;
+      } else {
+        // Nếu chưa ra số, cho hiển thị luôn chữ đang đọc để biết máy có đang nghe không
+        document.getElementById('cx5-kg').value = interimTranscript.trim();
       }
     }
 
     // Chốt đơn khi thả tay hoặc ngắt tiếng
     if (finalTranscript) {
-      let txt = finalTranscript.toLowerCase().replace(/phẩy/g, '.').replace(/chấm/g, '.');
-      const match = txt.match(/\d+(\.\d+)?/);
-      if (match) {
-        const num = parseFloat(match[0]);
-        if (!isNaN(num) && num > 0) {
-          document.getElementById('cx5-kg').value = num;
-          // Tự động bấm thêm
-          themDongCX5();
-          showCanhBaoCX5("Đã thêm: " + num + " kg", "success");
-        }
+      const num = parseKg(finalTranscript);
+      if (num !== null && num > 0) {
+        document.getElementById('cx5-kg').value = num;
+        // Tự động bấm thêm
+        themDongCX5();
+        showCanhBaoCX5("Đã thêm: " + num + " kg", "success");
       } else {
         showCanhBaoCX5("Không nhận diện được số: " + finalTranscript);
+        document.getElementById('cx5-kg').value = ""; // Xóa trắng vì không hiểu
       }
     }
   };
