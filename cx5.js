@@ -2052,9 +2052,23 @@ function khoiTaoGiongNoiCX5() {
 
     // Hàm dùng chung để parse số từ text
     function parseKg(text) {
-      // Đổi phẩy, chấm, dấu phẩy sang . và xóa toàn bộ khoảng trắng
-      let txt = text.toLowerCase().replace(/phẩy/g, '.').replace(/chấm/g, '.').replace(/,/g, '.').replace(/\s+/g, '');
-      const match = txt.match(/\d+(\.\d+)?/);
+      let txt = text.toLowerCase().replace(/,/g, '.');
+      
+      const mapNum = {
+        'không': '0', 'một': '1', 'mốt': '1', 'hai': '2', 'ba': '3', 
+        'bốn': '4', 'tư': '4', 'năm': '5', 'lăm': '5', 'sáu': '6', 
+        'bảy': '7', 'tám': '8', 'chín': '9', 
+        'rưỡi': '.5', 'phẩy': '.', 'chấm': '.'
+      };
+      
+      // Tách thành từng chữ, đổi chữ thành số nếu có
+      let words = txt.split(/\s+/);
+      let parsed = "";
+      for (let w of words) {
+        parsed += (mapNum[w] !== undefined) ? mapNum[w] : w;
+      }
+      
+      const match = parsed.match(/\d+(\.\d+)?/);
       if (match) return parseFloat(match[0]);
       return null;
     }
