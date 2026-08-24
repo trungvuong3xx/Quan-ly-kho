@@ -2062,105 +2062,64 @@ let cx5DangNghe = false;
 let cx5MicBtnEl = null;
 
 function khoiTaoGiongNoiCX5() {
-  if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
-    showCanhBaoCX5("TrÃ¬nh duyá»‡t khÃ´ng há»— trá»£ nháº­n diá»‡n giá»ng nÃ³i.");
+  const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SpeechRec) {
+    showCanhBaoCX5("Trình duyệt không hỗ trợ nhận diện giọng nói!");
     return null;
   }
-  const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+  
   const rec = new SpeechRec();
   rec.lang = 'vi-VN';
   rec.interimResults = true;
+  rec.continuous = true; // Quan trọng: Nghe liên tục đến khi buông tay
   rec.maxAlternatives = 1;
 
   rec.onresult = function(e) {
-    let finalTranscript = '';
-    let interimTranscript = '';
+    let fullText = '';
+    for (let i = 0; i < e.results.length; ++i) {
+      fullText += e.results[i][0].transcript;
+    }
     
-    for (let i = e.resultIndex; i < e.results.length; ++i) {
-      if (e.results[i].isFinal) {
-        finalTranscript += e.results[i][0].transcript;
-      } else {
-        interimTranscript += e.results[i][0].transcript;
-      }
-    }
+    window.__cx5KqCuoiCung = fullText;
 
-    // HÃ m dÃ¹ng chung Ä‘á»ƒ parse sá»‘ tá»« text
-    function parseKg(text) {
-      let txt = text.toLowerCase();
-      
-      // Äá»•i pháº©y thÃ nh cháº¥m
-      txt = txt.replace(/,/g, '.')
-               .replace(/pháº©y/g, '.')
-               .replace(/cháº¥m/g, '.');
-               
-      // Chuyá»ƒn chá»¯ thÃ nh sá»‘ (báº¥t cháº¥p cÃ³ khoáº£ng tráº¯ng hay dÃ­nh liá»n)
-      txt = txt.replace(/khÃ´ng/g, '0')
-               .replace(/má»™t|má»‘t/g, '1')
-               .replace(/hai/g, '2')
-               .replace(/ba/g, '3')
-               .replace(/bá»‘n|tÆ°/g, '4')
-               .replace(/nÄƒm|lÄƒm/g, '5')
-               .replace(/sÃ¡u/g, '6')
-               .replace(/báº£y/g, '7')
-               .replace(/tÃ¡m/g, '8')
-               .replace(/chÃ­n/g, '9')
-               .replace(/rÆ°á»¡i/g, '.5');
-               
-      // Ã‰p bá» chá»¯ "mÆ°Æ¡i" náº¿u Google lá»¡ dá»‹ch ra nguyÃªn chá»¯ (nÄƒm mÆ°Æ¡i -> 5 mÆ°Æ¡i -> 5)
-      txt = txt.replace(/mÆ°Æ¡i/g, ''); 
-      txt = txt.replace(/mÆ°á»i/g, '1'); // mÆ°á»i lÄƒm -> 1 5 -> 15
-      
-      // Gá»t sáº¡ch khoáº£ng tráº¯ng
-      txt = txt.replace(/\s+/g, '');
-      
-      // ULTIMATE FALLBACK: Náº¿u cÃ³ 2 cá»¥m sá»‘ bá»‹ ngÄƒn cÃ¡ch bá»Ÿi báº¥t ká»³ chá»¯ rÃ¡c nÃ o (vd: 52pháº£y3, 52kÃ½3), biáº¿n chá»¯ Ä‘Ã³ thÃ nh dáº¥u cháº¥m
-      txt = txt.replace(/(\d+)[^\d\.]+(\d+)/, '$1.$2');
-      
-      const match = txt.match(/\d+(\.\d+)?/);
-      if (match) return parseFloat(match[0]);
-      return null;
-    }
-
-    // Hiá»ƒn thá»‹ Realtime sá»‘ Ä‘ang Ä‘á»c vÃ o Ã´ Kg
-    if (interimTranscript) {
-      const num = parseKg(interimTranscript);
-      if (num !== null) {
-        document.getElementById('cx5-kg').value = num;
-      } else {
-        // Náº¿u chÆ°a ra sá»‘, cho hiá»ƒn thá»‹ luÃ´n chá»¯ Ä‘ang Ä‘á»c Ä‘á»ƒ biáº¿t mÃ¡y cÃ³ Ä‘ang nghe khÃ´ng
-        document.getElementById('cx5-kg').value = interimTranscript.trim();
-      }
-    }
-
-    // Chá»‘t Ä‘Æ¡n khi tháº£ tay hoáº·c ngáº¯t tiáº¿ng
-    if (finalTranscript) {
-      const num = parseKg(finalTranscript);
-      if (num !== null && num > 0) {
-        document.getElementById('cx5-kg').value = num;
-        // Tá»± Ä‘á»™ng báº¥m thÃªm
-        themDongCX5();
-        showCanhBaoCX5("ÄÃ£ thÃªm: " + num + " kg (Nghe Ä‘Æ°á»£c: " + finalTranscript + ")", "success");
-      } else {
-        showCanhBaoCX5("KhÃ´ng nháº­n diá»‡n Ä‘Æ°á»£c sá»‘: " + finalTranscript);
-        document.getElementById('cx5-kg').value = ""; // XÃ³a tráº¯ng vÃ¬ khÃ´ng hiá»ƒu
-      }
+    const num = parseKg(fullText);
+    if (num !== null) {
+      document.getElementById('cx5-kg').value = num;
+    } else {
+      document.getElementById('cx5-kg').value = fullText.trim();
     }
   };
 
   rec.onerror = function(e) {
-    // KhÃ´ng hiá»‡n lá»—i náº¿u user cá»‘ tÃ¬nh tháº£ tay quÃ¡ nhanh (no-speech)
     if (e.error !== 'no-speech' && e.error !== 'aborted') {
-      showCanhBaoCX5("Lá»—i giá»ng nÃ³i: " + e.error);
+      showCanhBaoCX5("Lỗi giọng nói: " + e.error);
     }
   };
 
   rec.onend = function() {
     cx5DangNghe = false;
-    if (cx5MicBtnEl) cx5MicBtnEl.classList.remove("listening");
+    const btn = document.querySelector('.cx5-mic-btn');
+    if (btn) btn.classList.remove("listening");
+
+    const val = document.getElementById('cx5-kg').value;
+    const num = parseFloat(val);
+    
+    // Nếu có giá trị hợp lệ thì chốt
+    if (!isNaN(num) && num > 0) {
+      themDongCX5();
+      showCanhBaoCX5("Đã thêm: " + num + " kg (Nghe được: " + (window.__cx5KqCuoiCung || '') + ")", "success");
+    } else {
+      if (window.__cx5KqCuoiCung && window.__cx5KqCuoiCung.trim() !== '') {
+        showCanhBaoCX5("Không nhận diện được số: " + window.__cx5KqCuoiCung);
+      }
+      document.getElementById('cx5-kg').value = ""; // Xóa trắng
+    }
+    window.__cx5KqCuoiCung = "";
   };
 
   return rec;
 }
+
 
 let cx5MicStopTimer = null;
 
@@ -2380,4 +2339,5 @@ window.addEventListener("load", function () {
     mspCacheX5[monthKey] = local;
   }
 });
+
 
