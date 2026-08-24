@@ -128,10 +128,13 @@ function nhapThuCongBTP(src) {
 
   hienVienFeedbackBTP("success");
 
+  // Vibrate thay vì gọi phatVibrateSuccess (vì phatVibrateSuccess bị dính tiếng Bíp)
+  if (navigator.vibrate) {
+    try { navigator.vibrate(70); } catch (e) {}
+  }
+
   // Đọc TTS luôn, không phát tiếng bíp cũ nữa
   docGiongNoiBTP(data.msp, data.kg);
-
-  if (typeof window.phatVibrateSuccess === "function") window.phatVibrateSuccess();
 
   phienBTP.push({
     rawQR: data.rawQR,
@@ -234,7 +237,9 @@ function khiQuetDuocMaBTP(result) {
 
   hienVienFeedbackBTP("success");
   
-  if (typeof window.phatVibrateSuccess === "function") window.phatVibrateSuccess();
+  if (navigator.vibrate) {
+    try { navigator.vibrate(70); } catch (e) {}
+  }
 
   // Chỉ dùng TTS, bỏ qua tiếng bíp cũ
   docGiongNoiBTP(data.msp, data.kg);
