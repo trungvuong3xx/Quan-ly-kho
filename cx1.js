@@ -227,6 +227,10 @@ async function guiLenSheetCX1(rows) {
 
 async function ketThucCX1() {
   dungCX1();
+  
+  // Lưu lịch sử NGAY LẬP TỨC để tránh mất dữ liệu nếu user thoát web hoặc chuyển trang giữa chừng
+  luuVaoLichSuCX1();
+  // Xóa khỏi danh sách dở dang sau khi đã đưa vào lịch sử an toàn
   xoaPhienDoDangCX1();
 
   // Hiện kết quả NGAY, lưu sheet chạy ngầm
@@ -243,6 +247,9 @@ async function ketThucCX1() {
     try {
       await guiLenSheetCX1(rows);
       soLuongDaGuiHienTai = phienCX1.length;
+      
+      // Cập nhật lại lịch sử với số lượng đã gửi mới lên Google Sheet
+      luuVaoLichSuCX1();
     } catch (err) {
       const pending = docPendingCX1();
       pending.push(...rows);
@@ -251,11 +258,12 @@ async function ketThucCX1() {
       // Coi như đã "xử lý" phần này để không gửi trùng lần sau — phần chưa gửi
       // thật sự vẫn nằm an toàn trong hàng đợi pending, sẽ tự gửi khi có mạng
       soLuongDaGuiHienTai = phienCX1.length;
+      
+      // Cập nhật lại lịch sử
+      luuVaoLichSuCX1();
     }
     if (typeof capNhatTrangThaiMang === "function") capNhatTrangThaiMang();
   }
-
-  luuVaoLichSuCX1();
 }
 
 function nhapTayCX1(dot, msp, qc) {
