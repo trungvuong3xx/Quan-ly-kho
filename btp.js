@@ -51,14 +51,22 @@ const mapKhoaBTP = new Map();
 
 function docGiongNoiBTP(msp, kg) {
   if (!('speechSynthesis' in window)) return;
+  
   let docMsp = String(msp || '').trim();
   if (docMsp.length >= 3) {
     docMsp = docMsp.slice(-3);
   }
-  const text = "Mã " + docMsp + ", " + (kg || 0) + " ký";
+  let arrMsp = docMsp.split('').join(' ');
+  
+  let strKg = String(kg || 0).trim();
+  let arrKg = strKg.split('').map(char => char === '.' ? 'phẩy' : char).join(' ');
+
+  // VD: "405" và "150" -> "4 0 5 1 5 0"
+  const text = arrMsp + " " + arrKg;
+  
   const msg = new SpeechSynthesisUtterance(text);
   msg.lang = 'vi-VN';
-  msg.rate = 1.2;
+  msg.rate = 1.5; // Tăng tốc độ đọc lên 1.5 để lướt siêu nhanh
   window.speechSynthesis.speak(msg);
 }
 
