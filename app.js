@@ -517,7 +517,9 @@ async function khoiTaoCameraFast(videoId, onDecodedCallback) {
             if (canvas) {
               const codes = await nativeBarcodeDetectorGlobal.detect(canvas);
               if (codes && codes.length > 0) {
-                onDecodedCallback(codes[0].rawValue);
+                for (const code of codes) {
+                  onDecodedCallback(code.rawValue);
+                }
               }
             }
           } catch (e) { }

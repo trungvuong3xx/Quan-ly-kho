@@ -47,7 +47,20 @@ function xuLyDuLieuQRBTP(text) {
   return { rawQR, msp, qc, kg };
 }
 
-let dangKhoaQuetBTP = false;
+const mapKhoaBTP = new Map();
+
+function docGiongNoiBTP(msp, kg) {
+  if (!('speechSynthesis' in window)) return;
+  let docMsp = String(msp || '').trim();
+  if (docMsp.length >= 3) {
+    docMsp = docMsp.slice(-3);
+  }
+  const text = "Mã " + docMsp + ", " + (kg || 0) + " ký";
+  const msg = new SpeechSynthesisUtterance(text);
+  msg.lang = 'vi-VN';
+  msg.rate = 1.2;
+  window.speechSynthesis.speak(msg);
+}
 
 function hienVienFeedbackBTP(loai) {
   const videoBox = document.getElementById("btp-video-box");
@@ -176,28 +189,34 @@ function capNhatLogBTP() {
 }
 
 function khiQuetDuocMaBTP(result) {
-  if (!result || !dangQuetBTP || dangKhoaQuetBTP) return;
+  if (!result || !dangQuetBTP) return;
   const rawText = typeof result.getText === "function" ? result.getText() : String(result);
   const data = xuLyDuLieuQRBTP(rawText);
   if (!data || !data.rawQR) return;
 
   const elCheck = document.getElementById("btp-cho-phep-trung-cam");
   const choPhepTrung = elCheck ? elCheck.checked : false;
+  const lockMs = choPhepTrung ? 1500 : 500;
+  const now = Date.now();
+
+  // Khóa Per-QR
+  if (mapKhoaBTP.has(data.rawQR) && (now - mapKhoaBTP.get(data.rawQR)) < lockMs) {
+    return;
+  }
+  mapKhoaBTP.set(data.rawQR, now);
 
   if (!choPhepTrung && phienBTP.some(item => item.rawQR.toLowerCase() === data.rawQR.toLowerCase())) {
-    showCanhBaoBTP("⚠️ Mã QR đã quét rồi!");
     hienVienFeedbackBTP("duplicate");
     if (typeof window.phatVibrateError === "function") window.phatVibrateError();
     return;
   }
 
-  dangKhoaQuetBTP = true;
   hienVienFeedbackBTP("success");
-
   if (typeof window.phatTiengBip === "function") window.phatTiengBip();
   else if (typeof phatTiengBip === "function") phatTiengBip();
-
   if (typeof window.phatVibrateSuccess === "function") window.phatVibrateSuccess();
+
+  docGiongNoiBTP(data.msp, data.kg);
 
   phienBTP.push({
     rawQR: data.rawQR,
@@ -212,21 +231,10 @@ function khiQuetDuocMaBTP(result) {
   const demEl = document.getElementById("btp-dem");
   if (demEl) demEl.textContent = "Đã quét: " + phienBTP.length + " mã";
   luuPhienDoDangBTP();
-
   capNhatLogBTP();
 
-  const lockMs = choPhepTrung ? 1500 : 500;
   const lockStatusEl = document.getElementById("btp-lock-status");
-  if (lockStatusEl) lockStatusEl.innerHTML = '<i class="ti ti-clock"></i> Chờ ' + (lockMs / 1000) + 's...';
-
-  setTimeout(() => {
-    dangKhoaQuetBTP = false;
-    if (lockStatusEl) lockStatusEl.innerHTML = '<i class="ti ti-circle-check" style="color:var(--success)"></i> Sẵn sàng';
-    if (dangQuetBTP) {
-      const sEl = document.getElementById("btp-status");
-      if (sEl) sEl.innerHTML = '<i class="ti ti-radar" style="color:var(--success)"></i> Đang quét Đợt ' + (demSoDotBTP || 1) + '...';
-    }
-  }, lockMs);
+  if (lockStatusEl) lockStatusEl.innerHTML = '<i class="ti ti-check-double" style="color:var(--success)"></i> ' + data.msp;
 }
 
 function luuPhienDoDangBTP() {
