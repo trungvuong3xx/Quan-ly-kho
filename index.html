@@ -1157,6 +1157,24 @@
     };
   });
 </script>
+<div id="pwa-update-toast" style="display:none; position:fixed; bottom:80px; left:50%; transform:translateX(-50%); background:var(--brass); color:var(--bg-deep); padding:10px 20px; border-radius:20px; font-weight:700; box-shadow:0 4px 12px rgba(245,158,11,0.5); z-index:9999; cursor:pointer;" onclick="window.location.reload(true);">
+  🔄 Có bản cập nhật mới! Bấm để tải lại
+</div>
+
+<script>
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('./sw.js').then(reg => {
+      reg.addEventListener('updatefound', () => {
+        const newWorker = reg.installing;
+        newWorker.addEventListener('statechange', () => {
+          if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+            document.getElementById('pwa-update-toast').style.display = 'block';
+          }
+        });
+      });
+    });
+  }
+</script>
 </body>
 </html>
 

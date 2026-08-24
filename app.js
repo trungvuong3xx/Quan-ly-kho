@@ -484,7 +484,23 @@ async function khoiTaoCameraFast(videoId, onDecodedCallback) {
     console.warn("getUserMedia camera stream notice:", e);
   }
 
-  // 2. Tận dụng phần cứng Native BarcodeDetector (Chạy 60fps trên GPU Android Chrome/Edge)
+  // Chuẩn bị Canvas ẩn để crop vùng chính giữa (Giảm 70% lượng pixel cần quét)
+  const cropCanvas = document.createElement('canvas');
+  const cropCtx = cropCanvas.getContext('2d', { willReadFrequently: true });
+  const CROP_SIZE = 600; // Vùng cắt 600x600 ở giữa
+  cropCanvas.width = CROP_SIZE;
+  cropCanvas.height = CROP_SIZE;
+
+  function captureCroppedFrame() {
+    if (videoEl.videoWidth === 0) return null;
+    const sx = (videoEl.videoWidth - CROP_SIZE) / 2;
+    const sy = (videoEl.videoHeight - CROP_SIZE) / 2;
+    // Vẽ vùng trung tâm của video lên canvas nhỏ
+    cropCtx.drawImage(videoEl, sx, sy, CROP_SIZE, CROP_SIZE, 0, 0, CROP_SIZE, CROP_SIZE);
+    return cropCanvas;
+  }
+
+  // 2. Tận dụng phần cứng Native BarcodeDetector (Chạy cực nhanh nhờ đã Crop)
   if ('BarcodeDetector' in window) {
     try {
       if (!nativeBarcodeDetectorGlobal) {
@@ -497,9 +513,12 @@ async function khoiTaoCameraFast(videoId, onDecodedCallback) {
         if (!isProcessing && videoEl.readyState >= 2) {
           isProcessing = true;
           try {
-            const codes = await nativeBarcodeDetectorGlobal.detect(videoEl);
-            if (codes && codes.length > 0) {
-              onDecodedCallback(codes[0].rawValue);
+            const canvas = captureCroppedFrame();
+            if (canvas) {
+              const codes = await nativeBarcodeDetectorGlobal.detect(canvas);
+              if (codes && codes.length > 0) {
+                onDecodedCallback(codes[0].rawValue);
+              }
             }
           } catch (e) { }
           isProcessing = false;
@@ -510,6 +529,7 @@ async function khoiTaoCameraFast(videoId, onDecodedCallback) {
       };
 
       animFrameMap[videoId] = requestAnimationFrame(loopNative);
+      return { reset: () => {} }; // Trả về object giả lập ZXing
     } catch (e) {
       console.warn("BarcodeDetector native error, fallback to ZXing:", e);
     }
@@ -522,11 +542,32 @@ async function khoiTaoCameraFast(videoId, onDecodedCallback) {
     hints.set(ZXing.DecodeHintType.TRY_HARDER, true);
 
     const reader = new ZXing.BrowserMultiFormatReader(hints);
-    reader.decodeFromVideoElement(videoEl, (result, err) => {
-      if (result) {
-        onDecodedCallback(result.getText());
+    
+    // Tự viết vòng lặp cho ZXing để dùng chung ảnh đã Crop
+    let isZxingProcessing = false;
+    const loopZxing = async () => {
+      if (!videoEl.srcObject || videoEl.paused || videoEl.ended) return;
+      if (!isZxingProcessing && videoEl.readyState >= 2) {
+        isZxingProcessing = true;
+        try {
+          const canvas = captureCroppedFrame();
+          if (canvas) {
+            // decodeFromCanvas đôi khi không có ở bản cũ, ta thử decode hoặc nếu lỗi thì im lặng
+            const result = reader.decode(canvas);
+            if (result) {
+              onDecodedCallback(result.getText());
+            }
+          }
+        } catch (e) {
+          // Lỗi NotFoundException được quăng ra liên tục khi không có QR, bỏ qua
+        }
+        isZxingProcessing = false;
       }
-    });
+      if (videoEl.srcObject) {
+        animFrameMap[videoId] = requestAnimationFrame(loopZxing);
+      }
+    };
+    animFrameMap[videoId] = requestAnimationFrame(loopZxing);
     return reader;
   } catch (e) {
     console.warn("ZXing fallback init error:", e);

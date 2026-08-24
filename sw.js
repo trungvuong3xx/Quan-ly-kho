@@ -1,4 +1,4 @@
-const CACHE_NAME = 'quan-ly-kho-auto-update-v15';
+const CACHE_NAME = 'quan-ly-kho-auto-update-v16';
 const urlsToCache = [
   './',
   './index.html',
@@ -66,16 +66,22 @@ self.addEventListener('fetch', event => {
 
   const url = new URL(req.url);
 
-  // Network-First cho các file ứng dụng: Luôn lấy code mới nhất từ GitHub khi có mạng
+  // Stale-While-Revalidate cho các file ứng dụng: Load tức thì từ Cache, ngầm tải bản mới
   if (laFileAppShell(url)) {
     event.respondWith(
-      fetch(req, { cache: 'no-store' }).then(res => {
-        if (res && res.status === 200) {
-          const resClone = res.clone();
-          caches.open(CACHE_NAME).then(cache => cache.put(req, resClone));
-        }
-        return res;
-      }).catch(() => caches.match(req, { ignoreSearch: true }))
+      caches.match(req, { ignoreSearch: true }).then(cachedRes => {
+        const fetchPromise = fetch(req, { cache: 'no-store' }).then(networkRes => {
+          if (networkRes && networkRes.status === 200) {
+            const resClone = networkRes.clone();
+            caches.open(CACHE_NAME).then(cache => cache.put(req, resClone));
+          }
+          return networkRes;
+        }).catch(() => {
+          // Bỏ qua lỗi mạng khi update ngầm
+        });
+        
+        return cachedRes || fetchPromise;
+      })
     );
   } else {
     // Cache-First cho tài nguyên tĩnh (ảnh, mp3, cdn)
