@@ -440,7 +440,7 @@
 
     <div id="cam-box" style="display:none">
       <div class="video-container" style="position:relative; width:100%; padding-bottom:65%; background:#000; border-radius:14px; overflow:hidden; margin-top:12px; border: 2px solid var(--brass); transition: border-color 0.3s ease, box-shadow 0.3s ease;">
-        <video id="reader" autoplay playsinline muted style="position:absolute; width:100%; height:100%; object-fit:cover"></video>
+        <video id="reader" autoplay playsinline muted disablePictureInPicture style="position:absolute; width:100%; height:100%; object-fit:cover; transform:translateZ(0); will-change:transform;"></video>
         <div class="cam-viewfinder">
           <div class="vf-corner vf-top-left"></div>
           <div class="vf-corner vf-top-right"></div>
@@ -466,7 +466,7 @@
     </div>
     <div id="kk-cam" style="display:none">
       <div class="video-container" style="position:relative; width:100%; padding-bottom:65%; background:#000; border-radius:14px; overflow:hidden; margin-top:12px; border: 2px solid var(--brass); transition: border-color 0.3s ease, box-shadow 0.3s ease;">
-        <video id="kk-reader" autoplay playsinline muted style="position:absolute; width:100%; height:100%; object-fit:cover"></video>
+        <video id="kk-reader" autoplay playsinline muted disablePictureInPicture style="position:absolute; width:100%; height:100%; object-fit:cover; transform:translateZ(0); will-change:transform;"></video>
         <div class="cam-viewfinder">
           <div class="vf-corner vf-top-left" style="border-color:var(--chi-3);"></div>
           <div class="vf-corner vf-top-right" style="border-color:var(--chi-3);"></div>
@@ -497,7 +497,7 @@
       <span id="cx1-dem" class="cx5-badge">Đã quét: 0 mã</span>
     </div>
     <div class="video-container" style="position:relative; width:100%; padding-bottom:70%; background:#000; border-radius:14px; overflow:hidden; margin-bottom:15px; border: 2px solid var(--steel); transition: border-color 0.3s ease, box-shadow 0.3s ease;">
-      <video id="cx1-reader" style="position:absolute; width:100%; height:100%; object-fit:cover"></video>
+      <video id="cx1-reader" autoplay playsinline muted disablePictureInPicture style="position:absolute; width:100%; height:100%; object-fit:cover; transform:translateZ(0); will-change:transform;"></video>
       <div class="cam-viewfinder">
         <div class="vf-corner vf-top-left" style="border-color:var(--steel);"></div>
         <div class="vf-corner vf-top-right" style="border-color:var(--steel);"></div>
@@ -612,7 +612,7 @@
       <span id="btp-dem" style="background:var(--brass); color:var(--bg-deep); font-weight:800; font-size:14px; padding:4px 12px; border-radius:20px; box-shadow:0 3px 10px rgba(245,158,11,0.45); letter-spacing:0.3px;">Đã quét: 0 mã</span>
     </div>
     <div id="btp-video-box" class="video-container" style="position:relative; width:100%; padding-bottom:60%; background:#000; border-radius:14px; overflow:hidden; margin-bottom:8px; border: 3px solid transparent; transition: border-color 0.3s ease, box-shadow 0.3s ease;">
-      <video id="btp-reader" style="position:absolute; width:100%; height:100%; object-fit:cover"></video>
+      <video id="btp-reader" autoplay playsinline muted disablePictureInPicture style="position:absolute; width:100%; height:100%; object-fit:cover; transform:translateZ(0); will-change:transform;"></video>
       <div class="btp-viewfinder">
         <div class="vf-corner vf-top-left"></div>
         <div class="vf-corner vf-top-right"></div>
