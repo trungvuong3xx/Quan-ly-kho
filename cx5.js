@@ -2052,23 +2052,34 @@ function khoiTaoGiongNoiCX5() {
 
     // Hàm dùng chung để parse số từ text
     function parseKg(text) {
-      let txt = text.toLowerCase().replace(/,/g, '.');
+      let txt = text.toLowerCase();
       
-      const mapNum = {
-        'không': '0', 'một': '1', 'mốt': '1', 'hai': '2', 'ba': '3', 
-        'bốn': '4', 'tư': '4', 'năm': '5', 'lăm': '5', 'sáu': '6', 
-        'bảy': '7', 'tám': '8', 'chín': '9', 
-        'rưỡi': '.5', 'phẩy': '.', 'chấm': '.'
-      };
+      // Đổi phẩy thành chấm
+      txt = txt.replace(/,/g, '.')
+               .replace(/phẩy/g, '.')
+               .replace(/chấm/g, '.');
+               
+      // Chuyển chữ thành số (bất chấp có khoảng trắng hay dính liền)
+      txt = txt.replace(/không/g, '0')
+               .replace(/một|mốt/g, '1')
+               .replace(/hai/g, '2')
+               .replace(/ba/g, '3')
+               .replace(/bốn|tư/g, '4')
+               .replace(/năm|lăm/g, '5')
+               .replace(/sáu/g, '6')
+               .replace(/bảy/g, '7')
+               .replace(/tám/g, '8')
+               .replace(/chín/g, '9')
+               .replace(/rưỡi/g, '.5');
+               
+      // Ép bỏ chữ "mươi" nếu Google lỡ dịch ra nguyên chữ (năm mươi -> 5 mươi -> 5)
+      txt = txt.replace(/mươi/g, ''); 
+      txt = txt.replace(/mười/g, '1'); // mười lăm -> 1 5 -> 15
       
-      // Tách thành từng chữ, đổi chữ thành số nếu có
-      let words = txt.split(/\s+/);
-      let parsed = "";
-      for (let w of words) {
-        parsed += (mapNum[w] !== undefined) ? mapNum[w] : w;
-      }
+      // Gọt sạch khoảng trắng
+      txt = txt.replace(/\s+/g, '');
       
-      const match = parsed.match(/\d+(\.\d+)?/);
+      const match = txt.match(/\d+(\.\d+)?/);
       if (match) return parseFloat(match[0]);
       return null;
     }
