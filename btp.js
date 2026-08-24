@@ -68,7 +68,7 @@ function docGiongNoiBTP(msp, kg) {
   
   const msg = new SpeechSynthesisUtterance(text);
   msg.lang = 'vi-VN';
-  msg.rate = 1.5; 
+  msg.rate = 2.2; 
   
   window.__speechUtterances.push(msg);
   msg.onend = function() {
@@ -76,11 +76,9 @@ function docGiongNoiBTP(msp, kg) {
     if (idx > -1) window.__speechUtterances.splice(idx, 1);
   };
 
-  // Ngắt giọng đọc cũ nếu có và delay 100ms để tránh đụng độ Audio Focus với tiếng Bíp
+  // Ngắt giọng đọc cũ nếu có và phát ngay lập tức (không delay nữa do đã bỏ tiếng bíp)
   window.speechSynthesis.cancel();
-  setTimeout(() => {
-    window.speechSynthesis.speak(msg);
-  }, 100);
+  window.speechSynthesis.speak(msg);
 }
 
 function hienVienFeedbackBTP(loai) {
