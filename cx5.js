@@ -2079,6 +2079,9 @@ function khoiTaoGiongNoiCX5() {
       // Gọt sạch khoảng trắng
       txt = txt.replace(/\s+/g, '');
       
+      // ULTIMATE FALLBACK: Nếu có 2 cụm số bị ngăn cách bởi bất kỳ chữ rác nào (vd: 52phảy3, 52ký3), biến chữ đó thành dấu chấm
+      txt = txt.replace(/(\d+)[^\d\.]+(\d+)/, '$1.$2');
+      
       const match = txt.match(/\d+(\.\d+)?/);
       if (match) return parseFloat(match[0]);
       return null;
