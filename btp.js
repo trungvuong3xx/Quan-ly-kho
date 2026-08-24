@@ -49,6 +49,9 @@ function xuLyDuLieuQRBTP(text) {
 
 const mapKhoaBTP = new Map();
 
+// Lưu trữ global để tránh bị Garbage Collection dọn rác giữa chừng (Bug Chrome Android)
+window.__speechUtterances = window.__speechUtterances || [];
+
 function docGiongNoiBTP(msp, kg) {
   if (!('speechSynthesis' in window)) return;
   
@@ -61,13 +64,23 @@ function docGiongNoiBTP(msp, kg) {
   let strKg = String(kg || 0).trim();
   let arrKg = strKg.split('').map(char => char === '.' ? 'phẩy' : char).join(' ');
 
-  // VD: "405" và "150" -> "4 0 5 1 5 0"
   const text = arrMsp + " " + arrKg;
   
   const msg = new SpeechSynthesisUtterance(text);
   msg.lang = 'vi-VN';
-  msg.rate = 1.5; // Tăng tốc độ đọc lên 1.5 để lướt siêu nhanh
-  window.speechSynthesis.speak(msg);
+  msg.rate = 1.5; 
+  
+  window.__speechUtterances.push(msg);
+  msg.onend = function() {
+    const idx = window.__speechUtterances.indexOf(msg);
+    if (idx > -1) window.__speechUtterances.splice(idx, 1);
+  };
+
+  // Ngắt giọng đọc cũ nếu có và delay 100ms để tránh đụng độ Audio Focus với tiếng Bíp
+  window.speechSynthesis.cancel();
+  setTimeout(() => {
+    window.speechSynthesis.speak(msg);
+  }, 100);
 }
 
 function hienVienFeedbackBTP(loai) {
