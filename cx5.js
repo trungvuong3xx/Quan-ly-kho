@@ -93,7 +93,7 @@ async function taiDanhSachQCX5(dateStr, forceRefresh) {
 
   // 2. Náº¿u cÃ³ trong LocalStorage -> Náº¡p ngay láº­p tá»©c 0ms (ká»ƒ cáº£ quÃ¡ 4h cÅ©), má»Ÿ UI ngay khÃ´ng báº¯t chá»
   if (!forceRefresh) {
-    const local = docMspCacheLocalCX5(monthKey, true); // Náº¡p tá»©c thÃ¬ cache local
+    const local = docMspCacheLocalCX5(monthKey, true); // Nạp tức thì cache local
     if (local && local.length > 0) {
       mspDataCX5 = local;
       mspCacheX5[monthKey] = local;
@@ -117,7 +117,7 @@ async function taiDanhSachQCX5(dateStr, forceRefresh) {
   if (typeof showLoading === "function") showLoading(true);
   const tenEl = document.getElementById("cx5-ten");
   if (tenEl) {
-    tenEl.placeholder = "Äang táº£i danh sÃ¡ch...";
+    tenEl.placeholder = "Đang tải danh sách...";
     tenEl.disabled = true;
   }
 
@@ -125,7 +125,7 @@ async function taiDanhSachQCX5(dateStr, forceRefresh) {
     const res = await callApiCX5({ action: "khoiTaoForm", dateStr, forceRefresh: !!forceRefresh });
     if (myToken !== taiDanhSachTokenCX5) return;
     if (res.error) { showCanhBaoCX5(res.error); mspDataCX5 = []; }
-    else if (!res.exists) { showCanhBaoCX5('ChÆ°a cÃ³ sheet thÃ¡ng "' + res.sheetName + '"'); mspDataCX5 = []; }
+    else if (!res.exists) { showCanhBaoCX5('Chưa có sheet tháng "' + res.sheetName + '"'); mspDataCX5 = []; }
     else {
       mspDataCX5 = (res.mspList || []).filter(i => i.vung !== "FOR");
       mspCacheX5[monthKey] = mspDataCX5;
@@ -210,7 +210,7 @@ function batDauPhienMoiCX5() {
   renderBangChiTietCX5();
   renderBangTongHopCX5();
 
-  // Náº¡p danh sÃ¡ch QC ngáº§m phÃ­a sau (0ms khÃ´ng cháº·n UI)
+  // Nạp danh sách QC ngầm phía sau (0ms không chặn UI)
   taiDanhSachQCX5(ngayCX5, false).catch(() => {});
 }
 
@@ -303,7 +303,7 @@ function renderDropdownCX5() {
   }
   if (kgKhu) kgKhu.style.display = "none";
   const tieuDe = dangHienGoiYCX5
-    ? '<div class="cx5-dropdown-title">Gá»£i Ã½ quy cÃ¡ch thÆ°á»ng dÃ¹ng</div>'
+    ? '<div class="cx5-dropdown-title">Gợi ý quy cách thường dùng</div>'
     : "";
   el.innerHTML = tieuDe + filteredCX5.map((item, idx) =>
     '<div class="cx5-dropdown-item' + (idx === activeIndexCX5 ? " active" : "") + '" data-idx="' + idx + '">' + escHtmlCX5(item.ten) + "</div>"
@@ -412,10 +412,10 @@ function xoaDongCX5(seq) {
 }
 
 function renderBangChiTietCX5() {
-  document.getElementById("cx5-dem").textContent = "ÄÃ£ nháº­p: " + phienCX5.length + " dÃ²ng";
+  document.getElementById("cx5-dem").textContent = "Đã nhập: " + phienCX5.length + " dòng";
   const tbody = document.getElementById("cx5-tbody-chitiet");
   if (phienCX5.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--cream-soft);font-style:italic">ChÆ°a cÃ³ dÃ²ng nÃ o</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--cream-soft);font-style:italic">Chưa có dòng nào</td></tr>';
     return;
   }
 
@@ -724,7 +724,7 @@ function moSuaLuotKhoDoiChieuCX5(key) {
   const msp = parts[0];
   const ten = parts[1] || key;
   const rows = phienCX5.filter(r => (r.msp === msp || r.ten === ten));
-  if (rows.length === 0) { showCanhBaoCX5("ChÆ°a cÃ³ lÆ°á»£t Kho nÃ o cho quy cÃ¡ch nÃ y"); return; }
+  if (rows.length === 0) { showCanhBaoCX5("Chưa có lượt Kho nào cho quy cách này"); return; }
   const luotId = rows[rows.length - 1].luot;
   moSuaLuotCX5(luotId);
 }
@@ -780,7 +780,7 @@ function renderDoiChieuCX5() {
 
   let html = "";
   if (filteredItems.length === 0) {
-    html += '<div style="text-align:center;color:var(--cream-soft);padding:16px 0">KhÃ´ng cÃ³ quy cÃ¡ch nÃ o trong má»¥c nÃ y</div>';
+    html += '<div style="text-align:center;color:var(--cream-soft);padding:16px 0">Không có quy cách nào trong mục này</div>';
   } else {
     html += '<div class="cx5-scroll" style="max-height: 380px;"><table class="cx5-table cx5-dc-table">' +
       '<thead><tr><th>QC</th><th>Kho</th><th>SX</th><th>Loáº¡i</th></tr></thead><tbody>';
@@ -798,9 +798,9 @@ function renderDoiChieuCX5() {
       } else if (loaiTrangThai === "LECH") {
         iconHtml = '<i class="ti ti-alert-triangle" style="color:var(--danger);font-size:17px;" title="Lá»‡ch"></i>';
       } else if (loaiTrangThai === "KHO_ONLY") {
-        iconHtml = '<i class="ti ti-box" style="color:#3b82f6;font-size:17px;" title="Kho chÆ°a cÃ³ SX"></i>';
+        iconHtml = '<i class="ti ti-box" style="color:#3b82f6;font-size:17px;" title="Kho chưa có SX"></i>';
       } else if (loaiTrangThai === "SX_ONLY") {
-        iconHtml = '<i class="ti ti-building-factory-2" style="color:#a855f7;font-size:17px;" title="SX chÆ°a cÃ³ Kho"></i>';
+        iconHtml = '<i class="ti ti-building-factory-2" style="color:#a855f7;font-size:17px;" title="SX chưa có Kho"></i>';
       } else {
         iconHtml = 'â€”';
       }
@@ -860,7 +860,7 @@ function moDcChiTietCX5(key) {
   if (kho.bao === 0) {
     ketQuaHtml = sxTong > 0
       ? '<div class="cx5-dc-ketqua cx5-dc-lech"><i class="ti ti-info-circle"></i> Kho chÆ°a nháº­p â€” SX bÃ¡o: ' + sxTong.toFixed(1) + 'kg</div>'
-      : '<div class="cx5-dc-ketqua" style="color:var(--cream-soft)"><i class="ti ti-info-circle"></i> Kho chÆ°a nháº­p gÃ¬ cho quy cÃ¡ch nÃ y</div>';
+      : '<div class="cx5-dc-ketqua" style="color:var(--cream-soft)"><i class="ti ti-info-circle"></i> Kho chưa nhập gì cho quy cách này</div>';
   } else if (sxTong === 0) {
     ketQuaHtml = '<div class="cx5-dc-ketqua cx5-dc-lech"><i class="ti ti-info-circle"></i> Kho Ä‘Ã£ nháº­p (' + khoKgNorm.toFixed(1) + 'kg) â€” SX chÆ°a bÃ¡o</div>';
   } else if (!conDeDongBo) {
@@ -874,12 +874,12 @@ function moDcChiTietCX5(key) {
 
   const nd = document.getElementById("cx5-dcc-noidung");
   nd.innerHTML =
-    // ThÃ´ng tin bÃªn KHO
+    // Thông tin bên KHO
     '<div style="background:var(--card-raised);border:1px solid var(--line);padding:10px 12px;border-radius:10px;margin-bottom:8px">' +
     '<div style="font-size:13px;font-weight:600;color:var(--cream);display:flex;align-items:center;gap:6px"><i class="ti ti-box" style="color:#3b82f6;font-size:16px"></i> <b>KHO</b> â€” Bao: <b>' + kho.bao + '</b> Â· Kg: <b>' + khoKgNorm.toFixed(1) + '</b></div>' +
     '</div>' +
 
-    // ThÃ´ng tin bÃªn SX
+    // Thông tin bên SX
     '<div style="background:var(--card-raised);border:1px solid var(--line);padding:10px 12px;border-radius:10px;margin-bottom:8px">' +
     '<div style="font-size:13px;font-weight:600;color:var(--cream);display:flex;align-items:center;gap:6px"><i class="ti ti-building-factory-2" style="color:#a855f7;font-size:16px"></i> <b>Sáº¢N XUáº¤T (SX)</b></div>' +
     '<div style="margin-top:6px">' + (dsSo || '<span style="color:var(--cream-soft);font-style:italic">ChÆ°a cÃ³ sá»‘ SX</span>') + '</div>' +
@@ -894,7 +894,7 @@ function moDcChiTietCX5(key) {
     // NÃºt hÃ nh Ä‘á»™ng
     '<div style="display:flex;gap:8px;margin-top:14px">' +
     '<button class="btn btn-red btn-sm" style="flex:1" onclick="xoaHangDoiChieuCX5(\'' + escHtmlCX5(key) + '\');dongDcChiTietCX5()"><i class="ti ti-trash"></i> XÃ³a dá»¯ liá»‡u SX</button>' +
-    '<button class="btn btn-sm" style="flex:1;background:var(--neutral-solid);color:var(--cream)" onclick="dongDcChiTietCX5()">ÄÃ³ng</button>' +
+    '<button class="btn btn-sm" style="flex:1;background:var(--neutral-solid);color:var(--cream)" onclick="dongDcChiTietCX5()">Đóng</button>' +
     '</div>';
 
   document.getElementById("cx5-overlay-dc-chitiet").classList.add("show");
@@ -1071,7 +1071,7 @@ function moTongKgCX5(dsQC) {
   // Váº½ báº£ng tá»•ng káº¿t ngay tá»« phienCX5 trÃªn RAM láº­p tá»©c
   renderTongKgCX5();
 
-  // Táº£i danh sÃ¡ch á»©ng viÃªn ghÃ©p pallet ngÃ y cÅ© ngáº§m khÃ´ng cháº·n UI
+  // Tải danh sách ứng viên ghép pallet ngày cũ ngầm không chặn UI
   if (dsQC && dsQC.length > 0) {
     callApiCX5({ action: "layUngVienGhepCX5", payload: { dsQC: dsQC, dateStr: ngayCX5 } }).then(res => {
       if (!res || res.error) return;
@@ -1315,7 +1315,7 @@ function renderTongKetPhienTongKgCX5() {
 
     let bao = rows.length;
     let kg = rows.reduce((s, r) => s + r.kg, 0);
-    let trangThaiHtml = '<i class="ti ti-minus" style="color:var(--cream-soft);font-size:18px" title="ChÆ°a ghÃ©p"></i>';
+    let trangThaiHtml = '<i class="ti ti-minus" style="color:var(--cream-soft);font-size:18px" title="Chưa ghép"></i>';
 
     let cardKey = Object.keys(tongKgDataCX5).find(function (k) {
       const kBao = tongKgDataCX5[k].homNay.bao - (tongKgDataCX5[k].daGhepBao || 0);
@@ -1345,7 +1345,7 @@ function renderTongKetPhienTongKgCX5() {
         appliedCards.add(cardKey);
         bao += extraBao;
         kg += extraKg;
-        trangThaiHtml = '<i class="ti ti-layers-intersect" style="color:var(--accent-2);font-size:18px" title="ÄÃ£ chá»n ghÃ©p"></i>';
+        trangThaiHtml = '<i class="ti ti-layers-intersect" style="color:var(--accent-2);font-size:18px" title="Đã chọn ghép"></i>';
       } else if (bao >= 10) {
         trangThaiHtml = '<i class="ti ti-check" style="color:var(--success);font-size:18px" title="OK (â‰¥10 bao)"></i>';
       }
@@ -1393,7 +1393,7 @@ function renderTongKetPhienTongKgCX5() {
           appliedCards.add(cardKey);
           bao += chosen.reduce(function (s, c) { return s + c.bao; }, 0);
           kg += chosen.reduce(function (s, c) { return s + c.kg; }, 0);
-          trangThaiHtml = '<i class="ti ti-layers-intersect" style="color:var(--accent-2);font-size:18px" title="ÄÃ£ chá»n ghÃ©p"></i>';
+          trangThaiHtml = '<i class="ti ti-layers-intersect" style="color:var(--accent-2);font-size:18px" title="Đã chọn ghép"></i>';
         } else if (bao >= 10) {
           trangThaiHtml = '<i class="ti ti-check" style="color:var(--success);font-size:18px" title="OK (â‰¥10 bao)"></i>';
         }
@@ -1457,7 +1457,7 @@ function xoaUngVienGhepCX5(key, idx) {
     } finally {
       showLoading(false);
     }
-  }, "áº¨n á»©ng viÃªn");
+  }, "Ẩn ứng viên");
 }
 window.xoaUngVienGhepCX5 = xoaUngVienGhepCX5;
 
@@ -1639,9 +1639,9 @@ function xuatExcelLichSuCX5(idPhien) {
   const dateStr = (entry ? entry.ngay : ngayCX5) || new Date().toISOString().split("T")[0];
   const exportData = dataList.map((item, idx) => ({
     "STT": idx + 1,
-    "LÆ°á»£t": item.luot || item.seq,
-    "MÃ£ MSP": item.msp,
-    "Quy cÃ¡ch": item.ten,
+    "Lượt": item.luot || item.seq,
+    "Mã MSP": item.msp,
+    "Quy cách": item.ten,
     "Khá»‘i lÆ°á»£ng (Kg)": item.kg,
     "Thá»i gian": item.thoiGian ? new Date(item.thoiGian).toLocaleTimeString("vi-VN") : ""
   }));
@@ -1674,7 +1674,7 @@ let _cx5XacNhanCallbackHuy = null;
 
 function moXacNhanCX5(noiDung, callback, nhanNutOk, callbackHuy, nhanNutHuy) {
   document.getElementById("cx5-xacnhan-noidung").textContent = noiDung;
-  document.getElementById("cx5-xacnhan-nut-ok").textContent = nhanNutOk || "XÃ³a";
+  document.getElementById("cx5-xacnhan-nut-ok").textContent = nhanNutOk || "Xóa";
   document.getElementById("cx5-xacnhan-nut-huy").textContent = nhanNutHuy || "Há»§y";
   _cx5XacNhanCallback = callback;
   _cx5XacNhanCallbackHuy = callbackHuy || null;
@@ -1769,12 +1769,12 @@ function renderLichSuCX5() {
       : '<i class="ti ti-x cx5-trangthai-mot-phan"></i>';
     const gio = new Date(s.capNhatLuc).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" });
     return '<div class="irow lichsu-row" style="cursor:pointer;align-items:center" onclick="xemChiTietLichSuCX5(\'' + s.idPhien + '\')">'
-      + '<span style="font-family:\'IBM Plex Sans\',sans-serif;color:var(--cream)">' + s.ngay + " Â· " + gio + '</span>'
+      + '<span style="font-family:\'IBM Plex Sans\',sans-serif;color:var(--cream)">' + s.ngay + " · " + gio + '</span>'
       + '<span style="font-family:\'IBM Plex Sans\',sans-serif;color:var(--cream);display:inline-flex;align-items:center;gap:10px">'
-      + soLuot + ' lÆ°á»£t Â· ' + tongKg.toLocaleString('vi-VN', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + ' kg'
+      + soLuot + ' lượt · ' + tongKg.toLocaleString('vi-VN', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + ' kg'
       + '<span style="display:inline-flex;align-items:center;gap:8px;padding-left:8px;border-left:1px solid var(--line)">'
       + trangThai
-      + '<button class="cx5-del-btn" aria-label="XÃ³a phiÃªn nÃ y" onclick="xoaMotPhienLichSuCX5(\'' + s.idPhien + '\', event)"><i class="ti ti-trash"></i></button>'
+      + '<button class="cx5-del-btn" aria-label="Xóa phiên này" onclick="xoaMotPhienLichSuCX5(\'' + s.idPhien + '\', event)"><i class="ti ti-trash"></i></button>'
       + '</span>'
       + '</span>'
       + '</div>';
@@ -1796,10 +1796,10 @@ function xemChiTietLichSuCX5(idPhien) {
   const hang = Object.values(gom);
 
   const gio = new Date(entry.capNhatLuc).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" });
-  document.getElementById("cx5-ctls-tieude").textContent = entry.ngay + " Â· " + gio;
+  document.getElementById("cx5-ctls-tieude").textContent = entry.ngay + " · " + gio;
   document.getElementById("cx5-ctls-noidung").innerHTML = hang.map(h =>
     '<div class="irow"><span class="ilabel">' + h.ten + '</span><span class="ivalue">'
-    + h.bao + ' bao Â· ' + h.kg.toLocaleString('vi-VN', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + ' kg</span></div>'
+    + h.bao + ' bao · ' + h.kg.toLocaleString('vi-VN', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + ' kg</span></div>'
   ).join("");
   document.getElementById("cx5-ctls-tieptuc").setAttribute("onclick", "dongChiTietLichSuCX5();tiepTucLichSuCX5('" + idPhien + "')");
   document.getElementById("cx5-overlay-chitiet-lichsu").classList.add("show");
@@ -2304,5 +2304,4 @@ window.addEventListener("load", function () {
     mspCacheX5[monthKey] = local;
   }
 });
-
 
