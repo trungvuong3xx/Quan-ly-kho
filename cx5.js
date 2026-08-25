@@ -1,4 +1,4 @@
-﻿const API_CX5 = "https://script.google.com/macros/s/AKfycbyOhUM1KCg0eUsj-tBPDFnyJXS_PDlxcsRWRqzR7ZdoX9ZCMRlvPApouk9Jn6yghVS1xg/exec";
+const API_CX5 = "https://script.google.com/macros/s/AKfycbyOhUM1KCg0eUsj-tBPDFnyJXS_PDlxcsRWRqzR7ZdoX9ZCMRlvPApouk9Jn6yghVS1xg/exec";
 
 const CX5_LICHSU_KEY = "cx5_lich_su";
 const CX5_LICHSU_SO_NGAY_GIU = 30;
@@ -977,40 +977,6 @@ async function dongBoMotQC_(key) {
     chuaDongBo.forEach(row => { row.daDongBo = true; });
     return true;
   }
-}
-
-let cx5MicStopTimer = null;
-
-function batDauNgheCX5() {
-  if (cx5MicStopTimer) clearTimeout(cx5MicStopTimer);
-  
-  const msp = document.getElementById("cx5-msp").value;
-  if (!msp || msp === 'CHÆ¯A CHá»ŒN') {
-    showCanhBaoCX5("Vui lÃ²ng KhÃ³a MÃ£ Quy CÃ¡ch trÆ°á»›c khi Ä‘á»c sá»‘ Kg!");
-    return;
-  }
-
-  khoiTaoGiongNoiCX5();
-  const btn = document.querySelector('.cx5-mic-btn');
-  if (btn) btn.classList.add('listening');
-  document.getElementById('cx5-kg').value = ""; // XÃ³a tráº¯ng Ã´ kg Ä‘á»ƒ chuáº©n bá»‹ nháº£y sá»‘
-  
-  try {
-    window.__cx5SpeechRec.start();
-  } catch (e) {}
-}
-
-function dungNgheCX5() {
-  const btn = document.querySelector('.cx5-mic-btn');
-  if (btn) btn.classList.remove('listening');
-  
-  // TrÃ¬ hoÃ£n táº¯t mic 800ms Ä‘á»ƒ báº¯t trá»n chá»¯ cuá»‘i cÃ¹ng (trÃ¡nh lá»—i nháº£ tay quÃ¡ nhanh bá»‹ nuá»‘t chá»¯)
-  if (cx5MicStopTimer) clearTimeout(cx5MicStopTimer);
-  cx5MicStopTimer = setTimeout(() => {
-    if (window.__cx5SpeechRec) {
-      window.__cx5SpeechRec.stop();
-    }
-  }, 800);
 }
 
 let dangDongBoCX5Lock = false;
@@ -2157,9 +2123,8 @@ function dungNgheCX5(e) {
     }
   }, 800);
 }
- catch (err) {}
-  }
-}
+window.batDauNgheCX5 = batDauNgheCX5;
+window.dungNgheCX5 = dungNgheCX5;
 // ----------------------------------------------------
 
 function moDoiQCLuotCX5() {
