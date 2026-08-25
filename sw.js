@@ -1,4 +1,4 @@
-const CACHE_NAME = 'kho-cache-v33';
+const CACHE_NAME = 'kho-cache-v29';
 const urlsToCache = [
   './',
   './index.html',
@@ -31,15 +31,7 @@ self.addEventListener('install', event => {
   self.skipWaiting(); // Kích hoạt ngay phiên bản mới vừa tải
   event.waitUntil(
     caches.open(CACHE_NAME).then(cache => {
-      // Đảm bảo lấy code mới nhất, không bị kẹt bởi HTTP cache hoặc SW cũ
-      return Promise.all(urlsToCache.map(url => {
-        return fetch(new Request(url, { cache: 'no-store' })).then(res => {
-          if (!res.ok) throw new Error('Fetch failed ' + res.status);
-          return cache.put(url, res);
-        }).catch(err => {
-          console.error('Lỗi khi cache:', url, err);
-        });
-      }));
+      return cache.addAll(urlsToCache);
     })
   );
 });
