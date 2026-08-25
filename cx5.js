@@ -1,4 +1,4 @@
-﻿const API_CX5 = "https://script.google.com/macros/s/AKfycbyOhUM1KCg0eUsj-tBPDFnyJXS_PDlxcsRWRqzR7ZdoX9ZCMRlvPApouk9Jn6yghVS1xg/exec";
+const API_CX5 = "https://script.google.com/macros/s/AKfycbyOhUM1KCg0eUsj-tBPDFnyJXS_PDlxcsRWRqzR7ZdoX9ZCMRlvPApouk9Jn6yghVS1xg/exec";
 
 const CX5_LICHSU_KEY = "cx5_lich_su";
 const CX5_LICHSU_SO_NGAY_GIU = 30;
@@ -29,11 +29,11 @@ async function callApiCX5(body) {
 }
 
 function boDauCX5(str) {
-  return String(str).normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/Ä‘/g, "d").replace(/Ä/g, "D");
+  return String(str).normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/đ/g, "d").replace(/Đ/g, "D");
 }
 
-// Escape dá»¯ liá»‡u trÆ°á»›c khi chÃ¨n vÃ o innerHTML (tÃªn quy cÃ¡ch Ä‘áº¿n tá»« Sheet â€” khÃ´ng
-// nÃªn tin tÆ°á»Ÿng tuyá»‡t Ä‘á»‘i lÃ  an toÃ n Ä‘á»ƒ chÃ¨n tháº³ng vÃ o HTML).
+// Escape dữ liệu trước khi chèn vào innerHTML (tên quy cách đến từ Sheet — không
+// nên tin tưởng tuyệt đối là an toàn để chèn thẳng vào HTML).
 function escHtmlCX5(str) {
   return String(str == null ? "" : str).replace(/[&<>"']/g, c => ({
     "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
@@ -59,9 +59,9 @@ function xoaPhienDoDangCX5() {
   try { localStorage.removeItem("cx5_phien_dodang"); } catch (e) { }
 }
 
-// Cache danh sÃ¡ch quy cÃ¡ch xuá»‘ng localStorage â€” sá»‘ng qua cáº£ láº§n táº£i láº¡i trang/má»Ÿ
-// láº¡i app (khÃ¡c mspCacheX5 chá»‰ sá»‘ng trong bá»™ nhá»›, máº¥t khi refresh). Háº¿t háº¡n sau
-// 4 tiáº¿ng Ä‘á»ƒ khá»›p vá»›i cache phÃ­a Apps Script (CacheService, cÅ©ng 4 tiáº¿ng).
+// Cache danh sách quy cách xuống localStorage — sống qua cả lần tải lại trang/mở
+// lại app (khác mspCacheX5 chỉ sống trong bộ nhớ, mất khi refresh). Hết hạn sau
+// 4 tiếng để khớp với cache phía Apps Script (CacheService, cũng 4 tiếng).
 const CX5_MSP_CACHE_TTL_MS = 4 * 60 * 60 * 1000;
 
 function docMspCacheLocalCX5(monthKey, boQuaHanSuDung) {
@@ -85,20 +85,20 @@ async function taiDanhSachQCX5(dateStr, forceRefresh) {
   const myToken = ++taiDanhSachTokenCX5;
   const monthKey = new Date(dateStr).getMonth() + 1;
 
-  // 1. Náº¿u Ä‘Ã£ cÃ³ trong RAM -> Náº¡p ngay láº­p tá»©c 0ms
+  // 1. Nếu đã có trong RAM -> Nạp ngay lập tức 0ms
   if (!forceRefresh && mspCacheX5[monthKey] && mspCacheX5[monthKey].length > 0) {
     mspDataCX5 = mspCacheX5[monthKey];
     return;
   }
 
-  // 2. Náº¿u cÃ³ trong LocalStorage -> Náº¡p ngay láº­p tá»©c 0ms (ká»ƒ cáº£ quÃ¡ 4h cÅ©), má»Ÿ UI ngay khÃ´ng báº¯t chá»
+  // 2. Nếu có trong LocalStorage -> Nạp ngay lập tức 0ms (kể cả quá 4h cũ), mở UI ngay không bắt chờ
   if (!forceRefresh) {
-    const local = docMspCacheLocalCX5(monthKey, true); // Náº¡p tá»©c thÃ¬ cache local
+    const local = docMspCacheLocalCX5(monthKey, true); // Nạp tức thì cache local
     if (local && local.length > 0) {
       mspDataCX5 = local;
       mspCacheX5[monthKey] = local;
 
-      // Cáº­p nháº­t ngáº§m danh sÃ¡ch má»›i tá»« Apps Script server (khÃ´ng cháº·n UI)
+      // Cập nhật ngầm danh sách mới từ Apps Script server (không chặn UI)
       callApiCX5({ action: "khoiTaoForm", dateStr, forceRefresh: false }).then(res => {
         if (res && res.mspList && Array.isArray(res.mspList)) {
           const freshData = res.mspList.filter(i => i.vung !== "FOR");
@@ -113,11 +113,11 @@ async function taiDanhSachQCX5(dateStr, forceRefresh) {
     }
   }
 
-  // 3. Chá»‰ khi chÆ°a cÃ³ dá»¯ liá»‡u local (láº§n Ä‘áº§u táº£i app), má»›i hiá»‡n loading chá» server
+  // 3. Chỉ khi chưa có dữ liệu local (lần đầu tải app), mới hiện loading chờ server
   if (typeof showLoading === "function") showLoading(true);
   const tenEl = document.getElementById("cx5-ten");
   if (tenEl) {
-    tenEl.placeholder = "Äang táº£i danh sÃ¡ch...";
+    tenEl.placeholder = "Đang tải danh sách...";
     tenEl.disabled = true;
   }
 
@@ -125,7 +125,7 @@ async function taiDanhSachQCX5(dateStr, forceRefresh) {
     const res = await callApiCX5({ action: "khoiTaoForm", dateStr, forceRefresh: !!forceRefresh });
     if (myToken !== taiDanhSachTokenCX5) return;
     if (res.error) { showCanhBaoCX5(res.error); mspDataCX5 = []; }
-    else if (!res.exists) { showCanhBaoCX5('ChÆ°a cÃ³ sheet thÃ¡ng "' + res.sheetName + '"'); mspDataCX5 = []; }
+    else if (!res.exists) { showCanhBaoCX5('Chưa có sheet tháng "' + res.sheetName + '"'); mspDataCX5 = []; }
     else {
       mspDataCX5 = (res.mspList || []).filter(i => i.vung !== "FOR");
       mspCacheX5[monthKey] = mspDataCX5;
@@ -137,16 +137,16 @@ async function taiDanhSachQCX5(dateStr, forceRefresh) {
     if (duPhong) {
       mspDataCX5 = duPhong;
       mspCacheX5[monthKey] = duPhong;
-      showCanhBaoCX5("Máº¥t máº¡ng â€” Ä‘ang dÃ¹ng danh sÃ¡ch quy cÃ¡ch Ä‘Ã£ lÆ°u trÆ°á»›c Ä‘Ã³");
+      showCanhBaoCX5("Mất mạng — đang dùng danh sách quy cách đã lưu trước đó");
     } else {
-      showCanhBaoCX5("KhÃ´ng táº£i Ä‘Æ°á»£c danh sÃ¡ch quy cÃ¡ch");
+      showCanhBaoCX5("Không tải được danh sách quy cách");
       mspDataCX5 = [];
     }
   } finally {
     if (typeof showLoading === "function") showLoading(false);
     if (myToken === taiDanhSachTokenCX5 && tenEl) {
       tenEl.disabled = false;
-      tenEl.placeholder = "GÃµ Ä‘á»ƒ tÃ¬m...";
+      tenEl.placeholder = "Gõ để tìm...";
     }
   }
 }
@@ -179,11 +179,11 @@ function batDauCX5() {
   try { phienCu = JSON.parse(localStorage.getItem("cx5_phien_dodang")); } catch (e) { }
   if (phienCu && Array.isArray(phienCu.phienCX5) && phienCu.phienCX5.length > 0) {
     moXacNhanCX5(
-      "Báº¡n Ä‘ang cÃ³ phiÃªn Chá»‰ X5 dá»Ÿ dang (" + phienCu.phienCX5.length + " dÃ²ng, ngÃ y " + phienCu.ngayCX5 + "). Tiáº¿p tá»¥c phiÃªn Ä‘Ã³ hay báº¯t Ä‘áº§u phiÃªn má»›i?",
+      "Bạn đang có phiên Chỉ X5 dở dang (" + phienCu.phienCX5.length + " dòng, ngày " + phienCu.ngayCX5 + "). Tiếp tục phiên đó hay bắt đầu phiên mới?",
       () => { xoaPhienDoDangCX5(); batDauPhienMoiCX5(); },
-      "Báº¯t Ä‘áº§u má»›i",
+      "Bắt đầu mới",
       () => { khoiPhucCX5(phienCu); },
-      "Tiáº¿p tá»¥c"
+      "Tiếp tục"
     );
     return;
   }
@@ -210,7 +210,7 @@ function batDauPhienMoiCX5() {
   renderBangChiTietCX5();
   renderBangTongHopCX5();
 
-  // Náº¡p danh sÃ¡ch QC ngáº§m phÃ­a sau (0ms khÃ´ng cháº·n UI)
+  // Nạp danh sách QC ngầm phía sau (0ms không chặn UI)
   taiDanhSachQCX5(ngayCX5, false).catch(() => {});
 }
 
@@ -238,7 +238,7 @@ async function khoiPhucCX5(state) {
   renderBangTongHopCX5();
 }
 
-// â”€â”€ KhoÃ¡/má»Ÿ Ã´ Quy cÃ¡ch: 1 lÆ°á»£t giá»¯ nguyÃªn quy cÃ¡ch, chá»‰ Ä‘á»•i sá»‘ kg â”€â”€
+// ── Khoá/mở ô Quy cách: 1 lượt giữ nguyên quy cách, chỉ đổi số kg ──
 function khoaQCCX5(msp, ten) {
   document.getElementById("cx5-qc-tim-wrap").style.display = "none";
   const khoa = document.getElementById("cx5-qc-khoa");
@@ -303,7 +303,7 @@ function renderDropdownCX5() {
   }
   if (kgKhu) kgKhu.style.display = "none";
   const tieuDe = dangHienGoiYCX5
-    ? '<div class="cx5-dropdown-title">Gá»£i Ã½ quy cÃ¡ch thÆ°á»ng dÃ¹ng</div>'
+    ? '<div class="cx5-dropdown-title">Gợi ý quy cách thường dùng</div>'
     : "";
   el.innerHTML = tieuDe + filteredCX5.map((item, idx) =>
     '<div class="cx5-dropdown-item' + (idx === activeIndexCX5 ? " active" : "") + '" data-idx="' + idx + '">' + escHtmlCX5(item.ten) + "</div>"
@@ -337,7 +337,7 @@ function chonQCX5(item) {
   closeDropdownCX5();
   khoaQCCX5(item.msp, item.ten);
 
-  // Má»—i láº§n chá»n quy cÃ¡ch (ká»ƒ cáº£ chá»n láº¡i Ä‘Ãºng QC cÅ© sau khi báº¥m "Äá»•i") lÃ  1 lÆ°á»£t má»›i
+  // Mỗi lần chọn quy cách (kể cả chọn lại đúng QC cũ sau khi bấm "Đổi") là 1 lượt mới
   luotDemCX5 += 1;
   luotHienTaiCX5 = { msp: item.msp, ten: item.ten, id: luotDemCX5 };
 
@@ -372,9 +372,9 @@ function themDongCX5() {
   let bao = parseInt(document.getElementById("cx5-bao") ? document.getElementById("cx5-bao").value : "1", 10);
   if (isNaN(bao) || bao < 1) bao = 1;
 
-  if (!msp || !ten) { showCanhBaoCX5("ChÆ°a chá»n quy cÃ¡ch há»£p lá»‡"); return; }
-  if (!kg || kg <= 0) { showCanhBaoCX5("Nháº­p sá»‘ kg há»£p lá»‡"); return; }
-  if (kg > CX5_KG_MAX) { showCanhBaoCX5("Sá»‘ kg quÃ¡ lá»›n (trÃªn " + CX5_KG_MAX + "kg), kiá»ƒm tra láº¡i"); return; }
+  if (!msp || !ten) { showCanhBaoCX5("Chưa chọn quy cách hợp lệ"); return; }
+  if (!kg || kg <= 0) { showCanhBaoCX5("Nhập số kg hợp lệ"); return; }
+  if (kg > CX5_KG_MAX) { showCanhBaoCX5("Số kg quá lớn (trên " + CX5_KG_MAX + "kg), kiểm tra lại"); return; }
 
   if (!luotHienTaiCX5 || luotHienTaiCX5.msp !== msp || luotHienTaiCX5.ten !== ten) {
     luotDemCX5 += 1;
@@ -404,7 +404,7 @@ function themDongCX5() {
 function xoaDongCX5(seq) {
   const dong = phienCX5.find(r => r.seq === seq);
   if (!dong) return;
-  if (dong.daDongBo) { showCanhBaoCX5("ÄÃ£ Ä‘á»“ng bá»™, khÃ´ng thá»ƒ xoÃ¡"); return; }
+  if (dong.daDongBo) { showCanhBaoCX5("Đã đồng bộ, không thể xoá"); return; }
   phienCX5 = phienCX5.filter(r => r.seq !== seq);
   luuPhienDoDangCX5();
   renderBangChiTietCX5();
@@ -412,10 +412,10 @@ function xoaDongCX5(seq) {
 }
 
 function renderBangChiTietCX5() {
-  document.getElementById("cx5-dem").textContent = "ÄÃ£ nháº­p: " + phienCX5.length + " dÃ²ng";
+  document.getElementById("cx5-dem").textContent = "Đã nhập: " + phienCX5.length + " dòng";
   const tbody = document.getElementById("cx5-tbody-chitiet");
   if (phienCX5.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--cream-soft);font-style:italic">ChÆ°a cÃ³ dÃ²ng nÃ o</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--cream-soft);font-style:italic">Chưa có dòng nào</td></tr>';
     return;
   }
 
@@ -442,7 +442,7 @@ function renderBangChiTietCX5() {
   }).join("");
 }
 
-// â”€â”€ Sá»­a cÃ¡c sá»‘ kg láº» trong 1 lÆ°á»£t (má»Ÿ overlay) â”€â”€
+// ── Sửa các số kg lẻ trong 1 lượt (mở overlay) ──
 let luotDangSuaCX5 = null;
 
 function moSuaLuotCX5(luotId) {
@@ -479,8 +479,8 @@ function themKgVaoLuotCX5() {
   if (rows.length === 0) { dongSuaLuotCX5(); return; }
   const input = document.getElementById("cx5-sl-them-kg");
   const kg = parseFloat(input.value);
-  if (!kg || kg <= 0) { showCanhBaoCX5("Nháº­p sá»‘ kg há»£p lá»‡"); return; }
-  if (kg > CX5_KG_MAX) { showCanhBaoCX5("Sá»‘ kg quÃ¡ lá»›n (trÃªn " + CX5_KG_MAX + "kg), kiá»ƒm tra láº¡i"); return; }
+  if (!kg || kg <= 0) { showCanhBaoCX5("Nhập số kg hợp lệ"); return; }
+  if (kg > CX5_KG_MAX) { showCanhBaoCX5("Số kg quá lớn (trên " + CX5_KG_MAX + "kg), kiểm tra lại"); return; }
 
   const first = rows[0];
   seqCX5 += 1;
@@ -513,7 +513,7 @@ function renderBangTongHopCX5() {
   const tbody = document.getElementById("cx5-tbody-tonghop");
   const keys = Object.keys(gom);
   if (keys.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--cream-soft);font-style:italic">ChÆ°a cÃ³ dá»¯ liá»‡u</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--cream-soft);font-style:italic">Chưa có dữ liệu</td></tr>';
     return;
   }
   tbody.innerHTML = keys.map(key => {
@@ -531,9 +531,9 @@ function renderBangTongHopCX5() {
   }).join("");
 }
 
-// â”€â”€ Xem rá»™ng (xoay ngang): chuyá»ƒn háº³n báº£ng vÃ o overlay toÃ n mÃ n hÃ¬nh,
-// chá»‰ 1 báº£ng Ä‘Æ°á»£c xoay táº¡i 1 thá»i Ä‘iá»ƒm nÃªn khÃ´ng thá»ƒ Ä‘Ã¨ lÃªn nhau, vÃ  nÃºt
-// Ä‘Ã³ng luÃ´n ná»•i cá»‘ Ä‘á»‹nh trÃªn cÃ¹ng nÃªn khÃ´ng bao giá» bá»‹ che â”€â”€
+// ── Xem rộng (xoay ngang): chuyển hẳn bảng vào overlay toàn màn hình,
+// chỉ 1 bảng được xoay tại 1 thời điểm nên không thể đè lên nhau, và nút
+// đóng luôn nổi cố định trên cùng nên không bao giờ bị che ──
 let cx5XoayMocGoc = null;
 
 function xoayBangCX5(id) {
@@ -543,7 +543,7 @@ function xoayBangCX5(id) {
   if (!wrap || !overlay || !content) return;
 
   const tieude = document.getElementById("cx5-xoay-tieude");
-  if (tieude) tieude.textContent = id === "cx5-bang-chitiet" ? "Chi tiáº¿t" : "Tá»•ng há»£p";
+  if (tieude) tieude.textContent = id === "cx5-bang-chitiet" ? "Chi tiết" : "Tổng hợp";
 
   cx5XoayMocGoc = document.createComment("cx5-xoay-moc:" + id);
   wrap.parentNode.insertBefore(cx5XoayMocGoc, wrap);
@@ -566,7 +566,7 @@ function dongXoayCX5() {
 window.dongXoayCX5 = dongXoayCX5;
 
 function ketThucPhienCX5() {
-  if (phienCX5.length === 0) { showCanhBaoCX5("ChÆ°a cÃ³ dá»¯ liá»‡u Ä‘á»ƒ káº¿t thÃºc phiÃªn"); return; }
+  if (phienCX5.length === 0) { showCanhBaoCX5("Chưa có dữ liệu để kết thúc phiên"); return; }
   dangKetThucCX5 = true;
   luuPhienDoDangCX5();
   moDoiChieuCX5();
@@ -640,8 +640,8 @@ function themDongSXCX5() {
   const msp = document.getElementById("cx5-sx-msp").value;
   const ten = document.getElementById("cx5-sx-ten").value.trim();
   const kg = parseFloat(document.getElementById("cx5-sx-kg").value);
-  if (!ten) { showCanhBaoCX5("ChÆ°a chá»n quy cÃ¡ch SX há»£p lá»‡"); return; }
-  if (!kg || kg <= 0) { showCanhBaoCX5("Nháº­p sá»‘ kg SX há»£p lá»‡"); return; }
+  if (!ten) { showCanhBaoCX5("Chưa chọn quy cách SX hợp lệ"); return; }
+  if (!kg || kg <= 0) { showCanhBaoCX5("Nhập số kg SX hợp lệ"); return; }
 
   const key = keyQCX5(msp || "NO_MSP", ten);
   if (!doiChieuCX5[key]) {
@@ -675,7 +675,7 @@ function xoaSoSXCX5(key, idx) {
 }
 
 function xoaHangDoiChieuCX5(key) {
-  moXacNhanCX5("XÃ³a dá»¯ liá»‡u SX cá»§a quy cÃ¡ch nÃ y?", () => {
+  moXacNhanCX5("Xóa dữ liệu SX của quy cách này?", () => {
     delete doiChieuCX5[key];
     luuPhienDoDangCX5();
     renderDoiChieuCX5();
@@ -702,7 +702,7 @@ window.datFilterDoiChieuCX5 = datFilterDoiChieuCX5;
 
 function themKgKhoDoiChieuCX5(key, inputEl) {
   const kg = parseFloat(inputEl.value);
-  if (!kg || kg <= 0) { showCanhBaoCX5("Nháº­p sá»‘ kg Kho há»£p lá»‡"); return; }
+  if (!kg || kg <= 0) { showCanhBaoCX5("Nhập số kg Kho hợp lệ"); return; }
   const parts = key.split("|");
   const msp = parts[0] || "";
   const ten = parts[1] || key;
@@ -724,7 +724,7 @@ function moSuaLuotKhoDoiChieuCX5(key) {
   const msp = parts[0];
   const ten = parts[1] || key;
   const rows = phienCX5.filter(r => (r.msp === msp || r.ten === ten));
-  if (rows.length === 0) { showCanhBaoCX5("ChÆ°a cÃ³ lÆ°á»£t Kho nÃ o cho quy cÃ¡ch nÃ y"); return; }
+  if (rows.length === 0) { showCanhBaoCX5("Chưa có lượt Kho nào cho quy cách này"); return; }
   const luotId = rows[rows.length - 1].luot;
   moSuaLuotCX5(luotId);
 }
@@ -767,7 +767,7 @@ function renderDoiChieuCX5() {
     return { key, kho, dc, sxTong, khoKgNorm, khop, conDeDongBo, loaiTrangThai };
   });
 
-  // Cáº­p nháº­t sá»‘ Ä‘áº¿m trÃªn cÃ¡c Tab Filter
+  // Cập nhật số đếm trên các Tab Filter
   const elKhop = document.getElementById("cx5-cnt-KHOP"); if (elKhop) elKhop.textContent = countKhop;
   const elLech = document.getElementById("cx5-cnt-LECH"); if (elLech) elLech.textContent = countLech;
   const elKho = document.getElementById("cx5-cnt-KHO_ONLY"); if (elKho) elKho.textContent = countKhoOnly;
@@ -780,10 +780,10 @@ function renderDoiChieuCX5() {
 
   let html = "";
   if (filteredItems.length === 0) {
-    html += '<div style="text-align:center;color:var(--cream-soft);padding:16px 0">KhÃ´ng cÃ³ quy cÃ¡ch nÃ o trong má»¥c nÃ y</div>';
+    html += '<div style="text-align:center;color:var(--cream-soft);padding:16px 0">Không có quy cách nào trong mục này</div>';
   } else {
     html += '<div class="cx5-scroll" style="max-height: 380px;"><table class="cx5-table cx5-dc-table">' +
-      '<thead><tr><th>QC</th><th>Kho</th><th>SX</th><th>Loáº¡i</th></tr></thead><tbody>';
+      '<thead><tr><th>QC</th><th>Kho</th><th>SX</th><th>Loại</th></tr></thead><tbody>';
     html += filteredItems.map(it => {
       const { key, kho, dc, sxTong, khoKgNorm, khop, conDeDongBo, loaiTrangThai } = it;
       const ten = escHtmlCX5(dc.ten || kho.ten);
@@ -791,18 +791,18 @@ function renderDoiChieuCX5() {
       let iconHtml;
       if (loaiTrangThai === "KHOP") {
         if (!conDeDongBo) {
-          iconHtml = '<i class="ti ti-checks" style="color:var(--success);font-size:17px;" title="ÄÃ£ Ä‘á»“ng bá»™"></i>';
+          iconHtml = '<i class="ti ti-checks" style="color:var(--success);font-size:17px;" title="Đã đồng bộ"></i>';
         } else {
-          iconHtml = '<i class="ti ti-check" style="color:var(--success);font-size:17px;" title="Khá»›p"></i>';
+          iconHtml = '<i class="ti ti-check" style="color:var(--success);font-size:17px;" title="Khớp"></i>';
         }
       } else if (loaiTrangThai === "LECH") {
-        iconHtml = '<i class="ti ti-alert-triangle" style="color:var(--danger);font-size:17px;" title="Lá»‡ch"></i>';
+        iconHtml = '<i class="ti ti-alert-triangle" style="color:var(--danger);font-size:17px;" title="Lệch"></i>';
       } else if (loaiTrangThai === "KHO_ONLY") {
-        iconHtml = '<i class="ti ti-box" style="color:#3b82f6;font-size:17px;" title="Kho chÆ°a cÃ³ SX"></i>';
+        iconHtml = '<i class="ti ti-box" style="color:#3b82f6;font-size:17px;" title="Kho chưa có SX"></i>';
       } else if (loaiTrangThai === "SX_ONLY") {
-        iconHtml = '<i class="ti ti-building-factory-2" style="color:#a855f7;font-size:17px;" title="SX chÆ°a cÃ³ Kho"></i>';
+        iconHtml = '<i class="ti ti-building-factory-2" style="color:#a855f7;font-size:17px;" title="SX chưa có Kho"></i>';
       } else {
-        iconHtml = 'â€”';
+        iconHtml = '—';
       }
 
       return '<tr class="cx5-dc-row" onclick="moDcChiTietCX5(\'' + escHtmlCX5(key) + '\')">' +
@@ -822,7 +822,7 @@ function renderDoiChieuCX5() {
 
     let tfootHtml = '<tfoot style="position: sticky; bottom: 0; background: var(--card-raised); z-index: 2; border-top: 2px solid var(--line); font-weight: bold;">' +
       '<tr>' +
-      '<td style="text-align: right; color: var(--steel);">Tá»•ng:</td>' +
+      '<td style="text-align: right; color: var(--steel);">Tổng:</td>' +
       '<td style="color: var(--success);">' + sumKho.toFixed(1) + '</td>' +
       '<td style="color: var(--brass);">' + sumSx.toFixed(1) + '</td>' +
       '<td></td>' +
@@ -840,7 +840,7 @@ function renderDoiChieuCX5() {
   }
 }
 
-// â”€â”€ Overlay chi tiáº¿t Ä‘á»‘i chiáº¿u (khi click hÃ ng trong báº£ng) â”€â”€
+// ── Overlay chi tiết đối chiếu (khi click hàng trong bảng) ──
 function moDcChiTietCX5(key) {
   const gom = tomTatCX5();
   const kho = gom[key] || { bao: 0, kg: 0, baoDaDongBo: 0 };
@@ -859,42 +859,42 @@ function moDcChiTietCX5(key) {
   let ketQuaHtml;
   if (kho.bao === 0) {
     ketQuaHtml = sxTong > 0
-      ? '<div class="cx5-dc-ketqua cx5-dc-lech"><i class="ti ti-info-circle"></i> Kho chÆ°a nháº­p â€” SX bÃ¡o: ' + sxTong.toFixed(1) + 'kg</div>'
-      : '<div class="cx5-dc-ketqua" style="color:var(--cream-soft)"><i class="ti ti-info-circle"></i> Kho chÆ°a nháº­p gÃ¬ cho quy cÃ¡ch nÃ y</div>';
+      ? '<div class="cx5-dc-ketqua cx5-dc-lech"><i class="ti ti-info-circle"></i> Kho chưa nhập — SX báo: ' + sxTong.toFixed(1) + 'kg</div>'
+      : '<div class="cx5-dc-ketqua" style="color:var(--cream-soft)"><i class="ti ti-info-circle"></i> Kho chưa nhập gì cho quy cách này</div>';
   } else if (sxTong === 0) {
-    ketQuaHtml = '<div class="cx5-dc-ketqua cx5-dc-lech"><i class="ti ti-info-circle"></i> Kho Ä‘Ã£ nháº­p (' + khoKgNorm.toFixed(1) + 'kg) â€” SX chÆ°a bÃ¡o</div>';
+    ketQuaHtml = '<div class="cx5-dc-ketqua cx5-dc-lech"><i class="ti ti-info-circle"></i> Kho đã nhập (' + khoKgNorm.toFixed(1) + 'kg) — SX chưa báo</div>';
   } else if (!conDeDongBo) {
-    ketQuaHtml = '<div class="cx5-dc-ketqua cx5-dc-khop"><i class="ti ti-checks"></i> ÄÃ£ Ä‘á»“ng bá»™</div>';
+    ketQuaHtml = '<div class="cx5-dc-ketqua cx5-dc-khop"><i class="ti ti-checks"></i> Đã đồng bộ</div>';
   } else if (khop) {
-    ketQuaHtml = '<div class="cx5-dc-ketqua cx5-dc-khop"><i class="ti ti-check"></i> Khá»›p hoÃ n toÃ n â€” sáºµn sÃ ng Ä‘á»“ng bá»™</div>';
+    ketQuaHtml = '<div class="cx5-dc-ketqua cx5-dc-khop"><i class="ti ti-check"></i> Khớp hoàn toàn — sẵn sàng đồng bộ</div>';
   } else {
     const lech = Math.round((sxTong - khoKgNorm) * 10) / 10;
-    ketQuaHtml = '<div class="cx5-dc-ketqua cx5-dc-lech"><i class="ti ti-alert-triangle"></i> Lá»‡ch: ' + (lech > 0 ? "+" : "") + lech.toFixed(1) + 'kg (Kho: ' + khoKgNorm.toFixed(1) + 'kg vs SX: ' + sxTong.toFixed(1) + 'kg)</div>';
+    ketQuaHtml = '<div class="cx5-dc-ketqua cx5-dc-lech"><i class="ti ti-alert-triangle"></i> Lệch: ' + (lech > 0 ? "+" : "") + lech.toFixed(1) + 'kg (Kho: ' + khoKgNorm.toFixed(1) + 'kg vs SX: ' + sxTong.toFixed(1) + 'kg)</div>';
   }
 
   const nd = document.getElementById("cx5-dcc-noidung");
   nd.innerHTML =
-    // ThÃ´ng tin bÃªn KHO
+    // Thông tin bên KHO
     '<div style="background:var(--card-raised);border:1px solid var(--line);padding:10px 12px;border-radius:10px;margin-bottom:8px">' +
-    '<div style="font-size:13px;font-weight:600;color:var(--cream);display:flex;align-items:center;gap:6px"><i class="ti ti-box" style="color:#3b82f6;font-size:16px"></i> <b>KHO</b> â€” Bao: <b>' + kho.bao + '</b> Â· Kg: <b>' + khoKgNorm.toFixed(1) + '</b></div>' +
+    '<div style="font-size:13px;font-weight:600;color:var(--cream);display:flex;align-items:center;gap:6px"><i class="ti ti-box" style="color:#3b82f6;font-size:16px"></i> <b>KHO</b> — Bao: <b>' + kho.bao + '</b> · Kg: <b>' + khoKgNorm.toFixed(1) + '</b></div>' +
     '</div>' +
 
-    // ThÃ´ng tin bÃªn SX
+    // Thông tin bên SX
     '<div style="background:var(--card-raised);border:1px solid var(--line);padding:10px 12px;border-radius:10px;margin-bottom:8px">' +
-    '<div style="font-size:13px;font-weight:600;color:var(--cream);display:flex;align-items:center;gap:6px"><i class="ti ti-building-factory-2" style="color:#a855f7;font-size:16px"></i> <b>Sáº¢N XUáº¤T (SX)</b></div>' +
-    '<div style="margin-top:6px">' + (dsSo || '<span style="color:var(--cream-soft);font-style:italic">ChÆ°a cÃ³ sá»‘ SX</span>') + '</div>' +
+    '<div style="font-size:13px;font-weight:600;color:var(--cream);display:flex;align-items:center;gap:6px"><i class="ti ti-building-factory-2" style="color:#a855f7;font-size:16px"></i> <b>SẢN XUẤT (SX)</b></div>' +
+    '<div style="margin-top:6px">' + (dsSo || '<span style="color:var(--cream-soft);font-style:italic">Chưa có số SX</span>') + '</div>' +
     '<div style="margin-top:10px;padding:8px 12px;background:rgba(168,85,247,0.12);border:1px solid rgba(168,85,247,0.3);border-radius:8px;display:flex;justify-content:space-between;align-items:center;">' +
-    '<span style="font-size:13px;color:var(--cream);font-weight:600;">Tá»•ng SX:</span>' +
+    '<span style="font-size:13px;color:var(--cream);font-weight:600;">Tổng SX:</span>' +
     '<span style="font-size:16px;font-weight:700;color:#c084fc;font-family:\'IBM Plex Mono\',monospace;">' + sxTong.toFixed(1) + ' kg</span>' +
     '</div>' +
     '</div>' +
 
     ketQuaHtml +
 
-    // NÃºt hÃ nh Ä‘á»™ng
+    // Nút hành động
     '<div style="display:flex;gap:8px;margin-top:14px">' +
-    '<button class="btn btn-red btn-sm" style="flex:1" onclick="xoaHangDoiChieuCX5(\'' + escHtmlCX5(key) + '\');dongDcChiTietCX5()"><i class="ti ti-trash"></i> XÃ³a dá»¯ liá»‡u SX</button>' +
-    '<button class="btn btn-sm" style="flex:1;background:var(--neutral-solid);color:var(--cream)" onclick="dongDcChiTietCX5()">ÄÃ³ng</button>' +
+    '<button class="btn btn-red btn-sm" style="flex:1" onclick="xoaHangDoiChieuCX5(\'' + escHtmlCX5(key) + '\');dongDcChiTietCX5()"><i class="ti ti-trash"></i> Xóa dữ liệu SX</button>' +
+    '<button class="btn btn-sm" style="flex:1;background:var(--neutral-solid);color:var(--cream)" onclick="dongDcChiTietCX5()">Đóng</button>' +
     '</div>';
 
   document.getElementById("cx5-overlay-dc-chitiet").classList.add("show");
@@ -934,7 +934,7 @@ function luuPendingCX5(list) {
 
 function capNhatDongPendingCX5() {
   const soLuong = docPendingCX5().length;
-  const noiDung = "CÃ²n " + soLuong + " má»¥c chÆ°a Ä‘á»“ng bá»™ â€” sáº½ tá»± gá»­i láº¡i khi cÃ³ máº¡ng";
+  const noiDung = "Còn " + soLuong + " mục chưa đồng bộ — sẽ tự gửi lại khi có mạng";
   [document.getElementById("cx5-pending-line"), document.getElementById("cx5-pending-line-dc")].forEach(el => {
     if (!el) return;
     if (soLuong > 0) { el.textContent = noiDung; el.style.display = "block"; }
@@ -979,47 +979,13 @@ async function dongBoMotQC_(key) {
   }
 }
 
-let cx5MicStopTimer = null;
-
-function batDauNgheCX5() {
-  if (cx5MicStopTimer) clearTimeout(cx5MicStopTimer);
-  
-  const msp = document.getElementById("cx5-msp").value;
-  if (!msp || msp === 'CHÆ¯A CHá»ŒN') {
-    showCanhBaoCX5("Vui lÃ²ng KhÃ³a MÃ£ Quy CÃ¡ch trÆ°á»›c khi Ä‘á»c sá»‘ Kg!");
-    return;
-  }
-
-  khoiTaoGiongNoiCX5();
-  const btn = document.querySelector('.cx5-mic-btn');
-  if (btn) btn.classList.add('listening');
-  document.getElementById('cx5-kg').value = ""; // XÃ³a tráº¯ng Ã´ kg Ä‘á»ƒ chuáº©n bá»‹ nháº£y sá»‘
-  
-  try {
-    window.__cx5SpeechRec.start();
-  } catch (e) {}
-}
-
-function dungNgheCX5() {
-  const btn = document.querySelector('.cx5-mic-btn');
-  if (btn) btn.classList.remove('listening');
-  
-  // TrÃ¬ hoÃ£n táº¯t mic 800ms Ä‘á»ƒ báº¯t trá»n chá»¯ cuá»‘i cÃ¹ng (trÃ¡nh lá»—i nháº£ tay quÃ¡ nhanh bá»‹ nuá»‘t chá»¯)
-  if (cx5MicStopTimer) clearTimeout(cx5MicStopTimer);
-  cx5MicStopTimer = setTimeout(() => {
-    if (window.__cx5SpeechRec) {
-      window.__cx5SpeechRec.stop();
-    }
-  }, 800);
-}
-
 let dangDongBoCX5Lock = false;
 
 async function dongBoTatCaCX5() {
   if (dangDongBoCX5Lock) return;
   const gom = tomTatCX5();
 
-  // CHá»NG Äá»’NG Bá»˜ TRÃ™NG 100%: Chá»‰ lá»c quy cÃ¡ch cÃ³ chá»©a dÃ²ng CHÆ¯A Äá»’NG Bá»˜ (daDongBo !== true)
+  // CHỐNG ĐỒNG BỘ TRÙNG 100%: Chỉ lọc quy cách có chứa dòng CHƯA ĐỒNG BỘ (daDongBo !== true)
   const dsCanDongBo = Object.keys(doiChieuCX5).filter(key => {
     const kho = gom[key];
     if (!kho) return false;
@@ -1027,19 +993,19 @@ async function dongBoTatCaCX5() {
     const sxTong = dc.sxEntries.reduce((s, v) => s + v, 0);
     const khop = Math.round(sxTong * 100) === Math.round(kho.kg * 100) && kho.kg > 0;
     
-    // Náº¿u táº¥t cáº£ cÃ¡c dÃ²ng cá»§a quy cÃ¡ch nÃ y Ä‘Ã£ Ä‘Æ°á»£c Ä‘á»“ng bá»™ trÆ°á»›c Ä‘Ã³ -> Loáº¡i bá» ngay
+    // Nếu tất cả các dòng của quy cách này đã được đồng bộ trước đó -> Loại bỏ ngay
     const chuaDongBoRows = phienCX5.filter(r => keyQCX5(r.msp, r.ten) === key && !r.daDongBo);
     return khop && chuaDongBoRows.length > 0;
   });
 
   if (dsCanDongBo.length === 0) {
-    showCanhBaoCX5("Táº¥t cáº£ mÃ£ chá»n Ä‘Ã£ Ä‘Æ°á»£c Ä‘á»“ng bá»™ trÆ°á»›c Ä‘Ã³!");
+    showCanhBaoCX5("Tất cả mã chọn đã được đồng bộ trước đó!");
     return;
   }
 
   dangDongBoCX5Lock = true;
   const btn = document.getElementById("cx5-btn-dongbo-tatca");
-  if (btn) { btn.disabled = true; btn.innerHTML = '<i class="ti ti-refresh spin"></i> Äang Ä‘á»“ng bá»™...'; }
+  if (btn) { btn.disabled = true; btn.innerHTML = '<i class="ti ti-refresh spin"></i> Đang đồng bộ...'; }
   showLoading(true);
 
   const itemsToSubmit = dsCanDongBo.map(key => {
@@ -1077,11 +1043,11 @@ async function dongBoTatCaCX5() {
       thatBai = itemsToSubmit.length;
     }
   } catch (e) {
-    showCanhBaoCX5("Lá»—i káº¿t ná»‘i Ä‘á»“ng bá»™: " + e.message);
+    showCanhBaoCX5("Lỗi kết nối đồng bộ: " + e.message);
   } finally {
     dangDongBoCX5Lock = false;
     showLoading(false);
-    if (btn) { btn.disabled = false; btn.innerHTML = '<i class="ti ti-refresh"></i> Äá»“ng bá»™'; }
+    if (btn) { btn.disabled = false; btn.innerHTML = '<i class="ti ti-refresh"></i> Đồng bộ'; }
   }
 
   luuPhienDoDangCX5();
@@ -1090,22 +1056,22 @@ async function dongBoTatCaCX5() {
   renderDoiChieuCX5();
   if (typeof capNhatTrangThaiMang === "function") capNhatTrangThaiMang();
 
-  if (thatBai === 0) showCanhBaoCX5("Äá»“ng bá»™ thÃ nh cÃ´ng " + thanhCong + " quy cÃ¡ch!", "success");
-  else showCanhBaoCX5("Äá»“ng bá»™: " + thanhCong + " OK, " + thatBai + " Lá»—i", "error");
-  // TÃCH BIá»†T HOÃ€N TOÃ€N: Báº£ng Ä‘á»‘i chiáº¿u chá»‰ Ä‘á»“ng bá»™ dá»¯ liá»‡u vÃ o Sheet ThÃ¡ng, khÃ´ng tá»± chuyá»ƒn sang LSC5
+  if (thatBai === 0) showCanhBaoCX5("Đồng bộ thành công " + thanhCong + " quy cách!", "success");
+  else showCanhBaoCX5("Đồng bộ: " + thanhCong + " OK, " + thatBai + " Lỗi", "error");
+  // TÁCH BIỆT HOÀN TOÀN: Bảng đối chiếu chỉ đồng bộ dữ liệu vào Sheet Tháng, không tự chuyển sang LSC5
 }
 
 function moTongKgCX5(dsQC) {
-  // CHUYá»‚N THáºº Tá»¨C THÃŒ (0ms Delay): KhÃ´ng cháº·n UI chá» máº¡ng
+  // CHUYỂN THẺ TỨC THÌ (0ms Delay): Không chặn UI chờ mạng
   document.getElementById("cx5-form").style.display = "none";
   document.getElementById("cx5-doichieu").style.display = "none";
   document.getElementById("cx5-nhap").style.display = "none";
   document.getElementById("cx5-tongkg").style.display = "block";
 
-  // Váº½ báº£ng tá»•ng káº¿t ngay tá»« phienCX5 trÃªn RAM láº­p tá»©c
+  // Vẽ bảng tổng kết ngay từ phienCX5 trên RAM lập tức
   renderTongKgCX5();
 
-  // Táº£i danh sÃ¡ch á»©ng viÃªn ghÃ©p pallet ngÃ y cÅ© ngáº§m khÃ´ng cháº·n UI
+  // Tải danh sách ứng viên ghép pallet ngày cũ ngầm không chặn UI
   if (dsQC && dsQC.length > 0) {
     callApiCX5({ action: "layUngVienGhepCX5", payload: { dsQC: dsQC, dateStr: ngayCX5 } }).then(res => {
       if (!res || res.error) return;
@@ -1153,7 +1119,7 @@ function moTongKgCX5(dsQC) {
           }
         }
         
-        // Pass 1: Khá»›p chÃ­nh xÃ¡c (exact match)
+        // Pass 1: Khớp chính xác (exact match)
         homNayList.forEach(c => {
            const cBao = c.effBao !== undefined ? c.effBao : c.bao;
            const cKg = c.effKg !== undefined ? c.effKg : c.kg;
@@ -1173,7 +1139,7 @@ function moTongKgCX5(dsQC) {
            });
         });
 
-        // Pass 2: Khá»›p bÃ¹ (fallback match) cho cÃ¡c pallet Ä‘Ã£ bá»‹ thay Ä‘á»•i sá»‘ bao/kg (vÃ­ dá»¥: Ä‘Ã£ ghÃ©p)
+        // Pass 2: Khớp bù (fallback match) cho các pallet đã bị thay đổi số bao/kg (ví dụ: đã ghép)
         anchorCandidates.forEach(anchor => {
            if (!anchor.rows) {
                const lIdx = localCandidates.findIndex(lc => !lc.matched);
@@ -1249,7 +1215,7 @@ function renderTongKgCX5() {
   const keys = Object.keys(tongKgDataCX5);
 
   if (keys.length === 0) {
-    container.innerHTML = '<div style="text-align:center;color:var(--cream-soft);padding:16px 0">KhÃ´ng cÃ³ quy cÃ¡ch nÃ o dÆ°á»›i 10 bao cáº§n ghÃ©p</div>';
+    container.innerHTML = '<div style="text-align:center;color:var(--cream-soft);padding:16px 0">Không có quy cách nào dưới 10 bao cần ghép</div>';
     renderTongKetPhienTongKgCX5();
     return;
   }
@@ -1276,8 +1242,8 @@ function renderTongKgCX5() {
         '<input type="checkbox" ' + (c.checked ? "checked" : "") + disabled + ' onchange="toggleGhepCX5(\'' + key + '\',' + idx + ')">' +
         '<span class="' + lopMo + '" style="flex:1;font-size:13px">' + ngayHienThi + ': ' +
         '<span class="cx5-tk-kg-chip" onclick="xemNguonGocCX5(' + c.row + ')">' + hienKg.toFixed(1) + '(' + hienBao + ')</span>' +
-        (daChonOKhoiKhac ? ' (Ä‘Ã£ chá»n)' : '') + '</span>' +
-        '<button type="button" class="cx5-tk-xoa"' + disabled + ' title="áº¨n vÄ©nh viá»…n" aria-label="áº¨n" onclick="xoaUngVienGhepCX5(\'' + key + '\',' + idx + ')"><i class="ti ti-x"></i></button>' +
+        (daChonOKhoiKhac ? ' (đã chọn)' : '') + '</span>' +
+        '<button type="button" class="cx5-tk-xoa"' + disabled + ' title="Ẩn vĩnh viễn" aria-label="Ẩn" onclick="xoaUngVienGhepCX5(\'' + key + '\',' + idx + ')"><i class="ti ti-x"></i></button>' +
         '</div>';
     }).join("");
 
@@ -1309,7 +1275,7 @@ function renderTongKgCX5() {
         dongTenHtml +
         '<div style="margin-top:4px">' + dsCu + '</div>' +
         '<div style="margin-top: 8px; text-align: right; font-size: 14px;">' +
-        'Tá»•ng: <b style="color: var(--brass);">' + tongKg.toFixed(1) + ' (' + tongBao + ')</b>' +
+        'Tổng: <b style="color: var(--brass);">' + tongKg.toFixed(1) + ' (' + tongBao + ')</b>' +
         '</div>' +
         '</div>';
     }
@@ -1332,7 +1298,7 @@ function renderTongKetPhienTongKgCX5() {
 
   const danhSach = [];
 
-  // 1) Hiá»ƒn thá»‹ tÃ¡ch biá»‡t tá»«ng LÆ¯á»¢T nháº­p (khá»›p tá»«ng dÃ²ng vá»›i Báº£ng chi tiáº¿t)
+  // 1) Hiển thị tách biệt từng LƯỢT nhập (khớp từng dòng với Bảng chi tiết)
   const luotMap = new Map();
   const thuTuLuot = [];
   phienCX5.forEach(r => {
@@ -1340,7 +1306,7 @@ function renderTongKetPhienTongKgCX5() {
     luotMap.get(r.luot).push(r);
   });
 
-  const appliedCards = new Set(); // LÆ°u váº¿t Ä‘á»ƒ khÃ´ng cá»™ng dá»“n dÆ° vÃ o nhiá»u lÆ°á»£t
+  const appliedCards = new Set(); // Lưu vết để không cộng dồn dư vào nhiều lượt
 
   thuTuLuot.slice().reverse().forEach(function (lid) {
     const rows = luotMap.get(lid);
@@ -1349,7 +1315,7 @@ function renderTongKetPhienTongKgCX5() {
 
     let bao = rows.length;
     let kg = rows.reduce((s, r) => s + r.kg, 0);
-    let trangThaiHtml = '<i class="ti ti-minus" style="color:var(--cream-soft);font-size:18px" title="ChÆ°a ghÃ©p"></i>';
+    let trangThaiHtml = '<i class="ti ti-minus" style="color:var(--cream-soft);font-size:18px" title="Chưa ghép"></i>';
 
     let cardKey = Object.keys(tongKgDataCX5).find(function (k) {
       const kBao = tongKgDataCX5[k].homNay.bao - (tongKgDataCX5[k].daGhepBao || 0);
@@ -1375,18 +1341,18 @@ function renderTongKetPhienTongKgCX5() {
       }
 
       if ((extraBao > 0 || extraKg > 0) && bao < 10 && !appliedCards.has(cardKey)) {
-        // Chá»‰ cá»™ng vÃ o lÆ°á»£t Ä‘áº§u tiÃªn Ä‘á»§ Ä‘iá»u kiá»‡n (bao < 10)
+        // Chỉ cộng vào lượt đầu tiên đủ điều kiện (bao < 10)
         appliedCards.add(cardKey);
         bao += extraBao;
         kg += extraKg;
-        trangThaiHtml = '<i class="ti ti-layers-intersect" style="color:var(--accent-2);font-size:18px" title="ÄÃ£ chá»n ghÃ©p"></i>';
+        trangThaiHtml = '<i class="ti ti-layers-intersect" style="color:var(--accent-2);font-size:18px" title="Đã chọn ghép"></i>';
       } else if (bao >= 10) {
-        trangThaiHtml = '<i class="ti ti-check" style="color:var(--success);font-size:18px" title="OK (â‰¥10 bao)"></i>';
+        trangThaiHtml = '<i class="ti ti-check" style="color:var(--success);font-size:18px" title="OK (≥10 bao)"></i>';
       }
     } else if (bao >= 10) {
-      trangThaiHtml = '<i class="ti ti-check" style="color:var(--success);font-size:18px" title="OK (â‰¥10 bao)"></i>';
+      trangThaiHtml = '<i class="ti ti-check" style="color:var(--success);font-size:18px" title="OK (≥10 bao)"></i>';
     } else if (first.daDongBo) {
-      trangThaiHtml = '<i class="ti ti-check" style="color:var(--success);font-size:18px" title="ÄÃ£ Ä‘á»“ng bá»™"></i>';
+      trangThaiHtml = '<i class="ti ti-check" style="color:var(--success);font-size:18px" title="Đã đồng bộ"></i>';
     }
 
     let bagInfo = "";
@@ -1406,7 +1372,7 @@ function renderTongKetPhienTongKgCX5() {
     });
   });
 
-  // 2) Quy cÃ¡ch dÆ° tá»« server chÆ°a cÃ³ lÆ°á»£t nÃ o trong phiÃªn hiá»‡n táº¡i
+  // 2) Quy cách dư từ server chưa có lượt nào trong phiên hiện tại
   tongKetPhienCX5.forEach(function (item) {
     const daduocHien = danhSach.some(function (d) { 
       return d.ten === item.ten && d.bao === item.bao && Math.abs(d.kg - item.kg) < 0.2; 
@@ -1427,9 +1393,9 @@ function renderTongKetPhienTongKgCX5() {
           appliedCards.add(cardKey);
           bao += chosen.reduce(function (s, c) { return s + c.bao; }, 0);
           kg += chosen.reduce(function (s, c) { return s + c.kg; }, 0);
-          trangThaiHtml = '<i class="ti ti-layers-intersect" style="color:var(--accent-2);font-size:18px" title="ÄÃ£ chá»n ghÃ©p"></i>';
+          trangThaiHtml = '<i class="ti ti-layers-intersect" style="color:var(--accent-2);font-size:18px" title="Đã chọn ghép"></i>';
         } else if (bao >= 10) {
-          trangThaiHtml = '<i class="ti ti-check" style="color:var(--success);font-size:18px" title="OK (â‰¥10 bao)"></i>';
+          trangThaiHtml = '<i class="ti ti-check" style="color:var(--success);font-size:18px" title="OK (≥10 bao)"></i>';
         }
       }
 
@@ -1444,7 +1410,7 @@ function renderTongKetPhienTongKgCX5() {
   });
 
   if (danhSach.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--cream-soft);font-style:italic">ChÆ°a cÃ³ dá»¯ liá»‡u</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--cream-soft);font-style:italic">Chưa có dữ liệu</td></tr>';
     return;
   }
 
@@ -1476,22 +1442,22 @@ function xoaUngVienGhepCX5(key, idx) {
   const candidate = d && d.cu[idx];
   if (!candidate) return;
 
-  moXacNhanCX5("áº¨n á»©ng viÃªn ghÃ©p pallet nÃ y khá»i danh sÃ¡ch? Muá»‘n khÃ´i phá»¥c pháº£i sá»­a láº¡i tá»« sheet gá»‘c.", async () => {
+  moXacNhanCX5("Ẩn ứng viên ghép pallet này khỏi danh sách? Muốn khôi phục phải sửa lại từ sheet gốc.", async () => {
     showLoading(true);
     try {
       const r = await callApiCX5({ action: "xoaUngVienGhepCX5", payload: { row: candidate.row } });
-      if (!r.success) { showCanhBaoCX5("Lá»—i: " + (r.message || "khÃ´ng rÃµ nguyÃªn nhÃ¢n")); return; }
+      if (!r.success) { showCanhBaoCX5("Lỗi: " + (r.message || "không rõ nguyên nhân")); return; }
       Object.keys(tongKgDataCX5).forEach(function (keyKhoi) {
         tongKgDataCX5[keyKhoi].cu = tongKgDataCX5[keyKhoi].cu.filter(function (c) { return c.row !== candidate.row; });
       });
       renderTongKgCX5();
       luuPhienDoDangCX5();
     } catch (e) {
-      showCanhBaoCX5("Máº¥t máº¡ng â€” thá»­ láº¡i: " + e.message);
+      showCanhBaoCX5("Mất mạng — thử lại: " + e.message);
     } finally {
       showLoading(false);
     }
-  }, "áº¨n á»©ng viÃªn");
+  }, "Ẩn ứng viên");
 }
 window.xoaUngVienGhepCX5 = xoaUngVienGhepCX5;
 
@@ -1521,7 +1487,7 @@ async function dongBoGhepCX5() {
     });
   });
 
-  // Gom sessionEntries CHÆ¯A Äá»’NG Bá»˜ LSC5 cá»§a phiÃªn hiá»‡n táº¡i
+  // Gom sessionEntries CHƯA ĐỒNG BỘ LSC5 của phiên hiện tại
   const chuaDongBoLSC5Rows = phienCX5.filter(r => !r.daDongBoLSC5);
   const sessionMap = new Map();
   chuaDongBoLSC5Rows.forEach(r => {
@@ -1540,13 +1506,13 @@ async function dongBoGhepCX5() {
   }));
 
   if (groups.length === 0 && sessionEntries.length === 0) {
-    showCanhBaoCX5("Dá»¯ liá»‡u phiÃªn vÃ  cÃ¡c chá»n ghÃ©p Ä‘Ã£ Ä‘Æ°á»£c Ä‘á»“ng bá»™ trÆ°á»›c Ä‘Ã³!");
+    showCanhBaoCX5("Dữ liệu phiên và các chọn ghép đã được đồng bộ trước đó!");
     return;
   }
 
   dangDongBoGhepCX5Lock = true;
   const btn = document.getElementById("cx5-btn-ghep");
-  if (btn) { btn.disabled = true; btn.innerHTML = '<i class="ti ti-refresh spin"></i> Äang Ä‘á»“ng bá»™ LSC5...'; }
+  if (btn) { btn.disabled = true; btn.innerHTML = '<i class="ti ti-refresh spin"></i> Đang đồng bộ LSC5...'; }
   showLoading(true);
 
   try {
@@ -1558,10 +1524,10 @@ async function dongBoGhepCX5() {
       payload: { dateStr: ngayCX5, groups: payloadGroups, sessionEntries: sessionEntries }
     });
     showLoading(false);
-    if (btn) { btn.disabled = false; btn.innerHTML = '<i class="ti ti-refresh"></i> Äá»“ng bá»™ Báº£ng Tá»•ng káº¿t'; }
-    if (!r.success) { showCanhBaoCX5("Lá»—i Ä‘á»“ng bá»™ LSC5: " + (r.message || "khÃ´ng rÃµ nguyÃªn nhÃ¢n")); return; }
+    if (btn) { btn.disabled = false; btn.innerHTML = '<i class="ti ti-refresh"></i> Đồng bộ Bảng Tổng kết'; }
+    if (!r.success) { showCanhBaoCX5("Lỗi đồng bộ LSC5: " + (r.message || "không rõ nguyên nhân")); return; }
 
-    // ÄÃ¡nh dáº¥u cÃ¡c dÃ²ng phienCX5 Ä‘Ã£ Ä‘á»“ng bá»™ LSC5 thÃ nh cÃ´ng
+    // Đánh dấu các dòng phienCX5 đã đồng bộ LSC5 thành công
     chuaDongBoLSC5Rows.forEach(r => { r.daDongBoLSC5 = true; });
 
     groups.forEach(function (g) {
@@ -1584,13 +1550,13 @@ async function dongBoGhepCX5() {
       if (phien) { phien.bao = g.tongBao; phien.kg = g.tongKg; }
     });
 
-    showCanhBaoCX5("Äá»“ng bá»™ LSC5 thÃ nh cÃ´ng!", "success");
+    showCanhBaoCX5("Đồng bộ LSC5 thành công!", "success");
     renderTongKgCX5();
     luuPhienDoDangCX5();
   } catch (e) {
     showLoading(false);
-    if (btn) { btn.disabled = false; btn.innerHTML = '<i class="ti ti-refresh"></i> Äá»“ng bá»™ Báº£ng Tá»•ng káº¿t'; }
-    showCanhBaoCX5("Máº¥t máº¡ng â€” thá»­ láº¡i: " + e.message);
+    if (btn) { btn.disabled = false; btn.innerHTML = '<i class="ti ti-refresh"></i> Đồng bộ Bảng Tổng kết'; }
+    showCanhBaoCX5("Mất mạng — thử lại: " + e.message);
   } finally {
     dangDongBoGhepCX5Lock = false;
   }
@@ -1610,8 +1576,8 @@ function boQuaTongKgCX5() {
 }
 window.boQuaTongKgCX5 = boQuaTongKgCX5;
 
-// Báº¥m vÃ o sá»‘ kg cá»§a 1 dÃ²ng "ngÃ y cÅ©" -> xá»• chi tiáº¿t theo tá»«ng dÃ²ng nguá»“n gá»‘c
-// (chÃ­nh dÃ²ng Ä‘Ã³ + má»i dÃ²ng trong cá»™t W, Ä‘Ã£ lÃ m pháº³ng sáºµn á»Ÿ phÃ­a server).
+// Bấm vào số kg của 1 dòng "ngày cũ" -> xổ chi tiết theo từng dòng nguồn gốc
+// (chính dòng đó + mọi dòng trong cột W, đã làm phẳng sẵn ở phía server).
 async function xemNguonGocCX5(row) {
   showLoading(true);
   let res;
@@ -1619,20 +1585,20 @@ async function xemNguonGocCX5(row) {
     res = await callApiCX5({ action: "layChiTietNguonGocCX5", payload: { row: row } });
   } catch (e) {
     showLoading(false);
-    showCanhBaoCX5("Lá»—i táº£i chi tiáº¿t nguá»“n gá»‘c: " + e.message);
+    showCanhBaoCX5("Lỗi tải chi tiết nguồn gốc: " + e.message);
     return;
   }
   showLoading(false);
-  if (res.error) { showCanhBaoCX5("Lá»—i: " + res.error); return; }
+  if (res.error) { showCanhBaoCX5("Lỗi: " + res.error); return; }
 
   const nd = document.getElementById("cx5-ng-noidung");
   nd.innerHTML = (res.nguon || []).map(function (n) {
     const tongDong = n.kgList.reduce(function (s, v) { return s + v; }, 0);
     return '<div style="margin-bottom:10px">' +
-      '<div style="font-size:12px;font-weight:600;color:var(--cream-soft)">NgÃ y ' + escHtmlCX5(n.ngay) + ' (dÃ²ng gá»‘c) â€” ' + n.kgList.length + ' bao, ' + (Math.round(tongDong * 100) / 100) + 'kg</div>' +
-      '<div style="margin-top:4px">' + (n.kgList.map(function (v) { return escHtmlCX5(v); }).join(" Â· ") || "â€”") + '</div>' +
+      '<div style="font-size:12px;font-weight:600;color:var(--cream-soft)">Ngày ' + escHtmlCX5(n.ngay) + ' (dòng gốc) — ' + n.kgList.length + ' bao, ' + (Math.round(tongDong * 100) / 100) + 'kg</div>' +
+      '<div style="margin-top:4px">' + (n.kgList.map(function (v) { return escHtmlCX5(v); }).join(" · ") || "—") + '</div>' +
       '</div>';
-  }).join("") || '<div style="color:var(--cream-soft)">KhÃ´ng cÃ³ dá»¯ liá»‡u</div>';
+  }).join("") || '<div style="color:var(--cream-soft)">Không có dữ liệu</div>';
 
   document.getElementById("cx5-overlay-nguongoc").classList.add("show");
 }
@@ -1667,17 +1633,17 @@ function xuatExcelLichSuCX5(idPhien) {
   const entry = list.find(s => s.idPhien === idPhien || s.id === idPhien);
   const dataList = entry ? entry.phienCX5 : phienCX5;
   if (!dataList || dataList.length === 0) {
-    alert("ChÆ°a cÃ³ dá»¯ liá»‡u Chá»‰ X5 Ä‘á»ƒ xuáº¥t Excel!");
+    alert("Chưa có dữ liệu Chỉ X5 để xuất Excel!");
     return;
   }
   const dateStr = (entry ? entry.ngay : ngayCX5) || new Date().toISOString().split("T")[0];
   const exportData = dataList.map((item, idx) => ({
     "STT": idx + 1,
-    "LÆ°á»£t": item.luot || item.seq,
-    "MÃ£ MSP": item.msp,
-    "Quy cÃ¡ch": item.ten,
-    "Khá»‘i lÆ°á»£ng (Kg)": item.kg,
-    "Thá»i gian": item.thoiGian ? new Date(item.thoiGian).toLocaleTimeString("vi-VN") : ""
+    "Lượt": item.luot || item.seq,
+    "Mã MSP": item.msp,
+    "Quy cách": item.ten,
+    "Khối lượng (Kg)": item.kg,
+    "Thời gian": item.thoiGian ? new Date(item.thoiGian).toLocaleTimeString("vi-VN") : ""
   }));
   if (typeof exportToExcel === "function") {
     exportToExcel("LichSu_ChiX5_" + dateStr, "Chi X5 " + dateStr, exportData);
@@ -1708,8 +1674,8 @@ let _cx5XacNhanCallbackHuy = null;
 
 function moXacNhanCX5(noiDung, callback, nhanNutOk, callbackHuy, nhanNutHuy) {
   document.getElementById("cx5-xacnhan-noidung").textContent = noiDung;
-  document.getElementById("cx5-xacnhan-nut-ok").textContent = nhanNutOk || "XÃ³a";
-  document.getElementById("cx5-xacnhan-nut-huy").textContent = nhanNutHuy || "Há»§y";
+  document.getElementById("cx5-xacnhan-nut-ok").textContent = nhanNutOk || "Xóa";
+  document.getElementById("cx5-xacnhan-nut-huy").textContent = nhanNutHuy || "Hủy";
   _cx5XacNhanCallback = callback;
   _cx5XacNhanCallbackHuy = callbackHuy || null;
   document.getElementById("cx5-overlay-xacnhan").classList.add("show");
@@ -1727,7 +1693,7 @@ function dongXacNhanCX5(dongY) {
 
 function xoaMotPhienLichSuCX5(idPhien, ev) {
   if (ev) ev.stopPropagation();
-  moXacNhanCX5("XÃ³a phiÃªn lá»‹ch sá»­ nÃ y? KhÃ´ng thá»ƒ hoÃ n tÃ¡c.", () => {
+  moXacNhanCX5("Xóa phiên lịch sử này? Không thể hoàn tác.", () => {
     luuLichSuCX5(docLichSuCX5().filter(s => s.idPhien !== idPhien));
     renderLichSuCX5();
   });
@@ -1735,8 +1701,8 @@ function xoaMotPhienLichSuCX5(idPhien, ev) {
 
 function xoaTatCaLichSuCX5() {
   const list = docLichSuCX5();
-  if (list.length === 0) { showCanhBaoCX5("KhÃ´ng cÃ³ lá»‹ch sá»­ Ä‘á»ƒ xÃ³a"); return; }
-  moXacNhanCX5("XÃ³a toÃ n bá»™ " + list.length + " phiÃªn lá»‹ch sá»­ Chá»‰ X5? KhÃ´ng thá»ƒ hoÃ n tÃ¡c.", () => {
+  if (list.length === 0) { showCanhBaoCX5("Không có lịch sử để xóa"); return; }
+  moXacNhanCX5("Xóa toàn bộ " + list.length + " phiên lịch sử Chỉ X5? Không thể hoàn tác.", () => {
     luuLichSuCX5([]);
     renderLichSuCX5();
   });
@@ -1746,9 +1712,9 @@ function donDepLichSuCX5() {
   luuLichSuCX5(docLichSuCX5());
 }
 
-// LÆ°u/cáº­p nháº­t (upsert) TOÃ€N Bá»˜ phiÃªn hiá»‡n táº¡i vÃ o Lá»‹ch sá»­, theo idPhien â€”
-// giá»‘ng cÆ¡ cháº¿ luuVaoLichSuCX1() bÃªn Chá»‰ For, khÃ¡c vá»›i báº£n cÅ© (lÆ°u rá»i tá»«ng
-// láº§n Ä‘á»“ng bá»™ 1 quy cÃ¡ch, lÃ m máº¥t ranh giá»›i giá»¯a cÃ¡c lÆ°á»£t cÃ¹ng quy cÃ¡ch).
+// Lưu/cập nhật (upsert) TOÀN BỘ phiên hiện tại vào Lịch sử, theo idPhien —
+// giống cơ chế luuVaoLichSuCX1() bên Chỉ For, khác với bản cũ (lưu rời từng
+// lần đồng bộ 1 quy cách, làm mất ranh giới giữa các lượt cùng quy cách).
 function luuPhienVaoLichSuCX5() {
   if (phienCX5.length === 0 || !idPhienHienTaiC5) return;
   const list = docLichSuCX5();
@@ -1790,7 +1756,7 @@ function renderLichSuCX5() {
   }
   if (list.length === 0) {
     container.innerHTML = '<div style="text-align:center;color:var(--cream-soft);padding:20px 0;">'
-      + (tuKhoa ? "KhÃ´ng tÃ¬m tháº¥y phiÃªn nÃ o khá»›p" : "ChÆ°a cÃ³ phiÃªn nÃ o trong " + CX5_LICHSU_SO_NGAY_GIU + " ngÃ y qua")
+      + (tuKhoa ? "Không tìm thấy phiên nào khớp" : "Chưa có phiên nào trong " + CX5_LICHSU_SO_NGAY_GIU + " ngày qua")
       + '</div>';
     return;
   }
@@ -1803,12 +1769,12 @@ function renderLichSuCX5() {
       : '<i class="ti ti-x cx5-trangthai-mot-phan"></i>';
     const gio = new Date(s.capNhatLuc).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" });
     return '<div class="irow lichsu-row" style="cursor:pointer;align-items:center" onclick="xemChiTietLichSuCX5(\'' + s.idPhien + '\')">'
-      + '<span style="font-family:\'IBM Plex Sans\',sans-serif;color:var(--cream)">' + s.ngay + " Â· " + gio + '</span>'
+      + '<span style="font-family:\'IBM Plex Sans\',sans-serif;color:var(--cream)">' + s.ngay + " · " + gio + '</span>'
       + '<span style="font-family:\'IBM Plex Sans\',sans-serif;color:var(--cream);display:inline-flex;align-items:center;gap:10px">'
-      + soLuot + ' lÆ°á»£t Â· ' + tongKg.toLocaleString('vi-VN', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + ' kg'
+      + soLuot + ' lượt · ' + tongKg.toLocaleString('vi-VN', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + ' kg'
       + '<span style="display:inline-flex;align-items:center;gap:8px;padding-left:8px;border-left:1px solid var(--line)">'
       + trangThai
-      + '<button class="cx5-del-btn" aria-label="XÃ³a phiÃªn nÃ y" onclick="xoaMotPhienLichSuCX5(\'' + s.idPhien + '\', event)"><i class="ti ti-trash"></i></button>'
+      + '<button class="cx5-del-btn" aria-label="Xóa phiên này" onclick="xoaMotPhienLichSuCX5(\'' + s.idPhien + '\', event)"><i class="ti ti-trash"></i></button>'
       + '</span>'
       + '</span>'
       + '</div>';
@@ -1830,10 +1796,10 @@ function xemChiTietLichSuCX5(idPhien) {
   const hang = Object.values(gom);
 
   const gio = new Date(entry.capNhatLuc).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" });
-  document.getElementById("cx5-ctls-tieude").textContent = entry.ngay + " Â· " + gio;
+  document.getElementById("cx5-ctls-tieude").textContent = entry.ngay + " · " + gio;
   document.getElementById("cx5-ctls-noidung").innerHTML = hang.map(h =>
     '<div class="irow"><span class="ilabel">' + h.ten + '</span><span class="ivalue">'
-    + h.bao + ' bao Â· ' + h.kg.toLocaleString('vi-VN', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + ' kg</span></div>'
+    + h.bao + ' bao · ' + h.kg.toLocaleString('vi-VN', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + ' kg</span></div>'
   ).join("");
   document.getElementById("cx5-ctls-tieptuc").setAttribute("onclick", "dongChiTietLichSuCX5();tiepTucLichSuCX5('" + idPhien + "')");
   document.getElementById("cx5-overlay-chitiet-lichsu").classList.add("show");
@@ -1845,8 +1811,8 @@ function dongChiTietLichSuCX5() {
 }
 window.dongChiTietLichSuCX5 = dongChiTietLichSuCX5;
 
-// Báº¥m vÃ o 1 phiÃªn trong Lá»‹ch sá»­ â†’ má»Ÿ tháº³ng mÃ n hÃ¬nh nháº­p liá»‡u CX5 cá»§a phiÃªn
-// Ä‘Ã³ Ä‘á»ƒ sá»­a/thÃªm/xoÃ¡ lÆ°á»£t, y nhÆ° báº¥m "Tiáº¿p tá»¥c" á»Ÿ Chá»‰ For.
+// Bấm vào 1 phiên trong Lịch sử → mở thẳng màn hình nhập liệu CX5 của phiên
+// đó để sửa/thêm/xoá lượt, y như bấm "Tiếp tục" ở Chỉ For.
 function tiepTucLichSuCX5(idPhien) {
   const list = docLichSuCX5();
   const entry = list.find(s => s.idPhien === idPhien);
@@ -1863,8 +1829,8 @@ function tiepTucLichSuCX5(idPhien) {
     luotDemCX5: entry.luotDemCX5,
     luotHienTaiCX5: entry.luotHienTaiCX5
   });
-  // Coi phiÃªn vá»«a má»Ÿ tá»« lá»‹ch sá»­ lÃ  phiÃªn "Ä‘ang dá»Ÿ dang" hiá»‡n táº¡i, Ä‘á»ƒ náº¿u
-  // thoÃ¡t app giá»¯a chá»«ng thÃ¬ láº§n sau váº«n tháº¥y banner tiáº¿p tá»¥c Ä‘Ãºng phiÃªn nÃ y.
+  // Coi phiên vừa mở từ lịch sử là phiên "đang dở dang" hiện tại, để nếu
+  // thoát app giữa chừng thì lần sau vẫn thấy banner tiếp tục đúng phiên này.
   luuPhienDoDangCX5();
 }
 window.tiepTucLichSuCX5 = tiepTucLichSuCX5;
@@ -1935,14 +1901,14 @@ let banPhimQCPendingCX5 = null;
   kgPanel.className = "cx5-bp-panel";
   kgPanel.innerHTML =
     '<div style="display:flex; justify-content:space-between; align-items:center; padding-bottom:8px;">' +
-    '<span class="cx5-bp-close" onclick="dongBanPhimCX5()">ÄÃ³ng bÃ n phÃ­m â¬‡</span>' +
-    '<button id="cx5-mic-btn" class="cx5-mic-btn"><i class="ti ti-microphone"></i> Giá»¯ Ä‘á»c sá»‘ Kg</button>' +
+    '<span class="cx5-bp-close" onclick="dongBanPhimCX5()">Đóng bàn phím ⬇</span>' +
+    '<button id="cx5-mic-btn" class="cx5-mic-btn"><i class="ti ti-microphone"></i> Giữ đọc số Kg</button>' +
     '</div>' +
     '<div class="cx5-bp-grid">' +
     '<div class="cx5-bp-key" onclick="bpKgSoCX5(\'7\')">7</div>' +
     '<div class="cx5-bp-key" onclick="bpKgSoCX5(\'8\')">8</div>' +
     '<div class="cx5-bp-key" onclick="bpKgSoCX5(\'9\')">9</div>' +
-    '<div class="cx5-bp-key cx5-bp-key-fn" onclick="bpKgXoaLuiCX5()">âŒ«</div>' +
+    '<div class="cx5-bp-key cx5-bp-key-fn" onclick="bpKgXoaLuiCX5()">⌫</div>' +
     '<div class="cx5-bp-key" onclick="bpKgSoCX5(\'4\')">4</div>' +
     '<div class="cx5-bp-key" onclick="bpKgSoCX5(\'5\')">5</div>' +
     '<div class="cx5-bp-key" onclick="bpKgSoCX5(\'6\')">6</div>' +
@@ -1956,7 +1922,7 @@ let banPhimQCPendingCX5 = null;
     "</div>";
   document.body.appendChild(kgPanel);
 
-  // ThÃªm sá»± kiá»‡n cho nÃºt Micro
+  // Thêm sự kiện cho nút Micro
   const micBtn = document.getElementById("cx5-mic-btn");
   if (micBtn) {
     micBtn.addEventListener("mousedown", batDauNgheCX5);
@@ -1964,7 +1930,7 @@ let banPhimQCPendingCX5 = null;
     micBtn.addEventListener("mouseleave", dungNgheCX5);
     
     micBtn.addEventListener("touchstart", function(e) {
-      e.preventDefault(); // NgÄƒn hÃ nh vi cuá»™n/click máº·c Ä‘á»‹nh trÃªn mobile
+      e.preventDefault(); // Ngăn hành vi cuộn/click mặc định trên mobile
       batDauNgheCX5(e);
     }, {passive: false});
     micBtn.addEventListener("touchend", function(e) {
@@ -1985,13 +1951,13 @@ let banPhimQCPendingCX5 = null;
     letters.map(l => '<div class="cx5-bp-letter-key" onclick="bpQcSoCX5(\'' + l + '\')">' + l + '</div>').join("") +
     '</div>';
   qcPanel.innerHTML =
-    '<span class="cx5-bp-close" onclick="dongBanPhimCX5()">ÄÃ³ng bÃ n phÃ­m â–¾</span>' +
+    '<span class="cx5-bp-close" onclick="dongBanPhimCX5()">Đóng bàn phím ▾</span>' +
     letterBarHtml +
     '<div class="cx5-bp-grid">' +
     '<div class="cx5-bp-key" onclick="bpQcSoCX5(\'7\')">7</div>' +
     '<div class="cx5-bp-key" onclick="bpQcSoCX5(\'8\')">8</div>' +
     '<div class="cx5-bp-key" onclick="bpQcSoCX5(\'9\')">9</div>' +
-    '<div class="cx5-bp-key cx5-bp-key-fn" onclick="bpQcXoaLuiCX5()">âŒ«</div>' +
+    '<div class="cx5-bp-key cx5-bp-key-fn" onclick="bpQcXoaLuiCX5()">⌫</div>' +
     '<div class="cx5-bp-key" onclick="bpQcSoCX5(\'4\')">4</div>' +
     '<div class="cx5-bp-key" onclick="bpQcSoCX5(\'5\')">5</div>' +
     '<div class="cx5-bp-key" onclick="bpQcSoCX5(\'6\')">6</div>' +
@@ -2028,7 +1994,7 @@ function moBanPhimCX5(el, loai) {
   const h = panelHienTai.offsetHeight || panelHienTai.getBoundingClientRect().height || 280;
   document.body.style.paddingBottom = h + "px";
 
-  // Tá»± Ä‘á»™ng Ä‘áº©y táº¥t cáº£ Pop-up Overlay Ä‘ang má»Ÿ lÃªn trÃªn bÃ n phÃ­m
+  // Tự động đẩy tất cả Pop-up Overlay đang mở lên trên bàn phím
   document.querySelectorAll(".overlay.show").forEach(ol => {
     ol.style.paddingBottom = h + "px";
   });
@@ -2056,14 +2022,14 @@ function dongBanPhimCX5() {
 }
 window.dongBanPhimCX5 = dongBanPhimCX5;
 
-// --- NHáº¬P LIá»†U Báº°NG GIá»ŒNG NÃ“I (SPEECH-TO-TEXT) CX5 ---
+// --- NHẬP LIỆU BẰNG GIỌNG NÓI (SPEECH-TO-TEXT) CX5 ---
 let cx5SpeechRec = null;
 let cx5DangNghe = false;
 let cx5MicBtnEl = null;
 
 function khoiTaoGiongNoiCX5() {
   if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
-    showCanhBaoCX5("TrÃ¬nh duyá»‡t khÃ´ng há»— trá»£ nháº­n diá»‡n giá»ng nÃ³i.");
+    showCanhBaoCX5("Trình duyệt không hỗ trợ nhận diện giọng nói.");
     return null;
   }
   const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -2084,36 +2050,36 @@ function khoiTaoGiongNoiCX5() {
       }
     }
 
-    // HÃ m dÃ¹ng chung Ä‘á»ƒ parse sá»‘ tá»« text
+    // Hàm dùng chung để parse số từ text
     function parseKg(text) {
       let txt = text.toLowerCase();
       
-      // Äá»•i pháº©y thÃ nh cháº¥m
+      // Đổi phẩy thành chấm
       txt = txt.replace(/,/g, '.')
-               .replace(/pháº©y/g, '.')
-               .replace(/cháº¥m/g, '.');
+               .replace(/phẩy/g, '.')
+               .replace(/chấm/g, '.');
                
-      // Chuyá»ƒn chá»¯ thÃ nh sá»‘ (báº¥t cháº¥p cÃ³ khoáº£ng tráº¯ng hay dÃ­nh liá»n)
-      txt = txt.replace(/khÃ´ng/g, '0')
-               .replace(/má»™t|má»‘t/g, '1')
+      // Chuyển chữ thành số (bất chấp có khoảng trắng hay dính liền)
+      txt = txt.replace(/không/g, '0')
+               .replace(/một|mốt/g, '1')
                .replace(/hai/g, '2')
                .replace(/ba/g, '3')
-               .replace(/bá»‘n|tÆ°/g, '4')
-               .replace(/nÄƒm|lÄƒm/g, '5')
-               .replace(/sÃ¡u/g, '6')
-               .replace(/báº£y/g, '7')
-               .replace(/tÃ¡m/g, '8')
-               .replace(/chÃ­n/g, '9')
-               .replace(/rÆ°á»¡i/g, '.5');
+               .replace(/bốn|tư/g, '4')
+               .replace(/năm|lăm/g, '5')
+               .replace(/sáu/g, '6')
+               .replace(/bảy/g, '7')
+               .replace(/tám/g, '8')
+               .replace(/chín/g, '9')
+               .replace(/rưỡi/g, '.5');
                
-      // Ã‰p bá» chá»¯ "mÆ°Æ¡i" náº¿u Google lá»¡ dá»‹ch ra nguyÃªn chá»¯ (nÄƒm mÆ°Æ¡i -> 5 mÆ°Æ¡i -> 5)
-      txt = txt.replace(/mÆ°Æ¡i/g, ''); 
-      txt = txt.replace(/mÆ°á»i/g, '1'); // mÆ°á»i lÄƒm -> 1 5 -> 15
+      // Ép bỏ chữ "mươi" nếu Google lỡ dịch ra nguyên chữ (năm mươi -> 5 mươi -> 5)
+      txt = txt.replace(/mươi/g, ''); 
+      txt = txt.replace(/mười/g, '1'); // mười lăm -> 1 5 -> 15
       
-      // Gá»t sáº¡ch khoáº£ng tráº¯ng
+      // Gọt sạch khoảng trắng
       txt = txt.replace(/\s+/g, '');
       
-      // ULTIMATE FALLBACK: Náº¿u cÃ³ 2 cá»¥m sá»‘ bá»‹ ngÄƒn cÃ¡ch bá»Ÿi báº¥t ká»³ chá»¯ rÃ¡c nÃ o (vd: 52pháº£y3, 52kÃ½3), biáº¿n chá»¯ Ä‘Ã³ thÃ nh dáº¥u cháº¥m
+      // ULTIMATE FALLBACK: Nếu có 2 cụm số bị ngăn cách bởi bất kỳ chữ rác nào (vd: 52phảy3, 52ký3), biến chữ đó thành dấu chấm
       txt = txt.replace(/(\d+)[^\d\.]+(\d+)/, '$1.$2');
       
       const match = txt.match(/\d+(\.\d+)?/);
@@ -2121,36 +2087,36 @@ function khoiTaoGiongNoiCX5() {
       return null;
     }
 
-    // Hiá»ƒn thá»‹ Realtime sá»‘ Ä‘ang Ä‘á»c vÃ o Ã´ Kg
+    // Hiển thị Realtime số đang đọc vào ô Kg
     if (interimTranscript) {
       const num = parseKg(interimTranscript);
       if (num !== null) {
         document.getElementById('cx5-kg').value = num;
       } else {
-        // Náº¿u chÆ°a ra sá»‘, cho hiá»ƒn thá»‹ luÃ´n chá»¯ Ä‘ang Ä‘á»c Ä‘á»ƒ biáº¿t mÃ¡y cÃ³ Ä‘ang nghe khÃ´ng
+        // Nếu chưa ra số, cho hiển thị luôn chữ đang đọc để biết máy có đang nghe không
         document.getElementById('cx5-kg').value = interimTranscript.trim();
       }
     }
 
-    // Chá»‘t Ä‘Æ¡n khi tháº£ tay hoáº·c ngáº¯t tiáº¿ng
+    // Chốt đơn khi thả tay hoặc ngắt tiếng
     if (finalTranscript) {
       const num = parseKg(finalTranscript);
       if (num !== null && num > 0) {
         document.getElementById('cx5-kg').value = num;
-        // Tá»± Ä‘á»™ng báº¥m thÃªm
+        // Tự động bấm thêm
         themDongCX5();
-        showCanhBaoCX5("ÄÃ£ thÃªm: " + num + " kg (Nghe Ä‘Æ°á»£c: " + finalTranscript + ")", "success");
+        showCanhBaoCX5("Đã thêm: " + num + " kg", "success");
       } else {
-        showCanhBaoCX5("KhÃ´ng nháº­n diá»‡n Ä‘Æ°á»£c sá»‘: " + finalTranscript);
-        document.getElementById('cx5-kg').value = ""; // XÃ³a tráº¯ng vÃ¬ khÃ´ng hiá»ƒu
+        showCanhBaoCX5("Không nhận diện được số: " + finalTranscript);
+        document.getElementById('cx5-kg').value = ""; // Xóa trắng vì không hiểu
       }
     }
   };
 
   rec.onerror = function(e) {
-    // KhÃ´ng hiá»‡n lá»—i náº¿u user cá»‘ tÃ¬nh tháº£ tay quÃ¡ nhanh (no-speech)
+    // Không hiện lỗi nếu user cố tình thả tay quá nhanh (no-speech)
     if (e.error !== 'no-speech' && e.error !== 'aborted') {
-      showCanhBaoCX5("Lá»—i giá»ng nÃ³i: " + e.error);
+      showCanhBaoCX5("Lỗi giọng nói: " + e.error);
     }
   };
 
@@ -2162,11 +2128,8 @@ function khoiTaoGiongNoiCX5() {
   return rec;
 }
 
-let cx5MicStopTimer = null;
-
 function batDauNgheCX5(e) {
   if (e) e.preventDefault();
-  if (cx5MicStopTimer) clearTimeout(cx5MicStopTimer);
   
   // Kiểm tra xem đã khóa Quy cách chưa, nếu chưa thì cảnh báo
   const khoaQC = document.getElementById("cx5-qc-khoa").style.display !== "none";
@@ -2186,19 +2149,14 @@ function batDauNgheCX5(e) {
   try { 
     cx5SpeechRec.start(); 
   } catch (err) {
+    // Lỗi start khi đang chạy
   }
 }
 
 function dungNgheCX5(e) {
   if (e) e.preventDefault();
-  if (cx5MicStopTimer) clearTimeout(cx5MicStopTimer);
-  cx5MicStopTimer = setTimeout(() => {
-    if (cx5SpeechRec && cx5DangNghe) {
-      try { cx5SpeechRec.stop(); } catch (err) {}
-    }
-  }, 800);
-}
- catch (err) {}
+  if (cx5SpeechRec && cx5DangNghe) {
+    try { cx5SpeechRec.stop(); } catch (err) {}
   }
 }
 // ----------------------------------------------------
@@ -2279,7 +2237,7 @@ function chonQCSLLuotCX5(item) {
   closeDropdownSLLuotCX5();
   const wrap = document.getElementById("cx5-sl-doi-qc-wrap");
   if (wrap) wrap.style.display = "none";
-  showCanhBaoCX5("ÄÃ£ Ä‘á»•i QC: " + item.ten, "success");
+  showCanhBaoCX5("Đã đổi QC: " + item.ten, "success");
 }
 
 function bpGiaTriCX5() {
@@ -2380,4 +2338,3 @@ window.addEventListener("load", function () {
     mspCacheX5[monthKey] = local;
   }
 });
-
