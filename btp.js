@@ -68,7 +68,8 @@ function docGiongNoiBTP(msp, kg) {
   
   const msg = new SpeechSynthesisUtterance(text);
   msg.lang = 'vi-VN';
-  msg.rate = 2.0;
+  msg.rate = 1.7;
+  msg.volume = 1.0;
   
   window.__speechUtterances.push(msg);
   msg.onend = function() {
