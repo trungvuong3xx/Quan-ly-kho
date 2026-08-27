@@ -168,7 +168,10 @@ function dungCX1() {
 }
 
 async function tiepTucCX1() {
-  demSoDot += 1; 
+  const coDuLieu = phienCX1.some(r => r.dotQuet === demSoDot);
+  if (coDuLieu) {
+    demSoDot += 1; 
+  }
   dangQuetCX1 = true;
   denPinBat = false;
   document.getElementById("cx1-status").textContent = "Đang quét Đợt " + demSoDot + "...";
@@ -266,64 +269,122 @@ async function ketThucCX1() {
   }
 }
 
+let cx1DangSuaDot = null;
+let cx1DangSuaMsp = null;
+let cx1DangSuaQc = null;
+
 function nhapTayCX1(dot, msp, qc) {
+  cx1DangSuaDot = dot;
+  cx1DangSuaMsp = msp;
+  cx1DangSuaQc = qc;
   let modal = document.getElementById("cx1-nhap-tay-modal");
   if (!modal) {
     modal = document.createElement("div");
     modal.id = "cx1-nhap-tay-modal";
     modal.className = "overlay";
-    modal.innerHTML = `
-      <div class="overlay-card" style="text-align:center;">
-        <div class="overlay-title" style="text-align:center;">Nhập số KG</div>
-        <div style="color:var(--cream-soft);font-size:14px;margin:10px 0 18px;line-height:1.5;" id="cx1-nhap-tay-text"></div>
-        <input type="number" id="cx1-nhap-tay-input" class="tk-input" style="text-align:center;font-size:20px;padding:12px;margin-bottom:20px;width:100%;box-sizing:border-box;background:var(--bg);color:var(--cream);border:1px solid var(--line);border-radius:10px;" placeholder="Ví dụ: 700.5">
-        <div style="display:flex; gap:10px;">
-          <button class="btn" style="flex:1;background:var(--card-raised);color:var(--cream);border:1px solid var(--line);" onclick="dongNhapTayCX1(false)">Hủy</button>
-          <button class="btn btn-blue" style="flex:1" onclick="dongNhapTayCX1(true)">Xác nhận</button>
-        </div>
-      </div>
-    `;
     document.body.appendChild(modal);
   }
 
-  const textEl = document.getElementById("cx1-nhap-tay-text");
-  const inputEl = document.getElementById("cx1-nhap-tay-input");
-  textEl.textContent = "Nhập số KG cho " + (qc || msp) + " (Đợt " + dot + "):";
-  inputEl.value = "";
-  
+  renderSuaChiTietCX1();
   modal.classList.add("show");
-  setTimeout(() => inputEl.focus(), 100);
-
-  window.dongNhapTayCX1 = function(isOk) {
-    modal.classList.remove("show");
-    if (!isOk) return;
-    
-    const kgStr = inputEl.value;
-    if (!kgStr) return;
-    const kg = parseFloat(kgStr);
-    if (isNaN(kg) || kg <= 0) {
-      showCanhBaoCX1("Số KG không hợp lệ!");
-      return;
-    }
-    
-    const id = "MANUAL_" + Date.now();
-    phienCX1.push({
-      id: id, msp: msp, qc: qc,
-      kg: kg, thoiGian: new Date(), dotQuet: dot
-    });
-    
-    const demEl = document.getElementById("cx1-dem");
-    if(demEl) demEl.textContent = "Đã quét: " + phienCX1.length + " mã";
-    
-    luuPhienDoDangCX1();
-    hienKetQuaCX1(); // to re-render the table
-    
-    if (dangQuetCX1 || (document.getElementById("cx1-cam") && document.getElementById("cx1-cam").style.display !== "none")) {
-      capNhatLogCX1();
-    }
-  };
 }
+
+function renderSuaChiTietCX1() {
+  const modal = document.getElementById("cx1-nhap-tay-modal");
+  if (!modal) return;
+  const rows = phienCX1.filter(r => r.dotQuet === cx1DangSuaDot && r.msp === cx1DangSuaMsp);
+  
+  let listHtml = "";
+  if (rows.length === 0) {
+    listHtml = '<div style="color:var(--cream-soft);font-size:13px;text-align:center;padding:10px 0;">Chưa có dữ liệu.</div>';
+  } else {
+    listHtml = rows.map(r => {
+      const idx = phienCX1.indexOf(r);
+      return '<span class="cx5-so-sx">' + r.kg + ' <i class="ti ti-x" onclick="xoaMaCX1TrongSua(' + idx + ', event)"></i></span>';
+    }).join("");
+  }
+
+  modal.innerHTML = `
+    <div class="overlay-card">
+      <div class="overlay-title" style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+        <span>Đợt ${cx1DangSuaDot} - ${cx1DangSuaQc || cx1DangSuaMsp}</span>
+        <button type="button" class="btn btn-sm btn-red" style="padding:4px 8px;font-size:12px;" onclick="xoaTongCX1()">Xóa tổng</button>
+      </div>
+      <div class="cx5-chitiet-kg" style="margin-top:10px">
+        ${listHtml}
+      </div>
+      <div style="display:flex;gap:8px;margin-top:14px">
+        <input type="text" id="cx1-them-kg" inputmode="none" placeholder="Thêm số kg..." onkeydown="if(event.key==='Enter'){event.preventDefault();themKgVaoDotCX1()}">
+        <button class="btn btn-green" style="width:56px;flex-shrink:0" onclick="themKgVaoDotCX1()"><i class="ti ti-plus"></i></button>
+      </div>
+      <button class="btn btn-full" style="background:var(--neutral-solid);color:var(--cream);margin-top:12px" onclick="dongNhapTayCX1()">Đóng</button>
+    </div>
+  `;
+}
+
+function themKgVaoDotCX1() {
+  const inputEl = document.getElementById("cx1-them-kg");
+  if (!inputEl) return;
+  const kgStr = inputEl.value;
+  if (!kgStr) return;
+  const kg = parseFloat(kgStr);
+  if (isNaN(kg) || kg <= 0) {
+    showCanhBaoCX1("Số KG không hợp lệ!");
+    return;
+  }
+  
+  const id = "MANUAL_" + Date.now();
+  phienCX1.push({
+    id: id, msp: cx1DangSuaMsp, qc: cx1DangSuaQc,
+    kg: kg, thoiGian: new Date(), dotQuet: cx1DangSuaDot
+  });
+  
+  inputEl.value = "";
+  luuPhienDoDangCX1();
+  hienKetQuaCX1();
+  renderSuaChiTietCX1();
+  capNhatLogCX1();
+  
+  const demEl = document.getElementById("cx1-dem");
+  if(demEl) demEl.textContent = "Đã quét: " + phienCX1.length + " mã";
+  inputEl.focus();
+}
+
+function xoaMaCX1TrongSua(index, ev) {
+  if (ev) ev.stopPropagation();
+  phienCX1.splice(index, 1);
+  luuPhienDoDangCX1();
+  hienKetQuaCX1();
+  renderSuaChiTietCX1();
+  capNhatLogCX1();
+  const demEl = document.getElementById("cx1-dem");
+  if (demEl) demEl.textContent = "Đã quét: " + phienCX1.length + " mã";
+}
+
+function xoaTongCX1() {
+  if (confirm("Xóa tất cả mã của quy cách này trong đợt " + cx1DangSuaDot + "?")) {
+    phienCX1 = phienCX1.filter(r => !(r.dotQuet === cx1DangSuaDot && r.msp === cx1DangSuaMsp));
+    luuPhienDoDangCX1();
+    hienKetQuaCX1();
+    renderSuaChiTietCX1();
+    capNhatLogCX1();
+    const demEl = document.getElementById("cx1-dem");
+    if (demEl) demEl.textContent = "Đã quét: " + phienCX1.length + " mã";
+  }
+}
+
+window.dongNhapTayCX1 = function() {
+  const modal = document.getElementById("cx1-nhap-tay-modal");
+  if (modal) modal.classList.remove("show");
+  cx1DangSuaDot = null;
+  cx1DangSuaMsp = null;
+  cx1DangSuaQc = null;
+  if (typeof dongBanPhimCX5 === "function") dongBanPhimCX5();
+};
 window.nhapTayCX1 = nhapTayCX1;
+window.themKgVaoDotCX1 = themKgVaoDotCX1;
+window.xoaMaCX1TrongSua = xoaMaCX1TrongSua;
+window.xoaTongCX1 = xoaTongCX1;
 
 function xoaMaCX1(index, ev) {
   if (ev) ev.stopPropagation();
@@ -360,6 +421,12 @@ function capNhatLogCX1() {
     return;
   }
 
+  const dotSeq = {};
+  phienCX1.forEach(item => {
+    dotSeq[item.dotQuet] = (dotSeq[item.dotQuet] || 0) + 1;
+    item.seqTrongDot = dotSeq[item.dotQuet];
+  });
+
   const newestFirst = phienCX1.slice().reverse();
   container.innerHTML = newestFirst.map((item, idx) => {
     const dot = item.dotQuet || 1;
@@ -370,6 +437,7 @@ function capNhatLogCX1() {
     return `<div class="${flashClass}" style="display:flex; justify-content:space-between; align-items:center; padding:4px 0; border-bottom:1px solid var(--line-soft); font-size:12px; border-radius:6px;">
       <span style="color:var(--steel); font-weight:700; width:26px;">${dot}</span>
       <span style="color:var(--brass); font-weight:800; flex:1; text-align:left; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${item.qc || item.msp || '—'}</span>
+      <span style="color:var(--cream-soft); font-size:11px; width:20px; text-align:center;">${item.seqTrongDot}</span>
       <span style="color:var(--success); font-weight:700; width:45px; text-align:center;">${item.kg || 0}</span>
       <span style="color:var(--cream-soft); font-size:11px; width:50px; text-align:right;">${gio}</span>
       <button class="cx5-del-btn" onclick="xoaMaCX1(${originalIndex}, event)" title="Xóa mã này" style="margin-left:4px; background:none; border:none; color:var(--red); cursor:pointer; padding:2px 4px;">
@@ -471,7 +539,10 @@ function hienKetQuaCX1() {
 
 async function quetTiepCX1() {
   // Giữ nguyên dữ liệu cũ, mở camera quét tiếp
-  demSoDot += 1;
+  const coDuLieu = phienCX1.some(r => r.dotQuet === demSoDot);
+  if (coDuLieu) {
+    demSoDot += 1;
+  }
   dangQuetCX1 = true;
   denPinBat = false;
 

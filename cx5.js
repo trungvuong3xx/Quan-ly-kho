@@ -1973,7 +1973,7 @@ let banPhimQCPendingCX5 = null;
   document.addEventListener("focus", function (e) {
     const el = e.target;
     if (!el || el.tagName !== "INPUT") return;
-    if (el.id === "cx5-kg" || el.id === "cx5-bao" || el.id === "cx5-sl-them-kg" || el.id === "cx5-sx-kg" || el.classList.contains("cx5-sx-input")) {
+    if (el.id === "cx5-kg" || el.id === "cx5-bao" || el.id === "cx5-sl-them-kg" || el.id === "cx5-sx-kg" || el.id === "cx1-them-kg" || el.classList.contains("cx5-sx-input")) {
       moBanPhimCX5(el, "kg");
     } else if (el.id === "cx5-ten" || el.id === "cx5-sx-ten" || el.id === "cx5-sl-ten-tim") {
       moBanPhimCX5(el, "qc");
@@ -2277,6 +2277,8 @@ function bpKgEnterCX5() {
     themKgVaoLuotCX5();
   } else if (id === "cx5-sx-kg") {
     themDongSXCX5();
+  } else if (id === "cx1-them-kg") {
+    if (typeof themKgVaoDotCX1 === "function") themKgVaoDotCX1();
   } else if (banPhimActiveElCX5.classList.contains("cx5-sx-input")) {
     const key = banPhimActiveElCX5.getAttribute("data-key");
     themSoSXCX5(key, banPhimActiveElCX5);
