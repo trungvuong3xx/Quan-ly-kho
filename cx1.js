@@ -27,7 +27,7 @@ async function toggleFlashCX1() {
     if (!stream) return;
     const track = stream.getVideoTracks()[0];
     const capabilities = track.getCapabilities();
-    if (!capabilities.torch) { alert("Thiết bị không hỗ trợ đèn pin."); return; }
+    if (!capabilities.torch) { showCanhBaoCX1("Thiết bị không hỗ trợ đèn pin."); return; }
     denPinBat = !denPinBat;
     await track.applyConstraints({ advanced: [{ torch: denPinBat }] });
     const btnFlash = document.getElementById("btn-flash-cx1");
@@ -115,14 +115,30 @@ async function batDauCX1() {
   let phienCu = null;
   try { phienCu = JSON.parse(localStorage.getItem("cx1_phien_dodang")); } catch (e) {}
   if (phienCu && Array.isArray(phienCu.phienCX1) && phienCu.phienCX1.length > 0) {
-    const tiepTuc = confirm(
-      "Bạn đang có phiên Chỉ For dở dang (" + phienCu.phienCX1.length + " mã, ngày " + phienCu.ngayCX1 + ").\n" +
-      "Bấm OK để tiếp tục phiên đó, hoặc Cancel để xoá và bắt đầu phiên mới."
-    );
-    if (tiepTuc) { khoiPhucCX1(phienCu); return; }
-    xoaPhienDoDangCX1();
+    if (typeof moXacNhanApp === "function") {
+      moXacNhanApp(
+        "Bạn đang có phiên Chỉ For dở dang (" + phienCu.phienCX1.length + " mã, ngày " + phienCu.ngayCX1 + ").<br>Bạn muốn tiếp tục phiên đó hay bắt đầu phiên mới?",
+        () => { khoiPhucCX1(phienCu); },
+        "Tiếp tục",
+        () => { xoaPhienDoDangCX1(); tiepTucKhoiTaoCX1(); },
+        "Bắt đầu mới",
+        "Phiên dở dang"
+      );
+      return;
+    } else {
+      const tiepTuc = confirm(
+        "Bạn đang có phiên Chỉ For dở dang (" + phienCu.phienCX1.length + " mã, ngày " + phienCu.ngayCX1 + ").\n" +
+        "Bấm OK để tiếp tục phiên đó, hoặc Cancel để xoá và bắt đầu phiên mới."
+      );
+      if (tiepTuc) { khoiPhucCX1(phienCu); return; }
+      xoaPhienDoDangCX1();
+    }
   }
 
+  tiepTucKhoiTaoCX1();
+}
+
+async function tiepTucKhoiTaoCX1() {
   phienCX1 = [];
   demSoDot = 1; 
   dangQuetCX1 = true;
@@ -154,7 +170,7 @@ async function batDauCX1() {
       });
     }
   } catch(e) {
-    alert("Lỗi camera: " + e);
+    showCanhBaoCX1("Lỗi camera: " + e);
     dungCX1();
   }
 }
@@ -187,7 +203,7 @@ async function tiepTucCX1() {
       });
     }
   } catch(e) {
-    alert("Lỗi camera: " + e);
+    showCanhBaoCX1("Lỗi camera: " + e);
     dungCX1();
   }
 }
@@ -282,7 +298,27 @@ function nhapTayCX1(dot, msp, qc) {
     modal = document.createElement("div");
     modal.id = "cx1-nhap-tay-modal";
     modal.className = "overlay";
+    modal.innerHTML = `
+      <div class="overlay-card">
+        <div class="overlay-title" style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+          <span id="cx1-sua-chitiet-title"></span>
+          <button type="button" class="btn btn-sm btn-red" style="padding:4px 8px;font-size:12px;" onclick="xoaTongCX1()">Xóa tổng</button>
+        </div>
+        <div class="cx5-chitiet-kg" id="cx1-sua-chitiet-container" style="margin-top:10px">
+        </div>
+        <div style="display:flex;gap:8px;margin-top:14px">
+          <input type="text" id="cx1-them-kg" inputmode="none" placeholder="Thêm số kg..." onkeydown="if(event.key==='Enter'){event.preventDefault();themKgVaoDotCX1()}">
+          <button class="btn btn-green" style="width:56px;flex-shrink:0" onclick="themKgVaoDotCX1()"><i class="ti ti-plus"></i></button>
+        </div>
+        <button class="btn btn-full" style="background:var(--neutral-solid);color:var(--cream);margin-top:12px" onclick="dongNhapTayCX1()">Đóng</button>
+      </div>
+    `;
     document.body.appendChild(modal);
+  }
+
+  const titleEl = document.getElementById("cx1-sua-chitiet-title");
+  if (titleEl) {
+    titleEl.textContent = "Đợt " + cx1DangSuaDot + " - " + (cx1DangSuaQc || cx1DangSuaMsp);
   }
 
   renderSuaChiTietCX1();
@@ -290,8 +326,8 @@ function nhapTayCX1(dot, msp, qc) {
 }
 
 function renderSuaChiTietCX1() {
-  const modal = document.getElementById("cx1-nhap-tay-modal");
-  if (!modal) return;
+  const container = document.getElementById("cx1-sua-chitiet-container");
+  if (!container) return;
   const rows = phienCX1.filter(r => r.dotQuet === cx1DangSuaDot && r.msp === cx1DangSuaMsp);
   
   let listHtml = "";
@@ -304,22 +340,7 @@ function renderSuaChiTietCX1() {
     }).join("");
   }
 
-  modal.innerHTML = `
-    <div class="overlay-card">
-      <div class="overlay-title" style="display:flex;align-items:center;justify-content:space-between;gap:8px">
-        <span>Đợt ${cx1DangSuaDot} - ${cx1DangSuaQc || cx1DangSuaMsp}</span>
-        <button type="button" class="btn btn-sm btn-red" style="padding:4px 8px;font-size:12px;" onclick="xoaTongCX1()">Xóa tổng</button>
-      </div>
-      <div class="cx5-chitiet-kg" style="margin-top:10px">
-        ${listHtml}
-      </div>
-      <div style="display:flex;gap:8px;margin-top:14px">
-        <input type="text" id="cx1-them-kg" inputmode="none" placeholder="Thêm số kg..." onkeydown="if(event.key==='Enter'){event.preventDefault();themKgVaoDotCX1()}">
-        <button class="btn btn-green" style="width:56px;flex-shrink:0" onclick="themKgVaoDotCX1()"><i class="ti ti-plus"></i></button>
-      </div>
-      <button class="btn btn-full" style="background:var(--neutral-solid);color:var(--cream);margin-top:12px" onclick="dongNhapTayCX1()">Đóng</button>
-    </div>
-  `;
+  container.innerHTML = listHtml;
 }
 
 function themKgVaoDotCX1() {
@@ -362,14 +383,26 @@ function xoaMaCX1TrongSua(index, ev) {
 }
 
 function xoaTongCX1() {
-  if (confirm("Xóa tất cả mã của quy cách này trong đợt " + cx1DangSuaDot + "?")) {
-    phienCX1 = phienCX1.filter(r => !(r.dotQuet === cx1DangSuaDot && r.msp === cx1DangSuaMsp));
-    luuPhienDoDangCX1();
-    hienKetQuaCX1();
-    renderSuaChiTietCX1();
-    capNhatLogCX1();
-    const demEl = document.getElementById("cx1-dem");
-    if (demEl) demEl.textContent = "Đã quét: " + phienCX1.length + " mã";
+  if (typeof moXacNhanApp === "function") {
+    moXacNhanApp("Xóa tất cả mã của quy cách này trong đợt " + cx1DangSuaDot + "?", () => {
+      phienCX1 = phienCX1.filter(r => !(r.dotQuet === cx1DangSuaDot && r.msp === cx1DangSuaMsp));
+      luuPhienDoDangCX1();
+      hienKetQuaCX1();
+      renderSuaChiTietCX1();
+      capNhatLogCX1();
+      const demEl = document.getElementById("cx1-dem");
+      if (demEl) demEl.textContent = "Đã quét: " + phienCX1.length + " mã";
+    }, "Xóa tất cả", null, "Hủy", "Xác nhận xóa");
+  } else {
+    if (confirm("Xóa tất cả mã của quy cách này trong đợt " + cx1DangSuaDot + "?")) {
+      phienCX1 = phienCX1.filter(r => !(r.dotQuet === cx1DangSuaDot && r.msp === cx1DangSuaMsp));
+      luuPhienDoDangCX1();
+      hienKetQuaCX1();
+      renderSuaChiTietCX1();
+      capNhatLogCX1();
+      const demEl = document.getElementById("cx1-dem");
+      if (demEl) demEl.textContent = "Đã quét: " + phienCX1.length + " mã";
+    }
   }
 }
 
@@ -391,9 +424,11 @@ function xoaMaCX1(index, ev) {
   if (index < 0 || index >= phienCX1.length) return;
   const item = phienCX1[index];
   const tenMa = item ? (item.msp || item.id) : "mã này";
+  const dot = item.dotQuet;
+  const msp = item.msp;
   
   const doXoa = () => {
-    phienCX1.splice(index, 1);
+    phienCX1 = phienCX1.filter(r => !(r.dotQuet === dot && r.msp === msp));
     luuPhienDoDangCX1();
     capNhatLogCX1();
     const demEl = document.getElementById("cx1-dem");
@@ -404,8 +439,12 @@ function xoaMaCX1(index, ev) {
     showCanhBaoCX1("Đã xóa " + tenMa);
   };
   
-  if (confirm("Xóa mã " + tenMa + " khỏi phiên quét?")) {
-    doXoa();
+  if (typeof moXacNhanApp === "function") {
+    moXacNhanApp("Xóa mã " + tenMa + " khỏi phiên quét?", doXoa, "Xóa", null, "Hủy", "Xác nhận xóa");
+  } else {
+    if (confirm("Xóa mã " + tenMa + " khỏi phiên quét?")) {
+      doXoa();
+    }
   }
 }
 window.xoaMaCX1 = xoaMaCX1;
@@ -668,7 +707,7 @@ window.addEventListener("online", async function() {
 });
 
 function xuatCSVCX1() {
-  if (phienCX1.length === 0) { alert("Chưa có dữ liệu để xuất"); return; }
+  if (phienCX1.length === 0) { showCanhBaoCX1("Chưa có dữ liệu để xuất"); return; }
   const header = ["Dot", "MSP", "QC", "KG", "ThoiGian"];
   const rows = phienCX1.map(r => [r.dotQuet, r.msp, r.qc, r.kg, r.thoiGian.toISOString()]);
   const escapeCSV = v => `"${String(v).replace(/"/g, '""')}"`;
@@ -794,7 +833,7 @@ function xuatExcelLichSuCX1(idPhien) {
   const list = docLichSuCX1();
   const entry = list.find(s => s.idPhien === targetId);
   if (!entry || !entry.phienCX1 || entry.phienCX1.length === 0) {
-    alert("Chưa có dữ liệu phiên này để xuất Excel!");
+    showCanhBaoCX1("Chưa có dữ liệu phiên này để xuất Excel!");
     return;
   }
   const dateStr = entry.ngay || new Date().toISOString().split("T")[0];
