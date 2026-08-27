@@ -453,7 +453,7 @@ async function khoiTaoCameraFast(videoId, onDecodedCallback) {
   if (!videoEl) return null;
 
   if (animFrameMap[videoId]) {
-    cancelAnimationFrame(animFrameMap[videoId]);
+    clearTimeout(animFrameMap[videoId]);
     animFrameMap[videoId] = null;
   }
 
@@ -526,11 +526,11 @@ async function khoiTaoCameraFast(videoId, onDecodedCallback) {
           isProcessing = false;
         }
         if (videoEl.srcObject) {
-          animFrameMap[videoId] = requestAnimationFrame(loopNative);
+          animFrameMap[videoId] = setTimeout(loopNative, 100);
         }
       };
 
-      animFrameMap[videoId] = requestAnimationFrame(loopNative);
+      animFrameMap[videoId] = setTimeout(loopNative, 100);
       return { reset: () => {} }; // Trả về object giả lập ZXing
     } catch (e) {
       console.warn("BarcodeDetector native error, fallback to ZXing:", e);
@@ -566,10 +566,10 @@ async function khoiTaoCameraFast(videoId, onDecodedCallback) {
         isZxingProcessing = false;
       }
       if (videoEl.srcObject) {
-        animFrameMap[videoId] = requestAnimationFrame(loopZxing);
+        animFrameMap[videoId] = setTimeout(loopZxing, 100);
       }
     };
-    animFrameMap[videoId] = requestAnimationFrame(loopZxing);
+    animFrameMap[videoId] = setTimeout(loopZxing, 100);
     return reader;
   } catch (e) {
     console.warn("ZXing fallback init error:", e);
@@ -579,7 +579,7 @@ async function khoiTaoCameraFast(videoId, onDecodedCallback) {
 
 function dungCameraFast(videoId, zxingReaderObj) {
   if (animFrameMap[videoId]) {
-    cancelAnimationFrame(animFrameMap[videoId]);
+    clearTimeout(animFrameMap[videoId]);
     animFrameMap[videoId] = null;
   }
   if (zxingReaderObj && typeof zxingReaderObj.reset === 'function') {
