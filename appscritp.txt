@@ -715,11 +715,24 @@ function ghiGhepCX5(payload) {
     });
 
     sessionEntries.forEach(function (se) {
-      const checkKey = se.dateStr + "|" + se.msp + "|" + se.bao + "|" + Math.round(se.kg * 100)/100;
-      if (existingCounts[checkKey] > 0) {
-        existingCounts[checkKey]--;
-      } else {
-        ghiLichSuC5(se);
+      let cacLotMoi = [];
+      if (se.lots) {
+        se.lots.forEach(function (lot) {
+          if (!lot.kgList || lot.kgList.length === 0) return;
+          let lotBao = lot.kgList.length;
+          let lotKg = 0;
+          lot.kgList.forEach(function (v) { lotKg += (Number(v) || 0); });
+          const checkKey = se.dateStr + "|" + se.msp + "|" + lotBao + "|" + Math.round(lotKg * 100) / 100;
+          if (existingCounts[checkKey] > 0) {
+            existingCounts[checkKey]--;
+          } else {
+            cacLotMoi.push(lot);
+          }
+        });
+      }
+      if (cacLotMoi.length > 0) {
+        const seMoi = { dateStr: se.dateStr, msp: se.msp, ten: se.ten, lots: cacLotMoi };
+        ghiLichSuC5(seMoi);
       }
     });
 
