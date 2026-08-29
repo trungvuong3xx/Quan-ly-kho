@@ -1111,6 +1111,7 @@ function moTongKgCX5(dsQC) {
           const rows = luotMapLocal.get(thuTuLocal[i]);
           if (rows.length > 0) {
             localCandidates.push({
+              lotId: idPhienHienTaiC5 + "_" + thuTuLocal[i],
               bao: rows.length,
               kg: Math.round(rows.reduce(function (s, r) { return s + r.kg; }, 0) * 10) / 10,
               matched: false,
@@ -1133,6 +1134,7 @@ function moTongKgCX5(dsQC) {
 
            anchorCandidates.push({
              row: c.row,
+             lotId: null,
              bao: cBao,
              kg: cKg,
              rows: matchedRows
@@ -1152,12 +1154,12 @@ function moTongKgCX5(dsQC) {
 
         localCandidates.forEach(lc => {
             if (!lc.matched) {
-                anchorCandidates.push({ row: null, bao: lc.bao, kg: lc.kg, rows: lc.rows });
+                anchorCandidates.push({ row: null, lotId: lc.lotId, bao: lc.bao, kg: lc.kg, rows: lc.rows });
             }
         });
 
         if (anchorCandidates.length === 0) {
-           anchorCandidates.push({ row: null, bao: 0, kg: 0, rows: null });
+           anchorCandidates.push({ row: null, lotId: null, bao: 0, kg: 0, rows: null });
         }
 
         anchorCandidates.forEach((anchor, idx) => {
@@ -1479,6 +1481,7 @@ async function dongBoGhepCX5() {
     groups.push({
       key: key,
       rowNeo: d.homNay ? d.homNay.row : null,
+      lotIdNeo: d.homNay ? d.homNay.lotId : null,
       baoNeo: d.homNay ? d.homNay.bao : 0,
       kgNeo: d.homNay ? d.homNay.kg : 0,
       tongBao: tongBao,
@@ -1502,7 +1505,7 @@ async function dongBoGhepCX5() {
     dateStr: ngayCX5,
     msp: e.msp,
     ten: e.ten,
-    lots: e.lotOrder.map(lid => ({ kgList: e.lotMap.get(lid) }))
+    lots: e.lotOrder.map(lid => ({ lotId: idPhienHienTaiC5 + "_" + lid, kgList: e.lotMap.get(lid) }))
   }));
 
   if (groups.length === 0 && sessionEntries.length === 0) {

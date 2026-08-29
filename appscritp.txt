@@ -491,23 +491,96 @@ function batchSubmitEntryX5(payload) {
       return { success: true, count: 0, results: [] };
     }
 
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
     const results = [];
+    const byDate = {};
+
     for (let i = 0; i < items.length; i++) {
-      const item = items[i];
-      if (!item || !item.msp) {
-        results.push({ msp: item ? item.msp : "", success: false, message: "Thiếu MSP" });
+      const it = items[i];
+      if (!it.dateStr) continue;
+      if (!byDate[it.dateStr]) byDate[it.dateStr] = [];
+      byDate[it.dateStr].push(it);
+    }
+
+    for (const dateStr in byDate) {
+      const dateItems = byDate[dateStr];
+      const date = new Date(dateStr);
+      if (isNaN(date.getTime())) {
+        dateItems.forEach(it => results.push({ key: it.key, msp: it.msp, success: false, message: 'Ngày không hợp lệ' }));
+        continue;
+      }
+      
+      const month = date.getMonth() + 1;
+      const day = date.getDate();
+      const sheetName = String(month);
+      const sheet = ss.getSheetByName(sheetName);
+
+      if (!sheet) {
+        dateItems.forEach(it => results.push({ key: it.key, msp: it.msp, success: false, message: 'Chưa có sheet tháng' }));
         continue;
       }
 
-      const r = submitEntry({
-        dateStr: item.dateStr,
-        loai: "NHAP_SX",
-        msp: item.msp,
-        bao: item.bao,
-        kg: item.kg,
-        ghiChu: item.ghiChu || ""
-      });
-      results.push({ key: item.key, msp: item.msp, ten: item.ten, success: r.success, message: r.message });
+      const baoCol = CONFIG.AF_COL_INDEX + (day - 1) * 8;
+
+      const mspData = sheet.getRange(6, CONFIG.MSP_COL_IN_MONTH_SHEET, 639, 1).getValues();
+      const dataRange = sheet.getRange(6, baoCol, 639, 2);
+      const dataValues = dataRange.getValues();
+      const noteRange = sheet.getRange(6, baoCol + 1, 639, 1);
+      const noteValues = noteRange.getNotes();
+
+      const mspMapNormal = {};
+      for (let i = 0; i < mspData.length; i++) {
+        const rowNum = 6 + i;
+        const m = String(mspData[i][0]).trim();
+        if (!m) continue;
+        if ((rowNum >= 6 && rowNum <= 543) || (rowNum >= 637 && rowNum <= 644)) {
+           if (mspMapNormal[m] === undefined) mspMapNormal[m] = i;
+        }
+      }
+
+      let hasChanges = false;
+
+      for (let i = 0; i < dateItems.length; i++) {
+        const item = dateItems[i];
+        if (!item.msp) {
+          results.push({ key: item.key, msp: "", success: false, message: "Thiếu MSP" });
+          continue;
+        }
+
+        const idx = mspMapNormal[String(item.msp).trim()];
+        if (idx === undefined) {
+           results.push({ key: item.key, msp: item.msp, success: false, message: 'Không tìm thấy MSP trong kho đã chọn' });
+           continue;
+        }
+
+        const baoInput = item.bao ? Number(item.bao) : 0;
+        const kgInput = item.kg ? Number(item.kg) : 0;
+
+        const existing = dataValues[idx];
+        const baoResult = combineValue_(existing[0], baoInput, 0);
+        const kgResult = combineValue_(existing[1], kgInput, 0);
+
+        if (!baoResult.ok) {
+           results.push({ key: item.key, msp: item.msp, success: false, message: 'Ô BAO đang có loại khác (hậu tố .x' + baoResult.existingSuffix + ')' });
+           continue;
+        }
+        if (!kgResult.ok) {
+           results.push({ key: item.key, msp: item.msp, success: false, message: 'Ô KG đang có loại khác (hậu tố .x' + kgResult.existingSuffix + ')' });
+           continue;
+        }
+
+        dataValues[idx][0] = Math.round(baoResult.val * 100) / 100;
+        dataValues[idx][1] = Math.round(kgResult.val * 100) / 100;
+        if (item.ghiChu) noteValues[idx][0] = item.ghiChu;
+        hasChanges = true;
+
+        results.push({ key: item.key, msp: item.msp, ten: item.ten, success: true, message: 'Đã ghi vào sheet ' + sheetName + ', dòng ' + (6 + idx) });
+      }
+
+      if (hasChanges) {
+        dataRange.setValues(dataValues);
+        noteRange.setNotes(noteValues);
+      }
     }
 
     return { success: true, results: results };
@@ -528,10 +601,11 @@ function layLSC5_() {
 function ghiLichSuC5(payload) {
   try {
     const lots = payload.lots || [];
-    if (lots.length === 0) return;
+    if (lots.length === 0) return {};
 
     const sh = layLSC5_();
     let row = Math.max(sh.getLastRow() + 1, 3);
+    const lotMap = {};
 
     lots.forEach(function (lot) {
       const kgList = lot.kgList || [];
@@ -560,8 +634,11 @@ function ghiLichSuC5(payload) {
       const tongKg = kgList.reduce(function (s, v) { return s + (Number(v) || 0); }, 0);
       sh.getRange(dongCuoiCung, 18).setValue(Math.round(tongKg * 100) / 100);
       sh.getRange(dongCuoiCung, 20, 1, 2).setValues([[kgList.length, Math.round(tongKg * 100) / 100]]);
+      
+      if (lot.lotId) lotMap[lot.lotId] = dongCuoiCung;
     });
-  } catch (e) {}
+    return lotMap;
+  } catch (e) { return {}; }
 }
 
 function chuanHoaNgayLSC5_(v) {
@@ -707,6 +784,7 @@ function ghiGhepCX5(payload) {
     // 1) Ghi dữ liệu lượt nhập phiên hôm nay vào LSC5 (kiểm tra chống trùng)
     const sessionEntries = (payload && payload.sessionEntries) ? payload.sessionEntries : [];
     const existingBlocks = docCacKhoiLSC5_();
+    const lotIdToRowMap = {};
     
     const existingCounts = {};
     existingBlocks.forEach(function (b) {
@@ -732,7 +810,8 @@ function ghiGhepCX5(payload) {
       }
       if (cacLotMoi.length > 0) {
         const seMoi = { dateStr: se.dateStr, msp: se.msp, ten: se.ten, lots: cacLotMoi };
-        ghiLichSuC5(seMoi);
+        const newMap = ghiLichSuC5(seMoi);
+        Object.assign(lotIdToRowMap, newMap);
       }
     });
 
@@ -744,6 +823,9 @@ function ghiGhepCX5(payload) {
 
     const blocks = docCacKhoiLSC5_();
     groups.forEach(function (g) {
+      if (g.lotIdNeo && lotIdToRowMap[g.lotIdNeo]) {
+        g.rowNeo = lotIdToRowMap[g.lotIdNeo];
+      }
       if (!g.rowNeo && g.key) {
         const parts = g.key.split("|");
         const msp = parts[0], ten = parts[1];
