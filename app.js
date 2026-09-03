@@ -1245,3 +1245,39 @@ function dongXacNhanApp(dongY) {
   else if (!dongY && cbHuy) cbHuy();
 }
 window.dongXacNhanApp = dongXacNhanApp;
+
+// ── Tự động khôi phục Camera khi app quay lại từ nền (Anti-Freeze) ──
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible') {
+    // Chờ 400ms để hệ điều hành cấp lại toàn quyền UI cho trình duyệt
+    setTimeout(() => {
+      const camList = [
+        { vid: 'reader', box: 'cam-box', restart: window.batDauQuet },
+        { vid: 'kk-reader', box: 'kk-cam', restart: window.batDauKiemKe },
+        { vid: 'cx1-reader', box: 'cx1-cam', restart: window.batDauCX1 },
+        { vid: 'btp-reader', box: 'btp-cam', restart: window.batDauBTP }
+      ];
+      
+      camList.forEach(cam => {
+        const videoEl = document.getElementById(cam.vid);
+        const boxEl = document.getElementById(cam.box);
+        
+        // Nếu module này đang mở và có camera đang gắn
+        if (videoEl && videoEl.srcObject && boxEl && boxEl.style.display !== 'none') {
+          // Thử ép play lại nếu OS chỉ pause nhẹ
+          videoEl.play().catch(() => {});
+          
+          // Kiểm tra xem luồng video có bị OS "giết" không (bị đen/đứng hình)
+          const tracks = videoEl.srcObject.getVideoTracks();
+          if (tracks.length === 0 || tracks[0].readyState === 'ended' || tracks[0].muted) {
+             dungCameraFast(cam.vid, null);
+             if (typeof cam.restart === 'function') {
+               setTimeout(cam.restart, 500); // Khởi động lại luồng quét
+             }
+          }
+        }
+      });
+    }, 400);
+  }
+});
+
