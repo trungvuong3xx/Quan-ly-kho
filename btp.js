@@ -361,16 +361,19 @@ async function batDauPhienMoiBTP() {
 }
 
 function dungBTP() {
+  // document.body.classList.remove("cam-active");
   dangQuetBTP = false;
-  if (typeof dungCameraFast === "function") {
-    dungCameraFast("btp-reader", zxingReaderBTP);
-  }
-  zxingReaderBTP = null;
+  // Giữ nguyên phần cứng camera chạy ngầm để bật lại tức thì
+  // if (typeof dungCameraFast === "function" && zxingReaderBTP) {
+  //   dungCameraFast("btp-reader", zxingReaderBTP);
+  // }
+  // zxingReaderBTP = null;
   const statusEl = document.getElementById("btp-status");
   if (statusEl) statusEl.innerHTML = '<i class="ti ti-player-pause" style="color:var(--red)"></i> Đã dừng quét (Đợt ' + (demSoDotBTP || 1) + ')';
 }
 
 async function tiepTucBTP() {
+  document.body.classList.add("cam-active");
   const daQuetTrongDotNay = phienBTP.some(function(item) { return item.dotQuet === demSoDotBTP; }); if (daQuetTrongDotNay || (demSoDotBTP || 0) === 0) { demSoDotBTP = (demSoDotBTP || 0) + 1; }
   dangQuetBTP = true;
   document.getElementById("btp-status").innerHTML = '<i class="ti ti-radar" style="color:var(--success)"></i> Đang quét Đợt ' + demSoDotBTP + '...';
@@ -598,7 +601,6 @@ function taoHangKetQuaBTP(danhSach) {
 }
 
 function hienKetQuaBTP() {
-  dungBTP();
   document.body.classList.remove("cam-active");
   const { hangDot, footDot, hangGom, footGom } = taoHangKetQuaBTP(phienBTP);
   const elDot = document.getElementById("btp-tbody-dot");
@@ -655,7 +657,6 @@ async function quetTiepBTP() {
 }
 
 function quetMoiBTP() {
-  dungBTP();
   phienBTP = [];
   demSoDotBTP = 0;
   idPhienHienTaiBTP = null;

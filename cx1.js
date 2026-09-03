@@ -146,6 +146,7 @@ async function tiepTucKhoiTaoCX1() {
   idPhienHienTai = Date.now() + "-" + Math.random().toString(36).slice(2);
   soLuongDaGuiHienTai = 0;
 
+  document.body.classList.add("cam-active");
   document.getElementById("cx1-form").style.display = "none";
   document.getElementById("cx1-cam").style.display = "block";
   document.getElementById("cx1-ketqua").style.display = "none";
@@ -176,10 +177,9 @@ async function tiepTucKhoiTaoCX1() {
 
 function dungCX1() {
   dangQuetCX1 = false;
-  if (typeof dungCameraFast === "function") {
-    dungCameraFast("cx1-reader", zxingReaderCX1);
-  }
-  zxingReaderCX1 = null;
+  // Giữ nguyên phần cứng camera chạy ngầm để bật lại tức thì
+  // dungCameraFast("cx1-reader", zxingReaderCX1);
+  // zxingReaderCX1 = null;
   document.getElementById("cx1-status").textContent = "Đã dừng Đợt " + demSoDot;
 }
 
@@ -567,7 +567,6 @@ function taoHangKetQuaCX1(danhSach) {
 }
 
 function hienKetQuaCX1() {
-  dungCX1();
   document.body.classList.remove("cam-active");
   const { hangDot, hangGom } = taoHangKetQuaCX1(phienCX1);
   document.getElementById("cx1-tbody-dot").innerHTML = hangDot;
@@ -588,6 +587,7 @@ async function quetTiepCX1() {
 
   document.getElementById("cx1-ketqua").style.display = "none";
   document.getElementById("cx1-cam").style.display = "block";
+  document.body.classList.add("cam-active");
   document.getElementById("cx1-status").textContent = "Đang quét Đợt " + demSoDot + "...";
 
   const btnToggle = document.getElementById("btn-dung-tieptuc-cx1");

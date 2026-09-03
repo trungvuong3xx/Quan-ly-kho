@@ -1,8 +1,8 @@
 @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap');
 
 /* ============================================================
-   THEME: "Obsidian & Amber Gold" ï¿½ ï¿½en dï¿½ Obsidian Slate,
-   ch? b?ch kim nhï¿½ nh?n, accent Cam H? Phï¿½ch Gold hi?n d?i.
+   THEME: "Obsidian & Amber Gold" — Ðen dá Obsidian Slate,
+   ch? b?ch kim nhã nh?n, accent Cam H? Phách Gold hi?n d?i.
    ============================================================ */
 
 :root {
@@ -266,7 +266,7 @@ input:focus {
   box-shadow: 0 0 0 4px var(--steel-bg), var(--shadow-pressed);
 }
 
-/* Ngï¿½y (date input) */
+/* Ngày (date input) */
 input[type=date] {
   width: 100%;
   height: 40px;
@@ -525,7 +525,7 @@ select option {
 .stock-row .ivalue { color: var(--steel); }
 .stock-ton .ivalue { color: var(--success); }
 
-/* QR Form ï¿½ luï¿½n n?n tr?ng d? in nhï¿½n th?t, khï¿½ng d?i theo theme app */
+/* QR Form — luôn n?n tr?ng d? in nhãn th?t, không d?i theo theme app */
 .qr-grid { display: grid; grid-template-columns: 1fr; gap: 6px; }
 
 .qr-item {
@@ -693,7 +693,7 @@ select option {
 
 
 
-/* -- Hi?u ?ng Highlight Ch?p Sï¿½ng Xanh Ng?c Dï¿½ng M?i Quï¿½t -- */
+/* -- Hi?u ?ng Highlight Ch?p Sáng Xanh Ng?c Dòng M?i Quét -- */
 @keyframes scanFlashNew {
   0% {
     background-color: rgba(63, 185, 80, 0.45) !important;
@@ -719,7 +719,7 @@ table thead th,
   border-bottom: 2px solid var(--border) !important;
 }
 
-/* -- Generic Camera HUD Viewfinder (Dï¿½ng chung cho Quï¿½t QR, CX1, Ki?m kï¿½) -- */
+/* -- Generic Camera HUD Viewfinder (Dùng chung cho Quét QR, CX1, Ki?m kê) -- */
 .cam-viewfinder {
   position: absolute;
   top: 0;
@@ -1034,7 +1034,7 @@ table thead th,
 .custom-option:last-child { border-bottom: none; }
 .custom-option:hover, .custom-option.active { background: var(--brass) !important; color: var(--bg-deep) !important; }
 
-/* Bottom Nav ï¿½ thanh n?i bo trï¿½n kï¿½nh m? (Glassmorphism), cï¿½ch mï¿½p */
+/* Bottom Nav — thanh n?i bo tròn kính m? (Glassmorphism), cách mép */
 
 
 
@@ -1047,7 +1047,7 @@ table thead th,
 
 @keyframes spin { to { transform: rotate(360deg); } }
 
-/* Icon loading dï¿½ng chung ï¿½ d?ng b? mï¿½u v?i theme qua CSS variable thay vï¿½ mï¿½ mï¿½u c?ng */
+/* Icon loading dùng chung — d?ng b? màu v?i theme qua CSS variable thay vì mã màu c?ng */
 .spinner-loading {
   border: 3px solid var(--neutral-solid);
   border-top-color: var(--brass);
@@ -1320,8 +1320,8 @@ table thead th,
   margin-bottom: 12px;
 }
 
-/* Xoay ngang b?ng CX5 = overlay toï¿½n mï¿½n hï¿½nh riï¿½ng, ch? 1 b?ng/l?n nï¿½n khï¿½ng th? dï¿½ nhau,
-   nï¿½t dï¿½ng n?m ngoï¿½i ph?n t? b? xoay nï¿½n luï¿½n b?m du?c. */
+/* Xoay ngang b?ng CX5 = overlay toàn màn hình riêng, ch? 1 b?ng/l?n nên không th? dè nhau,
+   nút dóng n?m ngoài ph?n t? b? xoay nên luôn b?m du?c. */
 .cx5-xoay-overlay {
   display: none;
   position: fixed; inset: 0;
@@ -1391,7 +1391,7 @@ table thead th,
 }
 
 /* ============================================================
-   Bï¿½N PHï¿½M ?O CH? X5 (Quy cï¿½ch / Kg)
+   BÀN PHÍM ?O CH? X5 (Quy cách / Kg)
    ============================================================ */
 .cx5-bp-panel {
   position: fixed; left: 0; right: 0; bottom: 0; z-index: 10500;
@@ -1485,10 +1485,10 @@ table thead th,
 }
 
 /* ============================================================
-   TINH CH?NH Nï¿½NG C?P THEME (ï¿½?ng b? 6 nï¿½t, Kï¿½nh m? & Vi?n n?i)
+   TINH CH?NH NÂNG C?P THEME (Ð?ng b? 6 nút, Kính m? & Vi?n n?i)
    ============================================================ */
 
-/* 1. ï¿½i?m nh?n 6 mï¿½u cho cï¿½c nï¿½t tï¿½nh nang Trang ch? */
+/* 1. Ði?m nh?n 6 màu cho các nút tính nang Trang ch? */
 .trangchu-grid .btn {
   background: var(--card-raised) !important;
   color: var(--cream) !important;
@@ -1513,14 +1513,14 @@ table thead th,
 .trangchu-grid .btn:nth-child(5) { border-left: 4px solid var(--chi-5) !important; }
 .trangchu-grid .btn:nth-child(6) { border-left: 4px solid var(--chi-6) !important; }
 
-/* 2. C?i thi?n d? rï¿½ Icon Bottom Nav trï¿½n mï¿½n hï¿½nh kho */
+/* 2. C?i thi?n d? rõ Icon Bottom Nav trên màn hình kho */
 
 
 
-/* 3. Hi?u ?ng nhï¿½n b?m mu?t tay (Touch Feedback) trï¿½n di d?ng */
+/* 3. Hi?u ?ng nhún b?m mu?t tay (Touch Feedback) trên di d?ng */
 .btn:active, 
 
-/* 4. Thu vi?n nï¿½t Xu?t Excel & Hi?u ?ng ph?n h?i quï¿½t mï¿½ */
+/* 4. Thu vi?n nút Xu?t Excel & Hi?u ?ng ph?n h?i quét mã */
 .btn-excel {
   background: #107c41 !important;
   color: #ffffff !important;
@@ -1558,202 +1558,7 @@ table thead th,
   100% { box-shadow: 0 0 0 0 rgba(82, 196, 26, 0); }
 }
 
-/* -- Xï¿½a hoï¿½n toï¿½n thanh cu?n (scrollbar) trï¿½n toï¿½n b? ?ng d?ng & trï¿½nh duy?t -- */
-html, body, *, ::-webkit-scrollbar {
-  -ms-overflow-style: none !important;
-  scrollbar-width: none !important;
-}
-
-::-webkit-scrollbar,
-*::-webkit-scrollbar,
-html::-webkit-scrollbar,
-body::-webkit-scrollbar {
-  display: none !important;
-  margin: auto;
-  background: var(--card);
-  border-radius: 20px;
-  padding: 10px;
-  display: flex;
-  flex-direction: column;
-}
-.cx5-xoay-rotor .cx5-table th,
-.cx5-xoay-rotor .cx5-table td { font-size: 14px; padding: 10px 8px; }
-.cx5-xoay-rotor .cx5-scroll {
-  max-height: none;
-  overflow-y: auto;
-  flex: 1;
-  min-height: 0;
-}
-
-/* ============================================================
-   BN PHM ?O CH? X5 (Quy cch / Kg)
-   ============================================================ */
-.cx5-bp-panel {
-  position: fixed; left: 0; right: 0; bottom: 0; z-index: 10500;
-  background: var(--card);
-  border-top: 1px solid var(--line);
-  border-radius: 20px 20px 0 0;
-  padding: 10px 10px calc(10px + env(safe-area-inset-bottom, 0px));
-  transform: translateY(100%);
-  transition: transform .2s ease;
-  box-shadow: 0 -8px 30px rgba(0, 0, 0, .35);
-}
-.cx5-bp-panel.show { transform: translateY(0); }
-
-.cx5-bp-letter-bar {
-  display: flex;
-  gap: 4px;
-  max-width: 420px;
-  margin: 0 auto 8px;
-  justify-content: space-between;
-}
-.cx5-bp-letter-key {
-  flex: 1;
-  background: var(--neutral-solid);
-  border: 1px solid var(--line);
-  color: var(--cream);
-  border-radius: 8px;
-  font-size: 14px;
-  font-weight: 700;
-  font-family: 'Space Grotesk', sans-serif;
-  padding: 8px 0;
-  text-align: center;
-  cursor: pointer;
-  user-select: none;
-  -webkit-tap-highlight-color: transparent;
-}
-.cx5-bp-letter-key:active {
-  background: var(--brass);
-  color: var(--bg-deep);
-}
-
-.cx5-bp-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 8px;
-  max-width: 420px;
-  margin: 0 auto;
-}
-
-.cx5-bp-key {
-  background: var(--card-raised);
-  border: 1px solid var(--line);
-  color: var(--cream);
-  border-radius: 12px;
-  font-size: 18px;
-  font-weight: 700;
-  font-family: 'IBM Plex Mono', monospace;
-  padding: 14px 0;
-  text-align: center;
-  cursor: pointer;
-  user-select: none;
-  position: relative;
-  -webkit-tap-highlight-color: transparent;
-}
-.cx5-bp-key:active { background: var(--neutral-hover); }
-
-.cx5-bp-key-sub {
-  position: absolute;
-  top: 3px; right: 6px;
-  font-size: 10px;
-  font-weight: 700;
-  font-family: 'IBM Plex Sans', sans-serif;
-  color: var(--brass);
-  opacity: .85;
-}
-
-.cx5-bp-key-fn { background: var(--neutral-solid); }
-.cx5-bp-key-enter { background: var(--brass); color: var(--bg-deep); grid-row: span 2; }
-.cx5-bp-key-zero { grid-column: span 3; }
-.cx5-bp-key-zero-kg { grid-column: span 2; }
-
-
-
-.cx5-bp-close {
-  display: block;
-  text-align: center;
-  color: var(--cream-soft);
-  font-size: 12px;
-  font-family: 'IBM Plex Sans', sans-serif;
-  padding: 6px 0 10px;
-  cursor: pointer;
-}
-
-/* ============================================================
-   TINH CH?NH NNG C?P THEME (?ng b? 6 nt, Knh m? & Vi?n n?i)
-   ============================================================ */
-
-/* 1. i?m nh?n 6 mu cho cc nt tnh nang Trang ch? */
-.trangchu-grid .btn {
-  background: var(--card-raised) !important;
-  color: var(--cream) !important;
-  border-radius: 14px;
-  border: 1px solid var(--line-soft);
-  transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
-  justify-content: flex-start;
-  padding-left: 18px;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.1);
-}
-
-.trangchu-grid .btn:hover {
-  background: var(--neutral-hover) !important;
-  transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.22);
-}
-
-.trangchu-grid .btn:nth-child(1) { border-left: 4px solid var(--chi-1) !important; }
-.trangchu-grid .btn:nth-child(2) { border-left: 4px solid var(--chi-2) !important; }
-.trangchu-grid .btn:nth-child(3) { border-left: 4px solid var(--chi-3) !important; }
-.trangchu-grid .btn:nth-child(4) { border-left: 4px solid var(--chi-4) !important; }
-.trangchu-grid .btn:nth-child(5) { border-left: 4px solid var(--chi-5) !important; }
-.trangchu-grid .btn:nth-child(6) { border-left: 4px solid var(--chi-6) !important; }
-
-/* 2. C?i thi?n d? r Icon Bottom Nav trn mn hnh kho */
-
-
-
-/* 3. Hi?u ?ng nhn b?m mu?t tay (Touch Feedback) trn di d?ng */
-.btn:active, 
-
-/* 4. Thu vi?n nt Xu?t Excel & Hi?u ?ng ph?n h?i qut m */
-.btn-excel {
-  background: #107c41 !important;
-  color: #ffffff !important;
-  font-weight: 600;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  box-shadow: 0 4px 12px rgba(16, 124, 65, 0.3);
-}
-.btn-excel:hover {
-  background: #0e6b37 !important;
-  box-shadow: 0 6px 16px rgba(16, 124, 65, 0.45);
-}
-
-.canh-bao-trung {
-  animation: flashRed 0.5s ease-in-out !important;
-  border: 3px solid #ff4d4f !important;
-}
-
-.flash-thanh-cong {
-  animation: flashGreen 0.4s ease-in-out !important;
-  border: 3px solid #52c41a !important;
-}
-
-@keyframes flashRed {
-  0% { box-shadow: 0 0 0 0 rgba(255, 77, 79, 0.7); }
-  50% { box-shadow: 0 0 20px 8px rgba(255, 77, 79, 0.9); }
-  100% { box-shadow: 0 0 0 0 rgba(255, 77, 79, 0); }
-}
-
-@keyframes flashGreen {
-  0% { box-shadow: 0 0 0 0 rgba(82, 196, 26, 0.7); }
-  50% { box-shadow: 0 0 20px 8px rgba(82, 196, 26, 0.9); }
-  100% { box-shadow: 0 0 0 0 rgba(82, 196, 26, 0); }
-}
-
-/* -- Xa hon ton thanh cu?n (scrollbar) trn ton b? ?ng d?ng & trnh duy?t -- */
+/* -- Xóa hoàn toàn thanh cu?n (scrollbar) trên toàn b? ?ng d?ng & trình duy?t -- */
 html, body, *, ::-webkit-scrollbar {
   -ms-overflow-style: none !important;
   scrollbar-width: none !important;
@@ -1776,6 +1581,78 @@ body::-webkit-scrollbar {
   background: transparent !important;
 }
 
+/* -- C? d?nh th? quét camera BTP v?a khít 100% màn hình, m? r?ng nh?t ký quét -- */
+body.cam-active {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  width: 100% !important;
+  height: 100vh !important;
+  height: 100dvh !important;
+  overflow: hidden !important;
+  touch-action: none !important;
+}
+
+body.cam-active #btpPage.active,
+body.cam-active #chiFor.active {
+  background: var(--bg-deep) !important;
+  height: calc(100dvh - 65px) !important;
+  padding: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  box-sizing: border-box !important;
+  overflow: hidden !important;
+}
+
+body.cam-active #btp-cam,
+body.cam-active #cx1-cam {
+  display: flex !important;
+  flex-direction: column !important;
+  flex: 1 1 auto !important;
+  height: 100% !important;
+  padding: 4px 0 0 0 !important;
+  margin: 0 !important;
+  box-sizing: border-box !important;
+  justify-content: flex-start !important;
+  gap: 6px !important;
+  overflow: hidden !important;
+}
+
+body.cam-active #btp-video-box,
+body.cam-active .video-container {
+  flex: 0 0 auto !important;
+  height: 220px !important;
+  width: calc(100% - 24px) !important;
+  padding-bottom: 0 !important;
+  margin: 0 12px 8px 12px !important;
+  border-radius: 14px !important;
+  border: 2px solid var(--primary) !important;
+  position: relative !important;
+  overflow: hidden !important;
+  box-shadow: 0 4px 12px rgba(34, 197, 94, 0.25) !important;
+}
+
+body.cam-active #btp-log-container,
+  body.cam-active #cx1-log-container {
+    flex: 1 1 auto !important;
+    display: flex !important;
+    flex-direction: column !important;
+    margin: 8px 12px 12px 12px !important;
+    padding: 10px 14px !important;
+    overflow: hidden !important;
+    max-height: none !important;
+  min-height: 120px !important;
+  border-radius: 12px !important;
+}
+
+body.cam-active #btp-log-list,
+body.cam-active #cx1-log-list {
+  flex: 1 1 auto !important;
+  max-height: none !important;
+  height: 100% !important;
+  overflow-y: auto !important;
 }
 
 /* -- BTP Camera Viewfinder Brackets & Laser Scan Line -- */
@@ -1830,14 +1707,14 @@ body::-webkit-scrollbar {
 
 
 
-/* -- ï¿½p c? d?nh giao di?n ?ng d?ng chi?u d?c 100% khï¿½ng cho xoay theo c?m bi?n di?n tho?i -- */
+/* -- Ép c? d?nh giao di?n ?ng d?ng chi?u d?c 100% không cho xoay theo c?m bi?n di?n tho?i -- */
 #app-viewport {
   width: 100%;
   height: 100%;
   box-sizing: border-box;
 }
 
-/* -- Linh ki?n Cï¿½ng T?c G?t (Toggle Switch Component) -- */
+/* -- Linh ki?n Công T?c G?t (Toggle Switch Component) -- */
 .toggle-switch {
   position: relative;
   display: inline-block;
@@ -2004,5 +1881,3 @@ body { padding: 0 !important; background: var(--bg-body) !important; color: var(
   50% { transform: scale(1.05); box-shadow: 0 0 0 10px rgba(220, 38, 38, 0); }
   100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(220, 38, 38, 0); }
 }
-
-

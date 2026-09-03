@@ -255,13 +255,12 @@ function chuyenTrang(id, el) {
   document.querySelectorAll(".bnav-btn").forEach(b => b.classList.remove("active"));
   document.getElementById(id).classList.add("active");
   if (el) el.classList.add("active");
-  if (id !== "quetQR" && typeof dungQuet === "function") dungQuet();
+  if (id !== "quetQR") dungQuet();
   if (id !== "chiFor" && typeof dungCX1 === "function") dungCX1();
   if (id !== "btpPage") {
     document.body.classList.remove("cam-active");
     if (typeof dungBTP === "function") dungBTP();
   }
-  if (id !== "kiemKe" && typeof dungKiemKe === "function") dungKiemKe();
   if (id === "trangChu" && typeof capNhatTrangChu === "function") capNhatTrangChu();
 
   // Tự động khởi tạo ngày hôm nay nếu ô chọn ngày đang trống
@@ -283,13 +282,11 @@ window.diToiTab = diToiTab;
 // Điều hướng tới 1 trang KHÔNG có nút riêng trên bottom-nav (vd: Lịch sử, chi tiết lịch sử)
 function chuyenTrangKhongNav(id) {
   document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
-  if (id !== "quetQR" && typeof dungQuet === "function") dungQuet();
   if (id !== "chiFor" && typeof dungCX1 === "function") dungCX1();
   if (id !== "btpPage") {
     document.body.classList.remove("cam-active");
     if (typeof dungBTP === "function") dungBTP();
   }
-  if (id !== "kiemKe" && typeof dungKiemKe === "function") dungKiemKe();
   const page = document.getElementById(id);
   if (page) page.classList.add("active");
 }
@@ -314,26 +311,7 @@ window.addEventListener("click", pushChanThoatState, { once: true });
 function handlePopStateThoat(e) {
   if (isExitingApp) return;
 
-  // 1. Nếu đang quét camera (Native hoặc Web) -> Dừng camera trước
-  const isCamActive = document.documentElement.classList.contains("barcode-scanner-active") ||
-                      document.body.classList.contains("barcode-scanner-active") || 
-                      document.body.classList.contains("cam-active") ||
-                      (document.getElementById("btp-cam") && document.getElementById("btp-cam").style.display !== "none") ||
-                      (document.getElementById("cx1-cam") && document.getElementById("cx1-cam").style.display !== "none") ||
-                      (document.getElementById("cam-box") && document.getElementById("cam-box").style.display !== "none") ||
-                      (document.getElementById("kk-cam") && document.getElementById("kk-cam").style.display !== "none") ||
-                      (document.getElementById("form-quet") && document.getElementById("form-quet").style.display !== "none");
-
-  if (isCamActive) {
-    if (typeof dungBTP === "function") dungBTP();
-    if (typeof dungCX1 === "function") dungCX1();
-    if (typeof dungQuet === "function") dungQuet();
-    if (typeof dungKiemKe === "function") dungKiemKe();
-    setTimeout(pushChanThoatState, 10);
-    return;
-  }
-
-  // 2. Nếu đang mở bàn phím ảo custom -> đóng bàn phím trước
+  // 1. Nếu đang mở bàn phím ảo custom -> đóng bàn phím trước
   const openBp = document.querySelector(".cx5-bp-panel.show");
   if (openBp) {
     if (typeof dongBanPhimCX5 === "function") dongBanPhimCX5();
@@ -341,8 +319,8 @@ function handlePopStateThoat(e) {
     return;
   }
 
-  // 3. Nếu đang mở overlay / modal -> đóng overlay trước
-  const openOverlay = document.querySelector(".overlay.show:not(#overlay-thoat), .cx5-xoay-overlay.show, .modal-sheet.show");
+  // 2. Nếu đang mở overlay / modal -> đóng overlay trước
+  const openOverlay = document.querySelector(".overlay.show, .cx5-xoay-overlay.show");
   if (openOverlay) {
     openOverlay.classList.remove("show");
     if (typeof dongSuaLuotCX5 === "function") dongSuaLuotCX5();
@@ -352,15 +330,12 @@ function handlePopStateThoat(e) {
     return;
   }
 
-  // 4. Nếu đang ở các tab khác ngoài Trang Chủ -> Quay về Trang Chủ
   const activePage = document.querySelector(".page.active");
   const activeId = activePage ? activePage.id : "trangChu";
 
   if (activeId !== "trangChu") {
     if (typeof diToiTab === "function") {
       diToiTab("trangChu");
-    } else if (typeof chuyenTrang === "function") {
-      chuyenTrang("trangChu", document.querySelector('.bnav-btn[data-page="trangChu"]'));
     } else if (typeof chuyenTrangKhongNav === "function") {
       chuyenTrangKhongNav("trangChu");
     }
@@ -368,34 +343,12 @@ function handlePopStateThoat(e) {
     return;
   }
 
-  // 5. Nếu đang ở Trang Chủ -> Mở hộp thoại xác nhận thoát app
   const el = document.getElementById("overlay-thoat");
-  if (el) {
-    if (el.classList.contains("show")) {
-      xacNhanThoatApp();
-    } else {
-      el.classList.add("show");
-    }
-  } else {
-    xacNhanThoatApp();
-  }
+  if (el) el.classList.add("show");
   setTimeout(pushChanThoatState, 10);
 }
 
 window.addEventListener("popstate", handlePopStateThoat);
-
-// Native Back Button Bridge (gọi từ Java MainActivity khi bấm nút Back hoặc vuốt cạnh)
-window.handleNativeBackButton = function() {
-  handlePopStateThoat();
-};
-
-if (window.Capacitor?.Plugins?.App) {
-  try {
-    window.Capacitor.Plugins.App.addListener('backButton', () => {
-      window.handleNativeBackButton();
-    });
-  } catch (e) { }
-}
 
 function khongThoatApp() {
   const el = document.getElementById("overlay-thoat");
@@ -408,16 +361,12 @@ function xacNhanThoatApp() {
   window.removeEventListener("popstate", handlePopStateThoat);
   const el = document.getElementById("overlay-thoat");
   if (el) el.classList.remove("show");
-  if (window.Capacitor?.Plugins?.App) {
-    window.Capacitor.Plugins.App.exitApp();
-  } else if (navigator.app && navigator.app.exitApp) {
-    navigator.app.exitApp();
-  } else {
-    try { window.close(); } catch (e) { }
-    setTimeout(() => {
-      history.back();
-    }, 50);
-  }
+  try {
+    window.close();
+  } catch (e) { }
+  setTimeout(() => {
+    history.back();
+  }, 50);
 }
 
 window.khongThoatApp = khongThoatApp;
@@ -499,15 +448,9 @@ async function taoQR() {
 let animFrameMap = {};
 let nativeBarcodeDetectorGlobal = null;
 
-const lastCameraCallbackMap = {};
-
 async function khoiTaoCameraFast(videoId, onDecodedCallback) {
   const videoEl = document.getElementById(videoId);
   if (!videoEl) return null;
-
-  if (typeof onDecodedCallback === 'function') {
-    lastCameraCallbackMap[videoId] = onDecodedCallback;
-  }
 
   if (animFrameMap[videoId]) {
     clearTimeout(animFrameMap[videoId]);
@@ -515,7 +458,7 @@ async function khoiTaoCameraFast(videoId, onDecodedCallback) {
   }
 
   // 1. Cấu hình độ phân giải 1080p Full HD + Tự động lấy nét liên tục (Continuous Focus)
-  const constraints = {
+  let constraints = {
     video: {
       facingMode: "environment",
       width: { ideal: 1920, min: 1280 },
@@ -523,6 +466,16 @@ async function khoiTaoCameraFast(videoId, onDecodedCallback) {
       frameRate: { ideal: 60 }
     }
   };
+
+  const savedCamId = localStorage.getItem('camera_uu_tien');
+  if (savedCamId) {
+    constraints.video = {
+      deviceId: { exact: savedCamId },
+      width: { ideal: 1920, min: 1280 },
+      height: { ideal: 1080, min: 720 },
+      frameRate: { ideal: 60 }
+    };
+  }
 
   try {
     const stream = await navigator.mediaDevices.getUserMedia(constraints);
@@ -640,17 +593,12 @@ function dungCameraFast(videoId, zxingReaderObj) {
     animFrameMap[videoId] = null;
   }
   if (zxingReaderObj && typeof zxingReaderObj.reset === 'function') {
-    try { zxingReaderObj.reset(); } catch(e) {}
+    zxingReaderObj.reset();
   }
   const videoEl = document.getElementById(videoId);
-  if (videoEl) {
-    try { videoEl.pause(); } catch(e) {}
-    if (videoEl.srcObject) {
-      try {
-        videoEl.srcObject.getTracks().forEach(t => t.stop());
-      } catch(e) {}
-      videoEl.srcObject = null;
-    }
+  if (videoEl && videoEl.srcObject) {
+    videoEl.srcObject.getTracks().forEach(t => t.stop());
+    videoEl.srcObject = null;
   }
 }
 
@@ -659,6 +607,34 @@ async function batDauQuet() {
   loaiChon = document.getElementById("chon-loai").value;
   if (!ngayChon) { alert("⚠️ Vui lòng chọn ngày!"); return; }
   if (!loaiChon) { alert("⚠️ Vui lòng chọn loại!"); return; }
+
+window.doiCamera = async function(videoId, restartFunc) {
+  try {
+    const devices = await navigator.mediaDevices.enumerateDevices();
+    const videoDevices = devices.filter(d => d.kind === 'videoinput');
+    let backCams = videoDevices.filter(d => d.label.toLowerCase().includes('back') || d.label.toLowerCase().includes('sau') || d.label.toLowerCase().includes('0, facing'));
+    if (backCams.length === 0) backCams = videoDevices; // Dự phòng nếu máy không báo label
+    
+    if (backCams.length <= 1) {
+      if (typeof showCanhBao === "function") showCanhBao("Hệ thống chỉ nhận diện 1 camera!");
+      return;
+    }
+    
+    const savedCamId = localStorage.getItem('camera_uu_tien');
+    let currentIndex = savedCamId ? backCams.findIndex(d => d.deviceId === savedCamId) : -1;
+    let nextIndex = (currentIndex + 1) % backCams.length;
+    localStorage.setItem('camera_uu_tien', backCams[nextIndex].deviceId);
+    
+    if (typeof showCanhBao === "function") showCanhBao(`Đã chuyển ống kính (${nextIndex + 1}/${backCams.length})`);
+    
+    dungCameraFast(videoId, null);
+    setTimeout(() => {
+      if (typeof window[restartFunc] === "function") window[restartFunc]();
+    }, 400);
+  } catch (e) {
+    if (typeof showCanhBao === "function") showCanhBao("Lỗi đổi camera: " + e);
+  }
+};
 
   // Mặc định quét nhanh nếu là Xuất
   quetNhanh = !isNhap(loaiChon);
@@ -1270,49 +1246,38 @@ function dongXacNhanApp(dongY) {
 }
 window.dongXacNhanApp = dongXacNhanApp;
 
-// ── Hàm khôi phục sạch luồng camera và khởi động lại vòng lặp quét ──
-async function khoiPhucCamera(videoId, fallbackCb) {
-  const videoEl = document.getElementById(videoId);
-  if (!videoEl) return;
-  const cb = lastCameraCallbackMap[videoId] || fallbackCb;
-  if (!cb) return;
-
-  // 1. Dừng sạch luồng cũ và giải phóng timer cũ
-  dungCameraFast(videoId, null);
-
-  // 2. Nghỉ 250ms cho Camera HAL của Android giải phóng cảm biến
-  await new Promise(r => setTimeout(r, 250));
-
-  // 3. Khởi tạo lại camera và kích hoạt lại vòng lặp quét mới
-  await khoiTaoCameraFast(videoId, cb);
-}
-
-// ── Tự động khôi phục Camera khi quay lại app từ nền (Chống đứng hình) ──
-let resumeCameraTimer = null;
-function triggerResumeCamera() {
-  clearTimeout(resumeCameraTimer);
-  resumeCameraTimer = setTimeout(async () => {
-    const camBoxes = [
-      { vid: 'reader', box: 'cam-box', fallback: (txt) => { if (typeof xuLyMaQuet === 'function') xuLyMaQuet(txt); } },
-      { vid: 'kk-reader', box: 'kk-cam', fallback: (txt) => { if (typeof xuLyMaKiemKe === 'function') xuLyMaKiemKe(txt); } },
-      { vid: 'cx1-reader', box: 'cx1-cam', fallback: (txt) => { if (txt && window.dangQuetCX1 && typeof window.khiQuetDuocMa === 'function') window.khiQuetDuocMa({ getText: () => txt }); } },
-      { vid: 'btp-reader', box: 'btp-cam', fallback: (txt) => { if (txt && window.dangQuetBTP && typeof window.khiQuetDuocMaBTP === 'function') window.khiQuetDuocMaBTP({ getText: () => txt }); } }
-    ];
-
-    for (const item of camBoxes) {
-      const boxEl = document.getElementById(item.box);
-      if (boxEl && window.getComputedStyle(boxEl).display !== 'none') {
-        await khoiPhucCamera(item.vid, item.fallback);
-      }
-    }
-  }, 350);
-}
-
+// ── Tự động khôi phục Camera khi app quay lại từ nền (Anti-Freeze) ──
 document.addEventListener('visibilitychange', () => {
   if (document.visibilityState === 'visible') {
-    triggerResumeCamera();
+    // Chờ 400ms để hệ điều hành cấp lại toàn quyền UI cho trình duyệt
+    setTimeout(() => {
+      const camList = [
+        { vid: 'reader', box: 'cam-box', restart: window.batDauQuet },
+        { vid: 'kk-reader', box: 'kk-cam', restart: window.batDauKiemKe },
+        { vid: 'cx1-reader', box: 'cx1-cam', restart: window.batDauCX1 },
+        { vid: 'btp-reader', box: 'btp-cam', restart: window.batDauBTP }
+      ];
+      
+      camList.forEach(cam => {
+        const videoEl = document.getElementById(cam.vid);
+        const boxEl = document.getElementById(cam.box);
+        
+        // Nếu module này đang mở và có camera đang gắn
+        if (videoEl && videoEl.srcObject && boxEl && boxEl.style.display !== 'none') {
+          // Thử ép play lại nếu OS chỉ pause nhẹ
+          videoEl.play().catch(() => {});
+          
+          // Kiểm tra xem luồng video có bị OS "giết" không (bị đen/đứng hình)
+          const tracks = videoEl.srcObject.getVideoTracks();
+          if (tracks.length === 0 || tracks[0].readyState === 'ended' || tracks[0].muted) {
+             dungCameraFast(cam.vid, null);
+             if (typeof cam.restart === 'function') {
+               setTimeout(cam.restart, 500); // Khởi động lại luồng quét
+             }
+          }
+        }
+      });
+    }, 400);
   }
 });
-window.addEventListener('focus', () => {
-  triggerResumeCamera();
-});
+
