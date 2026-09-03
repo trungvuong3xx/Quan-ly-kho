@@ -1,8 +1,8 @@
 @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap');
 
 /* ============================================================
-   THEME: "Obsidian & Amber Gold" ï¿½ ï¿½en dï¿½ Obsidian Slate,
-   ch? b?ch kim nhï¿½ nh?n, accent Cam H? Phï¿½ch Gold hi?n d?i.
+   THEME: "Obsidian & Amber Gold" — Ðen dá Obsidian Slate,
+   ch? b?ch kim nhã nh?n, accent Cam H? Phách Gold hi?n d?i.
    ============================================================ */
 
 :root {
@@ -266,7 +266,7 @@ input:focus {
   box-shadow: 0 0 0 4px var(--steel-bg), var(--shadow-pressed);
 }
 
-/* Ngï¿½y (date input) */
+/* Ngày (date input) */
 input[type=date] {
   width: 100%;
   height: 40px;
@@ -525,7 +525,7 @@ select option {
 .stock-row .ivalue { color: var(--steel); }
 .stock-ton .ivalue { color: var(--success); }
 
-/* QR Form ï¿½ luï¿½n n?n tr?ng d? in nhï¿½n th?t, khï¿½ng d?i theo theme app */
+/* QR Form — luôn n?n tr?ng d? in nhãn th?t, không d?i theo theme app */
 .qr-grid { display: grid; grid-template-columns: 1fr; gap: 6px; }
 
 .qr-item {
@@ -693,7 +693,7 @@ select option {
 
 
 
-/* -- Hi?u ?ng Highlight Ch?p Sï¿½ng Xanh Ng?c Dï¿½ng M?i Quï¿½t -- */
+/* -- Hi?u ?ng Highlight Ch?p Sáng Xanh Ng?c Dòng M?i Quét -- */
 @keyframes scanFlashNew {
   0% {
     background-color: rgba(63, 185, 80, 0.45) !important;
@@ -719,7 +719,7 @@ table thead th,
   border-bottom: 2px solid var(--border) !important;
 }
 
-/* -- Generic Camera HUD Viewfinder (Dï¿½ng chung cho Quï¿½t QR, CX1, Ki?m kï¿½) -- */
+/* -- Generic Camera HUD Viewfinder (Dùng chung cho Quét QR, CX1, Ki?m kê) -- */
 .cam-viewfinder {
   position: absolute;
   top: 0;
@@ -1034,7 +1034,7 @@ table thead th,
 .custom-option:last-child { border-bottom: none; }
 .custom-option:hover, .custom-option.active { background: var(--brass) !important; color: var(--bg-deep) !important; }
 
-/* Bottom Nav ï¿½ thanh n?i bo trï¿½n kï¿½nh m? (Glassmorphism), cï¿½ch mï¿½p */
+/* Bottom Nav — thanh n?i bo tròn kính m? (Glassmorphism), cách mép */
 
 
 
@@ -1047,7 +1047,7 @@ table thead th,
 
 @keyframes spin { to { transform: rotate(360deg); } }
 
-/* Icon loading dï¿½ng chung ï¿½ d?ng b? mï¿½u v?i theme qua CSS variable thay vï¿½ mï¿½ mï¿½u c?ng */
+/* Icon loading dùng chung — d?ng b? màu v?i theme qua CSS variable thay vì mã màu c?ng */
 .spinner-loading {
   border: 3px solid var(--neutral-solid);
   border-top-color: var(--brass);
@@ -1320,8 +1320,8 @@ table thead th,
   margin-bottom: 12px;
 }
 
-/* Xoay ngang b?ng CX5 = overlay toï¿½n mï¿½n hï¿½nh riï¿½ng, ch? 1 b?ng/l?n nï¿½n khï¿½ng th? dï¿½ nhau,
-   nï¿½t dï¿½ng n?m ngoï¿½i ph?n t? b? xoay nï¿½n luï¿½n b?m du?c. */
+/* Xoay ngang b?ng CX5 = overlay toàn màn hình riêng, ch? 1 b?ng/l?n nên không th? dè nhau,
+   nút dóng n?m ngoài ph?n t? b? xoay nên luôn b?m du?c. */
 .cx5-xoay-overlay {
   display: none;
   position: fixed; inset: 0;
@@ -1391,7 +1391,7 @@ table thead th,
 }
 
 /* ============================================================
-   Bï¿½N PHï¿½M ?O CH? X5 (Quy cï¿½ch / Kg)
+   BÀN PHÍM ?O CH? X5 (Quy cách / Kg)
    ============================================================ */
 .cx5-bp-panel {
   position: fixed; left: 0; right: 0; bottom: 0; z-index: 10500;
@@ -1485,10 +1485,10 @@ table thead th,
 }
 
 /* ============================================================
-   TINH CH?NH Nï¿½NG C?P THEME (ï¿½?ng b? 6 nï¿½t, Kï¿½nh m? & Vi?n n?i)
+   TINH CH?NH NÂNG C?P THEME (Ð?ng b? 6 nút, Kính m? & Vi?n n?i)
    ============================================================ */
 
-/* 1. ï¿½i?m nh?n 6 mï¿½u cho cï¿½c nï¿½t tï¿½nh nang Trang ch? */
+/* 1. Ði?m nh?n 6 màu cho các nút tính nang Trang ch? */
 .trangchu-grid .btn {
   background: var(--card-raised) !important;
   color: var(--cream) !important;
@@ -1513,14 +1513,14 @@ table thead th,
 .trangchu-grid .btn:nth-child(5) { border-left: 4px solid var(--chi-5) !important; }
 .trangchu-grid .btn:nth-child(6) { border-left: 4px solid var(--chi-6) !important; }
 
-/* 2. C?i thi?n d? rï¿½ Icon Bottom Nav trï¿½n mï¿½n hï¿½nh kho */
+/* 2. C?i thi?n d? rõ Icon Bottom Nav trên màn hình kho */
 
 
 
-/* 3. Hi?u ?ng nhï¿½n b?m mu?t tay (Touch Feedback) trï¿½n di d?ng */
+/* 3. Hi?u ?ng nhún b?m mu?t tay (Touch Feedback) trên di d?ng */
 .btn:active, 
 
-/* 4. Thu vi?n nï¿½t Xu?t Excel & Hi?u ?ng ph?n h?i quï¿½t mï¿½ */
+/* 4. Thu vi?n nút Xu?t Excel & Hi?u ?ng ph?n h?i quét mã */
 .btn-excel {
   background: #107c41 !important;
   color: #ffffff !important;
@@ -1558,7 +1558,7 @@ table thead th,
   100% { box-shadow: 0 0 0 0 rgba(82, 196, 26, 0); }
 }
 
-/* -- Xï¿½a hoï¿½n toï¿½n thanh cu?n (scrollbar) trï¿½n toï¿½n b? ?ng d?ng & trï¿½nh duy?t -- */
+/* -- Xóa hoàn toàn thanh cu?n (scrollbar) trên toàn b? ?ng d?ng & trình duy?t -- */
 html, body, *, ::-webkit-scrollbar {
   -ms-overflow-style: none !important;
   scrollbar-width: none !important;
@@ -1581,7 +1581,7 @@ body::-webkit-scrollbar {
   background: transparent !important;
 }
 
-/* -- C? d?nh th? quï¿½t camera BTP v?a khï¿½t 100% mï¿½n hï¿½nh, m? r?ng nh?t kï¿½ quï¿½t -- */
+/* -- C? d?nh th? quét camera BTP v?a khít 100% màn hình, m? r?ng nh?t ký quét -- */
 body.cam-active {
   position: fixed !important;
   top: 0 !important;
@@ -1707,14 +1707,14 @@ body.cam-active #cx1-log-list {
 
 
 
-/* -- ï¿½p c? d?nh giao di?n ?ng d?ng chi?u d?c 100% khï¿½ng cho xoay theo c?m bi?n di?n tho?i -- */
+/* -- Ép c? d?nh giao di?n ?ng d?ng chi?u d?c 100% không cho xoay theo c?m bi?n di?n tho?i -- */
 #app-viewport {
   width: 100%;
   height: 100%;
   box-sizing: border-box;
 }
 
-/* -- Linh ki?n Cï¿½ng T?c G?t (Toggle Switch Component) -- */
+/* -- Linh ki?n Công T?c G?t (Toggle Switch Component) -- */
 .toggle-switch {
   position: relative;
   display: inline-block;
@@ -1880,38 +1880,4 @@ body { padding: 0 !important; background: var(--bg-body) !important; color: var(
   0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.7); }
   50% { transform: scale(1.05); box-shadow: 0 0 0 10px rgba(220, 38, 38, 0); }
   100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(220, 38, 38, 0); }
-}
-
-/* â”€â”€ Google ML Kit Native Scanner (Clean Hole-Punching) â”€â”€ */
-html.barcode-scanner-active,
-body.barcode-scanner-active,
-body.barcode-scanner-active #app-viewport,
-body.barcode-scanner-active .page.active {
-  background: transparent !important;
-}
-
-body.barcode-scanner-active .video-container {
-  background: transparent !important;
-  box-shadow: 0 0 0 9999px var(--bg-body) !important;
-  z-index: 5 !important;
-}
-
-body.barcode-scanner-active .header,
-body.barcode-scanner-active .bottom-nav,
-body.barcode-scanner-active .card,
-body.barcode-scanner-active .btn,
-body.barcode-scanner-active .table,
-body.barcode-scanner-active #btp-cam > div:not(.video-container),
-body.barcode-scanner-active #cx1-cam > div:not(.video-container),
-body.barcode-scanner-active #cam-box > div:not(.video-container),
-body.barcode-scanner-active #kk-cam > div:not(.video-container) {
-  position: relative;
-  z-index: 10;
-  background: var(--bg-body);
-}
-
-body.barcode-scanner-active .header,
-body.barcode-scanner-active .bottom-nav {
-  background: var(--bg-surface) !important;
-  z-index: 100 !important;
 }
