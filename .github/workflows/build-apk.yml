@@ -56,7 +56,8 @@ jobs:
       - name: Build Android Debug APK
         run: |
           cd android
-          ./gradlew assembleDebug --stacktrace
+          ./gradlew assembleDebug --stacktrace 2>&1 | tee /tmp/gradle_log.txt
+          exit ${PIPESTATUS[0]}
 
       - name: Stage APK for Upload
         run: |
@@ -78,7 +79,7 @@ jobs:
           git config user.email "github-actions@github.com"
           git checkout -B build-log-branch
           echo "=== BUILD LOG ===" > error_summary.txt
-          find android -name "*.log" -exec cat {} + >> error_summary.txt 2>/dev/null || true
+          tail -n 150 /tmp/gradle_log.txt >> error_summary.txt 2>/dev/null || true
           git add -f error_summary.txt
           git commit -m "chore: save build log"
           git push origin build-log-branch --force || true
