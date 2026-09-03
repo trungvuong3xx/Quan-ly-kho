@@ -1207,3 +1207,63 @@ function dongXacNhanApp(dongY) {
   else if (!dongY && cbHuy) cbHuy();
 }
 window.dongXacNhanApp = dongXacNhanApp;
+
+// ── Tự động khôi phục Camera khi quay lại app từ nền (Chống đứng hình) ──
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible') {
+    setTimeout(async () => {
+      const camConfigs = [
+        { vid: 'reader', box: 'cam-box' },
+        { vid: 'kk-reader', box: 'kk-cam' },
+        { vid: 'cx1-reader', box: 'cx1-cam' },
+        { vid: 'btp-reader', box: 'btp-cam' }
+      ];
+
+      for (const cfg of camConfigs) {
+        const box = document.getElementById(cfg.box);
+        const videoEl = document.getElementById(cfg.vid);
+
+        // Kiểm tra xem màn hình camera này có đang mở không
+        if (box && videoEl && window.getComputedStyle(box).display !== 'none') {
+          // 1. Nếu video bị trình duyệt pause, thử play() trước
+          if (videoEl.paused) {
+            try { await videoEl.play(); } catch (e) { }
+          }
+
+          // 2. Kiểm tra xem luồng camera có bị mất track / đứng hình không
+          const stream = videoEl.srcObject;
+          const track = stream ? stream.getVideoTracks()[0] : null;
+          const biDung = !track || track.readyState === 'ended' || track.muted || videoEl.paused;
+
+          if (biDung) {
+            try {
+              if (stream) {
+                stream.getTracks().forEach(t => { try { t.stop(); } catch (e) { } });
+              }
+              const newStream = await navigator.mediaDevices.getUserMedia({
+                video: {
+                  facingMode: "environment",
+                  width: { ideal: 1920, min: 1280 },
+                  height: { ideal: 1080, min: 720 },
+                  frameRate: { ideal: 60 }
+                }
+              });
+              videoEl.srcObject = newStream;
+              await videoEl.play();
+
+              try {
+                const newTrack = newStream.getVideoTracks()[0];
+                const cap = newTrack.getCapabilities ? newTrack.getCapabilities() : {};
+                if (cap.focusMode && cap.focusMode.includes('continuous')) {
+                  await newTrack.applyConstraints({ advanced: [{ focusMode: 'continuous' }] });
+                }
+              } catch (e) { }
+            } catch (err) {
+              console.warn("Lỗi tự động khôi phục camera:", err);
+            }
+          }
+        }
+      }
+    }, 350);
+  }
+});
