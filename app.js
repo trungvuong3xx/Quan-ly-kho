@@ -255,12 +255,13 @@ function chuyenTrang(id, el) {
   document.querySelectorAll(".bnav-btn").forEach(b => b.classList.remove("active"));
   document.getElementById(id).classList.add("active");
   if (el) el.classList.add("active");
-  if (id !== "quetQR") dungQuet();
+  if (id !== "quetQR" && typeof dungQuet === "function") dungQuet();
   if (id !== "chiFor" && typeof dungCX1 === "function") dungCX1();
   if (id !== "btpPage") {
     document.body.classList.remove("cam-active");
     if (typeof dungBTP === "function") dungBTP();
   }
+  if (id !== "kiemKe" && typeof dungKiemKe === "function") dungKiemKe();
   if (id === "trangChu" && typeof capNhatTrangChu === "function") capNhatTrangChu();
 
   // Tự động khởi tạo ngày hôm nay nếu ô chọn ngày đang trống
@@ -282,11 +283,13 @@ window.diToiTab = diToiTab;
 // Điều hướng tới 1 trang KHÔNG có nút riêng trên bottom-nav (vd: Lịch sử, chi tiết lịch sử)
 function chuyenTrangKhongNav(id) {
   document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
+  if (id !== "quetQR" && typeof dungQuet === "function") dungQuet();
   if (id !== "chiFor" && typeof dungCX1 === "function") dungCX1();
   if (id !== "btpPage") {
     document.body.classList.remove("cam-active");
     if (typeof dungBTP === "function") dungBTP();
   }
+  if (id !== "kiemKe" && typeof dungKiemKe === "function") dungKiemKe();
   const page = document.getElementById(id);
   if (page) page.classList.add("active");
 }
@@ -312,16 +315,20 @@ function handlePopStateThoat(e) {
   if (isExitingApp) return;
 
   // 1. Nếu đang quét camera (Native hoặc Web) -> Dừng camera trước
-  const isCamActive = document.body.classList.contains("barcode-scanner-active") || 
+  const isCamActive = document.documentElement.classList.contains("barcode-scanner-active") ||
+                      document.body.classList.contains("barcode-scanner-active") || 
                       document.body.classList.contains("cam-active") ||
                       (document.getElementById("btp-cam") && document.getElementById("btp-cam").style.display !== "none") ||
                       (document.getElementById("cx1-cam") && document.getElementById("cx1-cam").style.display !== "none") ||
+                      (document.getElementById("cam-box") && document.getElementById("cam-box").style.display !== "none") ||
+                      (document.getElementById("kk-cam") && document.getElementById("kk-cam").style.display !== "none") ||
                       (document.getElementById("form-quet") && document.getElementById("form-quet").style.display !== "none");
 
   if (isCamActive) {
     if (typeof dungBTP === "function") dungBTP();
     if (typeof dungCX1 === "function") dungCX1();
     if (typeof dungQuet === "function") dungQuet();
+    if (typeof dungKiemKe === "function") dungKiemKe();
     setTimeout(pushChanThoatState, 10);
     return;
   }
@@ -517,9 +524,12 @@ async function khoiTaoCameraNative(videoId, onDecodedCallback) {
     document.documentElement.classList.add("barcode-scanner-active");
     document.body.classList.add("barcode-scanner-active");
     const videoEl = document.getElementById(videoId);
+    let targetCard = null;
     if (videoEl) {
       videoEl.style.display = 'none';
       videoEl.style.opacity = '0';
+      targetCard = videoEl.closest('.card');
+      if (targetCard) targetCard.classList.add("scanner-transparent-card");
     }
 
     if (nativeScannerListener) {
@@ -550,6 +560,7 @@ async function khoiTaoCameraNative(videoId, onDecodedCallback) {
           await BarcodeScanner.stopScan();
           document.documentElement.classList.remove("barcode-scanner-active");
           document.body.classList.remove("barcode-scanner-active");
+          document.querySelectorAll(".scanner-transparent-card").forEach(c => c.classList.remove("scanner-transparent-card"));
           if (videoEl) {
             videoEl.style.display = 'block';
             videoEl.style.opacity = '1';
@@ -711,6 +722,7 @@ function dungCameraFast(videoId, zxingReaderObj) {
       window.Capacitor.Plugins.BarcodeScanner.stopScan();
       document.documentElement.classList.remove("barcode-scanner-active");
       document.body.classList.remove("barcode-scanner-active");
+      document.querySelectorAll(".scanner-transparent-card").forEach(c => c.classList.remove("scanner-transparent-card"));
       const vEl = document.getElementById(videoId);
       if (vEl) {
         vEl.style.display = 'block';

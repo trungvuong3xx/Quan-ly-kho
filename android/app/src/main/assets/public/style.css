@@ -1883,6 +1883,14 @@ body { padding: 0 !important; background: var(--bg-body) !important; color: var(
 }
 
 /* Native Scanner: Đảm bảo nền trong suốt để camera phần cứng hiển thị trọn vẹn trong khung quét */
+.scanner-transparent-card {
+  background: transparent !important;
+  background-color: transparent !important;
+  box-shadow: none !important;
+  border-color: transparent !important;
+}
+
+/* Native Scanner: Đảm bảo nền trong suốt để camera phần cứng hiển thị trọn vẹn trong khung quét */
 html.barcode-scanner-active,
 body.barcode-scanner-active,
 body.barcode-scanner-active .device-frame,
@@ -1901,6 +1909,8 @@ body.barcode-scanner-active #kiemKe,
 body.barcode-scanner-active #kiemKe.active,
 body.barcode-scanner-active #btp-cam,
 body.barcode-scanner-active #cx1-cam,
+body.barcode-scanner-active #cam-box,
+body.barcode-scanner-active #kk-cam,
 body.barcode-scanner-active #video-box,
 body.barcode-scanner-active #btp-video-box,
 body.barcode-scanner-active #cx1-video-box,
@@ -1915,6 +1925,7 @@ body.barcode-scanner-active video {
 
 body.barcode-scanner-active .btp-viewfinder,
 body.barcode-scanner-active .cx1-viewfinder,
+body.barcode-scanner-active .cam-viewfinder,
 body.barcode-scanner-active .scan-box {
   background: transparent !important;
 }
