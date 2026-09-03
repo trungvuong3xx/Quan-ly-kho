@@ -74,6 +74,17 @@ jobs:
           path: output_apk/QuanLyKho.apk
           retention-days: 30
 
+      - name: Publish Direct APK Release
+        uses: softprops/action-gh-release@v2
+        if: success()
+        with:
+          tag_name: app-latest
+          name: "Phiên Bản Android APK Cài Đặt Trực Tiếp"
+          body: "Tải file QuanLyKho.apk bên dưới để cài đặt trực tiếp lên điện thoại mà không cần giải nén zip."
+          files: output_apk/QuanLyKho.apk
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Save Log on Failure
         if: failure()
         run: |
