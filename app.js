@@ -450,9 +450,77 @@ let nativeBarcodeDetectorGlobal = null;
 
 const lastCameraCallbackMap = {};
 
+function isCapacitorNative() {
+  return !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform());
+}
+
+let nativeScannerListener = null;
+
+async function khoiTaoCameraNative(videoId, onDecodedCallback) {
+  const BarcodeScanner = window.Capacitor?.Plugins?.BarcodeScanner;
+  if (!BarcodeScanner) return null;
+
+  try {
+    const status = await BarcodeScanner.checkPermissions();
+    if (status.camera !== 'granted') {
+      const request = await BarcodeScanner.requestPermissions();
+      if (request.camera !== 'granted') {
+        alert("⚠️ Vui lòng cấp quyền Camera để quét mã!");
+        return null;
+      }
+    }
+
+    document.body.classList.add("barcode-scanner-active");
+    const videoEl = document.getElementById(videoId);
+    if (videoEl) {
+      videoEl.style.opacity = '0';
+    }
+
+    if (nativeScannerListener) {
+      try { await nativeScannerListener.remove(); } catch (e) { }
+      nativeScannerListener = null;
+    }
+
+    nativeScannerListener = await BarcodeScanner.addListener('barcodeScanned', async (result) => {
+      if (result && result.barcode && result.barcode.displayValue) {
+        if (typeof onDecodedCallback === 'function') {
+          onDecodedCallback(result.barcode.displayValue);
+        }
+      }
+    });
+
+    await BarcodeScanner.startScan({
+      formats: ['QR_CODE'],
+      lensFacing: 'BACK'
+    });
+
+    return {
+      reset: async () => {
+        try {
+          if (nativeScannerListener) {
+            await nativeScannerListener.remove();
+            nativeScannerListener = null;
+          }
+          await BarcodeScanner.stopScan();
+          document.body.classList.remove("barcode-scanner-active");
+          if (videoEl) videoEl.style.opacity = '1';
+        } catch (e) { }
+      }
+    };
+  } catch (err) {
+    console.error("Lỗi khởi tạo Native Barcode Scanner:", err);
+    return null;
+  }
+}
+
 async function khoiTaoCameraFast(videoId, onDecodedCallback) {
   const videoEl = document.getElementById(videoId);
   if (!videoEl) return null;
+
+  if (isCapacitorNative()) {
+    const nativeObj = await khoiTaoCameraNative(videoId, onDecodedCallback);
+    if (nativeObj) return nativeObj;
+  }
 
   if (typeof onDecodedCallback === 'function') {
     lastCameraCallbackMap[videoId] = onDecodedCallback;
@@ -584,6 +652,17 @@ async function khoiTaoCameraFast(videoId, onDecodedCallback) {
 }
 
 function dungCameraFast(videoId, zxingReaderObj) {
+  if (isCapacitorNative() && window.Capacitor?.Plugins?.BarcodeScanner) {
+    try {
+      if (nativeScannerListener) {
+        nativeScannerListener.remove();
+        nativeScannerListener = null;
+      }
+      window.Capacitor.Plugins.BarcodeScanner.stopScan();
+      document.body.classList.remove("barcode-scanner-active");
+    } catch (e) { }
+  }
+
   if (animFrameMap[videoId]) {
     clearTimeout(animFrameMap[videoId]);
     animFrameMap[videoId] = null;

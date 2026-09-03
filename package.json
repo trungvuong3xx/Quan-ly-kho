@@ -1,0 +1,19 @@
+{
+  "name": "quan-ly-kho",
+  "version": "1.0.0",
+  "description": "Quản Lý Kho PWA and Android APK",
+  "main": "index.html",
+  "scripts": {
+    "build": "node build-web.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@capacitor-mlkit/barcode-scanning": "^8.1.1",
+    "@capacitor/android": "^8.5.1",
+    "@capacitor/cli": "^8.5.1",
+    "@capacitor/core": "^8.5.1"
+  }
+}
