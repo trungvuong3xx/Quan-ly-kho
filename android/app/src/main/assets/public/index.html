@@ -491,34 +491,50 @@
   <button class="btn btn-blue btn-full" onclick="batDauCX1()">Quét</button>
 </div>
 
-  <div id="cx1-cam" style="display:none; padding:12px 0 0 0;">
-    <div class="flex justify-between items-center mb-2" style="padding: 0 12px;">
-      <span id="cx1-status" style="font-weight:700">🟢 Đang quét Đợt 1...</span>
-      <span id="cx1-dem" class="cx5-badge">Đã quét: 0 mã</span>
-    </div>
-    <div class="video-container" style="position:relative; width:100%; padding-bottom:70%; background:#000; border-radius:14px; overflow:hidden; margin-bottom:15px; border: 2px solid var(--steel); transition: border-color 0.3s ease, box-shadow 0.3s ease;">
-      <video id="cx1-reader" autoplay playsinline muted disablePictureInPicture style="position:absolute; width:100%; height:100%; object-fit:cover; transform:translateZ(0); will-change:transform;"></video>
-      <div class="cam-viewfinder">
-        <div class="vf-corner vf-top-left" style="border-color:var(--steel);"></div>
-        <div class="vf-corner vf-top-right" style="border-color:var(--steel);"></div>
-        <div class="vf-corner vf-bottom-left" style="border-color:var(--steel);"></div>
-        <div class="vf-corner vf-bottom-right" style="border-color:var(--steel);"></div>
+  <div id="cx1-cam" class="cam-scanner-wrapper" style="display:none;">
+    <div class="cam-top-curtain">
+      <div class="flex justify-between items-center mb-2">
+        <span id="cx1-status" style="font-weight:700">🟢 Đang quét Đợt 1...</span>
+        <span id="cx1-dem" class="cx5-badge">Đã quét: 0 mã</span>
       </div>
     </div>
 
-    <div class="flex flex-col gap-2 w-full" style="padding: 0 12px;">
-      <button id="btn-flash-cx1" class="btn" style="width:100%; background:var(--surface-grad); border:1px solid var(--border); color:var(--text-main); margin:0; height:38px; font-size:14px;" onclick="toggleFlashCX1()">Bật/Tắt đèn</button>
-      <button id="btn-dung-tieptuc-cx1" class="btn btn-red" style="width:100%; margin:0; height:38px; font-size:14px;" onclick="toggleDungTiepTuc()">Dừng quét</button>
-      <button class="btn btn-green" style="width:100%; margin:0; height:38px; font-size:14px;" onclick="ketThucCX1()"><i class="ti ti-list-check"></i> Xem kết quả</button>
+    <div class="cam-row-middle">
+      <div class="cam-wing-left"></div>
+      <div id="cx1-video-box" class="video-container" style="position:relative; width:100%; height:220px; background:transparent; border-radius:14px; overflow:hidden; border: 2px solid var(--steel); transition: border-color 0.3s ease, box-shadow 0.3s ease;">
+        <video id="cx1-reader" autoplay playsinline muted disablePictureInPicture style="position:absolute; width:100%; height:100%; object-fit:cover; transform:translateZ(0); will-change:transform;"></video>
+        <div id="cx1-standby-overlay" class="cam-standby-box" style="display:none;">
+          <div class="standby-pulse-circle">
+            <i class="ti ti-player-pause"></i>
+          </div>
+          <div class="standby-text">ĐÃ TẠM DỪNG QUÉT</div>
+          <div class="standby-sub">Chạm "Tiếp tục" để bật lại camera</div>
+        </div>
+        <div class="cam-viewfinder">
+          <div class="vf-corner vf-top-left" style="border-color:var(--steel);"></div>
+          <div class="vf-corner vf-top-right" style="border-color:var(--steel);"></div>
+          <div class="vf-corner vf-bottom-left" style="border-color:var(--steel);"></div>
+          <div class="vf-corner vf-bottom-right" style="border-color:var(--steel);"></div>
+        </div>
+      </div>
+      <div class="cam-wing-right"></div>
     </div>
 
-    <div id="cx1-log-container" style="margin-top:8px; background:var(--card-raised); border-radius:12px; padding:8px 10px; border:1px solid var(--line-soft); display:flex; flex-direction:column; flex:1 1 auto;">
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px; border-bottom:1px solid var(--line); padding-bottom:4px; gap:8px;">
-        <span style="font-size:12px; font-weight:800; color:var(--brass); letter-spacing:0.5px; white-space:nowrap;"><i class="ti ti-clipboard-list"></i> NHẬT KÝ QUÉT CHỈ FOR</span>
-        <span id="cx1-log-count" style="font-size:12px; font-weight:700; color:var(--steel); white-space:nowrap;">0 mã</span>
+    <div class="cam-bottom-curtain">
+      <div class="flex flex-col gap-2 w-full" style="padding: 0 12px;">
+        <button id="btn-flash-cx1" class="btn" style="width:100%; background:var(--surface-grad); border:1px solid var(--border); color:var(--text-main); margin:0; height:38px; font-size:14px;" onclick="toggleFlashCX1()">Bật/Tắt đèn</button>
+        <button id="btn-dung-tieptuc-cx1" class="btn btn-red" style="width:100%; margin:0; height:38px; font-size:14px;" onclick="toggleDungTiepTuc()">Dừng quét</button>
+        <button class="btn btn-green" style="width:100%; margin:0; height:38px; font-size:14px;" onclick="ketThucCX1()"><i class="ti ti-list-check"></i> Xem kết quả</button>
       </div>
-      <div id="cx1-log-list" style="max-height:260px; min-height:120px; overflow-y:auto; padding-right:4px; flex:1 1 auto;">
-        <div style="color:var(--cream-soft); font-size:12px; text-align:center; padding:6px 0;">Chưa có mã nào được quét</div>
+
+      <div id="cx1-log-container" style="margin: 8px 12px 12px 12px; background:var(--card-raised); border-radius:12px; padding:8px 10px; border:1px solid var(--line-soft); display:flex; flex-direction:column; flex:1 1 auto;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px; border-bottom:1px solid var(--line); padding-bottom:4px; gap:8px;">
+          <span style="font-size:12px; font-weight:800; color:var(--brass); letter-spacing:0.5px; white-space:nowrap;"><i class="ti ti-clipboard-list"></i> NHẬT KÝ QUÉT CHỈ FOR</span>
+          <span id="cx1-log-count" style="font-size:12px; font-weight:700; color:var(--steel); white-space:nowrap;">0 mã</span>
+        </div>
+        <div id="cx1-log-list" style="max-height:220px; min-height:90px; overflow-y:auto; padding-right:4px; flex:1 1 auto;">
+          <div style="color:var(--cream-soft); font-size:12px; text-align:center; padding:6px 0;">Chưa có mã nào được quét</div>
+        </div>
       </div>
     </div>
   </div>
@@ -606,50 +622,66 @@
     
   </div>
 
-  <div id="btp-cam" style="display:none; overflow:visible; padding:12px 0 10px 0; margin-bottom:0;">
-    <div class="flex justify-between items-center mb-2" style="padding: 0 12px;">
-      <span id="btp-status" style="font-weight:700">🟢 Đang quét...</span>
-      <span id="btp-dem" style="background:var(--brass); color:var(--bg-deep); font-weight:800; font-size:14px; padding:4px 12px; border-radius:20px; box-shadow:0 3px 10px rgba(245,158,11,0.45); letter-spacing:0.3px;">Đã quét: 0 mã</span>
-    </div>
-    <div id="btp-video-box" class="video-container" style="position:relative; width:100%; padding-bottom:60%; background:#000; border-radius:14px; overflow:hidden; margin-bottom:8px; border: 3px solid transparent; transition: border-color 0.3s ease, box-shadow 0.3s ease;">
-      <video id="btp-reader" autoplay playsinline muted disablePictureInPicture style="position:absolute; width:100%; height:100%; object-fit:cover; transform:translateZ(0); will-change:transform;"></video>
-      <div class="btp-viewfinder">
-        <div class="vf-corner vf-top-left"></div>
-        <div class="vf-corner vf-top-right"></div>
-        <div class="vf-corner vf-bottom-left"></div>
-        <div class="vf-corner vf-bottom-right"></div>
+  <div id="btp-cam" class="cam-scanner-wrapper" style="display:none;">
+    <div class="cam-top-curtain">
+      <div class="flex justify-between items-center mb-2">
+        <span id="btp-status" style="font-weight:700">🟢 Đang quét...</span>
+        <span id="btp-dem" style="background:var(--brass); color:var(--bg-deep); font-weight:800; font-size:14px; padding:4px 12px; border-radius:20px; box-shadow:0 3px 10px rgba(245,158,11,0.45); letter-spacing:0.3px;">Đã quét: 0 mã</span>
       </div>
     </div>
 
-    <div style="margin: 0 12px 8px 12px; padding:8px 10px; background:var(--card-raised); border-radius:10px; border:1px solid var(--line-soft); display:flex; flex-direction:column; gap:8px;">
-      <div style="display:flex; align-items:center; justify-content:space-between;">
-        <span style="font-size:13px; font-weight:600; color:var(--cream);">Cho phép quét trùng</span>
-        <div style="display:flex; align-items:center; gap:8px;">
-          <span id="btp-lock-status" style="font-size:11px; color:var(--cream-soft);">Chờ quét...</span>
-          <label class="toggle-switch">
-            <input type="checkbox" id="btp-cho-phep-trung-cam">
-            <span class="toggle-slider"></span>
-          </label>
+    <div class="cam-row-middle">
+      <div class="cam-wing-left"></div>
+      <div id="btp-video-box" class="video-container" style="position:relative; width:100%; height:220px; background:transparent; border-radius:14px; overflow:hidden; border: 2px solid var(--primary); transition: border-color 0.3s ease, box-shadow 0.3s ease;">
+        <video id="btp-reader" autoplay playsinline muted disablePictureInPicture style="position:absolute; width:100%; height:100%; object-fit:cover; transform:translateZ(0); will-change:transform;"></video>
+        <div id="btp-standby-overlay" class="cam-standby-box" style="display:none;">
+          <div class="standby-pulse-circle">
+            <i class="ti ti-player-pause"></i>
+          </div>
+          <div class="standby-text">ĐÃ TẠM DỪNG QUÉT</div>
+          <div class="standby-sub">Chạm "Quét tiếp" để bật lại camera</div>
+        </div>
+        <div class="btp-viewfinder">
+          <div class="vf-corner vf-top-left"></div>
+          <div class="vf-corner vf-top-right"></div>
+          <div class="vf-corner vf-bottom-left"></div>
+          <div class="vf-corner vf-bottom-right"></div>
         </div>
       </div>
-      <div style="display:flex; gap:6px; align-items:center;">
-        <input type="text" id="btp-manual-input-cam" placeholder="Nhập tay mã BTP..." style="flex:1; height:38px; padding:0 12px; font-size:13px; margin:0; box-sizing:border-box;" onkeydown="if(event.key==='Enter') nhapThuCongBTP('cam')">
-        <button class="btn btn-blue" style="height:38px; padding:0 16px; font-size:13px; white-space:nowrap; margin:0;" onclick="nhapThuCongBTP('cam')">Thêm</button>
-      </div>
+      <div class="cam-wing-right"></div>
     </div>
 
-    <div class="flex flex-col gap-2 w-full" style="padding: 0 12px;">
-      <button id="btn-dung-tieptuc-btp" class="btn btn-red" style="width:100%; height:38px; font-size:14px; margin:0;" onclick="toggleDungTiepTucBTP()">Dừng quét</button>
-      <button class="btn btn-green" style="width:100%; height:38px; font-size:14px; margin:0;" onclick="xemKetQuaBTP()"><i class="ti ti-list-check"></i> Xem kết quả</button>
-    </div>
-
-    <div id="btp-log-container" style="margin-top:8px; background:var(--card-raised); border-radius:12px; padding:8px 10px; border:1px solid var(--line-soft); display:flex; flex-direction:column; flex:1 1 auto;">
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px; border-bottom:1px solid var(--line); padding-bottom:4px; gap:8px;">
-        <span style="font-size:12px; font-weight:800; color:var(--brass); letter-spacing:0.5px; white-space:nowrap;"><i class="ti ti-clipboard-list"></i> NHẬT KÝ QUÉT BTP</span>
-        <span id="btp-log-count" style="font-size:12px; font-weight:700; color:var(--steel); white-space:nowrap;">0 mã</span>
+    <div class="cam-bottom-curtain">
+      <div style="margin: 0 12px 8px 12px; padding:8px 10px; background:var(--card-raised); border-radius:10px; border:1px solid var(--line-soft); display:flex; flex-direction:column; gap:8px;">
+        <div style="display:flex; align-items:center; justify-content:space-between;">
+          <span style="font-size:13px; font-weight:600; color:var(--cream);">Cho phép quét trùng</span>
+          <div style="display:flex; align-items:center; gap:8px;">
+            <span id="btp-lock-status" style="font-size:11px; color:var(--cream-soft);">Chờ quét...</span>
+            <label class="toggle-switch">
+              <input type="checkbox" id="btp-cho-phep-trung-cam">
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+        </div>
+        <div style="display:flex; gap:6px; align-items:center;">
+          <input type="text" id="btp-manual-input-cam" placeholder="Nhập tay mã BTP..." style="flex:1; height:38px; padding:0 12px; font-size:13px; margin:0; box-sizing:border-box;" onkeydown="if(event.key==='Enter') nhapThuCongBTP('cam')">
+          <button class="btn btn-blue" style="height:38px; padding:0 16px; font-size:13px; white-space:nowrap; margin:0;" onclick="nhapThuCongBTP('cam')">Thêm</button>
+        </div>
       </div>
-      <div id="btp-log-list" style="max-height:260px; min-height:120px; overflow-y:auto; padding-right:4px; flex:1 1 auto;">
-        <div style="color:var(--cream-soft); font-size:12px; text-align:center; padding:6px 0;">Chưa có mã nào được quét</div>
+
+      <div class="flex flex-col gap-2 w-full" style="padding: 0 12px;">
+        <button id="btn-dung-tieptuc-btp" class="btn btn-red" style="width:100%; height:38px; font-size:14px; margin:0;" onclick="toggleDungTiepTucBTP()">Dừng quét</button>
+        <button class="btn btn-green" style="width:100%; height:38px; font-size:14px; margin:0;" onclick="xemKetQuaBTP()"><i class="ti ti-list-check"></i> Xem kết quả</button>
+      </div>
+
+      <div id="btp-log-container" style="margin: 8px 12px 12px 12px; background:var(--card-raised); border-radius:12px; padding:8px 10px; border:1px solid var(--line-soft); display:flex; flex-direction:column; flex:1 1 auto;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px; border-bottom:1px solid var(--line); padding-bottom:4px; gap:8px;">
+          <span style="font-size:12px; font-weight:800; color:var(--brass); letter-spacing:0.5px; white-space:nowrap;"><i class="ti ti-clipboard-list"></i> NHẬT KÝ QUÉT BTP</span>
+          <span id="btp-log-count" style="font-size:12px; font-weight:700; color:var(--steel); white-space:nowrap;">0 mã</span>
+        </div>
+        <div id="btp-log-list" style="max-height:220px; min-height:90px; overflow-y:auto; padding-right:4px; flex:1 1 auto;">
+          <div style="color:var(--cream-soft); font-size:12px; text-align:center; padding:6px 0;">Chưa có mã nào được quét</div>
+        </div>
       </div>
     </div>
   </div>
@@ -1032,11 +1064,11 @@
 
 </div><!-- /#app-viewport -->
 
-<script src="app.js?v=20260903-v67"></script>
+<script src="app.js?v=20260903-v68"></script>
 <script src="kiemke.js?v=20260827-v57"></script>
-<script src="cx1.js?v=20260903-v67"></script>
+<script src="cx1.js?v=20260903-v68"></script>
 <script src="cx5.js?v=20260827-v57"></script>
-<script src="btp.js?v=20260903-v67"></script>
+<script src="btp.js?v=20260903-v68"></script>
 <script src="tonkho.js?v=20260827-v57"></script>
 
 <!-- BOTTOM SHEET MODAL LỊCH SỬ -->

@@ -149,6 +149,8 @@ async function tiepTucKhoiTaoCX1() {
   document.body.classList.add("cam-active");
   document.getElementById("cx1-form").style.display = "none";
   document.getElementById("cx1-cam").style.display = "block";
+  const overlayCX1 = document.getElementById("cx1-standby-overlay");
+  if (overlayCX1) overlayCX1.style.display = "none";
   document.getElementById("cx1-ketqua").style.display = "none";
   document.getElementById("cx1-dem").textContent = "Đã quét: 0 mã";
   document.getElementById("cx1-status").textContent = "Đang quét Đợt 1...";
@@ -182,10 +184,14 @@ function dungCX1() {
     dungCameraFast("cx1-reader", zxingReaderCX1);
   }
   zxingReaderCX1 = null;
+  const overlay = document.getElementById("cx1-standby-overlay");
+  if (overlay) overlay.style.display = "flex";
   document.getElementById("cx1-status").textContent = "Đã dừng Đợt " + demSoDot;
 }
 
 async function tiepTucCX1() {
+  const overlay = document.getElementById("cx1-standby-overlay");
+  if (overlay) overlay.style.display = "none";
   const coDuLieu = phienCX1.some(r => r.dotQuet === demSoDot);
   if (coDuLieu) {
     demSoDot += 1; 
@@ -590,6 +596,8 @@ async function quetTiepCX1() {
 
   document.getElementById("cx1-ketqua").style.display = "none";
   document.getElementById("cx1-cam").style.display = "block";
+  const overlayCX1 = document.getElementById("cx1-standby-overlay");
+  if (overlayCX1) overlayCX1.style.display = "none";
   document.body.classList.add("cam-active");
   document.getElementById("cx1-status").textContent = "Đang quét Đợt " + demSoDot + "...";
 
