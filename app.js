@@ -534,9 +534,93 @@ window.doiCamera = async function(videoId, restartFunc) {
   }
 };
 
+function isCapacitorNative() {
+  return !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform());
+}
+
+let nativeScannerListener = null;
+
+async function khoiTaoCameraNative(videoId, onDecodedCallback) {
+  const BarcodeScanner = window.Capacitor?.Plugins?.BarcodeScanner;
+  if (!BarcodeScanner) return null;
+
+  try {
+    const status = await BarcodeScanner.checkPermissions();
+    if (status.camera !== 'granted') {
+      const request = await BarcodeScanner.requestPermissions();
+      if (request.camera !== 'granted') {
+        alert("⚠️ Vui lòng cấp quyền Camera để quét mã!");
+        return null;
+      }
+    }
+
+    if (nativeScannerListener) {
+      try { await nativeScannerListener.remove(); } catch (e) { }
+      nativeScannerListener = null;
+    }
+
+    nativeScannerListener = await BarcodeScanner.addListener('barcodeScanned', async (result) => {
+      if (result && result.barcode && result.barcode.displayValue) {
+        if (typeof onDecodedCallback === 'function') {
+          onDecodedCallback(result.barcode.displayValue);
+        }
+      }
+    });
+
+    const videoEl = document.getElementById(videoId);
+    if (videoEl) {
+      videoEl.style.display = 'none';
+    }
+
+    document.documentElement.classList.add("barcode-scanner-active");
+    document.body.classList.add("barcode-scanner-active");
+
+    await BarcodeScanner.startScan({
+      formats: ['QR_CODE'],
+      lensFacing: 'BACK'
+    });
+
+    return {
+      reset: async () => {
+        await dungCameraNative(videoId);
+      }
+    };
+  } catch (err) {
+    console.error("Lỗi khởi tạo Native Barcode Scanner:", err);
+    document.documentElement.classList.remove("barcode-scanner-active");
+    document.body.classList.remove("barcode-scanner-active");
+    return null;
+  }
+}
+
+async function dungCameraNative(videoId) {
+  document.documentElement.classList.remove("barcode-scanner-active");
+  document.body.classList.remove("barcode-scanner-active");
+
+  const videoEl = document.getElementById(videoId);
+  if (videoEl) {
+    videoEl.style.display = 'block';
+  }
+
+  if (window.Capacitor?.Plugins?.BarcodeScanner) {
+    try {
+      if (nativeScannerListener) {
+        try { await nativeScannerListener.remove(); } catch (e) { }
+        nativeScannerListener = null;
+      }
+      await window.Capacitor.Plugins.BarcodeScanner.stopScan();
+    } catch (e) { }
+  }
+}
+
 async function khoiTaoCameraFast(videoId, onDecodedCallback) {
   const videoEl = document.getElementById(videoId);
   if (!videoEl) return null;
+
+  if (isCapacitorNative()) {
+    const nativeObj = await khoiTaoCameraNative(videoId, onDecodedCallback);
+    if (nativeObj) return nativeObj;
+  }
 
   if (animFrameMap[videoId]) {
     clearTimeout(animFrameMap[videoId]);
@@ -734,6 +818,10 @@ async function khoiTaoCameraFast(videoId, onDecodedCallback) {
 }
 
 function dungCameraFast(videoId, zxingReaderObj) {
+  if (isCapacitorNative()) {
+    dungCameraNative(videoId);
+  }
+
   if (animFrameMap[videoId]) {
     clearTimeout(animFrameMap[videoId]);
     animFrameMap[videoId] = null;
