@@ -458,7 +458,7 @@ async function khoiTaoCameraFast(videoId, onDecodedCallback) {
   }
 
   // 1. Cấu hình độ phân giải 1080p Full HD + Tự động lấy nét liên tục (Continuous Focus)
-  const constraints = {
+  let constraints = {
     video: {
       facingMode: "environment",
       width: { ideal: 1920, min: 1280 },
@@ -466,6 +466,16 @@ async function khoiTaoCameraFast(videoId, onDecodedCallback) {
       frameRate: { ideal: 60 }
     }
   };
+
+  const savedCamId = localStorage.getItem('camera_uu_tien');
+  if (savedCamId) {
+    constraints.video = {
+      deviceId: { exact: savedCamId },
+      width: { ideal: 1920, min: 1280 },
+      height: { ideal: 1080, min: 720 },
+      frameRate: { ideal: 60 }
+    };
+  }
 
   try {
     const stream = await navigator.mediaDevices.getUserMedia(constraints);
@@ -597,6 +607,34 @@ async function batDauQuet() {
   loaiChon = document.getElementById("chon-loai").value;
   if (!ngayChon) { alert("⚠️ Vui lòng chọn ngày!"); return; }
   if (!loaiChon) { alert("⚠️ Vui lòng chọn loại!"); return; }
+
+window.doiCamera = async function(videoId, restartFunc) {
+  try {
+    const devices = await navigator.mediaDevices.enumerateDevices();
+    const videoDevices = devices.filter(d => d.kind === 'videoinput');
+    let backCams = videoDevices.filter(d => d.label.toLowerCase().includes('back') || d.label.toLowerCase().includes('sau') || d.label.toLowerCase().includes('0, facing'));
+    if (backCams.length === 0) backCams = videoDevices; // Dự phòng nếu máy không báo label
+    
+    if (backCams.length <= 1) {
+      if (typeof showCanhBao === "function") showCanhBao("Hệ thống chỉ nhận diện 1 camera!");
+      return;
+    }
+    
+    const savedCamId = localStorage.getItem('camera_uu_tien');
+    let currentIndex = savedCamId ? backCams.findIndex(d => d.deviceId === savedCamId) : -1;
+    let nextIndex = (currentIndex + 1) % backCams.length;
+    localStorage.setItem('camera_uu_tien', backCams[nextIndex].deviceId);
+    
+    if (typeof showCanhBao === "function") showCanhBao(`Đã chuyển ống kính (${nextIndex + 1}/${backCams.length})`);
+    
+    dungCameraFast(videoId, null);
+    setTimeout(() => {
+      if (typeof window[restartFunc] === "function") window[restartFunc]();
+    }, 400);
+  } catch (e) {
+    if (typeof showCanhBao === "function") showCanhBao("Lỗi đổi camera: " + e);
+  }
+};
 
   // Mặc định quét nhanh nếu là Xuất
   quetNhanh = !isNhap(loaiChon);
