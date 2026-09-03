@@ -448,9 +448,15 @@ async function taoQR() {
 let animFrameMap = {};
 let nativeBarcodeDetectorGlobal = null;
 
+const lastCameraCallbackMap = {};
+
 async function khoiTaoCameraFast(videoId, onDecodedCallback) {
   const videoEl = document.getElementById(videoId);
   if (!videoEl) return null;
+
+  if (typeof onDecodedCallback === 'function') {
+    lastCameraCallbackMap[videoId] = onDecodedCallback;
+  }
 
   if (animFrameMap[videoId]) {
     clearTimeout(animFrameMap[videoId]);
@@ -1208,62 +1214,49 @@ function dongXacNhanApp(dongY) {
 }
 window.dongXacNhanApp = dongXacNhanApp;
 
+// ── Hàm khôi phục sạch luồng camera và khởi động lại vòng lặp quét ──
+async function khoiPhucCamera(videoId, fallbackCb) {
+  const videoEl = document.getElementById(videoId);
+  if (!videoEl) return;
+  const cb = lastCameraCallbackMap[videoId] || fallbackCb;
+  if (!cb) return;
+
+  // 1. Dừng sạch luồng cũ và giải phóng timer cũ
+  dungCameraFast(videoId, null);
+
+  // 2. Nghỉ 250ms cho Camera HAL của Android giải phóng cảm biến
+  await new Promise(r => setTimeout(r, 250));
+
+  // 3. Khởi tạo lại camera và kích hoạt lại vòng lặp quét mới
+  await khoiTaoCameraFast(videoId, cb);
+}
+
 // ── Tự động khôi phục Camera khi quay lại app từ nền (Chống đứng hình) ──
+let resumeCameraTimer = null;
+function triggerResumeCamera() {
+  clearTimeout(resumeCameraTimer);
+  resumeCameraTimer = setTimeout(async () => {
+    const camBoxes = [
+      { vid: 'reader', box: 'cam-box', fallback: (txt) => { if (typeof xuLyMaQuet === 'function') xuLyMaQuet(txt); } },
+      { vid: 'kk-reader', box: 'kk-cam', fallback: (txt) => { if (typeof xuLyMaKiemKe === 'function') xuLyMaKiemKe(txt); } },
+      { vid: 'cx1-reader', box: 'cx1-cam', fallback: (txt) => { if (txt && window.dangQuetCX1 && typeof window.khiQuetDuocMa === 'function') window.khiQuetDuocMa({ getText: () => txt }); } },
+      { vid: 'btp-reader', box: 'btp-cam', fallback: (txt) => { if (txt && window.dangQuetBTP && typeof window.khiQuetDuocMaBTP === 'function') window.khiQuetDuocMaBTP({ getText: () => txt }); } }
+    ];
+
+    for (const item of camBoxes) {
+      const boxEl = document.getElementById(item.box);
+      if (boxEl && window.getComputedStyle(boxEl).display !== 'none') {
+        await khoiPhucCamera(item.vid, item.fallback);
+      }
+    }
+  }, 350);
+}
+
 document.addEventListener('visibilitychange', () => {
   if (document.visibilityState === 'visible') {
-    setTimeout(async () => {
-      const camConfigs = [
-        { vid: 'reader', box: 'cam-box' },
-        { vid: 'kk-reader', box: 'kk-cam' },
-        { vid: 'cx1-reader', box: 'cx1-cam' },
-        { vid: 'btp-reader', box: 'btp-cam' }
-      ];
-
-      for (const cfg of camConfigs) {
-        const box = document.getElementById(cfg.box);
-        const videoEl = document.getElementById(cfg.vid);
-
-        // Kiểm tra xem màn hình camera này có đang mở không
-        if (box && videoEl && window.getComputedStyle(box).display !== 'none') {
-          // 1. Nếu video bị trình duyệt pause, thử play() trước
-          if (videoEl.paused) {
-            try { await videoEl.play(); } catch (e) { }
-          }
-
-          // 2. Kiểm tra xem luồng camera có bị mất track / đứng hình không
-          const stream = videoEl.srcObject;
-          const track = stream ? stream.getVideoTracks()[0] : null;
-          const biDung = !track || track.readyState === 'ended' || track.muted || videoEl.paused;
-
-          if (biDung) {
-            try {
-              if (stream) {
-                stream.getTracks().forEach(t => { try { t.stop(); } catch (e) { } });
-              }
-              const newStream = await navigator.mediaDevices.getUserMedia({
-                video: {
-                  facingMode: "environment",
-                  width: { ideal: 1920, min: 1280 },
-                  height: { ideal: 1080, min: 720 },
-                  frameRate: { ideal: 60 }
-                }
-              });
-              videoEl.srcObject = newStream;
-              await videoEl.play();
-
-              try {
-                const newTrack = newStream.getVideoTracks()[0];
-                const cap = newTrack.getCapabilities ? newTrack.getCapabilities() : {};
-                if (cap.focusMode && cap.focusMode.includes('continuous')) {
-                  await newTrack.applyConstraints({ advanced: [{ focusMode: 'continuous' }] });
-                }
-              } catch (e) { }
-            } catch (err) {
-              console.warn("Lỗi tự động khôi phục camera:", err);
-            }
-          }
-        }
-      }
-    }, 350);
+    triggerResumeCamera();
   }
+});
+window.addEventListener('focus', () => {
+  triggerResumeCamera();
 });
