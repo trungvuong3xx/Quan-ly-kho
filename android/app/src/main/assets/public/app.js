@@ -311,7 +311,22 @@ window.addEventListener("click", pushChanThoatState, { once: true });
 function handlePopStateThoat(e) {
   if (isExitingApp) return;
 
-  // 1. Nếu đang mở bàn phím ảo custom -> đóng bàn phím trước
+  // 1. Nếu đang quét camera (Native hoặc Web) -> Dừng camera trước
+  const isCamActive = document.body.classList.contains("barcode-scanner-active") || 
+                      document.body.classList.contains("cam-active") ||
+                      (document.getElementById("btp-cam") && document.getElementById("btp-cam").style.display !== "none") ||
+                      (document.getElementById("cx1-cam") && document.getElementById("cx1-cam").style.display !== "none") ||
+                      (document.getElementById("form-quet") && document.getElementById("form-quet").style.display !== "none");
+
+  if (isCamActive) {
+    if (typeof dungBTP === "function") dungBTP();
+    if (typeof dungCX1 === "function") dungCX1();
+    if (typeof dungQuet === "function") dungQuet();
+    setTimeout(pushChanThoatState, 10);
+    return;
+  }
+
+  // 2. Nếu đang mở bàn phím ảo custom -> đóng bàn phím trước
   const openBp = document.querySelector(".cx5-bp-panel.show");
   if (openBp) {
     if (typeof dongBanPhimCX5 === "function") dongBanPhimCX5();
@@ -319,8 +334,8 @@ function handlePopStateThoat(e) {
     return;
   }
 
-  // 2. Nếu đang mở overlay / modal -> đóng overlay trước
-  const openOverlay = document.querySelector(".overlay.show, .cx5-xoay-overlay.show");
+  // 3. Nếu đang mở overlay / modal -> đóng overlay trước
+  const openOverlay = document.querySelector(".overlay.show:not(#overlay-thoat), .cx5-xoay-overlay.show, .modal-sheet.show");
   if (openOverlay) {
     openOverlay.classList.remove("show");
     if (typeof dongSuaLuotCX5 === "function") dongSuaLuotCX5();
@@ -330,12 +345,15 @@ function handlePopStateThoat(e) {
     return;
   }
 
+  // 4. Nếu đang ở các tab khác ngoài Trang Chủ -> Quay về Trang Chủ
   const activePage = document.querySelector(".page.active");
   const activeId = activePage ? activePage.id : "trangChu";
 
   if (activeId !== "trangChu") {
     if (typeof diToiTab === "function") {
       diToiTab("trangChu");
+    } else if (typeof chuyenTrang === "function") {
+      chuyenTrang("trangChu", document.querySelector('.bnav-btn[data-page="trangChu"]'));
     } else if (typeof chuyenTrangKhongNav === "function") {
       chuyenTrangKhongNav("trangChu");
     }
@@ -343,12 +361,34 @@ function handlePopStateThoat(e) {
     return;
   }
 
+  // 5. Nếu đang ở Trang Chủ -> Mở hộp thoại xác nhận thoát app
   const el = document.getElementById("overlay-thoat");
-  if (el) el.classList.add("show");
+  if (el) {
+    if (el.classList.contains("show")) {
+      xacNhanThoatApp();
+    } else {
+      el.classList.add("show");
+    }
+  } else {
+    xacNhanThoatApp();
+  }
   setTimeout(pushChanThoatState, 10);
 }
 
 window.addEventListener("popstate", handlePopStateThoat);
+
+// Native Back Button Bridge (gọi từ Java MainActivity khi bấm nút Back hoặc vuốt cạnh)
+window.handleNativeBackButton = function() {
+  handlePopStateThoat();
+};
+
+if (window.Capacitor?.Plugins?.App) {
+  try {
+    window.Capacitor.Plugins.App.addListener('backButton', () => {
+      window.handleNativeBackButton();
+    });
+  } catch (e) { }
+}
 
 function khongThoatApp() {
   const el = document.getElementById("overlay-thoat");
@@ -361,12 +401,16 @@ function xacNhanThoatApp() {
   window.removeEventListener("popstate", handlePopStateThoat);
   const el = document.getElementById("overlay-thoat");
   if (el) el.classList.remove("show");
-  try {
-    window.close();
-  } catch (e) { }
-  setTimeout(() => {
-    history.back();
-  }, 50);
+  if (window.Capacitor?.Plugins?.App) {
+    window.Capacitor.Plugins.App.exitApp();
+  } else if (navigator.app && navigator.app.exitApp) {
+    navigator.app.exitApp();
+  } else {
+    try { window.close(); } catch (e) { }
+    setTimeout(() => {
+      history.back();
+    }, 50);
+  }
 }
 
 window.khongThoatApp = khongThoatApp;
@@ -470,9 +514,11 @@ async function khoiTaoCameraNative(videoId, onDecodedCallback) {
       }
     }
 
+    document.documentElement.classList.add("barcode-scanner-active");
     document.body.classList.add("barcode-scanner-active");
     const videoEl = document.getElementById(videoId);
     if (videoEl) {
+      videoEl.style.display = 'none';
       videoEl.style.opacity = '0';
     }
 
@@ -502,8 +548,12 @@ async function khoiTaoCameraNative(videoId, onDecodedCallback) {
             nativeScannerListener = null;
           }
           await BarcodeScanner.stopScan();
+          document.documentElement.classList.remove("barcode-scanner-active");
           document.body.classList.remove("barcode-scanner-active");
-          if (videoEl) videoEl.style.opacity = '1';
+          if (videoEl) {
+            videoEl.style.display = 'block';
+            videoEl.style.opacity = '1';
+          }
         } catch (e) { }
       }
     };
@@ -659,7 +709,13 @@ function dungCameraFast(videoId, zxingReaderObj) {
         nativeScannerListener = null;
       }
       window.Capacitor.Plugins.BarcodeScanner.stopScan();
+      document.documentElement.classList.remove("barcode-scanner-active");
       document.body.classList.remove("barcode-scanner-active");
+      const vEl = document.getElementById(videoId);
+      if (vEl) {
+        vEl.style.display = 'block';
+        vEl.style.opacity = '1';
+      }
     } catch (e) { }
   }
 

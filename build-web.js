@@ -46,6 +46,10 @@ const pluginsJsonContent = JSON.stringify([
   {
     pkg: "@capacitor-mlkit/barcode-scanning",
     classpath: "io.capawesome.capacitorjs.plugins.mlkit.barcodescanning.BarcodeScannerPlugin"
+  },
+  {
+    pkg: "@capacitor/app",
+    classpath: "com.capacitorjs.plugins.app.AppPlugin"
   }
 ], null, 2);
 fs.writeFileSync(path.join(androidAssetsDir, 'capacitor.plugins.json'), pluginsJsonContent, 'utf8');
