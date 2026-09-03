@@ -501,87 +501,9 @@ let nativeBarcodeDetectorGlobal = null;
 
 const lastCameraCallbackMap = {};
 
-function isCapacitorNative() {
-  return !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform());
-}
-
-let nativeScannerListener = null;
-
-async function khoiTaoCameraNative(videoId, onDecodedCallback) {
-  const BarcodeScanner = window.Capacitor?.Plugins?.BarcodeScanner;
-  if (!BarcodeScanner) return null;
-
-  try {
-    const status = await BarcodeScanner.checkPermissions();
-    if (status.camera !== 'granted') {
-      const request = await BarcodeScanner.requestPermissions();
-      if (request.camera !== 'granted') {
-        alert("⚠️ Vui lòng cấp quyền Camera để quét mã!");
-        return null;
-      }
-    }
-
-    document.documentElement.classList.add("barcode-scanner-active");
-    document.body.classList.add("barcode-scanner-active");
-    const videoEl = document.getElementById(videoId);
-    let targetCard = null;
-    if (videoEl) {
-      videoEl.style.display = 'none';
-      videoEl.style.opacity = '0';
-      targetCard = videoEl.closest('.card');
-      if (targetCard) targetCard.classList.add("scanner-transparent-card");
-    }
-
-    if (nativeScannerListener) {
-      try { await nativeScannerListener.remove(); } catch (e) { }
-      nativeScannerListener = null;
-    }
-
-    nativeScannerListener = await BarcodeScanner.addListener('barcodeScanned', async (result) => {
-      if (result && result.barcode && result.barcode.displayValue) {
-        if (typeof onDecodedCallback === 'function') {
-          onDecodedCallback(result.barcode.displayValue);
-        }
-      }
-    });
-
-    await BarcodeScanner.startScan({
-      formats: ['QR_CODE'],
-      lensFacing: 'BACK'
-    });
-
-    return {
-      reset: async () => {
-        try {
-          if (nativeScannerListener) {
-            await nativeScannerListener.remove();
-            nativeScannerListener = null;
-          }
-          await BarcodeScanner.stopScan();
-          document.documentElement.classList.remove("barcode-scanner-active");
-          document.body.classList.remove("barcode-scanner-active");
-          document.querySelectorAll(".scanner-transparent-card").forEach(c => c.classList.remove("scanner-transparent-card"));
-          if (videoEl) {
-            videoEl.style.display = 'block';
-            videoEl.style.opacity = '1';
-          }
-        } catch (e) { }
-      }
-    };
-  } catch (err) {
-    console.error("Lỗi khởi tạo Native Barcode Scanner:", err);
-    return null;
-  }
-}
-
 async function khoiTaoCameraFast(videoId, onDecodedCallback) {
   const videoEl = document.getElementById(videoId);
   if (!videoEl) return null;
-
-  if (isCapacitorNative()) {
-    const nativeObj = await khoiTaoCameraNative(videoId, onDecodedCallback);
-    if (nativeObj) return nativeObj;
-  }
 
   if (typeof onDecodedCallback === 'function') {
     lastCameraCallbackMap[videoId] = onDecodedCallback;
@@ -713,38 +635,22 @@ async function khoiTaoCameraFast(videoId, onDecodedCallback) {
 }
 
 function dungCameraFast(videoId, zxingReaderObj) {
-  // Ngay lập tức gỡ bỏ trạng thái trong suốt để WebView trở lại nền solid, che camera ngay tức khắc
-  document.documentElement.classList.remove("barcode-scanner-active");
-  document.body.classList.remove("barcode-scanner-active");
-  document.querySelectorAll(".scanner-transparent-card").forEach(c => c.classList.remove("scanner-transparent-card"));
-
-  if (isCapacitorNative() && window.Capacitor?.Plugins?.BarcodeScanner) {
-    try {
-      if (nativeScannerListener) {
-        try { nativeScannerListener.remove(); } catch (e) { }
-        nativeScannerListener = null;
-      }
-      window.Capacitor.Plugins.BarcodeScanner.stopScan().catch(() => {});
-    } catch (e) { }
-  }
-
-  const vEl = document.getElementById(videoId);
-  if (vEl) {
-    vEl.style.display = 'block';
-    vEl.style.opacity = '1';
-  }
-
   if (animFrameMap[videoId]) {
     clearTimeout(animFrameMap[videoId]);
     animFrameMap[videoId] = null;
   }
   if (zxingReaderObj && typeof zxingReaderObj.reset === 'function') {
-    zxingReaderObj.reset();
+    try { zxingReaderObj.reset(); } catch(e) {}
   }
   const videoEl = document.getElementById(videoId);
-  if (videoEl && videoEl.srcObject) {
-    videoEl.srcObject.getTracks().forEach(t => t.stop());
-    videoEl.srcObject = null;
+  if (videoEl) {
+    try { videoEl.pause(); } catch(e) {}
+    if (videoEl.srcObject) {
+      try {
+        videoEl.srcObject.getTracks().forEach(t => t.stop());
+      } catch(e) {}
+      videoEl.srcObject = null;
+    }
   }
 }
 

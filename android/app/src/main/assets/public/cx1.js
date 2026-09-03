@@ -146,11 +146,8 @@ async function tiepTucKhoiTaoCX1() {
   idPhienHienTai = Date.now() + "-" + Math.random().toString(36).slice(2);
   soLuongDaGuiHienTai = 0;
 
-  document.body.classList.add("cam-active");
   document.getElementById("cx1-form").style.display = "none";
   document.getElementById("cx1-cam").style.display = "block";
-  const overlayCX1 = document.getElementById("cx1-standby-overlay");
-  if (overlayCX1) overlayCX1.style.display = "none";
   document.getElementById("cx1-ketqua").style.display = "none";
   document.getElementById("cx1-dem").textContent = "Đã quét: 0 mã";
   document.getElementById("cx1-status").textContent = "Đang quét Đợt 1...";
@@ -178,20 +175,15 @@ async function tiepTucKhoiTaoCX1() {
 }
 
 function dungCX1() {
-  document.body.classList.remove("cam-active");
   dangQuetCX1 = false;
   if (typeof dungCameraFast === "function") {
     dungCameraFast("cx1-reader", zxingReaderCX1);
   }
   zxingReaderCX1 = null;
-  const overlay = document.getElementById("cx1-standby-overlay");
-  if (overlay) overlay.style.display = "flex";
   document.getElementById("cx1-status").textContent = "Đã dừng Đợt " + demSoDot;
 }
 
 async function tiepTucCX1() {
-  const overlay = document.getElementById("cx1-standby-overlay");
-  if (overlay) overlay.style.display = "none";
   const coDuLieu = phienCX1.some(r => r.dotQuet === demSoDot);
   if (coDuLieu) {
     demSoDot += 1; 
@@ -596,9 +588,6 @@ async function quetTiepCX1() {
 
   document.getElementById("cx1-ketqua").style.display = "none";
   document.getElementById("cx1-cam").style.display = "block";
-  const overlayCX1 = document.getElementById("cx1-standby-overlay");
-  if (overlayCX1) overlayCX1.style.display = "none";
-  document.body.classList.add("cam-active");
   document.getElementById("cx1-status").textContent = "Đang quét Đợt " + demSoDot + "...";
 
   const btnToggle = document.getElementById("btn-dung-tieptuc-cx1");

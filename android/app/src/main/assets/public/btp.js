@@ -338,8 +338,6 @@ async function batDauPhienMoiBTP() {
   document.getElementById("btp-dem").textContent = "Đã quét: 0 mã";
   document.getElementById("btp-status").innerHTML = '<i class="ti ti-radar" style="color:var(--success)"></i> Đang quét Đợt 1...';
 
-  const overlayBTP = document.getElementById("btp-standby-overlay");
-  if (overlayBTP) overlayBTP.style.display = "none";
   capNhatLogBTP();
 
   const btnToggle = document.getElementById("btn-dung-tieptuc-btp");
@@ -363,22 +361,16 @@ async function batDauPhienMoiBTP() {
 }
 
 function dungBTP() {
-  document.body.classList.remove("cam-active");
   dangQuetBTP = false;
   if (typeof dungCameraFast === "function") {
     dungCameraFast("btp-reader", zxingReaderBTP);
   }
   zxingReaderBTP = null;
-  const overlay = document.getElementById("btp-standby-overlay");
-  if (overlay) overlay.style.display = "flex";
   const statusEl = document.getElementById("btp-status");
   if (statusEl) statusEl.innerHTML = '<i class="ti ti-player-pause" style="color:var(--red)"></i> Đã dừng quét (Đợt ' + (demSoDotBTP || 1) + ')';
 }
 
 async function tiepTucBTP() {
-  document.body.classList.add("cam-active");
-  const overlay = document.getElementById("btp-standby-overlay");
-  if (overlay) overlay.style.display = "none";
   const daQuetTrongDotNay = phienBTP.some(function(item) { return item.dotQuet === demSoDotBTP; }); if (daQuetTrongDotNay || (demSoDotBTP || 0) === 0) { demSoDotBTP = (demSoDotBTP || 0) + 1; }
   dangQuetBTP = true;
   document.getElementById("btp-status").innerHTML = '<i class="ti ti-radar" style="color:var(--success)"></i> Đang quét Đợt ' + demSoDotBTP + '...';
@@ -640,8 +632,6 @@ async function quetTiepBTP() {
 
   document.getElementById("btp-ketqua").style.display = "none";
   document.getElementById("btp-cam").style.display = "block";
-  const overlayBTP = document.getElementById("btp-standby-overlay");
-  if (overlayBTP) overlayBTP.style.display = "none";
   document.getElementById("btp-status").innerHTML = '<i class="ti ti-radar" style="color:var(--success)"></i> Đang quét Đợt ' + demSoDotBTP + '...';
 
   const btnToggle = document.getElementById("btn-dung-tieptuc-btp");
