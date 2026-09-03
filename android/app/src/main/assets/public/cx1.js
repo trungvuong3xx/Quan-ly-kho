@@ -176,10 +176,12 @@ async function tiepTucKhoiTaoCX1() {
 }
 
 function dungCX1() {
+  document.body.classList.remove("cam-active");
   dangQuetCX1 = false;
-  // Giữ nguyên phần cứng camera chạy ngầm để bật lại tức thì
-  // dungCameraFast("cx1-reader", zxingReaderCX1);
-  // zxingReaderCX1 = null;
+  if (typeof dungCameraFast === "function") {
+    dungCameraFast("cx1-reader", zxingReaderCX1);
+  }
+  zxingReaderCX1 = null;
   document.getElementById("cx1-status").textContent = "Đã dừng Đợt " + demSoDot;
 }
 
@@ -567,6 +569,7 @@ function taoHangKetQuaCX1(danhSach) {
 }
 
 function hienKetQuaCX1() {
+  dungCX1();
   document.body.classList.remove("cam-active");
   const { hangDot, hangGom } = taoHangKetQuaCX1(phienCX1);
   document.getElementById("cx1-tbody-dot").innerHTML = hangDot;

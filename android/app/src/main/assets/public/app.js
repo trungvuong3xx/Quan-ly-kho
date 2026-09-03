@@ -713,22 +713,25 @@ async function khoiTaoCameraFast(videoId, onDecodedCallback) {
 }
 
 function dungCameraFast(videoId, zxingReaderObj) {
+  // Ngay lập tức gỡ bỏ trạng thái trong suốt để WebView trở lại nền solid, che camera ngay tức khắc
+  document.documentElement.classList.remove("barcode-scanner-active");
+  document.body.classList.remove("barcode-scanner-active");
+  document.querySelectorAll(".scanner-transparent-card").forEach(c => c.classList.remove("scanner-transparent-card"));
+
   if (isCapacitorNative() && window.Capacitor?.Plugins?.BarcodeScanner) {
     try {
       if (nativeScannerListener) {
-        nativeScannerListener.remove();
+        try { nativeScannerListener.remove(); } catch (e) { }
         nativeScannerListener = null;
       }
-      window.Capacitor.Plugins.BarcodeScanner.stopScan();
-      document.documentElement.classList.remove("barcode-scanner-active");
-      document.body.classList.remove("barcode-scanner-active");
-      document.querySelectorAll(".scanner-transparent-card").forEach(c => c.classList.remove("scanner-transparent-card"));
-      const vEl = document.getElementById(videoId);
-      if (vEl) {
-        vEl.style.display = 'block';
-        vEl.style.opacity = '1';
-      }
+      window.Capacitor.Plugins.BarcodeScanner.stopScan().catch(() => {});
     } catch (e) { }
+  }
+
+  const vEl = document.getElementById(videoId);
+  if (vEl) {
+    vEl.style.display = 'block';
+    vEl.style.opacity = '1';
   }
 
   if (animFrameMap[videoId]) {

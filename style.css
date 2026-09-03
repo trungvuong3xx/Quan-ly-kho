@@ -1883,6 +1883,11 @@ body { padding: 0 !important; background: var(--bg-body) !important; color: var(
 }
 
 /* Native Scanner: Đảm bảo nền trong suốt để camera phần cứng hiển thị trọn vẹn trong khung quét */
+/* ============================================================
+   NATIVE CAMERA SCANNER VIEWPORT MASKING
+   Camera chỉ hiển thị DUY NHẤT bên trong khung ngắm .video-container
+   Mọi vùng bên ngoài khung ngắm đều được che phủ bằng mặt nạ solid 5000px
+   ============================================================ */
 .scanner-transparent-card {
   background: transparent !important;
   background-color: transparent !important;
@@ -1890,9 +1895,13 @@ body { padding: 0 !important; background: var(--bg-body) !important; color: var(
   border-color: transparent !important;
 }
 
-/* Native Scanner: Đảm bảo nền trong suốt để camera phần cứng hiển thị trọn vẹn trong khung quét */
 html.barcode-scanner-active,
-body.barcode-scanner-active,
+body.barcode-scanner-active {
+  visibility: visible !important;
+  background: transparent !important;
+  background-color: transparent !important;
+}
+
 body.barcode-scanner-active .device-frame,
 body.barcode-scanner-active #app-viewport,
 body.barcode-scanner-active .page,
@@ -1910,13 +1919,19 @@ body.barcode-scanner-active #kiemKe.active,
 body.barcode-scanner-active #btp-cam,
 body.barcode-scanner-active #cx1-cam,
 body.barcode-scanner-active #cam-box,
-body.barcode-scanner-active #kk-cam,
-body.barcode-scanner-active #video-box,
-body.barcode-scanner-active #btp-video-box,
-body.barcode-scanner-active #cx1-video-box,
+body.barcode-scanner-active #kk-cam {
+  background: transparent !important;
+  background-color: transparent !important;
+  overflow: visible !important;
+}
+
+/* Mặt nạ 5000px: Chỉ để lộ đúng lỗ của khung ngắm, che phủ hoàn toàn mọi cạnh, viền, góc xung quanh */
 body.barcode-scanner-active .video-container {
   background: transparent !important;
   background-color: transparent !important;
+  box-shadow: 0 0 0 5000px var(--bg-body) !important;
+  position: relative !important;
+  z-index: 1 !important;
 }
 
 body.barcode-scanner-active video {
@@ -1928,4 +1943,17 @@ body.barcode-scanner-active .cx1-viewfinder,
 body.barcode-scanner-active .cam-viewfinder,
 body.barcode-scanner-active .scan-box {
   background: transparent !important;
+  z-index: 2 !important;
+}
+
+/* Các thành phần điều khiển, nút bấm, bảng nhật ký nổi trên mặt nạ 5000px */
+body.barcode-scanner-active #btp-cam > *:not(.video-container),
+body.barcode-scanner-active #cx1-cam > *:not(.video-container),
+body.barcode-scanner-active #cam-box > *:not(.video-container),
+body.barcode-scanner-active #kk-cam > *:not(.video-container),
+body.barcode-scanner-active .bottom-nav,
+body.barcode-scanner-active .header,
+body.barcode-scanner-active .device-frame > .header {
+  position: relative !important;
+  z-index: 10 !important;
 }
