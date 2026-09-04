@@ -459,30 +459,32 @@ async function quetDanhSachCameraSau() {
     const videoInputs = devices.filter(d => d.kind === 'videoinput');
     if (videoInputs.length === 0) return [];
 
-    // Lọc camera sau: loại bỏ camera trước và LOẠI BỎ TRIỆT ĐỂ các camera ảo/AUX ID 100, 101, 120... gây crash Camera HAL
+    // Lọc bỏ camera trước và LOẠI BỎ TRIỆT ĐỂ tất cả camera ảo/AUX (có số 2 chữ số trở lên như 20, 21, 60, 100, 120...)
     let backCams = videoInputs.filter(d => {
       const lbl = (d.label || '').toLowerCase();
       if (lbl.includes('front') || lbl.includes('truoc') || lbl.includes('selfie') || lbl.includes('user')) return false;
-      if (/camera2\s*([1-9]\d+)/i.test(lbl) || /\b(100|101|120)\b/.test(lbl)) return false;
-      return lbl.includes('back') || lbl.includes('rear') || lbl.includes('sau') || lbl.includes('environment') || lbl.includes('camera2 0') || lbl.includes('camera2 2');
+      if (/\b\d{2,}\b/.test(lbl) || /camera2?\s*\d{2,}/i.test(lbl)) return false;
+      return true;
     });
 
     if (backCams.length === 0) {
       backCams = videoInputs.filter(d => {
         const lbl = (d.label || '').toLowerCase();
-        if (/camera2\s*([1-9]\d+)/i.test(lbl) || /\b(100|101|120)\b/.test(lbl)) return false;
-        return !lbl.includes('front') && !lbl.includes('truoc') && !lbl.includes('selfie') && !lbl.includes('user');
+        if (lbl.includes('front') || lbl.includes('truoc') || lbl.includes('selfie') || lbl.includes('user')) return false;
+        return !(/\b\d{2,}\b/.test(lbl) || /camera2?\s*\d{2,}/i.test(lbl));
       });
     }
 
-    if (backCams.length === 0) backCams = videoInputs;
+    if (backCams.length === 0) {
+      backCams = [videoInputs[0]];
+    }
 
-    // Sắp xếp: Ưu tiên Camera 0 (Cảm biến chính có AutoFocus - Sony IMX586) lên đầu tiên
+    // Sắp xếp: Luôn ưu tiên Camera 0 (Sony IMX586 48MP AF chính) lên đầu tiên
     backCams.sort((a, b) => {
       const aLbl = (a.label || '').toLowerCase();
       const bLbl = (b.label || '').toLowerCase();
-      const aIs0 = /camera2\s*0\b/i.test(aLbl) || /\b0\b/.test(aLbl);
-      const bIs0 = /camera2\s*0\b/i.test(bLbl) || /\b0\b/.test(bLbl);
+      const aIs0 = /camera2?\s*0\b/i.test(aLbl) || /\b0\b/.test(aLbl);
+      const bIs0 = /camera2?\s*0\b/i.test(bLbl) || /\b0\b/.test(bLbl);
       if (aIs0 && !bIs0) return -1;
       if (!aIs0 && bIs0) return 1;
       return 0;
@@ -594,8 +596,10 @@ window.doiCameraNhanh = async function(videoId) {
 
     let cams = await quetDanhSachCameraSau();
     if (cams.length <= 1) {
-      const msg = "Hệ thống chỉ nhận diện 1 camera sau!";
-      if (typeof showCanhBao === "function") showCanhBao(msg);
+      const msg = "Đang sử dụng camera chính tốt nhất (Sony 48MP AF)!";
+      if (videoId === 'btp-reader' && typeof showCanhBaoBTP === "function") showCanhBaoBTP(msg);
+      else if (videoId === 'cx1-reader' && typeof showCanhBaoCX1 === "function") showCanhBaoCX1(msg);
+      else if (typeof showCanhBao === "function") showCanhBao(msg);
       return;
     }
 
@@ -675,19 +679,77 @@ async function khoiTaoCameraFast(videoId, onDecodedCallback) {
     console.warn("getUserMedia camera stream notice:", e);
   }
 
-  // 2. ZXing BrowserQRCodeReader: Quét trực tiếp video 100% chuẩn xác, không crash, không lag
-  try {
-    const reader = new ZXing.BrowserQRCodeReader();
-    reader.decodeFromVideoElementContinuously(videoEl, (result, err) => {
-      if (result && result.getText()) {
-        onDecodedCallback(result.getText());
-      }
-    });
-    return reader;
-  } catch (e) {
-    console.warn("ZXing fallback init error:", e);
+  // 2. Vòng lặp giải mã QR hiệu năng cao: Native BarcodeDetector + Fallback ZXing decode
+  let nativeDetector = null;
+  if ('BarcodeDetector' in window) {
+    try {
+      nativeDetector = new BarcodeDetector({ formats: ['qr_code'] });
+    } catch (e) {
+      nativeDetector = null;
+    }
   }
-  return null;
+
+  const zxingReader = new ZXing.BrowserQRCodeReader();
+  let isScanning = true;
+  let isDecoding = false;
+
+  const quetKhungHinh = async () => {
+    if (!isScanning || !videoEl.srcObject || videoEl.paused || videoEl.ended) return;
+
+    if (!isDecoding && videoEl.readyState >= 2 && videoEl.videoWidth > 0) {
+      isDecoding = true;
+      let qrText = null;
+
+      // Ưu tiên 1: Native BarcodeDetector (Tốc độ phần cứng < 5ms)
+      if (nativeDetector) {
+        try {
+          const codes = await nativeDetector.detect(videoEl);
+          if (codes && codes.length > 0 && codes[0].rawValue) {
+            qrText = codes[0].rawValue;
+          }
+        } catch (eNative) {
+          nativeDetector = null;
+        }
+      }
+
+      // Ưu tiên 2 (hoặc Fallback): ZXing Reader (100% JS thuần, không phụ thuộc Google Play Services)
+      if (!qrText && videoEl.readyState >= 2) {
+        try {
+          const res = zxingReader.decode(videoEl);
+          if (res && res.getText()) {
+            qrText = res.getText();
+          }
+        } catch (eZxing) { }
+      }
+
+      if (qrText) {
+        try {
+          onDecodedCallback(qrText);
+        } catch (eCb) {
+          console.warn("Callback error:", eCb);
+        }
+      }
+
+      isDecoding = false;
+    }
+
+    if (isScanning && videoEl.srcObject) {
+      animFrameMap[videoId] = setTimeout(quetKhungHinh, 60); // Quét siêu nhạy ~16 FPS
+    }
+  };
+
+  animFrameMap[videoId] = setTimeout(quetKhungHinh, 100);
+
+  return {
+    reset: () => {
+      isScanning = false;
+      if (animFrameMap[videoId]) {
+        clearTimeout(animFrameMap[videoId]);
+        animFrameMap[videoId] = null;
+      }
+      try { zxingReader.reset(); } catch (e) {}
+    }
+  };
 }
 
 function dungCameraFast(videoId, zxingReaderObj) {
