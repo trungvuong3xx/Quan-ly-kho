@@ -448,9 +448,15 @@ async function taoQR() {
 let animFrameMap = {};
 let nativeBarcodeDetectorGlobal = null;
 
+const lastCameraCallbackMap = {};
+
 async function khoiTaoCameraFast(videoId, onDecodedCallback) {
   const videoEl = document.getElementById(videoId);
   if (!videoEl) return null;
+
+  if (typeof onDecodedCallback === 'function') {
+    lastCameraCallbackMap[videoId] = onDecodedCallback;
+  }
 
   if (animFrameMap[videoId]) {
     clearTimeout(animFrameMap[videoId]);
@@ -458,7 +464,7 @@ async function khoiTaoCameraFast(videoId, onDecodedCallback) {
   }
 
   // 1. Cấu hình độ phân giải 1080p Full HD + Tự động lấy nét liên tục (Continuous Focus)
-  let constraints = {
+  const constraints = {
     video: {
       facingMode: "environment",
       width: { ideal: 1920, min: 1280 },
@@ -466,16 +472,6 @@ async function khoiTaoCameraFast(videoId, onDecodedCallback) {
       frameRate: { ideal: 60 }
     }
   };
-
-  const savedCamId = localStorage.getItem('camera_uu_tien');
-  if (savedCamId) {
-    constraints.video = {
-      deviceId: { exact: savedCamId },
-      width: { ideal: 1920, min: 1280 },
-      height: { ideal: 1080, min: 720 },
-      frameRate: { ideal: 60 }
-    };
-  }
 
   try {
     const stream = await navigator.mediaDevices.getUserMedia(constraints);
@@ -607,34 +603,6 @@ async function batDauQuet() {
   loaiChon = document.getElementById("chon-loai").value;
   if (!ngayChon) { alert("⚠️ Vui lòng chọn ngày!"); return; }
   if (!loaiChon) { alert("⚠️ Vui lòng chọn loại!"); return; }
-
-window.doiCamera = async function(videoId, restartFunc) {
-  try {
-    const devices = await navigator.mediaDevices.enumerateDevices();
-    const videoDevices = devices.filter(d => d.kind === 'videoinput');
-    let backCams = videoDevices.filter(d => d.label.toLowerCase().includes('back') || d.label.toLowerCase().includes('sau') || d.label.toLowerCase().includes('0, facing'));
-    if (backCams.length === 0) backCams = videoDevices; // Dự phòng nếu máy không báo label
-    
-    if (backCams.length <= 1) {
-      if (typeof showCanhBao === "function") showCanhBao("Hệ thống chỉ nhận diện 1 camera!");
-      return;
-    }
-    
-    const savedCamId = localStorage.getItem('camera_uu_tien');
-    let currentIndex = savedCamId ? backCams.findIndex(d => d.deviceId === savedCamId) : -1;
-    let nextIndex = (currentIndex + 1) % backCams.length;
-    localStorage.setItem('camera_uu_tien', backCams[nextIndex].deviceId);
-    
-    if (typeof showCanhBao === "function") showCanhBao(`Đã chuyển ống kính (${nextIndex + 1}/${backCams.length})`);
-    
-    dungCameraFast(videoId, null);
-    setTimeout(() => {
-      if (typeof window[restartFunc] === "function") window[restartFunc]();
-    }, 400);
-  } catch (e) {
-    if (typeof showCanhBao === "function") showCanhBao("Lỗi đổi camera: " + e);
-  }
-};
 
   // Mặc định quét nhanh nếu là Xuất
   quetNhanh = !isNhap(loaiChon);
@@ -1246,38 +1214,49 @@ function dongXacNhanApp(dongY) {
 }
 window.dongXacNhanApp = dongXacNhanApp;
 
-// ── Tự động khôi phục Camera khi app quay lại từ nền (Anti-Freeze) ──
+// ── Hàm khôi phục sạch luồng camera và khởi động lại vòng lặp quét ──
+async function khoiPhucCamera(videoId, fallbackCb) {
+  const videoEl = document.getElementById(videoId);
+  if (!videoEl) return;
+  const cb = lastCameraCallbackMap[videoId] || fallbackCb;
+  if (!cb) return;
+
+  // 1. Dừng sạch luồng cũ và giải phóng timer cũ
+  dungCameraFast(videoId, null);
+
+  // 2. Nghỉ 250ms cho Camera HAL của Android giải phóng cảm biến
+  await new Promise(r => setTimeout(r, 250));
+
+  // 3. Khởi tạo lại camera và kích hoạt lại vòng lặp quét mới
+  await khoiTaoCameraFast(videoId, cb);
+}
+
+// ── Tự động khôi phục Camera khi quay lại app từ nền (Chống đứng hình) ──
+let resumeCameraTimer = null;
+function triggerResumeCamera() {
+  clearTimeout(resumeCameraTimer);
+  resumeCameraTimer = setTimeout(async () => {
+    const camBoxes = [
+      { vid: 'reader', box: 'cam-box', fallback: (txt) => { if (typeof xuLyMaQuet === 'function') xuLyMaQuet(txt); } },
+      { vid: 'kk-reader', box: 'kk-cam', fallback: (txt) => { if (typeof xuLyMaKiemKe === 'function') xuLyMaKiemKe(txt); } },
+      { vid: 'cx1-reader', box: 'cx1-cam', fallback: (txt) => { if (txt && window.dangQuetCX1 && typeof window.khiQuetDuocMa === 'function') window.khiQuetDuocMa({ getText: () => txt }); } },
+      { vid: 'btp-reader', box: 'btp-cam', fallback: (txt) => { if (txt && window.dangQuetBTP && typeof window.khiQuetDuocMaBTP === 'function') window.khiQuetDuocMaBTP({ getText: () => txt }); } }
+    ];
+
+    for (const item of camBoxes) {
+      const boxEl = document.getElementById(item.box);
+      if (boxEl && window.getComputedStyle(boxEl).display !== 'none') {
+        await khoiPhucCamera(item.vid, item.fallback);
+      }
+    }
+  }, 350);
+}
+
 document.addEventListener('visibilitychange', () => {
   if (document.visibilityState === 'visible') {
-    // Chờ 400ms để hệ điều hành cấp lại toàn quyền UI cho trình duyệt
-    setTimeout(() => {
-      const camList = [
-        { vid: 'reader', box: 'cam-box', restart: window.batDauQuet },
-        { vid: 'kk-reader', box: 'kk-cam', restart: window.batDauKiemKe },
-        { vid: 'cx1-reader', box: 'cx1-cam', restart: window.batDauCX1 },
-        { vid: 'btp-reader', box: 'btp-cam', restart: window.batDauBTP }
-      ];
-      
-      camList.forEach(cam => {
-        const videoEl = document.getElementById(cam.vid);
-        const boxEl = document.getElementById(cam.box);
-        
-        // Nếu module này đang mở và có camera đang gắn
-        if (videoEl && videoEl.srcObject && boxEl && boxEl.style.display !== 'none') {
-          // Thử ép play lại nếu OS chỉ pause nhẹ
-          videoEl.play().catch(() => {});
-          
-          // Kiểm tra xem luồng video có bị OS "giết" không (bị đen/đứng hình)
-          const tracks = videoEl.srcObject.getVideoTracks();
-          if (tracks.length === 0 || tracks[0].readyState === 'ended' || tracks[0].muted) {
-             dungCameraFast(cam.vid, null);
-             if (typeof cam.restart === 'function') {
-               setTimeout(cam.restart, 500); // Khởi động lại luồng quét
-             }
-          }
-        }
-      });
-    }, 400);
+    triggerResumeCamera();
   }
 });
-
+window.addEventListener('focus', () => {
+  triggerResumeCamera();
+});

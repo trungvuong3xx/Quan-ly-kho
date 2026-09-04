@@ -1,9 +1,0 @@
-node_modules/
-android/app/build/
-android/build/
-android/.gradle/
-android/captures/
-android/.idea/
-.gradle/
-*.log
-www/
