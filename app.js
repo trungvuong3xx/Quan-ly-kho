@@ -580,27 +580,10 @@ async function layCameraStream(targetDeviceId) {
   });
 }
 
-// Bật chế độ tự động lấy nét liên tục (Continuous Autofocus)
+// Android Camera2 đã tự động bật Continuous Autofocus & Continuous Autoexposure ở cấp phần cứng
 async function batContinuousAutofocus(stream) {
-  if (!stream) return;
-  try {
-    const track = stream.getVideoTracks()[0];
-    if (track && track.getCapabilities) {
-      const caps = track.getCapabilities();
-      const adv = [];
-      if (caps.focusMode && caps.focusMode.includes('continuous')) {
-        adv.push({ focusMode: 'continuous' });
-      }
-      if (caps.exposureMode && caps.exposureMode.includes('continuous')) {
-        adv.push({ exposureMode: 'continuous' });
-      }
-      if (adv.length > 0 && track.applyConstraints) {
-        await track.applyConstraints({ advanced: adv });
-      }
-    }
-  } catch (e) {
-    console.warn("Lấy nét tự động không được hỗ trợ bởi ống kính này:", e);
-  }
+  // Tuyệt đối không gọi applyConstraints tại đây vì trên chip Snapdragon 855 / Sony IMX586,
+  // applyConstraints làm sai lệch ma trận crop ISP (Invalid Crop window 8000x6000) dẫn đến crash Camera HAL.
 }
 
 // Tự động ẩn hoàn toàn nút đổi camera (Camera 0 Sony 48MP AF là tối ưu duy nhất để quét mã)
@@ -658,9 +641,16 @@ async function khoiTaoCameraFast(videoId, onDecodedCallback) {
         // Nếu camera đang mở chưa phải là Camera 0 chính chủ (48MP AF)
         if (activeDevId !== exactCam0.deviceId) {
           try {
+            // QUAN TRỌNG: Dừng sạch luồng cũ TRƯỚC khi mở luồng mới để tránh xung đột phần cứng HAL
+            if (stream) {
+              stream.getTracks().forEach(t => t.stop());
+              stream = null;
+            }
+            videoEl.srcObject = null;
+            await new Promise(r => setTimeout(r, 200));
+
             const cam0Stream = await layCameraStream(exactCam0.deviceId);
             if (cam0Stream) {
-              if (stream) stream.getTracks().forEach(t => t.stop());
               stream = cam0Stream;
               idCameraUuTien = exactCam0.deviceId;
               try { localStorage.setItem('camera_uu_tien', exactCam0.deviceId); } catch (e) {}
@@ -678,7 +668,20 @@ async function khoiTaoCameraFast(videoId, onDecodedCallback) {
     videoEl.srcObject = stream;
     await videoEl.play();
 
-    // Kích hoạt Continuous Autofocus
+    // Tự động khôi phục luồng nếu phần cứng Camera HAL bị ngắt đột ngột
+    const activeVideoTrack = stream ? stream.getVideoTracks()[0] : null;
+    if (activeVideoTrack) {
+      activeVideoTrack.onended = () => {
+        console.warn("Camera track ended. Tự động khôi phục luồng camera...");
+        setTimeout(() => {
+          if (document.visibilityState === 'visible') {
+            khoiPhucCamera(videoId, lastCameraCallbackMap[videoId]);
+          }
+        }, 350);
+      };
+    }
+
+    // Kích hoạt Continuous Autofocus an toàn
     await batContinuousAutofocus(stream);
 
     // Cập nhật nút đổi camera trên viewfinder (ẩn triệt để)
@@ -702,7 +705,18 @@ async function khoiTaoCameraFast(videoId, onDecodedCallback) {
   let isDecoding = false;
 
   const quetKhungHinh = async () => {
-    if (!isScanning || !videoEl.srcObject || videoEl.paused || videoEl.ended) return;
+    if (!isScanning) return;
+    const currentTrack = videoEl.srcObject ? videoEl.srcObject.getVideoTracks()[0] : null;
+    if (!videoEl.srcObject || !currentTrack || currentTrack.readyState === 'ended' || videoEl.ended) {
+      isScanning = false;
+      setTimeout(() => {
+        if (document.visibilityState === 'visible') {
+          khoiPhucCamera(videoId, onDecodedCallback);
+        }
+      }, 400);
+      return;
+    }
+    if (videoEl.paused) return;
 
     if (!isDecoding && videoEl.readyState >= 2 && videoEl.videoWidth > 0) {
       isDecoding = true;
@@ -1386,20 +1400,27 @@ function dongXacNhanApp(dongY) {
 window.dongXacNhanApp = dongXacNhanApp;
 
 // ── Hàm khôi phục sạch luồng camera và khởi động lại vòng lặp quét ──
+let dangKhoiPhucCameraMap = {};
 async function khoiPhucCamera(videoId, fallbackCb) {
-  const videoEl = document.getElementById(videoId);
-  if (!videoEl) return;
-  const cb = lastCameraCallbackMap[videoId] || fallbackCb;
-  if (!cb) return;
+  if (dangKhoiPhucCameraMap[videoId]) return;
+  dangKhoiPhucCameraMap[videoId] = true;
+  try {
+    const videoEl = document.getElementById(videoId);
+    if (!videoEl) return;
+    const cb = lastCameraCallbackMap[videoId] || fallbackCb;
+    if (!cb) return;
 
-  // 1. Dừng sạch luồng cũ và giải phóng timer cũ
-  dungCameraFast(videoId, null);
+    // 1. Dừng sạch luồng cũ và giải phóng timer cũ
+    dungCameraFast(videoId, null);
 
-  // 2. Nghỉ 250ms cho Camera HAL của Android giải phóng cảm biến
-  await new Promise(r => setTimeout(r, 250));
+    // 2. Nghỉ 300ms cho Camera HAL của Android giải phóng hoàn toàn cảm biến
+    await new Promise(r => setTimeout(r, 300));
 
-  // 3. Khởi tạo lại camera và kích hoạt lại vòng lặp quét mới
-  await khoiTaoCameraFast(videoId, cb);
+    // 3. Khởi tạo lại camera và kích hoạt lại vòng lặp quét mới
+    await khoiTaoCameraFast(videoId, cb);
+  } finally {
+    dangKhoiPhucCameraMap[videoId] = false;
+  }
 }
 
 // ── Tự động quản lý vòng đời Camera khi ẩn/mở lại app (Triệt tiêu 100% hiện tượng đứng hình) ──
