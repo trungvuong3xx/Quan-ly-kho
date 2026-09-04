@@ -444,11 +444,193 @@ async function taoQR() {
   document.getElementById("card-qr").style.display = "block";
 }
 
-// ── Bộ Engine Quét QR Siêu Tốc (Native BarcodeDetector + 1080p + Focus) ─────
+// ── Bộ Engine Quét QR Siêu Tốc & Quản Lý Camera Thông Minh ─────────────────
 let animFrameMap = {};
 let nativeBarcodeDetectorGlobal = null;
-
 const lastCameraCallbackMap = {};
+
+let danhSachCameraSau = [];
+let idCameraUuTien = localStorage.getItem('camera_uu_tien') || null;
+
+// Hàm quét & sắp xếp danh sách camera sau phần cứng
+async function quetDanhSachCameraSau() {
+  try {
+    const devices = await navigator.mediaDevices.enumerateDevices();
+    const videoInputs = devices.filter(d => d.kind === 'videoinput');
+    if (videoInputs.length === 0) return [];
+
+    // Lọc camera sau (loại bỏ camera trước / selfie)
+    let backCams = videoInputs.filter(d => {
+      const lbl = (d.label || '').toLowerCase();
+      return lbl.includes('back') || lbl.includes('rear') || lbl.includes('sau') || lbl.includes('environment');
+    });
+
+    if (backCams.length === 0) {
+      backCams = videoInputs.filter(d => {
+        const lbl = (d.label || '').toLowerCase();
+        return !lbl.includes('front') && !lbl.includes('truoc') && !lbl.includes('selfie') && !lbl.includes('user');
+      });
+    }
+
+    if (backCams.length === 0) backCams = videoInputs;
+
+    // Sắp xếp: Ưu tiên Camera 0 (Cảm biến chính có AutoFocus - Sony IMX586 trên K20 Pro) lên đầu tiên
+    backCams.sort((a, b) => {
+      const aLbl = (a.label || '').toLowerCase();
+      const bLbl = (b.label || '').toLowerCase();
+      const aIs0 = aLbl.includes('0') && (aLbl.includes('back') || aLbl.includes('rear') || aLbl.includes('sau') || aLbl.includes('camera2 0'));
+      const bIs0 = bLbl.includes('0') && (bLbl.includes('back') || bLbl.includes('rear') || bLbl.includes('sau') || bLbl.includes('camera2 0'));
+      if (aIs0 && !bIs0) return -1;
+      if (!aIs0 && bIs0) return 1;
+      return 0;
+    });
+
+    danhSachCameraSau = backCams;
+    return backCams;
+  } catch (e) {
+    console.warn("Lỗi enumerateDevices:", e);
+    return [];
+  }
+}
+
+// Hàm mở luồng camera an toàn với độ phân giải cao và fallback đa tầng
+async function layCameraStream(targetDeviceId) {
+  if (targetDeviceId) {
+    try {
+      return await navigator.mediaDevices.getUserMedia({
+        video: {
+          deviceId: { exact: targetDeviceId },
+          width: { ideal: 1920 },
+          height: { ideal: 1080 }
+        }
+      });
+    } catch (e) {
+      try {
+        return await navigator.mediaDevices.getUserMedia({
+          video: {
+            deviceId: { ideal: targetDeviceId }
+          }
+        });
+      } catch (e2) {}
+    }
+  }
+
+  try {
+    return await navigator.mediaDevices.getUserMedia({
+      video: {
+        facingMode: { ideal: "environment" },
+        width: { ideal: 1920 },
+        height: { ideal: 1080 }
+      }
+    });
+  } catch (e3) {}
+
+  try {
+    return await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: "environment" }
+    });
+  } catch (e4) {}
+
+  return await navigator.mediaDevices.getUserMedia({ video: true });
+}
+
+// Bật chế độ tự động lấy nét liên tục (Continuous Autofocus)
+async function batContinuousAutofocus(stream) {
+  if (!stream) return;
+  try {
+    const track = stream.getVideoTracks()[0];
+    if (track && track.getCapabilities) {
+      const caps = track.getCapabilities();
+      const adv = [];
+      if (caps.focusMode && caps.focusMode.includes('continuous')) {
+        adv.push({ focusMode: 'continuous' });
+      }
+      if (caps.exposureMode && caps.exposureMode.includes('continuous')) {
+        adv.push({ exposureMode: 'continuous' });
+      }
+      if (adv.length > 0 && track.applyConstraints) {
+        await track.applyConstraints({ advanced: adv });
+      }
+    }
+  } catch (e) {
+    console.warn("Lấy nét tự động không được hỗ trợ bởi ống kính này:", e);
+  }
+}
+
+// Tự động thêm nút đổi ống kính nổi ở góc trên khung video nếu máy có nhiều camera sau
+function capNhatNutDoiCamera(videoEl) {
+  if (!videoEl || !videoEl.parentElement) return;
+  const parent = videoEl.parentElement;
+  let btn = parent.querySelector('.btn-doi-cam');
+  if (!btn) {
+    btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'btn-doi-cam';
+    btn.title = 'Đổi ống kính camera';
+    btn.innerHTML = '<i class="ti ti-camera-rotate" style="font-size:18px;pointer-events:none;"></i>';
+    btn.setAttribute('style', 'position:absolute; top:8px; right:8px; z-index:20; background:rgba(0,0,0,0.55); border:1px solid rgba(255,255,255,0.35); color:#fff; border-radius:50%; width:38px; height:38px; display:none; align-items:center; justify-content:center; backdrop-filter:blur(4px); cursor:pointer; -webkit-tap-highlight-color:transparent; transition:transform 0.15s ease;');
+    btn.onclick = (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      doiCameraNhanh(videoEl.id);
+    };
+    parent.appendChild(btn);
+  }
+  if (danhSachCameraSau.length > 1) {
+    btn.style.display = 'flex';
+  } else {
+    btn.style.display = 'none';
+  }
+}
+
+// Hàm chuyển ống kính camera mượt mà, KHÔNG xóa dữ liệu phiên, KHÔNG reload
+window.doiCameraNhanh = async function(videoId) {
+  try {
+    const videoEl = document.getElementById(videoId);
+    if (!videoEl) return;
+
+    let cams = await quetDanhSachCameraSau();
+    if (cams.length <= 1) {
+      const msg = "Hệ thống chỉ nhận diện 1 camera sau!";
+      if (typeof showCanhBao === "function") showCanhBao(msg);
+      return;
+    }
+
+    const currentTrack = videoEl.srcObject ? videoEl.srcObject.getVideoTracks()[0] : null;
+    const currentDevId = currentTrack ? currentTrack.getSettings().deviceId : idCameraUuTien;
+    let currentIdx = cams.findIndex(c => c.deviceId === currentDevId);
+    let nextIdx = (currentIdx + 1) % cams.length;
+    let nextCam = cams[nextIdx];
+
+    // Dừng stream cũ
+    if (videoEl.srcObject) {
+      videoEl.srcObject.getTracks().forEach(t => t.stop());
+    }
+
+    // Mở stream camera mới
+    const newStream = await layCameraStream(nextCam.deviceId);
+    videoEl.srcObject = newStream;
+    await videoEl.play();
+
+    // Lưu camera đã chọn vào localStorage
+    idCameraUuTien = nextCam.deviceId;
+    localStorage.setItem('camera_uu_tien', idCameraUuTien);
+    localStorage.setItem('camera_da_chon_tay', '1');
+
+    await batContinuousAutofocus(newStream);
+
+    let tenCam = nextCam.label || `Ống kính ${nextIdx + 1}`;
+    tenCam = tenCam.split('(')[0].trim();
+    const thongBao = `Đã chuyển: ${tenCam} (${nextIdx + 1}/${cams.length})`;
+
+    if (videoId === 'btp-reader' && typeof showCanhBaoBTP === "function") showCanhBaoBTP(thongBao);
+    else if (videoId === 'cx1-reader' && typeof showCanhBaoCX1 === "function") showCanhBaoCX1(thongBao);
+    else if (typeof showCanhBao === "function") showCanhBao(thongBao);
+  } catch (err) {
+    console.warn("Lỗi doiCameraNhanh:", err);
+  }
+};
+window.doiCamera = window.doiCameraNhanh;
 
 async function khoiTaoCameraFast(videoId, onDecodedCallback) {
   const videoEl = document.getElementById(videoId);
@@ -463,50 +645,73 @@ async function khoiTaoCameraFast(videoId, onDecodedCallback) {
     animFrameMap[videoId] = null;
   }
 
-  // 1. Cấu hình độ phân giải 1080p Full HD + Tự động lấy nét liên tục (Continuous Focus)
-  const constraints = {
-    video: {
-      facingMode: "environment",
-      width: { ideal: 1920, min: 1280 },
-      height: { ideal: 1080, min: 720 },
-      frameRate: { ideal: 60 }
-    }
-  };
+  // 1. Quét danh sách camera phần cứng
+  let cams = await quetDanhSachCameraSau();
+  let targetId = idCameraUuTien;
+  if (!targetId && cams.length > 0) {
+    targetId = cams[0].deviceId;
+    idCameraUuTien = targetId;
+    localStorage.setItem('camera_uu_tien', targetId);
+  }
 
+  let stream = null;
   try {
-    const stream = await navigator.mediaDevices.getUserMedia(constraints);
+    stream = await layCameraStream(targetId);
     videoEl.srcObject = stream;
     await videoEl.play();
 
-    // Bật chế độ tự động lấy nét liên tục nếu camera hỗ trợ
-    try {
-      const track = stream.getVideoTracks()[0];
-      const capabilities = track.getCapabilities();
-      if (capabilities.focusMode && capabilities.focusMode.includes('continuous')) {
-        await track.applyConstraints({ advanced: [{ focusMode: 'continuous' }] });
+    // Sau khi có quyền, nếu chưa quét được nhãn hoặc máy tự bốc nhầm camera phụ:
+    if (cams.length === 0 || !cams.some(c => c.label)) {
+      cams = await quetDanhSachCameraSau();
+      if (cams.length > 0 && cams[0].deviceId && !localStorage.getItem('camera_da_chon_tay')) {
+        const activeTrack = stream.getVideoTracks()[0];
+        const activeSettings = activeTrack ? activeTrack.getSettings() : {};
+        if (activeSettings.deviceId && activeSettings.deviceId !== cams[0].deviceId) {
+          console.log("Phát hiện Android mở nhầm ống kính, tự động chuyển sang Camera 0 chính:", cams[0].label);
+          try {
+            activeTrack.stop();
+            const correctStream = await layCameraStream(cams[0].deviceId);
+            videoEl.srcObject = correctStream;
+            await videoEl.play();
+            stream = correctStream;
+            idCameraUuTien = cams[0].deviceId;
+            localStorage.setItem('camera_uu_tien', idCameraUuTien);
+          } catch (eSwitch) {}
+        }
       }
-    } catch (e) { }
+    }
+
+    // Kích hoạt Continuous Autofocus
+    await batContinuousAutofocus(stream);
+
+    // Cập nhật nút đổi camera trên viewfinder nếu máy có nhiều ống kính
+    capNhatNutDoiCamera(videoEl);
   } catch (e) {
     console.warn("getUserMedia camera stream notice:", e);
   }
 
-  // Chuẩn bị Canvas ẩn để crop vùng chính giữa (Giảm 70% lượng pixel cần quét)
+  // Chuẩn bị Canvas ẩn để crop vùng chính giữa (Đảm bảo toạ độ luôn hợp lệ, không bao giờ âm)
   const cropCanvas = document.createElement('canvas');
   const cropCtx = cropCanvas.getContext('2d', { willReadFrequently: true });
-  const CROP_SIZE = 600; // Vùng cắt 600x600 ở giữa
-  cropCanvas.width = CROP_SIZE;
-  cropCanvas.height = CROP_SIZE;
 
   function captureCroppedFrame() {
-    if (videoEl.videoWidth === 0) return null;
-    const sx = (videoEl.videoWidth - CROP_SIZE) / 2;
-    const sy = (videoEl.videoHeight - CROP_SIZE) / 2;
-    // Vẽ vùng trung tâm của video lên canvas nhỏ
-    cropCtx.drawImage(videoEl, sx, sy, CROP_SIZE, CROP_SIZE, 0, 0, CROP_SIZE, CROP_SIZE);
+    if (!videoEl.videoWidth || !videoEl.videoHeight) return null;
+    const vw = videoEl.videoWidth;
+    const vh = videoEl.videoHeight;
+    const side = Math.floor(Math.min(vw, vh) * 0.75);
+    const cropDim = Math.min(side, 600);
+    const sx = Math.floor((vw - cropDim) / 2);
+    const sy = Math.floor((vh - cropDim) / 2);
+
+    if (cropCanvas.width !== cropDim || cropCanvas.height !== cropDim) {
+      cropCanvas.width = cropDim;
+      cropCanvas.height = cropDim;
+    }
+    cropCtx.drawImage(videoEl, sx, sy, cropDim, cropDim, 0, 0, cropDim, cropDim);
     return cropCanvas;
   }
 
-  // 2. Tận dụng phần cứng Native BarcodeDetector (Chạy cực nhanh nhờ đã Crop)
+  // 2. Tận dụng phần cứng Native BarcodeDetector (Chạy siêu tốc)
   if ('BarcodeDetector' in window) {
     try {
       if (!nativeBarcodeDetectorGlobal) {
@@ -521,10 +726,13 @@ async function khoiTaoCameraFast(videoId, onDecodedCallback) {
           try {
             const canvas = captureCroppedFrame();
             if (canvas) {
-              const codes = await nativeBarcodeDetectorGlobal.detect(canvas);
+              let codes = await nativeBarcodeDetectorGlobal.detect(canvas);
+              if ((!codes || codes.length === 0) && videoEl.readyState >= 2) {
+                codes = await nativeBarcodeDetectorGlobal.detect(videoEl);
+              }
               if (codes && codes.length > 0) {
                 for (const code of codes) {
-                  onDecodedCallback(code.rawValue);
+                  if (code.rawValue) onDecodedCallback(code.rawValue);
                 }
               }
             }
@@ -537,13 +745,13 @@ async function khoiTaoCameraFast(videoId, onDecodedCallback) {
       };
 
       animFrameMap[videoId] = setTimeout(loopNative, 100);
-      return { reset: () => {} }; // Trả về object giả lập ZXing
+      return { reset: () => {} };
     } catch (e) {
       console.warn("BarcodeDetector native error, fallback to ZXing:", e);
     }
   }
 
-  // 3. ZXing Fallback chỉ quét QR_CODE với TRY_HARDER = true (không quét mã 1D thừa)
+  // 3. ZXing Fallback chỉ quét QR_CODE với TRY_HARDER = true
   try {
     const hints = new Map();
     hints.set(ZXing.DecodeHintType.POSSIBLE_FORMATS, [ZXing.BarcodeFormat.QR_CODE]);
@@ -551,7 +759,6 @@ async function khoiTaoCameraFast(videoId, onDecodedCallback) {
 
     const reader = new ZXing.BrowserMultiFormatReader(hints);
     
-    // Tự viết vòng lặp cho ZXing để dùng chung ảnh đã Crop
     let isZxingProcessing = false;
     const loopZxing = async () => {
       if (!videoEl.srcObject || videoEl.paused || videoEl.ended) return;
@@ -560,15 +767,21 @@ async function khoiTaoCameraFast(videoId, onDecodedCallback) {
         try {
           const canvas = captureCroppedFrame();
           if (canvas) {
-            // decodeFromCanvas đôi khi không có ở bản cũ, ta thử decode hoặc nếu lỗi thì im lặng
-            const result = reader.decode(canvas);
-            if (result) {
-              onDecodedCallback(result.getText());
+            try {
+              const result = reader.decode(canvas);
+              if (result) {
+                onDecodedCallback(result.getText());
+              }
+            } catch (e) {
+              try {
+                const fullResult = reader.decode(videoEl);
+                if (fullResult) {
+                  onDecodedCallback(fullResult.getText());
+                }
+              } catch (e2) {}
             }
           }
-        } catch (e) {
-          // Lỗi NotFoundException được quăng ra liên tục khi không có QR, bỏ qua
-        }
+        } catch (e) { }
         isZxingProcessing = false;
       }
       if (videoEl.srcObject) {

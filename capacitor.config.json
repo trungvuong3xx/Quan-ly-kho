@@ -1,0 +1,8 @@
+{
+  "appId": "com.ntv.quanlykho",
+  "appName": "Quản Lý Kho",
+  "webDir": "www",
+  "server": {
+    "cleartext": true
+  }
+}
