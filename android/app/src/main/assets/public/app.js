@@ -450,8 +450,31 @@ let nativeBarcodeDetectorGlobal = null;
 const lastCameraCallbackMap = {};
 
 let danhSachCameraSau = [];
-let idCameraUuTien = null;
-try { localStorage.removeItem('camera_uu_tien'); } catch (e) {}
+let idCameraUuTien = localStorage.getItem('camera_uu_tien') || null;
+
+// Hàm nhận diện chính xác Camera 0 (Sony IMX586 48MP AF chính)
+function timCamera0(devices) {
+  if (!devices || devices.length === 0) return null;
+  const videoInputs = devices.filter(d => d.kind === 'videoinput');
+  
+  // 1. Tìm camera có nhãn camera2 0 hoặc số 0 và facing back / sau
+  let cam0 = videoInputs.find(d => {
+    const lbl = (d.label || '').toLowerCase();
+    if (lbl.includes('front') || lbl.includes('truoc') || lbl.includes('selfie') || lbl.includes('user')) return false;
+    return /camera2?\s*0\b/i.test(lbl) || /\b0,\s*facing back/i.test(lbl) || /\b0\b/.test(lbl);
+  });
+  if (cam0 && cam0.deviceId) return cam0;
+
+  // 2. Tìm camera có nhãn chứa '0' bất kỳ nhưng không phải camera trước
+  cam0 = videoInputs.find(d => {
+    const lbl = (d.label || '').toLowerCase();
+    if (lbl.includes('front') || lbl.includes('truoc') || lbl.includes('selfie') || lbl.includes('user')) return false;
+    return /\b0\b/.test(lbl);
+  });
+  if (cam0 && cam0.deviceId) return cam0;
+
+  return null;
+}
 
 // Hàm quét & sắp xếp danh sách camera sau phần cứng
 async function quetDanhSachCameraSau() {
@@ -460,7 +483,14 @@ async function quetDanhSachCameraSau() {
     const videoInputs = devices.filter(d => d.kind === 'videoinput');
     if (videoInputs.length === 0) return [];
 
-    // Lọc bỏ camera trước và LOẠI BỎ TRIỆT ĐỂ tất cả camera ảo/AUX (có số 2 chữ số trở lên như 20, 21, 60, 100, 120...)
+    // Ưu tiên cao nhất: Tìm thấy Camera 0 chính xác
+    const cam0 = timCamera0(videoInputs);
+    if (cam0) {
+      danhSachCameraSau = [cam0];
+      return [cam0];
+    }
+
+    // Nếu chưa có nhãn (lần đầu chưa cấp quyền), lọc sơ bộ camera sau
     let backCams = videoInputs.filter(d => {
       const lbl = (d.label || '').toLowerCase();
       if (lbl.includes('front') || lbl.includes('truoc') || lbl.includes('selfie') || lbl.includes('user')) return false;
@@ -478,23 +508,6 @@ async function quetDanhSachCameraSau() {
 
     if (backCams.length === 0) {
       backCams = [videoInputs[0]];
-    }
-
-    // Sắp xếp: Luôn ưu tiên Camera 0 (Sony IMX586 48MP AF chính) lên đầu tiên
-    backCams.sort((a, b) => {
-      const aLbl = (a.label || '').toLowerCase();
-      const bLbl = (b.label || '').toLowerCase();
-      const aIs0 = /camera2?\s*0\b/i.test(aLbl) || /\b0\b/.test(aLbl);
-      const bIs0 = /camera2?\s*0\b/i.test(bLbl) || /\b0\b/.test(bLbl);
-      if (aIs0 && !bIs0) return -1;
-      if (!aIs0 && bIs0) return 1;
-      return 0;
-    });
-
-    // CHỈ GIỮ LẠI DUY NHẤT CAMERA 0 (Sony 48MP AF chính).
-    // Tuyệt đối không chọn Camera 2 (Ultra-wide cố định tiêu cự) hay Camera 3 (Telephoto kén HAL gây đen màn hình)
-    if (backCams.length > 0) {
-      backCams = [backCams[0]];
     }
 
     danhSachCameraSau = backCams;
@@ -601,26 +614,51 @@ async function khoiTaoCameraFast(videoId, onDecodedCallback) {
     animFrameMap[videoId] = null;
   }
 
-  // 1. Quét danh sách camera phần cứng & luôn chọn Camera 0 (Sony 48MP AF)
+  // 1. Quét danh sách camera phần cứng & ưu tiên mở Camera 0 (Sony 48MP AF)
   let cams = await quetDanhSachCameraSau();
-  let targetId = cams.length > 0 ? cams[0].deviceId : null;
-  idCameraUuTien = targetId;
-  try { localStorage.removeItem('camera_uu_tien'); } catch (e) {}
+  let cam0 = timCamera0(cams);
+  let targetId = (cam0 && cam0.deviceId) ? cam0.deviceId : idCameraUuTien;
 
   let stream = null;
   try {
     stream = await layCameraStream(targetId);
+
+    // Sau khi đã có stream (đã có quyền đầy đủ), quét lại nhãn để chắc chắn bắt đúng Camera 0
+    const devList = await navigator.mediaDevices.enumerateDevices();
+    const exactCam0 = timCamera0(devList);
+
+    if (exactCam0 && exactCam0.deviceId) {
+      const activeTrack = stream ? stream.getVideoTracks()[0] : null;
+      const activeDevId = (activeTrack && activeTrack.getSettings) ? activeTrack.getSettings().deviceId : null;
+
+      // Nếu luồng vừa mở chưa phải Camera 0, lập tức chuyển sang Camera 0
+      if (activeDevId !== exactCam0.deviceId) {
+        try {
+          if (stream) stream.getTracks().forEach(t => t.stop());
+          stream = await layCameraStream(exactCam0.deviceId);
+        } catch (eSwitch) {
+          console.warn("Lỗi chuyển sang Camera 0:", eSwitch);
+        }
+      }
+
+      idCameraUuTien = exactCam0.deviceId;
+      try { localStorage.setItem('camera_uu_tien', exactCam0.deviceId); } catch (e) {}
+    }
+
     videoEl.srcObject = stream;
     await videoEl.play();
 
     // Kích hoạt Continuous Autofocus
     await batContinuousAutofocus(stream);
 
-    // Cập nhật lại nhãn sau khi đã có quyền
-    cams = await quetDanhSachCameraSau();
-
-    // Cập nhật nút đổi camera trên viewfinder nếu máy có nhiều ống kính
+    // Cập nhật nút đổi camera trên viewfinder (ẩn triệt để)
     capNhatNutDoiCamera(videoEl);
+
+    // Thông báo xác nhận camera chính
+    const thongBaoCam = "Camera 0 chính chủ (Sony 48MP AF)";
+    if (videoId === 'btp-reader' && typeof showCanhBaoBTP === "function") showCanhBaoBTP(thongBaoCam);
+    else if (videoId === 'cx1-reader' && typeof showCanhBaoCX1 === "function") showCanhBaoCX1(thongBaoCam);
+    else if (typeof showCanhBao === "function") showCanhBao(thongBaoCam);
   } catch (e) {
     console.warn("getUserMedia camera stream notice:", e);
   }
