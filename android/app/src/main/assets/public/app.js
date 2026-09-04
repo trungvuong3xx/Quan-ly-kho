@@ -500,6 +500,9 @@ function timCamera0(devices) {
 // Hàm quét & sắp xếp danh sách camera sau phần cứng
 async function quetDanhSachCameraSau() {
   try {
+    if (window.AndroidBridge && typeof window.AndroidBridge.isCameraAvailable === 'function') {
+      if (!window.AndroidBridge.isCameraAvailable()) return [];
+    }
     const devices = await navigator.mediaDevices.enumerateDevices();
     const videoInputs = devices.filter(d => d.kind === 'videoinput');
     if (videoInputs.length === 0) return [];
@@ -527,7 +530,7 @@ async function quetDanhSachCameraSau() {
   }
 }
 
-// Hàm mở luồng camera tối ưu chuẩn HD 720p (chắc chắn mở camera sau, không bao giờ mở camera trước)
+// Hàm mở luồng camera tối ưu chuẩn 4:3 chống lỗi crop ISP Snapdragon 855 (tuyệt đối không bao giờ mở camera trước)
 async function layCameraStream(targetDeviceId) {
   // 1. Bắt buộc có facingMode: "environment" ngay cả khi chỉ định deviceId
   if (targetDeviceId) {
@@ -537,11 +540,18 @@ async function layCameraStream(targetDeviceId) {
           deviceId: { exact: targetDeviceId },
           facingMode: "environment",
           width: { ideal: 1280 },
-          height: { ideal: 720 }
+          height: { ideal: 960 }
         }
       });
     } catch (e) {
-      // Nếu deviceId lỗi/cũ, không bao giờ gọi { ideal: targetDeviceId } mà chuyển thẳng xuống facingMode: "environment"
+      try {
+        return await navigator.mediaDevices.getUserMedia({
+          video: {
+            deviceId: { exact: targetDeviceId },
+            facingMode: "environment"
+          }
+        });
+      } catch (e2) {}
     }
   }
 
@@ -551,7 +561,7 @@ async function layCameraStream(targetDeviceId) {
       video: {
         facingMode: { exact: "environment" },
         width: { ideal: 1280 },
-        height: { ideal: 720 }
+        height: { ideal: 960 }
       }
     });
   } catch (eExact) {}
@@ -570,7 +580,7 @@ async function layCameraStream(targetDeviceId) {
       video: {
         facingMode: "environment",
         width: { ideal: 1280 },
-        height: { ideal: 720 }
+        height: { ideal: 960 }
       }
     });
   } catch (eFacing) {}
@@ -672,12 +682,19 @@ async function khoiTaoCameraFast(videoId, onDecodedCallback) {
     const activeVideoTrack = stream ? stream.getVideoTracks()[0] : null;
     if (activeVideoTrack) {
       activeVideoTrack.onended = () => {
-        console.warn("Camera track ended. Tự động khôi phục luồng camera...");
-        setTimeout(() => {
+        console.warn("Camera track ended. Đang kiểm tra Camera HAL để tự động khôi phục an toàn...");
+        setTimeout(async () => {
           if (document.visibilityState === 'visible') {
+            if (window.AndroidBridge && typeof window.AndroidBridge.isCameraAvailable === 'function') {
+              let retries = 0;
+              while (!window.AndroidBridge.isCameraAvailable() && retries < 10) {
+                await new Promise(r => setTimeout(r, 400));
+                retries++;
+              }
+            }
             khoiPhucCamera(videoId, lastCameraCallbackMap[videoId]);
           }
-        }, 350);
+        }, 1200);
       };
     }
 
