@@ -85,9 +85,7 @@ window.addEventListener("pointerdown", unlockFastAudioEngine, { passive: true, c
 window.addEventListener("keydown", unlockFastAudioEngine, { passive: true, capture: true });
 
 function phatTiengBip() {
-  if (navigator.vibrate) {
-    try { navigator.vibrate(70); } catch (e) { }
-  }
+  phatVibrateSuccess();
 
   // 1. Phát qua Web Audio API Buffer (Siêu nhanh 0ms, không bị chặn trên di động)
   try {
@@ -178,13 +176,23 @@ function phatAmThanhSung(ctx) {
 }
 
 function phatVibrateSuccess() {
+  if (window.AndroidBridge && typeof window.AndroidBridge.vibrate === "function") {
+    try { window.AndroidBridge.vibrate(100); return; } catch (e) { }
+  }
   if (navigator.vibrate) {
-    try { navigator.vibrate(90); } catch (e) { }
+    try { navigator.vibrate(100); } catch (e) { }
   }
 }
 window.phatVibrateSuccess = phatVibrateSuccess;
 
 function phatVibrateError() {
+  if (window.AndroidBridge && typeof window.AndroidBridge.vibrate === "function") {
+    try {
+      window.AndroidBridge.vibrate(150);
+      setTimeout(() => { try { window.AndroidBridge.vibrate(150); } catch (e2) {} }, 250);
+      return;
+    } catch (e) { }
+  }
   if (navigator.vibrate) {
     try { navigator.vibrate([100, 50, 100]); } catch (e) { }
   }
