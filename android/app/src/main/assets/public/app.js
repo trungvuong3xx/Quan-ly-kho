@@ -1444,7 +1444,7 @@ async function khoiPhucCamera(videoId, fallbackCb) {
   await khoiTaoCameraFast(videoId, cb);
 }
 
-// ── Tự động khôi phục Camera khi quay lại app từ nền (Chống đứng hình) ──
+// ── Tự động khôi phục Camera khi quay lại app từ nền (An toàn, chống đơ máy) ──
 let resumeCameraTimer = null;
 function triggerResumeCamera() {
   clearTimeout(resumeCameraTimer);
@@ -1458,18 +1458,23 @@ function triggerResumeCamera() {
 
     for (const item of camBoxes) {
       const boxEl = document.getElementById(item.box);
-      if (boxEl && window.getComputedStyle(boxEl).display !== 'none') {
-        await khoiPhucCamera(item.vid, item.fallback);
+      const videoEl = document.getElementById(item.vid);
+      if (boxEl && window.getComputedStyle(boxEl).display !== 'none' && videoEl) {
+        const stream = videoEl.srcObject;
+        const tracks = stream ? stream.getVideoTracks() : [];
+        const isDead = !stream || tracks.length === 0 || tracks.some(t => t.readyState === 'ended' || t.muted);
+        if (isDead) {
+          await khoiPhucCamera(item.vid, item.fallback);
+        } else if (videoEl.paused) {
+          videoEl.play().catch(() => {});
+        }
       }
     }
-  }, 350);
+  }, 500);
 }
 
 document.addEventListener('visibilitychange', () => {
   if (document.visibilityState === 'visible') {
     triggerResumeCamera();
   }
-});
-window.addEventListener('focus', () => {
-  triggerResumeCamera();
 });
