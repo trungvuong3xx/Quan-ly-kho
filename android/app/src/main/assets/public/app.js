@@ -532,13 +532,11 @@ async function quetDanhSachCameraSau() {
 
 // Hàm mở luồng camera tối ưu chuẩn 4:3 chống lỗi crop ISP Snapdragon 855 (tuyệt đối không bao giờ mở camera trước)
 async function layCameraStream(targetDeviceId) {
-  // 1. Bắt buộc có facingMode: "environment" ngay cả khi chỉ định deviceId
   if (targetDeviceId) {
     try {
       return await navigator.mediaDevices.getUserMedia({
         video: {
           deviceId: { exact: targetDeviceId },
-          facingMode: "environment",
           width: { ideal: 1280 },
           height: { ideal: 960 }
         }
@@ -547,38 +545,18 @@ async function layCameraStream(targetDeviceId) {
       try {
         return await navigator.mediaDevices.getUserMedia({
           video: {
-            deviceId: { exact: targetDeviceId },
-            facingMode: "environment"
+            deviceId: { exact: targetDeviceId }
           }
         });
       } catch (e2) {}
     }
   }
 
-  // 2. Mở camera sau chuẩn với facingMode: { exact: "environment" }
+  // Mở camera sau chuẩn: facingMode: { ideal: "environment" }
   try {
     return await navigator.mediaDevices.getUserMedia({
       video: {
-        facingMode: { exact: "environment" },
-        width: { ideal: 1280 },
-        height: { ideal: 960 }
-      }
-    });
-  } catch (eExact) {}
-
-  try {
-    return await navigator.mediaDevices.getUserMedia({
-      video: {
-        facingMode: { exact: "environment" }
-      }
-    });
-  } catch (eExact2) {}
-
-  // 3. Fallback cuối cùng: facingMode: "environment" (luôn có environment, tuyệt đối không gọi getUserMedia rỗng)
-  try {
-    return await navigator.mediaDevices.getUserMedia({
-      video: {
-        facingMode: "environment",
+        facingMode: { ideal: "environment" },
         width: { ideal: 1280 },
         height: { ideal: 960 }
       }
@@ -637,41 +615,23 @@ async function khoiTaoCameraFast(videoId, onDecodedCallback) {
 
   let stream = null;
   try {
-    stream = await layCameraStream(targetId);
+    if (targetId) {
+      try {
+        stream = await layCameraStream(targetId);
+      } catch (eTarget) {
+        stream = null;
+      }
+    }
+    if (!stream) {
+      stream = await layCameraStream(null);
+    }
 
-    // Sau khi camera sau đã hoạt động (labels đã hiển thị đầy đủ), kiểm tra và khóa cố định vào Camera 0 (Sony 48MP)
     try {
       const devList = await navigator.mediaDevices.enumerateDevices();
       const exactCam0 = timCamera0(devList);
       if (exactCam0 && exactCam0.deviceId) {
-        const activeTrack = stream ? stream.getVideoTracks()[0] : null;
-        const activeSettings = activeTrack && activeTrack.getSettings ? activeTrack.getSettings() : null;
-        const activeDevId = activeSettings ? activeSettings.deviceId : null;
-
-        // Nếu camera đang mở chưa phải là Camera 0 chính chủ (48MP AF)
-        if (activeDevId !== exactCam0.deviceId) {
-          try {
-            // QUAN TRỌNG: Dừng sạch luồng cũ TRƯỚC khi mở luồng mới để tránh xung đột phần cứng HAL
-            if (stream) {
-              stream.getTracks().forEach(t => t.stop());
-              stream = null;
-            }
-            videoEl.srcObject = null;
-            await new Promise(r => setTimeout(r, 200));
-
-            const cam0Stream = await layCameraStream(exactCam0.deviceId);
-            if (cam0Stream) {
-              stream = cam0Stream;
-              idCameraUuTien = exactCam0.deviceId;
-              try { localStorage.setItem('camera_uu_tien', exactCam0.deviceId); } catch (e) {}
-            }
-          } catch (eSwitch) {
-            console.warn("Lỗi chuyển sang Camera 0:", eSwitch);
-          }
-        } else {
-          idCameraUuTien = exactCam0.deviceId;
-          try { localStorage.setItem('camera_uu_tien', exactCam0.deviceId); } catch (e) {}
-        }
+        idCameraUuTien = exactCam0.deviceId;
+        try { localStorage.setItem('camera_uu_tien', exactCam0.deviceId); } catch (e) {}
       }
     } catch (eCheck) {}
 
