@@ -178,7 +178,9 @@ function phatAmThanhSung(ctx) {
 }
 
 function phatVibrateSuccess() {
-  phatTiengBip();
+  if (navigator.vibrate) {
+    try { navigator.vibrate(90); } catch (e) { }
+  }
 }
 window.phatVibrateSuccess = phatVibrateSuccess;
 
@@ -518,15 +520,15 @@ async function quetDanhSachCameraSau() {
   }
 }
 
-// Hàm mở luồng camera an toàn với độ phân giải cao và fallback đa tầng
+// Hàm mở luồng camera tối ưu chuẩn HD 720p (siêu mát máy, 60 FPS mượt mà, đọc mã cực nét)
 async function layCameraStream(targetDeviceId) {
   if (targetDeviceId) {
     try {
       return await navigator.mediaDevices.getUserMedia({
         video: {
           deviceId: { exact: targetDeviceId },
-          width: { ideal: 1920 },
-          height: { ideal: 1080 }
+          width: { ideal: 1280 },
+          height: { ideal: 720 }
         }
       });
     } catch (e) {
@@ -544,8 +546,8 @@ async function layCameraStream(targetDeviceId) {
     return await navigator.mediaDevices.getUserMedia({
       video: {
         facingMode: { ideal: "environment" },
-        width: { ideal: 1920 },
-        height: { ideal: 1080 }
+        width: { ideal: 1280 },
+        height: { ideal: 720 }
       }
     });
   } catch (e3) {}
@@ -718,7 +720,7 @@ async function khoiTaoCameraFast(videoId, onDecodedCallback) {
     }
 
     if (isScanning && videoEl.srcObject) {
-      animFrameMap[videoId] = setTimeout(quetKhungHinh, 60); // Quét siêu nhạy ~16 FPS
+      animFrameMap[videoId] = setTimeout(quetKhungHinh, 100); // 10 FPS tối ưu: Máy mát rượi, không tụt FPS, bắt mã tức thì
     }
   };
 
@@ -798,13 +800,7 @@ async function batDauQuet() {
 // ── Hàng đợi Offline & Phản hồi Cảm ứng (Haptic Vibration) ─────────
 const APP_PENDING_KEY = "app_pending_saves";
 
-function phatVibrateSuccess() {
-  if (navigator.vibrate) navigator.vibrate(80);
-}
-
-function phatVibrateError() {
-  if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
-}
+// (phatVibrateSuccess & phatVibrateError đã được khởi tạo và gắn vào window ở trên)
 
 function docPendingApp() {
   try {
@@ -1384,7 +1380,7 @@ async function khoiPhucCamera(videoId, fallbackCb) {
   await khoiTaoCameraFast(videoId, cb);
 }
 
-// ── Tự động khôi phục Camera khi quay lại app từ nền (An toàn, chống đơ máy) ──
+// ── Tự động quản lý vòng đời Camera khi ẩn/mở lại app (Triệt tiêu 100% hiện tượng đứng hình) ──
 let resumeCameraTimer = null;
 function triggerResumeCamera() {
   clearTimeout(resumeCameraTimer);
@@ -1400,21 +1396,139 @@ function triggerResumeCamera() {
       const boxEl = document.getElementById(item.box);
       const videoEl = document.getElementById(item.vid);
       if (boxEl && window.getComputedStyle(boxEl).display !== 'none' && videoEl) {
-        const stream = videoEl.srcObject;
-        const tracks = stream ? stream.getVideoTracks() : [];
-        const isDead = !stream || tracks.length === 0 || tracks.some(t => t.readyState === 'ended' || t.muted);
-        if (isDead) {
-          await khoiPhucCamera(item.vid, item.fallback);
-        } else if (videoEl.paused) {
-          videoEl.play().catch(() => {});
-        }
+        // Luôn khôi phục lại luồng camera mới tinh để không bao giờ bị đứng hình sau khi ẩn app
+        await khoiPhucCamera(item.vid, item.fallback);
       }
     }
-  }, 500);
+  }, 250);
 }
 
 document.addEventListener('visibilitychange', () => {
-  if (document.visibilityState === 'visible') {
+  if (document.visibilityState === 'hidden') {
+    // 1. Khi ẩn app hoặc tắt màn hình: Chủ động ngắt sạch phần cứng camera để giải phóng cảm biến
+    const camBoxes = [
+      { vid: 'reader', box: 'cam-box' },
+      { vid: 'kk-reader', box: 'kk-cam' },
+      { vid: 'cx1-reader', box: 'cx1-cam' },
+      { vid: 'btp-reader', box: 'btp-cam' }
+    ];
+    for (const item of camBoxes) {
+      const boxEl = document.getElementById(item.box);
+      const videoEl = document.getElementById(item.vid);
+      if (boxEl && window.getComputedStyle(boxEl).display !== 'none' && videoEl && videoEl.srcObject) {
+        try {
+          videoEl.srcObject.getTracks().forEach(t => t.stop());
+          videoEl.srcObject = null;
+        } catch (e) {}
+      }
+    }
+  } else if (document.visibilityState === 'visible') {
+    // 2. Khi quay lại app: Tự động khởi động lại luồng camera mới ngay lập tức
     triggerResumeCamera();
   }
 });
+
+// ── Hệ Thống Sao Lưu & Phục Hồi Dữ Liệu An Toàn ───────────────────
+const BACKUP_KEYS = [
+  "app_pending_saves",
+  "cx1_phien_dodang",
+  "cx1_pending_saves",
+  "cx1_lich_su",
+  "cx5_phien_dodang",
+  "cx5_pending_saves",
+  "cx5_lich_su",
+  "btp_phien_dodang",
+  "btp_pending_saves",
+  "btp_lich_su",
+  "kk_pending_saves",
+  "tk_freq",
+  "camera_uu_tien",
+  "user_theme"
+];
+
+function saoLuuDuLieuToanBo() {
+  try {
+    const backupData = {
+      phienBan: "1.0",
+      thoiGian: new Date().toISOString(),
+      duLieu: {}
+    };
+
+    let count = 0;
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (!k) continue;
+      if (BACKUP_KEYS.includes(k) || k.includes('pending') || k.includes('phien_dodang') || k.includes('lich_su') || k.includes('msp_cache')) {
+        backupData.duLieu[k] = localStorage.getItem(k);
+        count++;
+      }
+    }
+
+    const jsonStr = JSON.stringify(backupData, null, 2);
+    const blob = new Blob([jsonStr], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+
+    const d = new Date();
+    const pad = n => String(n).padStart(2, '0');
+    const timeStr = `${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}_${pad(d.getHours())}h${pad(d.getMinutes())}`;
+    const filename = `QuanLyKho_Backup_${timeStr}.json`;
+
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+
+    const msg = `Đã sao lưu thành công ${count} mục dữ liệu vào thư mục Download!`;
+    if (typeof showCanhBao === "function") showCanhBao(msg);
+    else alert(msg + `\nTên file: ${filename}`);
+  } catch (err) {
+    console.error("Lỗi sao lưu:", err);
+    alert("Lỗi khi sao lưu dữ liệu: " + err.message);
+  }
+}
+window.saoLuuDuLieuToanBo = saoLuuDuLieuToanBo;
+
+function kichHoatPhucHoiDuLieu() {
+  const fileInput = document.getElementById("input-phuc-hoi-du-lieu");
+  if (fileInput) {
+    fileInput.value = "";
+    fileInput.click();
+  }
+}
+window.kichHoatPhucHoiDuLieu = kichHoatPhucHoiDuLieu;
+
+function xuLyFilePhucHoiDuLieu(event) {
+  const file = event.target.files && event.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const parsed = JSON.parse(e.target.result);
+      if (!parsed || !parsed.duLieu || typeof parsed.duLieu !== "object") {
+        alert("File sao lưu không đúng định dạng!");
+        return;
+      }
+
+      let restoredCount = 0;
+      for (const [key, val] of Object.entries(parsed.duLieu)) {
+        if (typeof val === "string") {
+          localStorage.setItem(key, val);
+          restoredCount++;
+        }
+      }
+
+      const thongBao = `Đã phục hồi thành công ${restoredCount} mục dữ liệu!`;
+      if (typeof showCanhBao === "function") showCanhBao(thongBao);
+      alert(thongBao + "\nTrang sẽ tự động làm mới để đồng bộ dữ liệu.");
+      window.location.reload();
+    } catch (err) {
+      alert("Lỗi đọc file phục hồi: " + err.message);
+    }
+  };
+  reader.readAsText(file);
+}
+window.xuLyFilePhucHoiDuLieu = xuLyFilePhucHoiDuLieu;

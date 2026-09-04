@@ -128,12 +128,14 @@ function nhapThuCongBTP(src) {
 
   hienVienFeedbackBTP("success");
 
-  // Vibrate thay vì gọi phatVibrateSuccess (vì phatVibrateSuccess bị dính tiếng Bíp)
-  if (navigator.vibrate) {
+  // Phát tiếng bíp giòn giã và rung phản hồi tức thì
+  if (typeof window.phatTiengBip === "function") {
+    window.phatTiengBip();
+  } else if (navigator.vibrate) {
     try { navigator.vibrate(70); } catch (e) {}
   }
 
-  // Đọc TTS luôn, không phát tiếng bíp cũ nữa
+  // Đọc TTS nếu thiết bị hỗ trợ
   docGiongNoiBTP(data.msp, data.kg);
 
   phienBTP.push({
@@ -251,11 +253,14 @@ function khiQuetDuocMaBTP(result) {
 
   hienVienFeedbackBTP("success");
   
-  if (navigator.vibrate) {
+  // Phát tiếng bíp giòn giã và rung phản hồi tức thì
+  if (typeof window.phatTiengBip === "function") {
+    window.phatTiengBip();
+  } else if (navigator.vibrate) {
     try { navigator.vibrate(70); } catch (e) {}
   }
 
-  // Chỉ dùng TTS, bỏ qua tiếng bíp cũ
+  // Đọc TTS nếu thiết bị hỗ trợ
   docGiongNoiBTP(data.msp, data.kg);
 
   phienBTP.push({

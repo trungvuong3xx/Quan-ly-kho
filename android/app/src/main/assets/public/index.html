@@ -292,6 +292,19 @@
         </div>
       </div>
     </div>
+
+    <div class="section-title"><i class="ti ti-device-floppy" style="color:var(--primary)"></i> Sao Lưu & Bảo Toàn Dữ Liệu</div>
+    <div class="dashboard-grid">
+      <div class="grid-card" onclick="saoLuuDuLieuToanBo()">
+        <div class="grid-icon" style="background: linear-gradient(135deg, #10b981, #059669);"><i class="ti ti-download"></i></div>
+        <div class="grid-title">Sao Lưu Dữ Liệu</div>
+      </div>
+      <div class="grid-card" onclick="kichHoatPhucHoiDuLieu()">
+        <div class="grid-icon" style="background: linear-gradient(135deg, #f59e0b, #d97706);"><i class="ti ti-upload"></i></div>
+        <div class="grid-title">Phục Hồi Dữ Liệu</div>
+      </div>
+    </div>
+    <input type="file" id="input-phuc-hoi-du-lieu" accept=".json" style="display:none" onchange="xuLyFilePhucHoiDuLieu(event)">
   </div>
 </div>
 
