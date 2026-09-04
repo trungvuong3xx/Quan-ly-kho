@@ -162,7 +162,8 @@ async function tiepTucKhoiTaoCX1() {
   btnToggle.className = "btn btn-red btn-full";
 
   try {
-    if (!zxingReaderCX1) {
+    const cx1Vid = document.getElementById("cx1-reader");
+    if (!zxingReaderCX1 || !cx1Vid || !cx1Vid.srcObject) {
       zxingReaderCX1 = await khoiTaoCameraFast("cx1-reader", (txt) => {
         if (txt && dangQuetCX1) {
           khiQuetDuocMa({ getText: () => txt });
@@ -195,7 +196,8 @@ async function tiepTucCX1() {
   document.getElementById("btn-flash-cx1").style.color = "var(--cream)";
   document.getElementById("btn-flash-cx1").textContent = "Bật đèn pin";
   try {
-    if (!zxingReaderCX1) {
+    const cx1Vid = document.getElementById("cx1-reader");
+    if (!zxingReaderCX1 || !cx1Vid || !cx1Vid.srcObject) {
       zxingReaderCX1 = await khoiTaoCameraFast("cx1-reader", (txt) => {
         if (txt && dangQuetCX1) {
           khiQuetDuocMa({ getText: () => txt });
@@ -595,7 +597,8 @@ async function quetTiepCX1() {
   btnToggle.className = "btn btn-red btn-full";
 
   try {
-    if (!zxingReaderCX1) {
+    const cx1Vid = document.getElementById("cx1-reader");
+    if (!zxingReaderCX1 || !cx1Vid || !cx1Vid.srcObject) {
       zxingReaderCX1 = await khoiTaoCameraFast("cx1-reader", (txt) => {
         if (txt && dangQuetCX1) {
           khiQuetDuocMa({ getText: () => txt });

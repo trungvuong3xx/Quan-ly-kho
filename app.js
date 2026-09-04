@@ -676,7 +676,14 @@ async function khoiTaoCameraFast(videoId, onDecodedCallback) {
     } catch (eCheck) {}
 
     videoEl.srcObject = stream;
-    await videoEl.play();
+    videoEl.muted = true;
+    videoEl.setAttribute('playsinline', '');
+    videoEl.setAttribute('autoplay', '');
+    try {
+      await videoEl.play();
+    } catch (ePlay) {
+      console.warn("video.play() notice:", ePlay);
+    }
 
     // Tự động khôi phục luồng nếu phần cứng Camera HAL bị ngắt đột ngột
     const activeVideoTrack = stream ? stream.getVideoTracks()[0] : null;

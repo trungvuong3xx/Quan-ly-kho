@@ -358,7 +358,8 @@ async function batDauPhienMoiBTP() {
   }
 
   try {
-    if (!zxingReaderBTP) {
+    const btpVid = document.getElementById("btp-reader");
+    if (!zxingReaderBTP || !btpVid || !btpVid.srcObject) {
       zxingReaderBTP = await khoiTaoCameraFast("btp-reader", (txt) => {
         if (txt && dangQuetBTP) {
           khiQuetDuocMaBTP({ getText: () => txt });
@@ -389,7 +390,8 @@ async function tiepTucBTP() {
   dangQuetBTP = true;
   document.getElementById("btp-status").innerHTML = '<i class="ti ti-radar" style="color:var(--success)"></i> Đang quét Đợt ' + demSoDotBTP + '...';
   try {
-    if (!zxingReaderBTP) {
+    const btpVid = document.getElementById("btp-reader");
+    if (!zxingReaderBTP || !btpVid || !btpVid.srcObject) {
       zxingReaderBTP = await khoiTaoCameraFast("btp-reader", (txt) => {
         if (txt && dangQuetBTP) {
           khiQuetDuocMaBTP({ getText: () => txt });
@@ -654,7 +656,8 @@ async function quetTiepBTP() {
   }
 
   try {
-    if (!zxingReaderBTP) {
+    const btpVid = document.getElementById("btp-reader");
+    if (!zxingReaderBTP || !btpVid || !btpVid.srcObject) {
       zxingReaderBTP = await khoiTaoCameraFast("btp-reader", (txt) => {
         if (txt && dangQuetBTP) {
           khiQuetDuocMaBTP({ getText: () => txt });
@@ -712,7 +715,8 @@ async function khoiPhucBTP(state) {
   }
 
   try {
-    if (!zxingReaderBTP) {
+    const btpVid = document.getElementById("btp-reader");
+    if (!zxingReaderBTP || !btpVid || !btpVid.srcObject) {
       zxingReaderBTP = await khoiTaoCameraFast("btp-reader", (txt) => {
         if (txt && dangQuetBTP) {
           khiQuetDuocMaBTP({ getText: () => txt });

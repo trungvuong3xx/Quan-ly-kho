@@ -39,6 +39,7 @@ public class MainActivity extends BridgeActivity {
         }
 
         if (getBridge() != null && getBridge().getWebView() != null) {
+            getBridge().getWebView().getSettings().setMediaPlaybackRequiresUserGesture(false);
             getBridge().getWebView().addJavascriptInterface(new Object() {
                 @JavascriptInterface
                 public boolean isCameraAvailable() {
