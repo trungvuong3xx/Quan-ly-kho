@@ -529,28 +529,23 @@ async function quetDanhSachCameraSau() {
 
 // Hàm mở luồng camera tối ưu chuẩn HD 720p (chắc chắn mở camera sau, không bao giờ mở camera trước)
 async function layCameraStream(targetDeviceId) {
+  // 1. Bắt buộc có facingMode: "environment" ngay cả khi chỉ định deviceId
   if (targetDeviceId) {
     try {
       return await navigator.mediaDevices.getUserMedia({
         video: {
           deviceId: { exact: targetDeviceId },
+          facingMode: "environment",
           width: { ideal: 1280 },
           height: { ideal: 720 }
         }
       });
     } catch (e) {
-      try {
-        return await navigator.mediaDevices.getUserMedia({
-          video: {
-            deviceId: { ideal: targetDeviceId }
-          }
-        });
-      } catch (e2) {}
+      // Nếu deviceId lỗi/cũ, không bao giờ gọi { ideal: targetDeviceId } mà chuyển thẳng xuống facingMode: "environment"
     }
   }
 
-  // Bắt buộc mở camera sau bằng facingMode: { exact: "environment" }
-  // Tuyệt đối không dùng { ideal: "environment" } vì sẽ bị kích hoạt nhầm camera trước pop-up
+  // 2. Mở camera sau chuẩn với facingMode: { exact: "environment" }
   try {
     return await navigator.mediaDevices.getUserMedia({
       video: {
@@ -569,6 +564,7 @@ async function layCameraStream(targetDeviceId) {
     });
   } catch (eExact2) {}
 
+  // 3. Fallback cuối cùng: facingMode: "environment" (luôn có environment, tuyệt đối không gọi getUserMedia rỗng)
   try {
     return await navigator.mediaDevices.getUserMedia({
       video: {
@@ -642,41 +638,40 @@ async function khoiTaoCameraFast(videoId, onDecodedCallback) {
   // 1. Quét danh sách camera phần cứng & ưu tiên mở Camera 0 (Sony 48MP AF)
   let cams = await quetDanhSachCameraSau();
   let cam0 = timCamera0(cams);
-  let targetId = (cam0 && cam0.deviceId) ? cam0.deviceId : idCameraUuTien;
+  // Chỉ dùng idCameraUuTien nếu nó thực sự tồn tại trong danh sách camera sau phần cứng
+  const validSavedId = (idCameraUuTien && cams.some(d => d.deviceId === idCameraUuTien)) ? idCameraUuTien : null;
+  let targetId = (cam0 && cam0.deviceId) ? cam0.deviceId : validSavedId;
 
   let stream = null;
   try {
     stream = await layCameraStream(targetId);
 
-    // Sau khi đã có stream, âm thầm lưu lại Camera 0 vào bộ nhớ nếu cần
+    // Sau khi camera sau đã hoạt động (labels đã hiển thị đầy đủ), kiểm tra và khóa cố định vào Camera 0 (Sony 48MP)
     try {
-      const activeTrack = stream ? stream.getVideoTracks()[0] : null;
-      const activeLabel = (activeTrack && activeTrack.label) ? activeTrack.label.toLowerCase() : '';
+      const devList = await navigator.mediaDevices.enumerateDevices();
+      const exactCam0 = timCamera0(devList);
+      if (exactCam0 && exactCam0.deviceId) {
+        const activeTrack = stream ? stream.getVideoTracks()[0] : null;
+        const activeSettings = activeTrack && activeTrack.getSettings ? activeTrack.getSettings() : null;
+        const activeDevId = activeSettings ? activeSettings.deviceId : null;
 
-      // Chỉ chuyển nếu lỡ bắt nhầm camera trước pop-up
-      const isFront = activeLabel.includes('front') || activeLabel.includes('truoc') || activeLabel.includes('selfie') || activeLabel.includes('user') || activeLabel.includes('camera2 1');
-      if (isFront) {
-        const devList = await navigator.mediaDevices.enumerateDevices();
-        const exactCam0 = timCamera0(devList);
-        if (exactCam0 && exactCam0.deviceId) {
+        // Nếu camera đang mở chưa phải là Camera 0 chính chủ (48MP AF)
+        if (activeDevId !== exactCam0.deviceId) {
           try {
-            if (stream) stream.getTracks().forEach(t => t.stop());
-            stream = await layCameraStream(exactCam0.deviceId);
-            idCameraUuTien = exactCam0.deviceId;
-            try { localStorage.setItem('camera_uu_tien', exactCam0.deviceId); } catch (e) {}
+            const cam0Stream = await layCameraStream(exactCam0.deviceId);
+            if (cam0Stream) {
+              if (stream) stream.getTracks().forEach(t => t.stop());
+              stream = cam0Stream;
+              idCameraUuTien = exactCam0.deviceId;
+              try { localStorage.setItem('camera_uu_tien', exactCam0.deviceId); } catch (e) {}
+            }
           } catch (eSwitch) {
             console.warn("Lỗi chuyển sang Camera 0:", eSwitch);
           }
+        } else {
+          idCameraUuTien = exactCam0.deviceId;
+          try { localStorage.setItem('camera_uu_tien', exactCam0.deviceId); } catch (e) {}
         }
-      } else {
-        // Đã là camera sau chuẩn, âm thầm lưu deviceId nếu tìm thấy Camera 0 trong danh sách
-        navigator.mediaDevices.enumerateDevices().then(devList => {
-          const exactCam0 = timCamera0(devList);
-          if (exactCam0 && exactCam0.deviceId) {
-            idCameraUuTien = exactCam0.deviceId;
-            try { localStorage.setItem('camera_uu_tien', exactCam0.deviceId); } catch (e) {}
-          }
-        }).catch(() => {});
       }
     } catch (eCheck) {}
 

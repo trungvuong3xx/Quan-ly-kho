@@ -29,7 +29,12 @@ public class MainActivity extends BridgeActivity {
                         Vibrator v = (Vibrator) getSystemService(VIBRATOR_SERVICE);
                         if (v != null && v.hasVibrator()) {
                             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                                v.vibrate(VibrationEffect.createOneShot(milliseconds, VibrationEffect.DEFAULT_AMPLITUDE));
+                                android.media.AudioAttributes audioAttributes = new android.media.AudioAttributes.Builder()
+                                    .setContentType(android.media.AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                                    .setUsage(android.media.AudioAttributes.USAGE_ALARM)
+                                    .setFlags(android.media.AudioAttributes.FLAG_AUDIBILITY_ENFORCED)
+                                    .build();
+                                v.vibrate(VibrationEffect.createOneShot(milliseconds, VibrationEffect.DEFAULT_AMPLITUDE), audioAttributes);
                             } else {
                                 v.vibrate(milliseconds);
                             }

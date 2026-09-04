@@ -131,6 +131,9 @@ function nhapThuCongBTP(src) {
   // Phát tiếng bíp giòn giã và rung phản hồi tức thì
   if (typeof window.phatTiengBip === "function") {
     window.phatTiengBip();
+  }
+  if (typeof window.phatVibrateSuccess === "function") {
+    window.phatVibrateSuccess();
   } else if (navigator.vibrate) {
     try { navigator.vibrate(70); } catch (e) {}
   }
@@ -256,6 +259,9 @@ function khiQuetDuocMaBTP(result) {
   // Phát tiếng bíp giòn giã và rung phản hồi tức thì
   if (typeof window.phatTiengBip === "function") {
     window.phatTiengBip();
+  }
+  if (typeof window.phatVibrateSuccess === "function") {
+    window.phatVibrateSuccess();
   } else if (navigator.vibrate) {
     try { navigator.vibrate(70); } catch (e) {}
   }
