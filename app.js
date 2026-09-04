@@ -466,33 +466,33 @@ let idCameraUuTien = localStorage.getItem('camera_uu_tien') || null;
 function timCamera0(devices) {
   if (!devices || devices.length === 0) return null;
   const videoInputs = devices.filter(d => d.kind === 'videoinput');
-  
-  // 1. Tìm camera có nhãn camera2 0 hoặc số 0 và facing back / sau
+  if (videoInputs.length === 0) return null;
+
+  // 1. Tìm camera có nhãn rõ ràng là Camera 0 (loại trừ camera2 10 và camera trước)
   let cam0 = videoInputs.find(d => {
     const lbl = (d.label || '').toLowerCase();
     if (!lbl) return false;
-    if (lbl.includes('front') || lbl.includes('truoc') || lbl.includes('selfie') || lbl.includes('user')) return false;
-    return /camera2?\s*0\b/i.test(lbl) || (lbl.includes('facing back') && /\b0\b/.test(lbl));
+    if (lbl.includes('front') || lbl.includes('truoc') || lbl.includes('selfie') || lbl.includes('user') || lbl.includes('camera2 1,')) return false;
+    if (lbl.includes('camera2 10') || lbl.includes('camera 10') || lbl.includes('aux') || lbl.includes('wide') || lbl.includes('tele')) return false;
+    return /camera2?\s*0\b/i.test(lbl) || (lbl.includes('back') && /(^|[^\d])0($|[^\d])/.test(lbl));
   });
   if (cam0 && cam0.deviceId) return cam0;
 
-  // 2. Tìm camera có nhãn chứa '0' bất kỳ nhưng không phải camera trước
-  cam0 = videoInputs.find(d => {
+  // 2. Tìm camera sau nhưng loại trừ tuyệt đối camera 10, tele, wide và camera trước
+  let backCam = videoInputs.find(d => {
     const lbl = (d.label || '').toLowerCase();
     if (!lbl) return false;
-    if (lbl.includes('front') || lbl.includes('truoc') || lbl.includes('selfie') || lbl.includes('user')) return false;
-    return /\b0\b/.test(lbl);
-  });
-  if (cam0 && cam0.deviceId) return cam0;
-
-  // 3. Tìm bất kỳ camera sau nào (facing back / sau)
-  const backCam = videoInputs.find(d => {
-    const lbl = (d.label || '').toLowerCase();
-    if (!lbl) return false;
-    if (lbl.includes('front') || lbl.includes('truoc') || lbl.includes('selfie') || lbl.includes('user')) return false;
+    if (lbl.includes('front') || lbl.includes('truoc') || lbl.includes('selfie') || lbl.includes('user') || lbl.includes('camera2 1,')) return false;
+    if (lbl.includes('camera2 10') || lbl.includes('camera 10') || lbl.includes('aux') || lbl.includes('wide') || lbl.includes('tele')) return false;
     return lbl.includes('back') || lbl.includes('sau') || lbl.includes('environment');
   });
   if (backCam && backCam.deviceId) return backCam;
+
+  // 3. Nếu chưa có nhãn (lần đầu khi trình duyệt chưa cấp quyền truy cập thiết bị),
+  // Camera 0 trong kiến trúc Android Camera2 luôn là thiết bị đầu tiên (index 0)
+  if (videoInputs[0] && videoInputs[0].deviceId) {
+    return videoInputs[0];
+  }
 
   return null;
 }
@@ -514,11 +514,12 @@ async function quetDanhSachCameraSau() {
       return [cam0];
     }
 
-    // Lọc camera sau (loại bỏ triệt để camera trước pop-up)
+    // Lọc camera sau (loại bỏ triệt để camera trước pop-up và camera 10)
     let backCams = videoInputs.filter(d => {
       const lbl = (d.label || '').toLowerCase();
       if (!lbl) return true;
       if (lbl.includes('front') || lbl.includes('truoc') || lbl.includes('selfie') || lbl.includes('user') || lbl.includes('camera2 1')) return false;
+      if (lbl.includes('camera2 10') || lbl.includes('camera 10')) return false;
       return true;
     });
 
@@ -632,6 +633,25 @@ async function khoiTaoCameraFast(videoId, onDecodedCallback) {
       if (exactCam0 && exactCam0.deviceId) {
         idCameraUuTien = exactCam0.deviceId;
         try { localStorage.setItem('camera_uu_tien', exactCam0.deviceId); } catch (e) {}
+
+        const activeTrack = stream ? stream.getVideoTracks()[0] : null;
+        const activeLabel = (activeTrack?.label || '').toLowerCase();
+        const isCam0Active = /camera2?\s*0\b/i.test(activeLabel) && !activeLabel.includes('10');
+
+        // Nếu camera đang mở chưa phải là Camera 0 Sony 48MP AF chính chủ, chuyển ngay sang Camera 0
+        if (!isCam0Active) {
+          try {
+            if (stream) stream.getTracks().forEach(t => t.stop());
+            await new Promise(r => setTimeout(r, 120));
+            const cam0Stream = await layCameraStream(exactCam0.deviceId);
+            if (cam0Stream) {
+              stream = cam0Stream;
+              videoEl.srcObject = cam0Stream;
+            }
+          } catch (eSwitch) {
+            console.warn("Lỗi chuyển sang Camera 0:", eSwitch);
+          }
+        }
       }
     } catch (eCheck) {}
 
