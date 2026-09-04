@@ -450,7 +450,8 @@ let nativeBarcodeDetectorGlobal = null;
 const lastCameraCallbackMap = {};
 
 let danhSachCameraSau = [];
-let idCameraUuTien = localStorage.getItem('camera_uu_tien') || null;
+let idCameraUuTien = null;
+try { localStorage.removeItem('camera_uu_tien'); } catch (e) {}
 
 // Hàm quét & sắp xếp danh sách camera sau phần cứng
 async function quetDanhSachCameraSau() {
@@ -489,6 +490,12 @@ async function quetDanhSachCameraSau() {
       if (!aIs0 && bIs0) return 1;
       return 0;
     });
+
+    // CHỈ GIỮ LẠI DUY NHẤT CAMERA 0 (Sony 48MP AF chính).
+    // Tuyệt đối không chọn Camera 2 (Ultra-wide cố định tiêu cự) hay Camera 3 (Telephoto kén HAL gây đen màn hình)
+    if (backCams.length > 0) {
+      backCams = [backCams[0]];
+    }
 
     danhSachCameraSau = backCams;
     return backCams;
@@ -562,80 +569,22 @@ async function batContinuousAutofocus(stream) {
   }
 }
 
-// Tự động thêm nút đổi ống kính nổi ở góc trên khung video nếu máy có nhiều camera sau
+// Tự động ẩn hoàn toàn nút đổi camera (Camera 0 Sony 48MP AF là tối ưu duy nhất để quét mã)
 function capNhatNutDoiCamera(videoEl) {
   if (!videoEl || !videoEl.parentElement) return;
   const parent = videoEl.parentElement;
-  let btn = parent.querySelector('.btn-doi-cam');
-  if (!btn) {
-    btn = document.createElement('button');
-    btn.type = 'button';
-    btn.className = 'btn-doi-cam';
-    btn.title = 'Đổi ống kính camera';
-    btn.innerHTML = '<i class="ti ti-camera-rotate" style="font-size:18px;pointer-events:none;"></i>';
-    btn.setAttribute('style', 'position:absolute; top:8px; right:8px; z-index:20; background:rgba(0,0,0,0.55); border:1px solid rgba(255,255,255,0.35); color:#fff; border-radius:50%; width:38px; height:38px; display:none; align-items:center; justify-content:center; backdrop-filter:blur(4px); cursor:pointer; -webkit-tap-highlight-color:transparent; transition:transform 0.15s ease;');
-    btn.onclick = (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      doiCameraNhanh(videoEl.id);
-    };
-    parent.appendChild(btn);
-  }
-  if (danhSachCameraSau.length > 1) {
-    btn.style.display = 'flex';
-  } else {
-    btn.style.display = 'none';
+  const btn = parent.querySelector('.btn-doi-cam');
+  if (btn) {
+    btn.remove();
   }
 }
 
-// Hàm chuyển ống kính camera mượt mà, KHÔNG xóa dữ liệu phiên, KHÔNG reload
+// Khóa cố định camera chính, không cho đổi sang camera phụ để chống đen màn hình và mất nét
 window.doiCameraNhanh = async function(videoId) {
-  try {
-    const videoEl = document.getElementById(videoId);
-    if (!videoEl) return;
-
-    let cams = await quetDanhSachCameraSau();
-    if (cams.length <= 1) {
-      const msg = "Đang sử dụng camera chính tốt nhất (Sony 48MP AF)!";
-      if (videoId === 'btp-reader' && typeof showCanhBaoBTP === "function") showCanhBaoBTP(msg);
-      else if (videoId === 'cx1-reader' && typeof showCanhBaoCX1 === "function") showCanhBaoCX1(msg);
-      else if (typeof showCanhBao === "function") showCanhBao(msg);
-      return;
-    }
-
-    const currentTrack = videoEl.srcObject ? videoEl.srcObject.getVideoTracks()[0] : null;
-    const currentDevId = currentTrack ? currentTrack.getSettings().deviceId : idCameraUuTien;
-    let currentIdx = cams.findIndex(c => c.deviceId === currentDevId);
-    let nextIdx = (currentIdx + 1) % cams.length;
-    let nextCam = cams[nextIdx];
-
-    // Dừng stream cũ
-    if (videoEl.srcObject) {
-      videoEl.srcObject.getTracks().forEach(t => t.stop());
-    }
-
-    // Mở stream camera mới
-    const newStream = await layCameraStream(nextCam.deviceId);
-    videoEl.srcObject = newStream;
-    await videoEl.play();
-
-    // Lưu camera đã chọn vào localStorage
-    idCameraUuTien = nextCam.deviceId;
-    localStorage.setItem('camera_uu_tien', idCameraUuTien);
-    localStorage.setItem('camera_da_chon_tay', '1');
-
-    await batContinuousAutofocus(newStream);
-
-    let tenCam = nextCam.label || `Ống kính ${nextIdx + 1}`;
-    tenCam = tenCam.split('(')[0].trim();
-    const thongBao = `Đã chuyển: ${tenCam} (${nextIdx + 1}/${cams.length})`;
-
-    if (videoId === 'btp-reader' && typeof showCanhBaoBTP === "function") showCanhBaoBTP(thongBao);
-    else if (videoId === 'cx1-reader' && typeof showCanhBaoCX1 === "function") showCanhBaoCX1(thongBao);
-    else if (typeof showCanhBao === "function") showCanhBao(thongBao);
-  } catch (err) {
-    console.warn("Lỗi doiCameraNhanh:", err);
-  }
+  const msg = "Đã khóa cố định Camera chính Sony 48MP AF - Cảm biến duy nhất hỗ trợ lấy nét quét mã QR!";
+  if (videoId === 'btp-reader' && typeof showCanhBaoBTP === "function") showCanhBaoBTP(msg);
+  else if (videoId === 'cx1-reader' && typeof showCanhBaoCX1 === "function") showCanhBaoCX1(msg);
+  else if (typeof showCanhBao === "function") showCanhBao(msg);
 };
 window.doiCamera = window.doiCameraNhanh;
 
@@ -652,14 +601,11 @@ async function khoiTaoCameraFast(videoId, onDecodedCallback) {
     animFrameMap[videoId] = null;
   }
 
-  // 1. Quét danh sách camera phần cứng
+  // 1. Quét danh sách camera phần cứng & luôn chọn Camera 0 (Sony 48MP AF)
   let cams = await quetDanhSachCameraSau();
-  let targetId = idCameraUuTien;
-  if (!targetId && cams.length > 0) {
-    targetId = cams[0].deviceId;
-    idCameraUuTien = targetId;
-    localStorage.setItem('camera_uu_tien', targetId);
-  }
+  let targetId = cams.length > 0 ? cams[0].deviceId : null;
+  idCameraUuTien = targetId;
+  try { localStorage.removeItem('camera_uu_tien'); } catch (e) {}
 
   let stream = null;
   try {
