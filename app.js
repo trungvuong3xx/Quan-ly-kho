@@ -711,8 +711,13 @@ async function khoiTaoCameraFast(videoId, onDecodedCallback) {
     return cropCanvas;
   }
 
-  // 2. Tận dụng phần cứng Native BarcodeDetector (Chạy siêu tốc)
-  if ('BarcodeDetector' in window) {
+  // 2. Nhận diện mã QR (Tránh crash Chromium WebView trên Android, dùng ZXing độc lập)
+  const isAndroidApp = (window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform()) || 
+                       window.location.protocol === 'capacitor:' || 
+                       (window.location.protocol === 'https:' && window.location.hostname === 'localhost') ||
+                       /Android.*(wv|\.apk)/i.test(navigator.userAgent);
+
+  if (!isAndroidApp && 'BarcodeDetector' in window) {
     try {
       if (!nativeBarcodeDetectorGlobal) {
         nativeBarcodeDetectorGlobal = new BarcodeDetector({ formats: ['qr_code'] });
