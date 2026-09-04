@@ -459,27 +459,30 @@ async function quetDanhSachCameraSau() {
     const videoInputs = devices.filter(d => d.kind === 'videoinput');
     if (videoInputs.length === 0) return [];
 
-    // Lọc camera sau (loại bỏ camera trước / selfie)
+    // Lọc camera sau: loại bỏ camera trước và LOẠI BỎ TRIỆT ĐỂ các camera ảo/AUX ID 100, 101, 120... gây crash Camera HAL
     let backCams = videoInputs.filter(d => {
       const lbl = (d.label || '').toLowerCase();
-      return lbl.includes('back') || lbl.includes('rear') || lbl.includes('sau') || lbl.includes('environment');
+      if (lbl.includes('front') || lbl.includes('truoc') || lbl.includes('selfie') || lbl.includes('user')) return false;
+      if (/camera2\s*([1-9]\d+)/i.test(lbl) || /\b(100|101|120)\b/.test(lbl)) return false;
+      return lbl.includes('back') || lbl.includes('rear') || lbl.includes('sau') || lbl.includes('environment') || lbl.includes('camera2 0') || lbl.includes('camera2 2');
     });
 
     if (backCams.length === 0) {
       backCams = videoInputs.filter(d => {
         const lbl = (d.label || '').toLowerCase();
+        if (/camera2\s*([1-9]\d+)/i.test(lbl) || /\b(100|101|120)\b/.test(lbl)) return false;
         return !lbl.includes('front') && !lbl.includes('truoc') && !lbl.includes('selfie') && !lbl.includes('user');
       });
     }
 
     if (backCams.length === 0) backCams = videoInputs;
 
-    // Sắp xếp: Ưu tiên Camera 0 (Cảm biến chính có AutoFocus - Sony IMX586 trên K20 Pro) lên đầu tiên
+    // Sắp xếp: Ưu tiên Camera 0 (Cảm biến chính có AutoFocus - Sony IMX586) lên đầu tiên
     backCams.sort((a, b) => {
       const aLbl = (a.label || '').toLowerCase();
       const bLbl = (b.label || '').toLowerCase();
-      const aIs0 = aLbl.includes('0') && (aLbl.includes('back') || aLbl.includes('rear') || aLbl.includes('sau') || aLbl.includes('camera2 0'));
-      const bIs0 = bLbl.includes('0') && (bLbl.includes('back') || bLbl.includes('rear') || bLbl.includes('sau') || bLbl.includes('camera2 0'));
+      const aIs0 = /camera2\s*0\b/i.test(aLbl) || /\b0\b/.test(aLbl);
+      const bIs0 = /camera2\s*0\b/i.test(bLbl) || /\b0\b/.test(bLbl);
       if (aIs0 && !bIs0) return -1;
       if (!aIs0 && bIs0) return 1;
       return 0;
@@ -660,29 +663,11 @@ async function khoiTaoCameraFast(videoId, onDecodedCallback) {
     videoEl.srcObject = stream;
     await videoEl.play();
 
-    // Sau khi có quyền, nếu chưa quét được nhãn hoặc máy tự bốc nhầm camera phụ:
-    if (cams.length === 0 || !cams.some(c => c.label)) {
-      cams = await quetDanhSachCameraSau();
-      if (cams.length > 0 && cams[0].deviceId && !localStorage.getItem('camera_da_chon_tay')) {
-        const activeTrack = stream.getVideoTracks()[0];
-        const activeSettings = activeTrack ? activeTrack.getSettings() : {};
-        if (activeSettings.deviceId && activeSettings.deviceId !== cams[0].deviceId) {
-          console.log("Phát hiện Android mở nhầm ống kính, tự động chuyển sang Camera 0 chính:", cams[0].label);
-          try {
-            activeTrack.stop();
-            const correctStream = await layCameraStream(cams[0].deviceId);
-            videoEl.srcObject = correctStream;
-            await videoEl.play();
-            stream = correctStream;
-            idCameraUuTien = cams[0].deviceId;
-            localStorage.setItem('camera_uu_tien', idCameraUuTien);
-          } catch (eSwitch) {}
-        }
-      }
-    }
-
     // Kích hoạt Continuous Autofocus
     await batContinuousAutofocus(stream);
+
+    // Cập nhật lại nhãn sau khi đã có quyền
+    cams = await quetDanhSachCameraSau();
 
     // Cập nhật nút đổi camera trên viewfinder nếu máy có nhiều ống kính
     capNhatNutDoiCamera(videoEl);
@@ -690,110 +675,14 @@ async function khoiTaoCameraFast(videoId, onDecodedCallback) {
     console.warn("getUserMedia camera stream notice:", e);
   }
 
-  // Chuẩn bị Canvas ẩn để crop vùng chính giữa (Đảm bảo toạ độ luôn hợp lệ, không bao giờ âm)
-  const cropCanvas = document.createElement('canvas');
-  const cropCtx = cropCanvas.getContext('2d', { willReadFrequently: true });
-
-  function captureCroppedFrame() {
-    if (!videoEl.videoWidth || !videoEl.videoHeight) return null;
-    const vw = videoEl.videoWidth;
-    const vh = videoEl.videoHeight;
-    const side = Math.floor(Math.min(vw, vh) * 0.75);
-    const cropDim = Math.min(side, 600);
-    const sx = Math.floor((vw - cropDim) / 2);
-    const sy = Math.floor((vh - cropDim) / 2);
-
-    if (cropCanvas.width !== cropDim || cropCanvas.height !== cropDim) {
-      cropCanvas.width = cropDim;
-      cropCanvas.height = cropDim;
-    }
-    cropCtx.drawImage(videoEl, sx, sy, cropDim, cropDim, 0, 0, cropDim, cropDim);
-    return cropCanvas;
-  }
-
-  // 2. Nhận diện mã QR (Tránh crash Chromium WebView trên Android, dùng ZXing độc lập)
-  const isAndroidApp = (window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform()) || 
-                       window.location.protocol === 'capacitor:' || 
-                       (window.location.protocol === 'https:' && window.location.hostname === 'localhost') ||
-                       /Android.*(wv|\.apk)/i.test(navigator.userAgent);
-
-  if (!isAndroidApp && 'BarcodeDetector' in window) {
-    try {
-      if (!nativeBarcodeDetectorGlobal) {
-        nativeBarcodeDetectorGlobal = new BarcodeDetector({ formats: ['qr_code'] });
-      }
-      let isProcessing = false;
-
-      const loopNative = async () => {
-        if (!videoEl.srcObject || videoEl.paused || videoEl.ended) return;
-        if (!isProcessing && videoEl.readyState >= 2) {
-          isProcessing = true;
-          try {
-            const canvas = captureCroppedFrame();
-            if (canvas) {
-              let codes = await nativeBarcodeDetectorGlobal.detect(canvas);
-              if ((!codes || codes.length === 0) && videoEl.readyState >= 2) {
-                codes = await nativeBarcodeDetectorGlobal.detect(videoEl);
-              }
-              if (codes && codes.length > 0) {
-                for (const code of codes) {
-                  if (code.rawValue) onDecodedCallback(code.rawValue);
-                }
-              }
-            }
-          } catch (e) { }
-          isProcessing = false;
-        }
-        if (videoEl.srcObject) {
-          animFrameMap[videoId] = setTimeout(loopNative, 100);
-        }
-      };
-
-      animFrameMap[videoId] = setTimeout(loopNative, 100);
-      return { reset: () => {} };
-    } catch (e) {
-      console.warn("BarcodeDetector native error, fallback to ZXing:", e);
-    }
-  }
-
-  // 3. ZXing Fallback chỉ quét QR_CODE với TRY_HARDER = true
+  // 2. ZXing BrowserQRCodeReader: Quét trực tiếp video 100% chuẩn xác, không crash, không lag
   try {
-    const hints = new Map();
-    hints.set(ZXing.DecodeHintType.POSSIBLE_FORMATS, [ZXing.BarcodeFormat.QR_CODE]);
-    hints.set(ZXing.DecodeHintType.TRY_HARDER, true);
-
-    const reader = new ZXing.BrowserMultiFormatReader(hints);
-    
-    let isZxingProcessing = false;
-    const loopZxing = async () => {
-      if (!videoEl.srcObject || videoEl.paused || videoEl.ended) return;
-      if (!isZxingProcessing && videoEl.readyState >= 2) {
-        isZxingProcessing = true;
-        try {
-          const canvas = captureCroppedFrame();
-          if (canvas) {
-            try {
-              const result = reader.decode(canvas);
-              if (result) {
-                onDecodedCallback(result.getText());
-              }
-            } catch (e) {
-              try {
-                const fullResult = reader.decode(videoEl);
-                if (fullResult) {
-                  onDecodedCallback(fullResult.getText());
-                }
-              } catch (e2) {}
-            }
-          }
-        } catch (e) { }
-        isZxingProcessing = false;
+    const reader = new ZXing.BrowserQRCodeReader();
+    reader.decodeFromVideoElementContinuously(videoEl, (result, err) => {
+      if (result && result.getText()) {
+        onDecodedCallback(result.getText());
       }
-      if (videoEl.srcObject) {
-        animFrameMap[videoId] = setTimeout(loopZxing, 100);
-      }
-    };
-    animFrameMap[videoId] = setTimeout(loopZxing, 100);
+    });
     return reader;
   } catch (e) {
     console.warn("ZXing fallback init error:", e);
