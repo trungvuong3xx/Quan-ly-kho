@@ -8,7 +8,14 @@ on:
       - gh-pages
     paths:
       - 'app.js'
+      - 'quetqr.js'
+      - 'kiemke.js'
+      - 'cx1.js'
+      - 'cx5.js'
+      - 'btp.js'
+      - 'tonkho.js'
       - 'index.html'
+      - 'style.css'
       - 'package.json'
       - 'build-web.js'
       - 'android/**'
