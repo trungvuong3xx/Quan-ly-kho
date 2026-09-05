@@ -3,6 +3,7 @@ package com.ntv.quanlykho;
 import android.Manifest;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
+import android.webkit.WebSettings;
 import android.webkit.WebView;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
@@ -14,7 +15,10 @@ public class MainActivity extends BridgeActivity {
         super.onCreate(savedInstanceState);
         WebView.setWebContentsDebuggingEnabled(true);
         if (getBridge() != null && getBridge().getWebView() != null) {
-            getBridge().getWebView().getSettings().setMediaPlaybackRequiresUserGesture(false);
+            WebView webView = getBridge().getWebView();
+            webView.getSettings().setMediaPlaybackRequiresUserGesture(false);
+            webView.getSettings().setCacheMode(WebSettings.LOAD_NO_CACHE);
+            webView.clearCache(true);
         }
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.CAMERA}, 1001);
@@ -25,7 +29,9 @@ public class MainActivity extends BridgeActivity {
     public void onResume() {
         super.onResume();
         if (getBridge() != null && getBridge().getWebView() != null) {
-            getBridge().getWebView().getSettings().setMediaPlaybackRequiresUserGesture(false);
+            WebView webView = getBridge().getWebView();
+            webView.getSettings().setMediaPlaybackRequiresUserGesture(false);
+            webView.getSettings().setCacheMode(WebSettings.LOAD_NO_CACHE);
         }
     }
 

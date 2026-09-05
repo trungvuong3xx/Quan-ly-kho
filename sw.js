@@ -1,5 +1,18 @@
-const CACHE_NAME = 'kho-cache-v58';
-const urlsToCache = [
+// Nếu đang chạy trong ứng dụng APK Capacitor (localhost):
+// Tự hủy Service Worker và xóa sạch mọi bộ nhớ Cache để luôn nạp trực tiếp 100% từ bộ cài APK
+if (self.location.hostname === 'localhost' || self.location.protocol === 'capacitor:') {
+  self.addEventListener('install', () => self.skipWaiting());
+  self.addEventListener('activate', event => {
+    event.waitUntil(
+      caches.keys().then(keys => Promise.all(keys.map(k => caches.delete(k))))
+        .then(() => self.registration.unregister())
+        .then(() => self.clients.claim())
+    );
+  });
+} else {
+  // Logic Service Worker dành riêng cho Web PWA (GitHub Pages)
+  const CACHE_NAME = 'kho-cache-v58';
+  const urlsToCache = [
   './',
   './index.html',
   './style.css',
@@ -97,3 +110,4 @@ self.addEventListener('fetch', event => {
     );
   }
 });
+}
