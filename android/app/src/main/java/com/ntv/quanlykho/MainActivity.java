@@ -18,7 +18,6 @@ public class MainActivity extends BridgeActivity {
             WebView webView = getBridge().getWebView();
             webView.getSettings().setMediaPlaybackRequiresUserGesture(false);
             webView.getSettings().setCacheMode(WebSettings.LOAD_NO_CACHE);
-            webView.clearCache(true);
         }
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.CAMERA}, 1001);

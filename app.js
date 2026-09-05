@@ -454,7 +454,7 @@ async function quetDanhSachCameraSau() {
     // Lọc camera sau (loại bỏ triệt để camera trước pop-up trên K20 Pro)
     let backCams = videoInputs.filter(d => {
       const lbl = (d.label || '').toLowerCase();
-      if (!lbl) return false;
+      if (!lbl) return true;
       if (lbl.includes('front') || lbl.includes('truoc') || lbl.includes('selfie') || lbl.includes('user') || lbl.includes('camera2 1') || lbl.includes('camera 1') || lbl.includes('facing front')) return false;
       return true;
     });
@@ -467,14 +467,13 @@ async function quetDanhSachCameraSau() {
   }
 }
 
-// Hàm mở luồng camera tối ưu chuẩn 4:3 (chắc chắn mở camera sau, TUYỆT ĐỐI KHÔNG mở camera trước pop-up)
+// Hàm mở luồng camera tối ưu chuẩn 4:3 (chắc chắn mở camera sau Sony 48MP AF)
 async function layCameraStream(targetDeviceId) {
   if (targetDeviceId) {
     try {
       return await navigator.mediaDevices.getUserMedia({
         video: {
           deviceId: { exact: targetDeviceId },
-          facingMode: { ideal: "environment" },
           width: { ideal: 1280 },
           height: { ideal: 960 }
         }
@@ -483,53 +482,41 @@ async function layCameraStream(targetDeviceId) {
       try {
         return await navigator.mediaDevices.getUserMedia({
           video: {
-            deviceId: { exact: targetDeviceId },
-            facingMode: { ideal: "environment" }
+            deviceId: { ideal: targetDeviceId }
           }
         });
       } catch (e2) {}
     }
   }
 
-  // 1. Khóa cứng Camera sau bằng exact: "environment"
+  // 1. Ưu tiên cao nhất: Camera sau chuẩn tỉ lệ 4:3 (cảm biến Sony 48MP AF)
   try {
     return await navigator.mediaDevices.getUserMedia({
       video: {
-        facingMode: { exact: "environment" },
+        facingMode: { ideal: "environment" },
         width: { ideal: 1280 },
         height: { ideal: 960 }
       }
     });
   } catch (e1) {}
 
+  // 2. Dự phòng: Camera sau với facingMode ideal
   try {
     return await navigator.mediaDevices.getUserMedia({
       video: {
-        facingMode: { exact: "environment" }
+        facingMode: { ideal: "environment" }
       }
     });
   } catch (e2) {}
 
-  // 2. Dự phòng facingMode "environment" chuẩn
-  try {
-    return await navigator.mediaDevices.getUserMedia({
-      video: {
-        facingMode: "environment",
-        width: { ideal: 1280 },
-        height: { ideal: 960 }
-      }
-    });
-  } catch (e3) {}
-
+  // 3. Dự phòng: facingMode environment tiêu chuẩn
   try {
     return await navigator.mediaDevices.getUserMedia({
       video: { facingMode: "environment" }
     });
-  } catch (e4) {}
+  } catch (e3) {}
 
-  // TUYỆT ĐỐI KHÔNG fallback sang { video: true } để chống Android kích hoạt motor camera trước thò thụt
-  console.error("Không thể kết nối Camera Sau");
-  throw new Error("Không thể mở Camera Sau");
+  return null;
 }
 
 // Bật chế độ tự động lấy nét liên tục (Continuous Autofocus)
@@ -595,6 +582,19 @@ async function khoiTaoCameraFast(videoId, onDecodedCallback) {
       }
     } catch (eCheck) {}
 
+    if (!stream) {
+      console.warn("Không lấy được luồng camera sau!");
+      return null;
+    }
+
+    // Ghi nhớ Camera 0 trong phiên hiện tại để lần sau mở nhanh
+    navigator.mediaDevices.enumerateDevices().then(devList => {
+      const exactCam0 = timCamera0(devList);
+      if (exactCam0 && exactCam0.deviceId) {
+        idCameraUuTien = exactCam0.deviceId;
+      }
+    }).catch(() => {});
+
     videoEl.muted = true;
     videoEl.defaultMuted = true;
     videoEl.playsInline = true;
@@ -610,6 +610,11 @@ async function khoiTaoCameraFast(videoId, onDecodedCallback) {
       }
     } catch (ePlay) {
       console.warn("video.play() notice:", ePlay);
+      setTimeout(() => {
+        if (videoEl && videoEl.srcObject && videoEl.paused) {
+          videoEl.play().catch(() => {});
+        }
+      }, 100);
     }
 
     // Cơ chế chống kẹt khung play: Chạm vào bất kỳ vị trí nào trên video hoặc khung ngắm sẽ kích hoạt play lại ngay
