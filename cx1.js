@@ -108,7 +108,7 @@ function khiQuetDuocMa(result) {
   const data = xuLyDuLieuQR(rawText);
   if (!data) return;
 
-  const keyQR = (data.id + "_" + (data.kg || 0)).toLowerCase();
+  const keyQR = (data.id || "").toLowerCase();
   const elCheck = document.getElementById("cx1-cho-phep-trung-cam");
   const choPhepTrung = elCheck ? elCheck.checked : false;
   const lockMs = choPhepTrung ? 1500 : 500;
@@ -120,14 +120,14 @@ function khiQuetDuocMa(result) {
   }
   mapKhoaCX1.set(keyQR, now);
 
-  const trung = phienCX1.find(r => r.id === data.id && r.kg === data.kg);
+  const trung = phienCX1.find(r => r.id === data.id);
   if (!choPhepTrung && trung) {
     mapKhoaCX1.set(keyQR, Date.now() + 1500); // Khóa 1.5s để không nháy cảnh báo liên tục
     if (typeof phatVibrateError === "function") phatVibrateError();
     else if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
 
     // Hiện popup thông báo màu đỏ nổi bật khi quét trùng
-    showCanhBaoCX1("⚠️ Trùng mã! Mã " + data.id + " (" + (data.kg || 0) + " kg) đã quét rồi.", "error");
+    showCanhBaoCX1("⚠️ Trùng mã! Mã " + data.id + " đã quét rồi.", "error");
 
     const vc = document.querySelector("#cx1-cam .video-container");
     if (vc) {
