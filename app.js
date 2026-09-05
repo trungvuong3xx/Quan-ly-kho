@@ -376,6 +376,32 @@ function xacNhanThoatApp() {
   window.removeEventListener("popstate", handlePopStateThoat);
   const el = document.getElementById("overlay-thoat");
   if (el) el.classList.remove("show");
+
+  // 1. Thoát app Android Native thông qua Bridge Interface
+  if (window.AndroidNative && typeof window.AndroidNative.exitApp === "function") {
+    try {
+      window.AndroidNative.exitApp();
+      return;
+    } catch (e) {}
+  }
+
+  // 2. Thoát app thông qua Capacitor App Plugin
+  if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.App && typeof window.Capacitor.Plugins.App.exitApp === "function") {
+    try {
+      window.Capacitor.Plugins.App.exitApp();
+      return;
+    } catch (e) {}
+  }
+
+  // 3. Fallback cho Cordova / PhoneGap
+  if (window.navigator && window.navigator.app && typeof window.navigator.app.exitApp === "function") {
+    try {
+      window.navigator.app.exitApp();
+      return;
+    } catch (e) {}
+  }
+
+  // 4. Trình duyệt Web
   try {
     window.close();
   } catch (e) { }
@@ -386,6 +412,7 @@ function xacNhanThoatApp() {
 
 window.khongThoatApp = khongThoatApp;
 window.xacNhanThoatApp = xacNhanThoatApp;
+window.handleNativeBackButton = handlePopStateThoat;
 
 function showLoading(show) {
   document.getElementById("overlay-loading").style.display = show ? "flex" : "none";

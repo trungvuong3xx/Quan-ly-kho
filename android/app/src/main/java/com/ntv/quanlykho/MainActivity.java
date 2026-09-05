@@ -3,6 +3,7 @@ package com.ntv.quanlykho;
 import android.Manifest;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
+import android.webkit.JavascriptInterface;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import androidx.core.app.ActivityCompat;
@@ -18,6 +19,14 @@ public class MainActivity extends BridgeActivity {
             WebView webView = getBridge().getWebView();
             webView.getSettings().setMediaPlaybackRequiresUserGesture(false);
             webView.getSettings().setCacheMode(WebSettings.LOAD_NO_CACHE);
+            webView.addJavascriptInterface(new Object() {
+                @JavascriptInterface
+                public void exitApp() {
+                    runOnUiThread(() -> {
+                        finishAffinity();
+                    });
+                }
+            }, "AndroidNative");
         }
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.CAMERA}, 1001);
