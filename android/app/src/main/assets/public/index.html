@@ -215,11 +215,23 @@
       </div>
     </div>
 
+    <div class="pending-session-card" id="phien-dodang-card-quetqr" style="display:none">
+      <div class="ps-header">
+        <i class="ti ti-alert-circle" style="font-size: 18px;"></i>
+        <span>Phiên Quét QR dở dang</span>
+      </div>
+      <div class="ps-desc" id="phien-dodang-noidung-quetqr"></div>
+      <div class="ps-actions">
+        <button class="btn-ps-cancel" onclick="huyPhienQuetQR()">Huỷ bỏ</button>
+        <button class="btn-ps-resume" onclick="tiepTucPhienQuetQR()">Tiếp tục</button>
+      </div>
+    </div>
+
     <div class="section-title">Thao Tác Nhanh</div>
     <div class="recent-scroll">
-      <div class="recent-item" onclick="chuyenTrangKhongNav('taoQR')">
-        <div class="recent-icon" style="color: #2563eb;"><i class="ti ti-qrcode"></i></div>
-        <div class="recent-label">Tạo QR</div>
+      <div class="recent-item" onclick="chuyenTrangKhongNav('lichSuQuetQR')">
+        <div class="recent-icon" style="color: #2563eb;"><i class="ti ti-history"></i></div>
+        <div class="recent-label">Lịch Sử QR</div>
       </div>
       <div class="recent-item" onclick="chuyenTrang('quetQR', document.querySelector('.nav-item[data-page=quetQR]'))">
         <div class="recent-icon" style="color: #4f46e5;"><i class="ti ti-scan"></i></div>
@@ -237,22 +249,19 @@
 
     <div class="section-title" style="margin-top:8px"><i class="ti ti-arrows-maximize" style="color:var(--primary)"></i> Nhập Xuất & Kiểm Kê</div>
     <div class="dashboard-grid">
-      <div class="grid-card" onclick="chuyenTrangKhongNav('taoQR')">
-        <div class="grid-icon" style="background: linear-gradient(135deg, #60a5fa, #2563eb);"><i class="ti ti-qrcode"></i></div>
-        <div class="grid-title">Tạo QR Code</div>
-        
+      <div class="grid-card" onclick="chuyenTrangKhongNav('lichSuQuetQR')">
+        <div class="grid-icon" style="background: linear-gradient(135deg, #60a5fa, #2563eb);"><i class="ti ti-history"></i></div>
+        <div class="grid-title">Lịch Sử Quét QR</div>
       </div>
       <div class="grid-card" onclick="chuyenTrang('quetQR', document.querySelector('.nav-item[data-page=quetQR]'))">
         <div class="grid-icon" style="background: linear-gradient(135deg, #818cf8, #4f46e5);"><i class="ti ti-scan"></i></div>
         <div class="grid-title">Quét QR</div>
-        
       </div>
       <div class="grid-card full-width" onclick="chuyenTrangKhongNav('kiemKe')">
         <div class="grid-icon" style="background: linear-gradient(135deg, #38bdf8, #0ea5e9);"><i class="ti ti-clipboard-check"></i></div>
         <div class="grid-text">
           <div class="grid-title" style="margin-bottom:0">Kiểm Kê Kho</div>
         </div>
-        
       </div>
     </div>
 
@@ -393,78 +402,142 @@
   </div>
 </div>
 
-<div id="taoQR" class="page">
-  <div class="card">
-    <h3>Tạo QR</h3>
-    <label>MSP</label>
-    <div class="row">
-      <input type="text" id="msp-tao" placeholder="Nhập mã" onkeydown="if(event.key==='Enter') timMSP()">
-      <button class="btn btn-blue" onclick="timMSP()">Tìm</button>
+<div id="quetQR" class="page">
+  <div id="form-chon" class="card">
+    <h3>Quét QR (Nhập/Xuất Kho)</h3>
+
+    <label>Ngày</label>
+    <input type="date" id="chon-ngay" style="margin-bottom:10px;">
+
+    <label>Loại giao dịch</label>
+    <div class="custom-select" style="margin-bottom:16px;">
+      <button type="button" id="chon-loai-btn" class="custom-select-btn" onclick="toggleDropdownLoaiQR(event)">
+        Chọn loại
+      </button>
+
+      <div id="chon-loai-list" class="custom-select-list">
+        <div class="group-title">Nhập</div>
+        <div class="custom-option" data-value="Nhập SX">Nhập SX</div>
+        <div class="custom-option" data-value="Nhập Trả">Nhập Trả</div>
+        <div class="custom-option" data-value="Nhập For">Nhập For</div>
+
+        <div class="group-title">Xuất</div>
+        <div class="custom-option" data-value="Xuất SX">Xuất SX</div>
+        <div class="custom-option" data-value="Xuất Trả">Xuất Trả</div>
+        <div class="custom-option" data-value="Xuất Gia Công">Xuất Gia Công</div>
+        <div class="custom-option" data-value="Xuất Phế">Xuất Phế</div>
+        <div class="custom-option" data-value="Xuất Bán">Xuất Bán</div>
+        <div class="custom-option" data-value="Bình Thuận">Bình Thuận</div>
+        <div class="custom-option" data-value="Xuất For">Xuất For</div>
+      </div>
     </div>
-    <div class="info-box" id="info-tao">
-      <div class="irow"><span class="ilabel">Tên</span><span class="ivalue" id="t-ten"></span></div>
-      <div class="irow"><span class="ilabel">Màu</span><span class="ivalue" id="t-mau"></span></div>
-      <label>Số lượng</label>
-      <input type="number" id="sl-qr" value="20" min="1" max="100">
-      <button class="btn btn-green btn-full" onclick="taoQR()">Tạo QR</button>
+
+    <input type="hidden" id="chon-loai">
+    <button class="btn btn-blue btn-full" onclick="batDauQuetQR()">Bắt đầu Quét Camera</button>
+  </div>
+
+  <div id="cam-box" style="display:none; overflow:hidden; padding:12px 0 10px 0; margin-bottom:0;">
+    <div class="flex justify-between items-center mb-2" style="padding: 0 12px;">
+      <span id="qr-status" style="font-weight:700">🟢 Đang quét Đợt 1...</span>
+      <span id="qr-dem" style="background:var(--brass); color:var(--bg-deep); font-weight:800; font-size:14px; padding:4px 12px; border-radius:20px; box-shadow:0 3px 10px rgba(245,158,11,0.45); letter-spacing:0.3px;">Đã quét: 0 bao</span>
+    </div>
+
+    <div class="video-container" style="position:relative; width:100%; padding-bottom:60%; background:#000; border-radius:14px; overflow:hidden; margin-bottom:8px; border: 3px solid transparent; transition: border-color 0.3s ease, box-shadow 0.3s ease;">
+      <video id="reader" autoplay playsinline muted disablePictureInPicture style="position:absolute; width:100%; height:100%; object-fit:cover; transform:translateZ(0); will-change:transform;"></video>
+      <div class="cam-viewfinder">
+        <div class="vf-corner vf-top-left"></div>
+        <div class="vf-corner vf-top-right"></div>
+        <div class="vf-corner vf-bottom-left"></div>
+        <div class="vf-corner vf-bottom-right"></div>
+      </div>
+    </div>
+
+    <div style="margin: 0 12px 8px 12px; padding:8px 10px; background:var(--card-raised); border-radius:10px; border:1px solid var(--line-soft); display:flex; flex-direction:column; gap:8px;">
+      <div style="display:flex; align-items:center; justify-content:space-between;">
+        <span style="font-size:13px; font-weight:600; color:var(--cream);">Cho phép quét trùng</span>
+        <div style="display:flex; align-items:center; gap:8px;">
+          <span id="qr-lock-status" style="font-size:11px; color:var(--cream-soft);">Chờ quét...</span>
+          <label class="toggle-switch">
+            <input type="checkbox" id="qr-cho-phep-trung-cam" onchange="capNhatTrangThaiTrungQR()">
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+      </div>
+      <div style="display:flex; gap:6px; align-items:center;">
+        <input type="text" id="qr-manual-input-cam" placeholder="Nhập tay mã QR..." style="flex:1; height:38px; padding:0 12px; font-size:13px; margin:0; box-sizing:border-box;" onkeydown="if(event.key==='Enter') nhapThuCongQR()">
+        <button class="btn btn-blue" style="height:38px; padding:0 16px; font-size:13px; white-space:nowrap; margin:0;" onclick="nhapThuCongQR()">Thêm</button>
+      </div>
+    </div>
+
+    <div class="flex flex-col gap-2 w-full" style="padding: 0 12px;">
+      <button id="btn-dung-tieptuc-qr" class="btn btn-red" style="width:100%; height:38px; font-size:14px; margin:0;" onclick="toggleDungTiepTucQR()">Dừng quét</button>
+      <button class="btn btn-green" style="width:100%; height:38px; font-size:14px; margin:0;" onclick="xemKetQuaQuetQR()"><i class="ti ti-list-check"></i> Xem kết quả</button>
+    </div>
+
+    <div id="qr-log-container" style="margin-top:8px; background:var(--card-raised); border-radius:12px; padding:8px 10px; border:1px solid var(--line-soft); display:flex; flex-direction:column; flex:1 1 auto;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px; border-bottom:1px solid var(--line); padding-bottom:4px; gap:8px;">
+        <span style="font-size:12px; font-weight:800; color:var(--brass); letter-spacing:0.5px; white-space:nowrap;"><i class="ti ti-clipboard-list"></i> NHẬT KÝ QUÉT</span>
+        <span id="qr-log-count" style="font-size:12px; font-weight:700; color:var(--steel); white-space:nowrap;">0 bao</span>
+      </div>
+      <div id="qr-log-list" style="max-height:240px; min-height:100px; overflow-y:auto; padding-right:4px; flex:1 1 auto;">
+        <div style="color:var(--cream-soft); font-size:12px; text-align:center; padding:6px 0;">Chưa có mã nào được quét</div>
+      </div>
     </div>
   </div>
-  <div class="card" id="card-qr" style="display:none">
-    <h3>Danh sách QR</h3>
-    <div class="qr-grid" id="qr-grid"></div>
-    <button class="btn-print" onclick="window.print()">In QR</button>
+
+  <div id="qr-ketqua" class="card" style="display:none">
+    <h3 id="qr-ketqua-tieude" style="color:var(--success); text-align:center; margin-bottom:20px;">Hoàn tất</h3>
+
+    <div style="margin-bottom: 30px;">
+      <h4 style="color:var(--brass); margin-bottom:10px;">CHI TIẾT</h4>
+      <div style="overflow-x:auto;">
+        <table style="width:100%; border-collapse:collapse; background:var(--card-raised); font-size:14px; border-radius:8px; overflow:hidden;">
+          <thead>
+            <tr style="background:var(--line-soft)">
+              <th style="padding:10px; border-bottom:2px solid var(--line); text-align:left">Đợt</th>
+              <th style="padding:10px; border-bottom:2px solid var(--line); text-align:left">QC</th>
+              <th style="padding:10px; border-bottom:2px solid var(--line); text-align:center">Bao</th>
+              <th style="padding:10px; border-bottom:2px solid var(--line); text-align:right">KG</th>
+            </tr>
+          </thead>
+          <tbody id="qr-tbody-dot"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div style="margin-bottom: 20px;">
+      <h4 style="color:var(--steel); margin-bottom:10px;">TỔNG HỢP</h4>
+      <div style="overflow-x:auto;">
+        <table style="width:100%; border-collapse:collapse; background:var(--card-raised); font-size:14px; border-radius:8px; overflow:hidden;">
+          <thead>
+            <tr style="background:var(--line-soft)">
+              <th style="padding:10px; border-bottom:2px solid var(--line); text-align:left">QC</th>
+              <th style="padding:10px; border-bottom:2px solid var(--line); text-align:center">Bao</th>
+              <th style="padding:10px; border-bottom:2px solid var(--line); text-align:right">KG</th>
+            </tr>
+          </thead>
+          <tbody id="qr-tbody-gom"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <button id="btn-gui-dulieu-qr" class="btn" style="width:100%; height:42px; font-size:14px; font-weight:700; margin:0 0 8px 0; background:linear-gradient(135deg, #f59e0b, #d97706); color:#1a1a2e; border:none; box-shadow:0 4px 12px rgba(245,158,11,0.4);" onclick="guiDuLieuQuetQR()"><i class="ti ti-cloud-upload"></i> Gửi dữ liệu lên Sheet</button>
+    <div style="display:flex; gap:8px; margin-bottom:8px;">
+      <button class="btn btn-green" style="flex:1; height:38px; font-size:13px; margin:0;" onclick="quetTiepQuetQR()">Quét tiếp</button>
+      <button class="btn btn-blue" style="flex:1; height:38px; font-size:13px; margin:0;" onclick="quetMoiQuetQR()">Quét mới</button>
+    </div>
+    <button class="btn btn-excel btn-full" style="height:38px; font-size:13px; margin:0;" onclick="xuatExcelQuetQR()"><i class="ti ti-file-spreadsheet"></i> Xuất Excel</button>
   </div>
 </div>
 
-<div id="quetQR" class="page">
+<div id="lichSuQuetQR" class="page">
   <div class="card">
-    <h3>Quét QR</h3>
-
-    <div id="form-chon">
-      <label>Ngày</label>
-      <input type="date" id="chon-ngay">
-
-      <label>Loại</label>
-      <div class="custom-select">
-        <button type="button" id="chon-loai-btn" class="custom-select-btn">
-  Chọn loại
-</button>
-
-        <div id="chon-loai-list" class="custom-select-list">
-          <div class="group-title">Nhập</div>
-          <div class="custom-option" data-value="Nhập SX">Nhập SX</div>
-          <div class="custom-option" data-value="Nhập Trả">Nhập Trả</div>
-          <div class="custom-option" data-value="Nhập For">Nhập For</div>
-
-          <div class="group-title">Xuất</div>
-          <div class="custom-option" data-value="Xuất SX">Xuất SX</div>
-          <div class="custom-option" data-value="Xuất Trả">Xuất Trả</div>
-          <div class="custom-option" data-value="Xuất Gia Công">Xuất Gia Công</div>
-          <div class="custom-option" data-value="Xuất Phế">Xuất Phế</div>
-          <div class="custom-option" data-value="Xuất Bán">Xuất Bán</div>
-          <div class="custom-option" data-value="Bình Thuận">Bình Thuận</div>
-          <div class="custom-option" data-value="Xuất For">Xuất For</div>
-        </div>
-      </div>
-
-      <input type="hidden" id="chon-loai">
-      <button class="btn btn-blue btn-full" onclick="batDauQuet()">Quét</button>
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+      <h3 style="margin:0">Lịch Sử Quét QR</h3>
+      <button class="btn btn-red" style="padding:6px 12px; font-size:13px;" onclick="xoaTatCaLichSuQR()">Xóa tất cả</button>
     </div>
-
-    <div id="cam-box" style="display:none">
-      <div class="video-container" style="position:relative; width:100%; padding-bottom:65%; background:#000; border-radius:14px; overflow:hidden; margin-top:12px; border: 2px solid var(--brass); transition: border-color 0.3s ease, box-shadow 0.3s ease;">
-        <video id="reader" autoplay playsinline muted disablePictureInPicture style="position:absolute; width:100%; height:100%; object-fit:cover; transform:translateZ(0); will-change:transform;"></video>
-        <div class="cam-viewfinder">
-          <div class="vf-corner vf-top-left"></div>
-          <div class="vf-corner vf-top-right"></div>
-          <div class="vf-corner vf-bottom-left"></div>
-          <div class="vf-corner vf-bottom-right"></div>
-        </div>
-      </div>
-      <button id="toggle-quet-nhanh" class="btn btn-full" style="background:var(--neutral-solid);color:var(--cream);margin-top:10px" onclick="toggleQuetNhanh()">Nhập Kg: TẮT</button>
-      <div class="scanner-status" id="scanner-status"></div>
-      <button class="btn btn-red btn-full" id="btn-stop" onclick="dungQuet()" style="display:none">Dừng quét</button>
-    </div>
+    <input type="text" id="lichsu-qr-tim" placeholder="Tìm theo ngày, loại, mã..." oninput="renderLichSuQR()" style="margin-bottom:12px">
+    <div id="lichsu-qr-list"></div>
   </div>
 </div>
 
@@ -931,39 +1004,7 @@
   <div class="spinner-loading lg"></div>
 </div>
 
-<div class="overlay" id="overlay">
-  <div class="overlay-card">
-    <div id="overlay-spinner" style="display:none;justify-content:center;padding:20px;">
-      <div class="spinner-loading md"></div>
-    </div>
-    <div id="overlay-content">
-      <div class="tk-card-header" style="margin-bottom:14px">
-        <div>
-          <div class="tk-card-ten" id="q-ten">Thông tin tem QR</div>
-          <div class="tk-card-msp">MSP: <span id="q-msp">—</span> &nbsp;·&nbsp; ID: <span id="q-id">—</span></div>
-        </div>
-        <div class="tk-badge tk-badge-thuong" id="q-loai">Nhập</div>
-      </div>
 
-      <div class="tk-stat-grid" style="margin-bottom:14px">
-        <div class="tk-stat-box">
-          <div class="tk-stat-label">MÀU SẮC</div>
-          <div class="tk-stat-val" style="font-size:14px;color:var(--cream)" id="q-mau">—</div>
-        </div>
-        <div class="tk-stat-box highlight">
-          <div class="tk-stat-label">TỒN KHO</div>
-          <div class="tk-stat-val main-ton" id="q-ton">0</div>
-        </div>
-      </div>
-
-      <label>Số kg nhập/xuất</label>
-      <input type="number" id="q-kg" placeholder="Nhập số kg" min="0" step="0.1">
-      <button class="btn btn-green btn-full" id="btn-luu" style="margin-top:12px" onclick="luuGiaoDich()">Lưu & quét tiếp</button>
-      <button class="btn btn-full bg-neutral-solid text-cream mt-2" onclick="dongOverlay()">Bỏ qua</button>
-      <div class="msg" id="msg-quet"></div>
-    </div>
-  </div>
-</div>
 
 <div class="overlay" id="cx5-overlay-luot">
   <div class="overlay-card">
@@ -1056,12 +1097,13 @@
 
 </div><!-- /#app-viewport -->
 
-<script src="app.js?v=20260905-v56"></script>
-<script src="kiemke.js?v=20260905-v56"></script>
-<script src="cx1.js?v=20260905-v56"></script>
-<script src="cx5.js?v=20260905-v56"></script>
-<script src="btp.js?v=20260905-v56"></script>
-<script src="tonkho.js?v=20260905-v56"></script>
+<script src="app.js?v=20260905-v57"></script>
+<script src="quetqr.js?v=20260905-v57"></script>
+<script src="kiemke.js?v=20260905-v57"></script>
+<script src="cx1.js?v=20260905-v57"></script>
+<script src="cx5.js?v=20260905-v57"></script>
+<script src="btp.js?v=20260905-v57"></script>
+<script src="tonkho.js?v=20260905-v57"></script>
 
 <!-- BOTTOM SHEET MODAL LỊCH SỬ -->
 <div class="modal-overlay" id="modal-overlay" onclick="closeLichSuModal(event)">
@@ -1069,6 +1111,9 @@
     <div class="modal-close" onclick="closeLichSuModal()"><i class="ti ti-x"></i></div>
     <div class="modal-title">Lịch Sử Quét</div>
     <div style="display:flex; flex-direction:column; gap:12px;">
+      <div onclick="closeLichSuModal(); moLichSuChon('quetqr')" style="padding:16px; background:var(--bg-body); border-radius:16px; border:1px solid var(--border); font-weight:700; color:var(--text-main); display:flex; align-items:center; gap:12px; cursor: pointer;">
+        <i class="ti ti-scan" style="font-size:24px; color:var(--primary)"></i> Lịch sử Quét QR
+      </div>
       <div onclick="closeLichSuModal(); moLichSuChon('btp')" style="padding:16px; background:var(--bg-body); border-radius:16px; border:1px solid var(--border); font-weight:700; color:var(--text-main); display:flex; align-items:center; gap:12px; cursor: pointer;">
         <i class="ti ti-box" style="font-size:24px; color:var(--primary)"></i> Lịch sử BTP
       </div>

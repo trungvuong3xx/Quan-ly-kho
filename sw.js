@@ -1,9 +1,10 @@
-const CACHE_NAME = 'kho-cache-v56';
+const CACHE_NAME = 'kho-cache-v57';
 const urlsToCache = [
   './',
   './index.html',
   './style.css',
   './app.js',
+  './quetqr.js',
   './kiemke.js',
   './cx1.js',
   './cx5.js',

@@ -10,13 +10,8 @@ async function callAPI(body) {
   }
 }
 
-let infoMSP = null;
 let zxingReader = null;
 let dangXuLy = false;
-let ngayChon = null;
-let loaiChon = null;
-let qrDangQuet = null;
-let quetNhanh = false; // toggle quét nhanh
 
 function formatKg(value) {
   const num = Number(value || 0);
@@ -394,73 +389,7 @@ function showLoading(show) {
   document.getElementById("overlay-loading").style.display = show ? "flex" : "none";
 }
 
-function capNhatNutQuetNhanh() {
-  const btn = document.getElementById("toggle-quet-nhanh");
-  if (quetNhanh) {
-    btn.style.background = "var(--success)";
-    btn.style.color = "var(--bg)";
-    btn.textContent = "Quét nhanh: BẬT";
-  } else {
-    btn.style.background = "var(--neutral)";
-    btn.style.color = "var(--cream)";
-    btn.textContent = "Quét nhanh: TẮT";
-  }
-}
 
-function toggleQuetNhanh() {
-  quetNhanh = !quetNhanh;
-  capNhatNutQuetNhanh();
-}
-
-async function timMSP() {
-  const input = document.getElementById("msp-tao");
-  const msp = input.value.trim();
-  const infoBox = document.getElementById("info-tao");
-  infoMSP = null;
-  infoBox.classList.remove("show");
-  document.getElementById("card-qr").style.display = "none";
-  document.getElementById("qr-grid").innerHTML = "";
-  if (!msp) { alert("Vui lòng nhập mã MSP!"); input.focus(); return; }
-  showLoading(true);
-  const info = await callAPI({ action: "getInfo", msp });
-  showLoading(false);
-  if (!info.success) { alert(info.error || info.message || "Không tìm thấy MSP!"); input.focus(); return; }
-  infoMSP = { msp, ten: info.ten || msp, mau: info.mau || "" };
-  document.getElementById("t-ten").textContent = infoMSP.ten;
-  document.getElementById("t-mau").textContent = infoMSP.mau || "-";
-  infoBox.classList.add("show");
-}
-
-async function taoQR() {
-  if (!infoMSP) return;
-  const sl = parseInt(document.getElementById("sl-qr").value, 10) || 20;
-  showLoading(true);
-  const ids = await callAPI({ action: "taoNhieuID", soLuong: sl });
-  showLoading(false);
-  if (ids.error) { alert(ids.error); return; }
-  const grid = document.getElementById("qr-grid");
-  grid.innerHTML = "";
-  ids.forEach(id => {
-    const qrData = id + "|" + infoMSP.msp;
-    const nd = document.createElement("div");
-    nd.className = "qr-item";
-    nd.innerHTML = `
-      <div class="qr-label">
-        <div class="qr-info">
-          <div class="qr-ten">${escapeHtml(infoMSP.ten)}</div>
-          <div class="qr-mau">${escapeHtml(infoMSP.mau || "—")}</div>
-          <div class="qr-id">${escapeHtml(id)}</div>
-        </div>
-        <div class="qr-code-cell">
-          <div class="qr-code-box" id="qr-${id}"></div>
-        </div>
-      </div>
-    `;
-    grid.appendChild(nd);
-    new QRCode(document.getElementById("qr-" + id), { text: qrData, width: 56, height: 56, correctLevel: QRCode.CorrectLevel.M });
-  });
-  document.getElementById("card-qr").style.display = "block";
-}
 
 // ── Bộ Engine Quét QR Siêu Tốc & Quản Lý Camera Thông Minh ─────────────────
 let animFrameMap = {};
@@ -799,49 +728,7 @@ function dungCameraFast(videoId, zxingReaderObj) {
   }
 }
 
-async function batDauQuet() {
-  ngayChon = document.getElementById("chon-ngay").value;
-  loaiChon = document.getElementById("chon-loai").value;
-  if (!ngayChon) { alert("⚠️ Vui lòng chọn ngày!"); return; }
-  if (!loaiChon) { alert("⚠️ Vui lòng chọn loại!"); return; }
 
-  // Mặc định quét nhanh nếu là Xuất
-  quetNhanh = !isNhap(loaiChon);
-  capNhatNutQuetNhanh();
-
-  document.getElementById("form-chon").style.display = "none";
-  document.getElementById("cam-box").style.display = "block";
-  document.getElementById("btn-stop").style.display = "block";
-  document.getElementById("scanner-status").textContent = "" + loaiChon + " | " + ngayChon;
-  dangXuLy = false;
-
-  try {
-    zxingReader = await khoiTaoCameraFast("reader", async (text) => {
-      if (!text || dangXuLy) return;
-      dangXuLy = true;
-      try {
-        const qrData = parseQRText(text);
-        if (!qrData || !qrData.id || !qrData.msp) {
-          showCanhBao("QR không hợp lệ");
-          setTimeout(() => { dangXuLy = false; }, 1500);
-          return;
-        }
-        const { id, msp } = qrData;
-        if (quetNhanh) {
-          await luuNhanh({ id, msp });
-        } else {
-          await hienOverlay({ id, msp });
-        }
-      } catch (e) {
-        showCanhBao("Lỗi đọc QR");
-        setTimeout(() => { dangXuLy = false; }, 1500);
-      }
-    });
-  } catch (e) {
-    alert("Lỗi camera: " + e);
-    dungQuet();
-  }
-}
 
 // ── Hàng đợi Offline & Phản hồi Cảm ứng (Haptic Vibration) ─────────
 const APP_PENDING_KEY = "app_pending_saves";
@@ -874,193 +761,7 @@ window.addEventListener("load", () => {
   guiPendingApp();
 });
 
-// Lưu nhanh không cần nhập kg
-async function luuNhanh(data) {
-  showCanhBao("💾 Đang lưu " + data.id + "...");
 
-  try {
-    const info = await callAPI({ action: "kiemTraQR", id: data.id, msp: data.msp, loai: loaiChon });
-
-    if (info.error) {
-      phatVibrateError();
-      showCanhBao(info.error);
-      setTimeout(() => { dangXuLy = false; }, 1800);
-      return;
-    }
-
-    const r = await callAPI({
-      action: "luuGiaoDich",
-      id: data.id, msp: data.msp,
-      ten: info.ten || "—", mau: info.mau || "—",
-      ngay: ngayChon, loai: loaiChon,
-      kg: 0
-    });
-
-    if (r.error) {
-      phatVibrateError();
-      showCanhBao(r.error);
-    } else {
-      phatVibrateSuccess();
-      showCanhBao("Đã lưu " + data.id);
-    }
-  } catch (err) {
-    // Mất mạng -> Lưu hàng đợi Offline
-    const pending = docPendingApp();
-    pending.push({
-      id: data.id, msp: data.msp,
-      ten: "—", mau: "—",
-      ngay: ngayChon, loai: loaiChon, kg: 0,
-      thoiGian: new Date().toISOString()
-    });
-    luuPendingApp(pending);
-    phatVibrateSuccess();
-    showCanhBao("Mất mạng — Đã lưu tạm " + data.id);
-    capNhatTrangThaiMang();
-  }
-  setTimeout(() => { dangXuLy = false; }, 1000);
-}
-
-function dungQuet() {
-  dungCameraFast("reader", zxingReader);
-  zxingReader = null;
-  qrDangQuet = null;
-  document.getElementById("form-chon").style.display = "block";
-  document.getElementById("cam-box").style.display = "none";
-  document.getElementById("btn-stop").style.display = "none";
-  document.getElementById("scanner-status").textContent = "";
-  document.getElementById("canh-bao").style.display = "none";
-}
-
-async function hienOverlay(data) {
-  document.getElementById("q-id").textContent = data.id;
-  document.getElementById("q-msp").textContent = data.msp;
-  document.getElementById("q-ten").textContent = "...";
-  document.getElementById("q-mau").textContent = "...";
-  document.getElementById("q-loai").textContent = loaiChon;
-  document.getElementById("q-ton").textContent = "...";
-  document.getElementById("q-kg").value = "";
-  document.getElementById("q-kg").placeholder = "Nhập số kg...";
-  document.getElementById("btn-luu").textContent = "Lưu & quét tiếp";
-  document.getElementById("msg-quet").classList.remove("show");
-  document.getElementById("overlay-spinner").style.display = "flex";
-  document.getElementById("overlay-content").style.display = "block";
-  document.getElementById("overlay").classList.add("show");
-  document.getElementById("q-kg").focus();
-
-  try {
-    const info = await callAPI({ action: "kiemTraQR", id: data.id, msp: data.msp, loai: loaiChon });
-    document.getElementById("overlay-spinner").style.display = "none";
-
-    if (info.error) {
-      phatVibrateError();
-      document.getElementById("overlay").classList.remove("show");
-      showCanhBao(info.error);
-      setTimeout(() => { dangXuLy = false; }, 1800);
-      return;
-    }
-
-    qrDangQuet = { id: data.id, msp: data.msp, ten: info.ten || "—", mau: info.mau || "—", cheDo: info.cheDo || "luuMoi" };
-    document.getElementById("q-ten").textContent = qrDangQuet.ten;
-    document.getElementById("q-mau").textContent = qrDangQuet.mau;
-    document.getElementById("q-ton").textContent = formatKg(info.ton) + " kg";
-
-    if (info.cheDo === "capNhatNhap") {
-      document.getElementById("q-kg").value = formatKg(info.kgNhap);
-      document.getElementById("btn-luu").textContent = "Cập nhật kg";
-    } else if (!isNhap(loaiChon)) {
-      document.getElementById("q-kg").placeholder = "Tồn: " + formatKg(info.ton) + " kg";
-    }
-  } catch (err) {
-    document.getElementById("overlay-spinner").style.display = "none";
-    qrDangQuet = { id: data.id, msp: data.msp, ten: "—", mau: "—", cheDo: "luuMoi" };
-    document.getElementById("q-ten").textContent = "Ngoại tuyến";
-    document.getElementById("q-mau").textContent = "—";
-    document.getElementById("q-ton").textContent = "—";
-  }
-}
-
-function dongOverlay() {
-  document.getElementById("overlay").classList.remove("show");
-  qrDangQuet = null;
-  dangXuLy = false;
-}
-
-function showCanhBao(text) {
-  const el = document.getElementById("canh-bao");
-  el.textContent = text;
-  el.style.display = "block";
-  setTimeout(() => { el.style.display = "none"; }, 2000);
-}
-
-async function luuGiaoDich() {
-  if (!qrDangQuet) return;
-  const kg = document.getElementById("q-kg").value;
-  if (!kg || parseFloat(kg) <= 0) {
-    phatVibrateError();
-    showMsg("Nhập số kg hợp lệ", false);
-    return;
-  }
-
-  const btn = document.getElementById("btn-luu");
-  btn.disabled = true;
-  btn.textContent = "Đang lưu...";
-
-  try {
-    const r = await callAPI({
-      action: "luuGiaoDich",
-      id: qrDangQuet.id, msp: qrDangQuet.msp, ten: qrDangQuet.ten, mau: qrDangQuet.mau,
-      ngay: ngayChon, loai: loaiChon, kg
-    });
-
-    btn.disabled = false;
-    btn.textContent = "Lưu & quét tiếp";
-
-    if (r.error) {
-      phatVibrateError();
-      showMsg(r.error, false);
-      return;
-    }
-    phatVibrateSuccess();
-    showMsg("Đã lưu " + formatKg(r.kgGoc || kg) + " kg", true);
-  } catch (err) {
-    // Mất mạng -> lưu tạm offline
-    const pending = docPendingApp();
-    pending.push({
-      id: qrDangQuet.id, msp: qrDangQuet.msp, ten: qrDangQuet.ten, mau: qrDangQuet.mau,
-      ngay: ngayChon, loai: loaiChon, kg
-    });
-    luuPendingApp(pending);
-    btn.disabled = false;
-    btn.textContent = "Lưu & quét tiếp";
-    phatVibrateSuccess();
-    showMsg("Mất mạng — Đã lưu tạm " + kg + " kg", true);
-    capNhatTrangThaiMang();
-  }
-  setTimeout(() => dongOverlay(), 800);
-}
-
-let loaiDaChon = "";
-document.addEventListener("click", e => {
-  const btn = document.getElementById("chon-loai-btn");
-  const list = document.getElementById("chon-loai-list");
-  if (!btn || !list) return;
-  if (btn.contains(e.target)) { list.classList.toggle("show"); return; }
-  if (e.target.classList.contains("custom-option")) {
-    loaiDaChon = e.target.dataset.value;
-    document.getElementById("chon-loai").value = loaiDaChon;
-    btn.innerHTML = loaiDaChon + '<span style="font-size:12px;color:var(--cream-soft);margin-left:auto">▼</span>';
-    document.querySelectorAll(".custom-option").forEach(opt => opt.classList.remove("active"));
-    e.target.classList.add("active");
-    list.classList.remove("show");
-    return;
-  }
-  if (!list.contains(e.target)) list.classList.remove("show");
-});
-
-function showMsg(text, ok) {
-  const el = document.getElementById("msg-quet");
-  if (el) { el.textContent = text; el.className = "msg show " + (ok ? "ok" : "err"); }
-}
 
 window.onload = function () {
   const today = new Date().toISOString().split("T")[0];
@@ -1177,6 +878,41 @@ function capNhatTrangChu() {
       cardBTP.style.display = "none";
     }
   }
+
+  const cardQR = document.getElementById("phien-dodang-card-quetqr");
+  const noidungQR = document.getElementById("phien-dodang-noidung-quetqr");
+  if (cardQR && noidungQR) {
+    let stateQR = null;
+    try { stateQR = JSON.parse(localStorage.getItem("quetqr_phien_dodang")); } catch (e) { }
+
+    if (stateQR && Array.isArray(stateQR.phienQuetQR) && stateQR.phienQuetQR.length > 0) {
+      const gioCapNhatQR = stateQR.capNhat
+        ? new Date(stateQR.capNhat).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" })
+        : "—";
+      noidungQR.innerHTML = `
+        <div class="tk-card-header" style="margin-bottom:10px">
+          <div>
+            <div class="tk-card-ten">Quét QR (${stateQR.loaiQuetQR || 'Giao dịch'})</div>
+            <div class="tk-card-msp">Cập nhật: <span>${gioCapNhatQR}</span></div>
+          </div>
+          <div class="tk-badge tk-badge-thuong">Dở dang</div>
+        </div>
+        <div class="tk-stat-grid">
+          <div class="tk-stat-box">
+            <div class="tk-stat-label">NGÀY</div>
+            <div class="tk-stat-val" style="font-size:14px;color:var(--cream)">${stateQR.ngayQuetQR || "—"}</div>
+          </div>
+          <div class="tk-stat-box highlight">
+            <div class="tk-stat-label">ĐÃ QUÉT</div>
+            <div class="tk-stat-val main-ton">${stateQR.phienQuetQR.length} <small>bao</small></div>
+          </div>
+        </div>
+      `;
+      cardQR.style.display = "block";
+    } else {
+      cardQR.style.display = "none";
+    }
+  }
 }
 window.capNhatTrangChu = capNhatTrangChu;
 
@@ -1196,7 +932,10 @@ function moLichSuChon(loai) {
   const el = document.getElementById("lichsu-menu-trangchu");
   if (el) el.style.display = "none";
 
-  if (loai === "btp") {
+  if (loai === "quetqr") {
+    if (typeof window.renderLichSuQR === "function") window.renderLichSuQR();
+    if (typeof window.chuyenTrangKhongNav === "function") window.chuyenTrangKhongNav("lichSuQuetQR");
+  } else if (loai === "btp") {
     if (typeof window.moLichSuBTP === "function") window.moLichSuBTP();
     else if (typeof window.chuyenTrangKhongNav === "function") window.chuyenTrangKhongNav("lichSuBTP");
   } else if (loai === "for") {
@@ -1209,19 +948,14 @@ function moLichSuChon(loai) {
 }
 window.moLichSuChon = moLichSuChon;
 
-window.timMSP = timMSP;
-window.taoQR = taoQR;
 window.chuyenTrang = chuyenTrang;
-window.batDauQuet = batDauQuet;
-window.dungQuet = dungQuet;
-window.dongOverlay = dongOverlay;
-window.luuGiaoDich = luuGiaoDich;
-window.toggleQuetNhanh = toggleQuetNhanh;
+window.chuyenTrangKhongNav = chuyenTrangKhongNav;
 
 // ── Trạng thái mạng & Bộ máy đồng bộ tập trung toàn bộ module ──────
 function demPendingMang() {
   let tong = 0;
   try { tong += JSON.parse(localStorage.getItem(APP_PENDING_KEY) || "[]").length; } catch (e) { }
+  try { tong += JSON.parse(localStorage.getItem("quetqr_pending_saves") || "[]").length; } catch (e) { }
   try { tong += JSON.parse(localStorage.getItem("qr_pending_saves") || "[]").length; } catch (e) { }
   try { tong += JSON.parse(localStorage.getItem("cx1_pending_saves") || "[]").length; } catch (e) { }
   try { tong += JSON.parse(localStorage.getItem("kk_pending_saves") || "[]").length; } catch (e) { }
@@ -1296,6 +1030,30 @@ async function dongBoTatCaOfflineApp() {
       if (pendingKK.length > 0 && typeof callAPI === "function") {
         const r = await callAPI({ action: "luuKiemKe", data: pendingKK });
         if (r && !r.error) localStorage.setItem("kk_pending_saves", "[]");
+      }
+    } catch (e) { }
+
+    // 6. Đồng bộ Quét QR (quetqr.js)
+    try {
+      const pendingQQR = JSON.parse(localStorage.getItem("quetqr_pending_saves") || "[]");
+      if (pendingQQR.length > 0 && typeof callAPI === "function") {
+        const remainingQQR = [];
+        for (const item of pendingQQR) {
+          try {
+            const r = await callAPI({
+              action: "luuGiaoDich",
+              id: item.id,
+              msp: item.msp,
+              ten: item.qc || item.msp,
+              mau: item.qc || "—",
+              ngay: item.ngay,
+              loai: item.loai,
+              kg: item.kg
+            });
+            if (r && r.error) remainingQQR.push(item);
+          } catch (e) { remainingQQR.push(item); }
+        }
+        localStorage.setItem("quetqr_pending_saves", JSON.stringify(remainingQQR));
       }
     } catch (e) { }
 
@@ -1479,6 +1237,9 @@ window.addEventListener('pagehide', ngatTatCaCamera);
 // ── Hệ Thống Sao Lưu & Phục Hồi Dữ Liệu An Toàn ───────────────────
 const BACKUP_KEYS = [
   "app_pending_saves",
+  "quetqr_phien_dodang",
+  "quetqr_pending_saves",
+  "quetqr_lichsu",
   "cx1_phien_dodang",
   "cx1_pending_saves",
   "cx1_lich_su",

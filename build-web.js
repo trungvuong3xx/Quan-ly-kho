@@ -5,6 +5,7 @@ const filesToCopy = [
   'index.html',
   'style.css',
   'app.js',
+  'quetqr.js',
   'kiemke.js',
   'cx1.js',
   'cx5.js',
