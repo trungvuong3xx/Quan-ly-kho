@@ -162,17 +162,12 @@ async function tiepTucKhoiTaoCX1() {
   btnToggle.className = "btn btn-red btn-full";
 
   try {
-    const cx1Vid = document.getElementById("cx1-reader");
-    const cx1Track = cx1Vid && cx1Vid.srcObject ? cx1Vid.srcObject.getVideoTracks()[0] : null;
-    const isCamRunningCX1 = cx1Track && cx1Track.readyState === 'live';
-    if (!zxingReaderCX1 || !isCamRunningCX1) {
+    if (!zxingReaderCX1) {
       zxingReaderCX1 = await khoiTaoCameraFast("cx1-reader", (txt) => {
         if (txt && dangQuetCX1) {
           khiQuetDuocMa({ getText: () => txt });
         }
       });
-    } else if (cx1Vid && cx1Vid.paused) {
-      cx1Vid.play().catch(() => {});
     }
   } catch(e) {
     showCanhBaoCX1("Lỗi camera: " + e);
@@ -200,17 +195,12 @@ async function tiepTucCX1() {
   document.getElementById("btn-flash-cx1").style.color = "var(--cream)";
   document.getElementById("btn-flash-cx1").textContent = "Bật đèn pin";
   try {
-    const cx1Vid = document.getElementById("cx1-reader");
-    const cx1Track = cx1Vid && cx1Vid.srcObject ? cx1Vid.srcObject.getVideoTracks()[0] : null;
-    const isCamRunningCX1 = cx1Track && cx1Track.readyState === 'live';
-    if (!zxingReaderCX1 || !isCamRunningCX1) {
+    if (!zxingReaderCX1) {
       zxingReaderCX1 = await khoiTaoCameraFast("cx1-reader", (txt) => {
         if (txt && dangQuetCX1) {
           khiQuetDuocMa({ getText: () => txt });
         }
       });
-    } else if (cx1Vid && cx1Vid.paused) {
-      cx1Vid.play().catch(() => {});
     }
   } catch(e) {
     showCanhBaoCX1("Lỗi camera: " + e);
@@ -605,17 +595,12 @@ async function quetTiepCX1() {
   btnToggle.className = "btn btn-red btn-full";
 
   try {
-    const cx1Vid = document.getElementById("cx1-reader");
-    const cx1Track = cx1Vid && cx1Vid.srcObject ? cx1Vid.srcObject.getVideoTracks()[0] : null;
-    const isCamRunningCX1 = cx1Track && cx1Track.readyState === 'live';
-    if (!zxingReaderCX1 || !isCamRunningCX1) {
+    if (!zxingReaderCX1) {
       zxingReaderCX1 = await khoiTaoCameraFast("cx1-reader", (txt) => {
         if (txt && dangQuetCX1) {
           khiQuetDuocMa({ getText: () => txt });
         }
       });
-    } else if (cx1Vid && cx1Vid.paused) {
-      cx1Vid.play().catch(() => {});
     }
   } catch(e) {
     alert("Lỗi camera: " + e);

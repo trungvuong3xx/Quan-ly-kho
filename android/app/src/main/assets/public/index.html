@@ -21,20 +21,10 @@
 <meta name="browsermode" content="application">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <script>
-  // Trong ứng dụng Android Native (Capacitor/WebView): Luôn tải trực tiếp mã nguồn từ APK, KHÔNG dùng Service Worker cache
-  const isCapacitorApp = window.Capacitor !== undefined || window.location.hostname === 'localhost' || window.location.protocol === 'capacitor:';
-  if (isCapacitorApp && 'serviceWorker' in navigator) {
-    navigator.serviceWorker.getRegistrations().then(regs => {
-      for (const r of regs) r.unregister();
-    });
-    if ('caches' in window) {
-      caches.keys().then(keys => {
-        for (const k of keys) caches.delete(k);
-      });
-    }
-  } else if ('serviceWorker' in navigator) {
+  if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
       navigator.serviceWorker.register('./sw.js', { updateViaCache: 'none' }).then(reg => {
+        // Tự động kiểm tra bản cập nhật mới trên GitHub mỗi khi mở app hoặc quay lại app
         reg.update();
 
         reg.addEventListener('updatefound', () => {
@@ -1184,7 +1174,20 @@
   🔄 Có bản cập nhật mới! Bấm để tải lại
 </div>
 
-<!-- (Service Worker quản lý tập trung ở thẻ head) -->
+<script>
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('./sw.js').then(reg => {
+      reg.addEventListener('updatefound', () => {
+        const newWorker = reg.installing;
+        newWorker.addEventListener('statechange', () => {
+          if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+            document.getElementById('pwa-update-toast').style.display = 'block';
+          }
+        });
+      });
+    });
+  }
+</script>
 </body>
 </html>
 
