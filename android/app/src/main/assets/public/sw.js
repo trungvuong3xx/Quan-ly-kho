@@ -11,7 +11,7 @@ if (self.location.hostname === 'localhost' || self.location.protocol === 'capaci
   });
 } else {
   // Logic Service Worker dành riêng cho Web PWA (GitHub Pages)
-  const CACHE_NAME = 'kho-cache-v59';
+  const CACHE_NAME = 'kho-cache-v60';
   const urlsToCache = [
   './',
   './index.html',
@@ -29,9 +29,11 @@ if (self.location.hostname === 'localhost' || self.location.protocol === 'capaci
   './icon-512.png',
   './apple-touch-icon.png',
   './favicon.png',
-  'https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css',
-  'https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js',
-  'https://cdn.jsdelivr.net/npm/@zxing/library@0.19.1/umd/index.min.js'
+  './lib/tabler-icons.min.css',
+  './lib/fonts/tabler-icons.woff2',
+  './lib/qrcode.min.js',
+  './lib/zxing.min.js',
+  './lib/xlsx.full.min.js'
 ];
 
 // ── Lắng nghe lệnh Skip Waiting từ trang chính ────────────────

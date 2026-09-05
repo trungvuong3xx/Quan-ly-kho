@@ -203,8 +203,11 @@ function capNhatLogBTP() {
     return { ...item, dem: countMap[key] };
   });
 
+  const MAX_LIVE_LOG = 30;
   const newestFirst = enrichedBTP.slice().reverse();
-  container.innerHTML = newestFirst.map((item, idx) => {
+  const displayedItems = newestFirst.slice(0, MAX_LIVE_LOG);
+
+  let html = displayedItems.map((item, idx) => {
     const dot = item.dotQuet || 1;
     const originalIndex = phienBTP.length - 1 - idx;
     const gio = item.thoiGian ? new Date(item.thoiGian).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit", second: "2-digit" }) : "";
@@ -221,6 +224,13 @@ function capNhatLogBTP() {
       </button>
     </div>`;
   }).join("");
+
+  if (phienBTP.length > MAX_LIVE_LOG) {
+    const conLai = phienBTP.length - MAX_LIVE_LOG;
+    html += `<div style="text-align:center; padding:6px 0; font-size:11px; color:var(--cream-soft); font-style:italic;">... và ${conLai} mã trước đó (xem đầy đủ ở bảng kết quả)</div>`;
+  }
+
+  container.innerHTML = html;
 }
 
 function khiQuetDuocMaBTP(result) {

@@ -37,6 +37,25 @@ for (const file of filesToCopy) {
   }
 }
 
+// Copy local libraries (lib/) recursively to www/lib and android assets
+function copyDirRecursive(srcDir, destDir) {
+  if (!fs.existsSync(srcDir)) return;
+  if (!fs.existsSync(destDir)) fs.mkdirSync(destDir, { recursive: true });
+  const entries = fs.readdirSync(srcDir, { withFileTypes: true });
+  for (const entry of entries) {
+    const srcPath = path.join(srcDir, entry.name);
+    const destPath = path.join(destDir, entry.name);
+    if (entry.isDirectory()) {
+      copyDirRecursive(srcPath, destPath);
+    } else {
+      fs.copyFileSync(srcPath, destPath);
+    }
+  }
+}
+copyDirRecursive(path.join(__dirname, 'lib'), path.join(wwwDir, 'lib'));
+copyDirRecursive(path.join(__dirname, 'lib'), path.join(androidPublicDir, 'lib'));
+console.log('Copied lib/ -> www/lib & android/assets/public/lib');
+
 // Copy config files for Android Capacitor
 const capConfigSrc = path.join(__dirname, 'capacitor.config.json');
 if (fs.existsSync(capConfigSrc)) {

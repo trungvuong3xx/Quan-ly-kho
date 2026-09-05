@@ -18,6 +18,7 @@ on:
       - 'style.css'
       - 'package.json'
       - 'build-web.js'
+      - 'lib/**'
       - 'android/**'
       - '.github/workflows/build-apk.yml'
 

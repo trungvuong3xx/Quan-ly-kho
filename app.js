@@ -268,8 +268,9 @@ function chuyenTrang(id, el) {
   document.querySelectorAll(".bnav-btn").forEach(b => b.classList.remove("active"));
   document.getElementById(id).classList.add("active");
   if (el) el.classList.add("active");
-  if (id !== "quetQR") dungQuet();
+  if (id !== "quetQR" && typeof dungQuet === "function") dungQuet();
   if (id !== "chiFor" && typeof dungCX1 === "function") dungCX1();
+  if (id !== "kiemKe" && typeof dungKiemKe === "function") dungKiemKe();
   if (id !== "btpPage") {
     document.body.classList.remove("cam-active");
     if (typeof dungBTP === "function") dungBTP();
@@ -575,7 +576,8 @@ async function moLuongCameraDungHuong() {
         video: {
           facingMode: { ideal: "environment" },
           width: { ideal: 1280 },
-          height: { ideal: 960 }
+          height: { ideal: 960 },
+          frameRate: { ideal: 24, max: 30 }
         }
       };
       if (videoInputs.length > 0 && videoInputs[0] && videoInputs[0].deviceId) {
@@ -623,7 +625,8 @@ async function moLuongCameraDungHuong() {
         video: {
           deviceId: { exact: id },
           width: { ideal: 1280 },
-          height: { ideal: 960 }
+          height: { ideal: 960 },
+          frameRate: { ideal: 24, max: 30 }
         }
       });
       const track = stream.getVideoTracks()[0];
@@ -636,7 +639,8 @@ async function moLuongCameraDungHuong() {
             deviceId: { ideal: id },
             facingMode: { ideal: "environment" },
             width: { ideal: 1280 },
-            height: { ideal: 960 }
+            height: { ideal: 960 },
+            frameRate: { ideal: 24, max: 30 }
           }
         });
         const track = stream.getVideoTracks()[0];
@@ -653,7 +657,8 @@ async function moLuongCameraDungHuong() {
         deviceId: (cam0 && cam0.deviceId) ? { ideal: cam0.deviceId } : undefined,
         facingMode: { ideal: "environment" },
         width: { ideal: 1280 },
-        height: { ideal: 960 }
+        height: { ideal: 960 },
+        frameRate: { ideal: 24, max: 30 }
       }
     });
     const track = stream.getVideoTracks()[0];
