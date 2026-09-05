@@ -56,6 +56,32 @@ function xuLyDuLieuQR(text) {
     const kg = parseFloat(tags["T4"] || "0") || 0;
     if (id && msp) return { id, msp, qc, kg };
   }
+  const lines = text.split("\n").map(l => l.trim()).filter(l => l !== "");
+  if (lines.length >= 2) {
+    const id = lines[0] || "";
+    const msp = lines[1] || "";
+    let kg = 0, qc = "";
+
+    const dongQCKG = lines.slice(2).find(l => {
+      return /[\d.]+\s*$/.test(l) && (l.includes('/') || l.includes('Kg') || l.includes('kg') || l.includes('-'));
+    }) || lines.find(l => l.includes("-") && /\d+/.test(l)) || "";
+
+    if (dongQCKG) {
+      const matchKG = dongQCKG.match(/([\d.]+)\s*$/);
+      kg = matchKG ? parseFloat(matchKG[1]) : 0;
+      const matchSlash = dongQCKG.match(/\b([A-Za-z0-9]+[/][A-Za-z0-9]+)\b/);
+      if (matchSlash) {
+        qc = matchSlash[1].trim();
+      } else if (matchKG && dongQCKG.includes("-")) {
+        qc = dongQCKG.substring(0, dongQCKG.lastIndexOf(matchKG[0])).trim();
+        if (qc.endsWith("-")) qc = qc.slice(0, -1).trim();
+      } else {
+        const matchFirst = dongQCKG.match(/^([^\s(]+)/);
+        if (matchFirst) qc = matchFirst[1].replace(/[-]+$/, '').trim();
+      }
+    }
+    if (id && msp) return { id, msp, qc, kg };
+  }
   return null;
 }
 

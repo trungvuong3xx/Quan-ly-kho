@@ -217,14 +217,30 @@ function parseQRText(text) {
   if (lines.length >= 2) {
     const id = lines[0] || "";
     const msp = lines[1] || "";
-    const dongQCKG = lines.find(l => l.includes("-") && /\d+/.test(l)) || "";
     let kg = 0, qc = "";
+
+    // Tìm dòng chứa Quy cách và Số kg (ưu tiên tìm từ dòng thứ 3 trở đi)
+    const dongQCKG = lines.slice(2).find(l => {
+      const hasNumberAtEnd = /[\d.]+\s*$/.test(l);
+      const hasIndicator = l.includes('/') || l.includes('Kg') || l.includes('kg') || l.includes('-');
+      return hasNumberAtEnd && hasIndicator;
+    }) || lines.find(l => l.includes("-") && /\d+/.test(l)) || "";
+
     if (dongQCKG) {
-      const matchKG = dongQCKG.match(/[\d.]+$/);
-      kg = matchKG ? parseFloat(matchKG[0]) : 0;
-      qc = dongQCKG;
-      if (matchKG) qc = dongQCKG.substring(0, dongQCKG.lastIndexOf(matchKG[0])).trim();
-      if (qc.endsWith("-")) qc = qc.slice(0, -1).trim();
+      const matchKG = dongQCKG.match(/([\d.]+)\s*$/);
+      kg = matchKG ? parseFloat(matchKG[1]) : 0;
+
+      // Ưu tiên trích xuất quy cách dạng 380/36, 150D/3 hoặc từ đầu tiên trước khoảng trắng/dấu ngoặc
+      const matchSlash = dongQCKG.match(/\b([A-Za-z0-9]+[/][A-Za-z0-9]+)\b/);
+      if (matchSlash) {
+        qc = matchSlash[1].trim();
+      } else if (matchKG && dongQCKG.includes("-")) {
+        qc = dongQCKG.substring(0, dongQCKG.lastIndexOf(matchKG[0])).trim();
+        if (qc.endsWith("-")) qc = qc.slice(0, -1).trim();
+      } else {
+        const matchFirst = dongQCKG.match(/^([^\s(]+)/);
+        if (matchFirst) qc = matchFirst[1].replace(/[-]+$/, '').trim();
+      }
     }
     if (id && msp) return { id, msp, qc, kg };
   }
