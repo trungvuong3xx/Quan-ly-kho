@@ -467,57 +467,97 @@ async function quetDanhSachCameraSau() {
   }
 }
 
-// Hàm mở luồng camera tối ưu chuẩn 4:3 (chắc chắn mở camera sau Sony 48MP AF)
-async function layCameraStream(targetDeviceId) {
-  if (targetDeviceId) {
+// Hàm nhận diện + mở đúng camera sau Sony 48MP AF, không bao giờ để lọt camera trước
+async function moLuongCameraDungHuong() {
+  const laCameraTruoc = (lbl) => {
+    lbl = (lbl || '').toLowerCase();
+    return lbl.includes('front') || lbl.includes('truoc') || lbl.includes('selfie') || lbl.includes('user') || lbl.includes('camera2 1') || lbl.includes('camera 1') || lbl.includes('facing front');
+  };
+
+  let devices = await navigator.mediaDevices.enumerateDevices();
+  let videoInputs = devices.filter(d => d.kind === 'videoinput');
+
+  // 1. Nếu chưa có quyền (nhãn rỗng) -> mở luồng camera sau tạm thời để lấy nhãn thật
+  // Tuyệt đối không dùng { video: true } để tránh kích hoạt motor camera trước thò thụt trên K20 Pro
+  const chuaCoLabel = videoInputs.length > 0 && videoInputs.every(d => !d.label);
+  let activeStream = null;
+
+  if (chuaCoLabel) {
     try {
-      return await navigator.mediaDevices.getUserMedia({
+      activeStream = await navigator.mediaDevices.getUserMedia({
         video: {
-          deviceId: { exact: targetDeviceId },
+          facingMode: { ideal: "environment" },
           width: { ideal: 1280 },
           height: { ideal: 960 }
         }
       });
+      devices = await navigator.mediaDevices.enumerateDevices();
+      videoInputs = devices.filter(d => d.kind === 'videoinput');
     } catch (e) {
-      try {
-        return await navigator.mediaDevices.getUserMedia({
-          video: {
-            deviceId: { ideal: targetDeviceId }
-          }
-        });
-      } catch (e2) {}
+      activeStream = null;
     }
   }
 
-  // 1. Ưu tiên cao nhất: Camera sau chuẩn tỉ lệ 4:3 (cảm biến Sony 48MP AF)
+  // 2. Tìm Camera 0 chính xác (Sony IMX586 48MP AF)
+  const cam0 = timCamera0(videoInputs);
+
+  // Nếu luồng activeStream tạm thời ở trên đã là Camera sau chuẩn thì dùng luôn
+  if (activeStream) {
+    const track = activeStream.getVideoTracks()[0];
+    const trackLbl = (track && track.label) ? track.label.toLowerCase() : '';
+    if (!laCameraTruoc(trackLbl)) {
+      if (!cam0 || (cam0.label && trackLbl === cam0.label.toLowerCase())) {
+        return activeStream;
+      }
+    }
+    activeStream.getTracks().forEach(t => { try { t.stop(); } catch (e) {} });
+    activeStream = null;
+  }
+
+  // 3. Lập danh sách ứng viên (Camera 0 đứng đầu, tiếp theo là các camera sau khác)
+  const backCams = videoInputs.filter(d => !laCameraTruoc(d.label));
+  const ungVien = [];
+  if (cam0 && cam0.deviceId) ungVien.push(cam0.deviceId);
+  if (idCameraUuTien && !ungVien.includes(idCameraUuTien)) ungVien.push(idCameraUuTien);
+  for (const d of backCams) {
+    if (d.deviceId && !ungVien.includes(d.deviceId)) {
+      ungVien.push(d.deviceId);
+    }
+  }
+
+  // 4. Thử lần lượt từng camera sau bằng deviceId cụ thể
+  for (const id of ungVien) {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: {
+          deviceId: { exact: id },
+          width: { ideal: 1280 },
+          height: { ideal: 960 }
+        }
+      });
+      const track = stream.getVideoTracks()[0];
+      if (!laCameraTruoc(track && track.label)) return stream;
+      stream.getTracks().forEach(t => { try { t.stop(); } catch (e) {} });
+    } catch (e) {}
+  }
+
+  // 5. Fallback cuối cùng: facingMode ideal environment
   try {
-    return await navigator.mediaDevices.getUserMedia({
+    const stream = await navigator.mediaDevices.getUserMedia({
       video: {
         facingMode: { ideal: "environment" },
         width: { ideal: 1280 },
         height: { ideal: 960 }
       }
     });
-  } catch (e1) {}
-
-  // 2. Dự phòng: Camera sau với facingMode ideal
-  try {
-    return await navigator.mediaDevices.getUserMedia({
-      video: {
-        facingMode: { ideal: "environment" }
-      }
-    });
-  } catch (e2) {}
-
-  // 3. Dự phòng: facingMode environment tiêu chuẩn
-  try {
-    return await navigator.mediaDevices.getUserMedia({
-      video: { facingMode: "environment" }
-    });
-  } catch (e3) {}
+    const track = stream.getVideoTracks()[0];
+    if (!laCameraTruoc(track && track.label)) return stream;
+    stream.getTracks().forEach(t => { try { t.stop(); } catch (e) {} });
+  } catch (e) {}
 
   return null;
 }
+const layCameraStream = moLuongCameraDungHuong;
 
 // Bật chế độ tự động lấy nét liên tục (Continuous Autofocus)
 async function batContinuousAutofocus(stream) {
@@ -558,29 +598,9 @@ async function khoiTaoCameraFast(videoId, onDecodedCallback) {
     animFrameMap[videoId] = null;
   }
 
-  // 1. Quét danh sách camera phần cứng & ưu tiên mở Camera 0 (Sony 48MP AF)
-  let cams = await quetDanhSachCameraSau();
-  let cam0 = timCamera0(cams);
-  let targetId = (cam0 && cam0.deviceId) ? cam0.deviceId : idCameraUuTien;
-
   let stream = null;
   try {
-    stream = await layCameraStream(targetId);
-
-    // Kiểm tra an toàn: Nếu vô tình mở nhầm camera trước thì dừng ngay lập tức để bảo vệ motor
-    try {
-      const activeTrack = stream ? stream.getVideoTracks()[0] : null;
-      const activeLabel = (activeTrack && activeTrack.label) ? activeTrack.label.toLowerCase() : '';
-
-      const isFront = activeLabel.includes('front') || activeLabel.includes('truoc') || activeLabel.includes('selfie') || activeLabel.includes('user') || activeLabel.includes('camera2 1') || activeLabel.includes('camera 1') || activeLabel.includes('facing front');
-      if (isFront) {
-        console.warn("Phát hiện camera trước, dừng ngay để bảo vệ motor");
-        if (stream) {
-          stream.getTracks().forEach(t => { try { t.stop(); } catch (e) {} });
-        }
-        return null;
-      }
-    } catch (eCheck) {}
+    stream = await moLuongCameraDungHuong();
 
     if (!stream) {
       console.warn("Không lấy được luồng camera sau!");
