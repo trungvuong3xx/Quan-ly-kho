@@ -535,7 +535,7 @@ async function quetDanhSachCameraSau() {
   }
 }
 
-// Hàm mở luồng camera tối ưu chuẩn HD 720p (chắc chắn mở camera sau, không bao giờ mở camera trước)
+// Hàm mở luồng camera tối ưu chuẩn 4:3 (chắc chắn mở camera sau, không bao giờ mở camera trước)
 async function layCameraStream(targetDeviceId) {
   if (targetDeviceId) {
     try {
@@ -543,7 +543,7 @@ async function layCameraStream(targetDeviceId) {
         video: {
           deviceId: { exact: targetDeviceId },
           width: { ideal: 1280 },
-          height: { ideal: 720 }
+          height: { ideal: 960 }
         }
       });
     } catch (e) {
@@ -557,62 +557,38 @@ async function layCameraStream(targetDeviceId) {
     }
   }
 
-  // Bắt buộc mở camera sau bằng facingMode: { exact: "environment" }
-  // Tuyệt đối không dùng { ideal: "environment" } vì sẽ bị kích hoạt nhầm camera trước pop-up
   try {
     return await navigator.mediaDevices.getUserMedia({
       video: {
-        facingMode: { exact: "environment" },
+        facingMode: { ideal: "environment" },
         width: { ideal: 1280 },
-        height: { ideal: 720 }
+        height: { ideal: 960 }
       }
     });
-  } catch (eExact) {}
+  } catch (e1) {}
 
   try {
     return await navigator.mediaDevices.getUserMedia({
       video: {
-        facingMode: { exact: "environment" }
+        facingMode: { ideal: "environment" }
       }
     });
-  } catch (eExact2) {}
+  } catch (e2) {}
 
   try {
     return await navigator.mediaDevices.getUserMedia({
-      video: {
-        facingMode: "environment",
-        width: { ideal: 1280 },
-        height: { ideal: 720 }
-      }
+      video: { facingMode: "environment" }
     });
-  } catch (eFacing) {}
+  } catch (e3) {}
 
-  return await navigator.mediaDevices.getUserMedia({
-    video: { facingMode: "environment" }
-  });
+  return await navigator.mediaDevices.getUserMedia({ video: true });
 }
 
 // Bật chế độ tự động lấy nét liên tục (Continuous Autofocus)
 async function batContinuousAutofocus(stream) {
-  if (!stream) return;
-  try {
-    const track = stream.getVideoTracks()[0];
-    if (track && track.getCapabilities) {
-      const caps = track.getCapabilities();
-      const adv = [];
-      if (caps.focusMode && caps.focusMode.includes('continuous')) {
-        adv.push({ focusMode: 'continuous' });
-      }
-      if (caps.exposureMode && caps.exposureMode.includes('continuous')) {
-        adv.push({ exposureMode: 'continuous' });
-      }
-      if (adv.length > 0 && track.applyConstraints) {
-        await track.applyConstraints({ advanced: adv });
-      }
-    }
-  } catch (e) {
-    console.warn("Lấy nét tự động không được hỗ trợ bởi ống kính này:", e);
-  }
+  // Không gọi track.applyConstraints() vì gây xung đột và crash Camera HAL trên Snapdragon 855
+  // Android Camera2 đã tự động kích hoạt Continuous Picture AF ở tầng phần cứng
+  return;
 }
 
 // Tự động ẩn hoàn toàn nút đổi camera (Camera 0 Sony 48MP AF là tối ưu duy nhất để quét mã)
@@ -688,8 +664,33 @@ async function khoiTaoCameraFast(videoId, onDecodedCallback) {
       }
     } catch (eCheck) {}
 
+    videoEl.muted = true;
+    videoEl.defaultMuted = true;
+    videoEl.playsInline = true;
+    videoEl.setAttribute('playsinline', '');
+    videoEl.setAttribute('webkit-playsinline', '');
+    videoEl.setAttribute('autoplay', '');
     videoEl.srcObject = stream;
-    await videoEl.play();
+
+    try {
+      const playPromise = videoEl.play();
+      if (playPromise && typeof playPromise.then === 'function') {
+        await playPromise;
+      }
+    } catch (ePlay) {
+      console.warn("video.play() notice:", ePlay);
+    }
+
+    // Cơ chế chống kẹt khung play: Chạm vào bất kỳ vị trí nào trên video hoặc khung ngắm sẽ kích hoạt play lại ngay
+    const tiepTucPhat = () => {
+      if (videoEl && videoEl.srcObject && videoEl.paused) {
+        videoEl.play().catch(() => {});
+      }
+    };
+    videoEl.onclick = tiepTucPhat;
+    if (videoEl.parentElement) {
+      videoEl.parentElement.onclick = tiepTucPhat;
+    }
 
     // Kích hoạt Continuous Autofocus
     await batContinuousAutofocus(stream);
@@ -715,7 +716,17 @@ async function khoiTaoCameraFast(videoId, onDecodedCallback) {
   let isDecoding = false;
 
   const quetKhungHinh = async () => {
-    if (!isScanning || !videoEl.srcObject || videoEl.paused || videoEl.ended) return;
+    if (!isScanning || !videoEl.srcObject || videoEl.ended) return;
+
+    if (videoEl.paused) {
+      try { videoEl.play().catch(() => {}); } catch (e) {}
+      if (videoEl.paused) {
+        if (isScanning && videoEl.srcObject) {
+          animFrameMap[videoId] = setTimeout(quetKhungHinh, 200);
+        }
+        return;
+      }
+    }
 
     if (!isDecoding && videoEl.readyState >= 2 && videoEl.videoWidth > 0) {
       isDecoding = true;

@@ -352,12 +352,17 @@ async function batDauPhienMoiBTP() {
   }
 
   try {
-    if (!zxingReaderBTP) {
+    const btpVid = document.getElementById("btp-reader");
+    const btpTrack = btpVid && btpVid.srcObject ? btpVid.srcObject.getVideoTracks()[0] : null;
+    const isCamRunningBTP = btpTrack && btpTrack.readyState === 'live';
+    if (!zxingReaderBTP || !isCamRunningBTP) {
       zxingReaderBTP = await khoiTaoCameraFast("btp-reader", (txt) => {
         if (txt && dangQuetBTP) {
           khiQuetDuocMaBTP({ getText: () => txt });
         }
       });
+    } else if (btpVid && btpVid.paused) {
+      btpVid.play().catch(() => {});
     }
   } catch (e) {
     showCanhBaoBTP("Lỗi camera: " + e);
@@ -383,12 +388,17 @@ async function tiepTucBTP() {
   dangQuetBTP = true;
   document.getElementById("btp-status").innerHTML = '<i class="ti ti-radar" style="color:var(--success)"></i> Đang quét Đợt ' + demSoDotBTP + '...';
   try {
-    if (!zxingReaderBTP) {
+    const btpVid = document.getElementById("btp-reader");
+    const btpTrack = btpVid && btpVid.srcObject ? btpVid.srcObject.getVideoTracks()[0] : null;
+    const isCamRunningBTP = btpTrack && btpTrack.readyState === 'live';
+    if (!zxingReaderBTP || !isCamRunningBTP) {
       zxingReaderBTP = await khoiTaoCameraFast("btp-reader", (txt) => {
         if (txt && dangQuetBTP) {
           khiQuetDuocMaBTP({ getText: () => txt });
         }
       });
+    } else if (btpVid && btpVid.paused) {
+      btpVid.play().catch(() => {});
     }
   } catch (e) {
     alert("Lỗi camera: " + e);
@@ -648,12 +658,17 @@ async function quetTiepBTP() {
   }
 
   try {
-    if (!zxingReaderBTP) {
+    const btpVid = document.getElementById("btp-reader");
+    const btpTrack = btpVid && btpVid.srcObject ? btpVid.srcObject.getVideoTracks()[0] : null;
+    const isCamRunningBTP = btpTrack && btpTrack.readyState === 'live';
+    if (!zxingReaderBTP || !isCamRunningBTP) {
       zxingReaderBTP = await khoiTaoCameraFast("btp-reader", (txt) => {
         if (txt && dangQuetBTP) {
           khiQuetDuocMaBTP({ getText: () => txt });
         }
       });
+    } else if (btpVid && btpVid.paused) {
+      btpVid.play().catch(() => {});
     }
   } catch (e) {
     alert("Lỗi camera: " + e);
@@ -706,12 +721,17 @@ async function khoiPhucBTP(state) {
   }
 
   try {
-    if (!zxingReaderBTP) {
+    const btpVid = document.getElementById("btp-reader");
+    const btpTrack = btpVid && btpVid.srcObject ? btpVid.srcObject.getVideoTracks()[0] : null;
+    const isCamRunningBTP = btpTrack && btpTrack.readyState === 'live';
+    if (!zxingReaderBTP || !isCamRunningBTP) {
       zxingReaderBTP = await khoiTaoCameraFast("btp-reader", (txt) => {
         if (txt && dangQuetBTP) {
           khiQuetDuocMaBTP({ getText: () => txt });
         }
       });
+    } else if (btpVid && btpVid.paused) {
+      btpVid.play().catch(() => {});
     }
   } catch (e) {
     alert("Lỗi camera: " + e);
