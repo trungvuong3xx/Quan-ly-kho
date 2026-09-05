@@ -509,13 +509,24 @@
       <span id="cx1-status" style="font-weight:700">🟢 Đang quét Đợt 1...</span>
       <span id="cx1-dem" class="cx5-badge">Đã quét: 0 mã</span>
     </div>
-    <div class="video-container" style="position:relative; width:100%; padding-bottom:70%; background:#000; border-radius:14px; overflow:hidden; margin-bottom:15px; border: 2px solid var(--steel); transition: border-color 0.3s ease, box-shadow 0.3s ease;">
+    <div class="video-container" style="position:relative; width:100%; padding-bottom:70%; background:#000; border-radius:14px; overflow:hidden; margin-bottom:8px; border: 2px solid var(--steel); transition: border-color 0.3s ease, box-shadow 0.3s ease;">
       <video id="cx1-reader" autoplay playsinline muted disablePictureInPicture style="position:absolute; width:100%; height:100%; object-fit:cover; transform:translateZ(0); will-change:transform;"></video>
       <div class="cam-viewfinder">
         <div class="vf-corner vf-top-left" style="border-color:var(--steel);"></div>
         <div class="vf-corner vf-top-right" style="border-color:var(--steel);"></div>
         <div class="vf-corner vf-bottom-left" style="border-color:var(--steel);"></div>
         <div class="vf-corner vf-bottom-right" style="border-color:var(--steel);"></div>
+      </div>
+    </div>
+
+    <div style="margin: 0 12px 8px 12px; padding:8px 10px; background:var(--card-raised); border-radius:10px; border:1px solid var(--line-soft); display:flex; align-items:center; justify-content:space-between;">
+      <span style="font-size:13px; font-weight:600; color:var(--cream);">Cho phép quét trùng</span>
+      <div style="display:flex; align-items:center; gap:8px;">
+        <span id="cx1-lock-status" style="font-size:11px; color:var(--cream-soft);">Chờ quét...</span>
+        <label class="toggle-switch">
+          <input type="checkbox" id="cx1-cho-phep-trung-cam" onchange="capNhatTrangThaiTrungCX1()">
+          <span class="toggle-slider"></span>
+        </label>
       </div>
     </div>
 
@@ -1045,12 +1056,12 @@
 
 </div><!-- /#app-viewport -->
 
-<script src="app.js?v=20260905-v54"></script>
-<script src="kiemke.js?v=20260905-v54"></script>
-<script src="cx1.js?v=20260905-v54"></script>
-<script src="cx5.js?v=20260905-v54"></script>
-<script src="btp.js?v=20260905-v54"></script>
-<script src="tonkho.js?v=20260905-v54"></script>
+<script src="app.js?v=20260905-v55"></script>
+<script src="kiemke.js?v=20260905-v55"></script>
+<script src="cx1.js?v=20260905-v55"></script>
+<script src="cx5.js?v=20260905-v55"></script>
+<script src="btp.js?v=20260905-v55"></script>
+<script src="tonkho.js?v=20260905-v55"></script>
 
 <!-- BOTTOM SHEET MODAL LỊCH SỬ -->
 <div class="modal-overlay" id="modal-overlay" onclick="closeLichSuModal(event)">

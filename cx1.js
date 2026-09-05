@@ -86,20 +86,49 @@ function xuLyDuLieuQR(text) {
 }
 
 let lanCanhBaoCuoi = 0;
+let mapKhoaCX1 = new Map();
+
+function capNhatTrangThaiTrungCX1() {
+  const elCheck = document.getElementById("cx1-cho-phep-trung-cam");
+  const elStatus = document.getElementById("cx1-lock-status");
+  if (!elStatus) return;
+  if (elCheck && elCheck.checked) {
+    elStatus.textContent = "Cho phép";
+    elStatus.style.color = "var(--success)";
+  } else {
+    elStatus.textContent = "Chờ quét...";
+    elStatus.style.color = "var(--cream-soft)";
+  }
+}
+window.capNhatTrangThaiTrungCX1 = capNhatTrangThaiTrungCX1;
 
 function khiQuetDuocMa(result) {
   if (!result || !dangQuetCX1) return;
-  const data = xuLyDuLieuQR(result.getText());
+  const rawText = typeof result.getText === "function" ? result.getText() : String(result);
+  const data = xuLyDuLieuQR(rawText);
   if (!data) return;
-  const trung = phienCX1.find(r => r.id === data.id && r.kg === data.kg);
-  if (trung) {
-    const now = Date.now();
-    if (now - lanCanhBaoCuoi > 1500) {
-      showCanhBaoCX1("Mã " + data.id + " + KG " + data.kg + " đã quét rồi");
-      lanCanhBaoCuoi = now;
-    }
+
+  const keyQR = (data.id + "_" + (data.kg || 0)).toLowerCase();
+  const elCheck = document.getElementById("cx1-cho-phep-trung-cam");
+  const choPhepTrung = elCheck ? elCheck.checked : false;
+  const lockMs = choPhepTrung ? 1500 : 500;
+  const now = Date.now();
+
+  // Khóa Per-QR chống quét dính liên tục cùng 1 mã
+  if (mapKhoaCX1.has(keyQR) && (now - mapKhoaCX1.get(keyQR)) < lockMs) {
+    return;
+  }
+  mapKhoaCX1.set(keyQR, now);
+
+  const trung = phienCX1.find(r => r.id === data.id && (data.kg > 0 ? r.kg === data.kg : true));
+  if (!choPhepTrung && trung) {
+    mapKhoaCX1.set(keyQR, Date.now() + 1500); // Khóa 1.5s để không nháy cảnh báo liên tục
     if (typeof phatVibrateError === "function") phatVibrateError();
     else if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
+
+    // Hiện popup thông báo màu đỏ nổi bật khi quét trùng
+    showCanhBaoCX1("⚠️ Trùng mã! Mã " + data.id + " (" + (data.kg || 0) + " kg) đã quét rồi.", "error");
+
     const vc = document.querySelector("#cx1-cam .video-container");
     if (vc) {
       vc.classList.add("canh-bao-trung");
@@ -107,8 +136,11 @@ function khiQuetDuocMa(result) {
     }
     return;
   }
+
+  // Quét thành công: KHÔNG HIỆN POPUP, chỉ phát âm thanh/rung và hiển thị dưới nhật ký (log)
   phatTiengBip();
   if (typeof phatVibrateSuccess === "function") phatVibrateSuccess();
+
   phienCX1.push({ 
     id: data.id, msp: data.msp, qc: data.qc, 
     kg: data.kg, thoiGian: new Date(), dotQuet: demSoDot 
@@ -660,11 +692,42 @@ function quetMoiCX1() {
   capNhatLogCX1();
 }
 
-function showCanhBaoCX1(text) {
+let timerCanhBaoCX1 = null;
+function showCanhBaoCX1(text, type = "error") {
   const el = document.getElementById("canh-bao");
+  if (!el) return;
   el.textContent = text;
+  
+  if (type === "success") {
+    el.style.background = "linear-gradient(135deg, #10b981, #059669)";
+    el.style.boxShadow = "0 8px 24px rgba(16, 185, 129, .4)";
+    el.style.border = "1px solid #34d399";
+  } else {
+    // Popup cảnh báo màu đỏ rực rỡ nổi bật
+    el.style.background = "linear-gradient(135deg, #ef4444, #dc2626)";
+    el.style.boxShadow = "0 8px 24px rgba(220, 38, 38, .5)";
+    el.style.border = "1px solid #f87171";
+  }
+  
+  el.style.color = "#ffffff";
+  el.style.fontSize = "14px";
+  el.style.fontWeight = "700";
+  el.style.padding = "12px 22px";
+  el.style.borderRadius = "14px";
+  el.style.position = "fixed";
+  el.style.top = "75px";
+  el.style.left = "50%";
+  el.style.transform = "translateX(-50%)";
+  el.style.zIndex = "999999";
+  el.style.whiteSpace = "nowrap";
+  el.style.maxWidth = "90vw";
+  el.style.textAlign = "center";
   el.style.display = "block";
-  setTimeout(() => { el.style.display = "none"; }, 2000);
+  
+  if (timerCanhBaoCX1) clearTimeout(timerCanhBaoCX1);
+  timerCanhBaoCX1 = setTimeout(() => { 
+    if (el) el.style.display = "none"; 
+  }, 2200);
 }
 
 // Khôi phục lại 1 phiên Chỉ For đã lưu (từ banner "Phiên dở dang" ở Trang chủ,
