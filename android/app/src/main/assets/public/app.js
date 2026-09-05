@@ -477,20 +477,24 @@ async function moLuongCameraDungHuong() {
   let devices = await navigator.mediaDevices.enumerateDevices();
   let videoInputs = devices.filter(d => d.kind === 'videoinput');
 
-  // 1. Nếu chưa có quyền (nhãn rỗng) -> mở luồng camera sau tạm thời để lấy nhãn thật
+  // 1. Nếu chưa có quyền (nhãn rỗng hoặc danh sách rỗng) -> mở luồng camera sau để lấy nhãn thật
   // Tuyệt đối không dùng { video: true } để tránh kích hoạt motor camera trước thò thụt trên K20 Pro
-  const chuaCoLabel = videoInputs.length > 0 && videoInputs.every(d => !d.label);
+  const chuaCoLabel = videoInputs.length === 0 || videoInputs.every(d => !d.label);
   let activeStream = null;
 
   if (chuaCoLabel) {
     try {
-      activeStream = await navigator.mediaDevices.getUserMedia({
+      const constraints = {
         video: {
           facingMode: { ideal: "environment" },
           width: { ideal: 1280 },
           height: { ideal: 960 }
         }
-      });
+      };
+      if (videoInputs.length > 0 && videoInputs[0] && videoInputs[0].deviceId) {
+        constraints.video.deviceId = { ideal: videoInputs[0].deviceId };
+      }
+      activeStream = await navigator.mediaDevices.getUserMedia(constraints);
       devices = await navigator.mediaDevices.enumerateDevices();
       videoInputs = devices.filter(d => d.kind === 'videoinput');
     } catch (e) {
@@ -501,15 +505,15 @@ async function moLuongCameraDungHuong() {
   // 2. Tìm Camera 0 chính xác (Sony IMX586 48MP AF)
   const cam0 = timCamera0(videoInputs);
 
-  // Nếu luồng activeStream tạm thời ở trên đã là Camera sau chuẩn thì dùng luôn
+  // Nếu luồng activeStream ở trên đã mở thành công và là camera sau -> DÙNG LUÔN, TUYỆT ĐỐI KHÔNG STOP!
+  // Việc stop stream vừa mở sẽ khóa cảm biến trong HAL 300ms, dẫn đến mở nhầm sang camera trước gây lỗi calibrate motor
   if (activeStream) {
     const track = activeStream.getVideoTracks()[0];
     const trackLbl = (track && track.label) ? track.label.toLowerCase() : '';
     if (!laCameraTruoc(trackLbl)) {
-      if (!cam0 || (cam0.label && trackLbl === cam0.label.toLowerCase())) {
-        return activeStream;
-      }
+      return activeStream;
     }
+    // Chỉ stop nếu lỡ là camera trước
     activeStream.getTracks().forEach(t => { try { t.stop(); } catch (e) {} });
     activeStream = null;
   }
@@ -538,13 +542,28 @@ async function moLuongCameraDungHuong() {
       const track = stream.getVideoTracks()[0];
       if (!laCameraTruoc(track && track.label)) return stream;
       stream.getTracks().forEach(t => { try { t.stop(); } catch (e) {} });
-    } catch (e) {}
+    } catch (e) {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: {
+            deviceId: { ideal: id },
+            facingMode: { ideal: "environment" },
+            width: { ideal: 1280 },
+            height: { ideal: 960 }
+          }
+        });
+        const track = stream.getVideoTracks()[0];
+        if (!laCameraTruoc(track && track.label)) return stream;
+        stream.getTracks().forEach(t => { try { t.stop(); } catch (e) {} });
+      } catch (e2) {}
+    }
   }
 
-  // 5. Fallback cuối cùng: facingMode ideal environment
+  // 5. Fallback cuối cùng: facingMode ideal environment (ưu tiên deviceId của Camera 0)
   try {
     const stream = await navigator.mediaDevices.getUserMedia({
       video: {
+        deviceId: (cam0 && cam0.deviceId) ? { ideal: cam0.deviceId } : undefined,
         facingMode: { ideal: "environment" },
         width: { ideal: 1280 },
         height: { ideal: 960 }

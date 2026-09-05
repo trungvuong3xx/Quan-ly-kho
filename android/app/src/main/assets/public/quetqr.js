@@ -278,24 +278,34 @@ function capNhatLogQR() {
     return;
   }
 
-  // Hiển thị danh sách từ mới nhất lên trên
-  container.innerHTML = phienQuetQR.slice().reverse().map((r, revIdx) => {
+  // Tính số thứ tự trong đợt (seqTrongDot) cho từng mã giống CX1
+  const dotSeq = {};
+  phienQuetQR.forEach(item => {
+    const dot = item.dotQuet || 1;
+    dotSeq[dot] = (dotSeq[dot] || 0) + 1;
+    item.seqTrongDot = dotSeq[dot];
+  });
+
+  // Hiển thị danh sách từ mới nhất lên trên: Đợt | ID | QC | KG | SL trong đợt | Thời gian | Xóa
+  const newestFirst = phienQuetQR.slice().reverse();
+  container.innerHTML = newestFirst.map((item, revIdx) => {
     const origIdx = phienQuetQR.length - 1 - revIdx;
-    const timeStr = r.thoiGian ? new Date(r.thoiGian).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit", second: "2-digit" }) : "—";
+    const dot = item.dotQuet || 1;
+    const gio = item.thoiGian ? new Date(item.thoiGian).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit", second: "2-digit" }) : "—";
+    const flashClass = revIdx === 0 ? ' scan-flash-new' : '';
+    const kgStr = item.kg ? Number(item.kg).toFixed(1) : "0";
+
     return `
-      <div style="display:flex; justify-content:space-between; align-items:center; padding:5px 8px; border-bottom:1px solid var(--line-soft); font-size:12px; animation:fadeIn 0.2s ease;">
-        <div style="flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
-          <span style="font-weight:700; color:var(--brass); margin-right:4px;">#${origIdx + 1}</span>
-          <span style="color:var(--cream); font-weight:600;">${r.id}</span>
-          <span style="color:var(--cream-soft); margin-left:4px;">(${r.qc})</span>
-          <span style="color:var(--success); font-weight:700; margin-left:6px;">${r.kg ? r.kg.toFixed(1) + ' kg' : '0 kg'}</span>
-        </div>
-        <div style="display:flex; align-items:center; gap:6px;">
-          <span style="color:var(--cream-soft); font-size:11px;">${timeStr}</span>
-          <button onclick="xoaMaTrongLiveLogQR(${origIdx})" style="background:none; border:none; color:var(--danger); cursor:pointer; padding:2px 4px;" title="Xóa mã này">
-            <i class="ti ti-trash"></i>
-          </button>
-        </div>
+      <div class="${flashClass}" style="display:flex; justify-content:space-between; align-items:center; padding:4px 2px; border-bottom:1px solid var(--line-soft); font-size:12px; border-radius:6px;">
+        <span style="color:var(--steel); font-weight:700; width:24px; text-align:center;">${dot}</span>
+        <span style="color:var(--cream); font-weight:700; width:75px; text-align:left; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${item.id || ''}">${item.id || '—'}</span>
+        <span style="color:var(--brass); font-weight:700; flex:1; min-width:60px; text-align:left; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${item.qc || item.msp || ''}">${item.qc || item.msp || '—'}</span>
+        <span style="color:var(--success); font-weight:700; width:42px; text-align:right;">${kgStr}</span>
+        <span style="color:var(--blue); font-weight:700; width:26px; text-align:center;">${item.seqTrongDot}</span>
+        <span style="color:var(--cream-soft); font-size:11px; width:52px; text-align:right;">${gio}</span>
+        <button onclick="xoaMaTrongLiveLogQR(${origIdx})" style="background:none; border:none; color:var(--red); cursor:pointer; width:26px; padding:2px 0; display:inline-flex; align-items:center; justify-content:center;" title="Xóa mã này">
+          <i class="ti ti-trash"></i>
+        </button>
       </div>
     `;
   }).join("");
