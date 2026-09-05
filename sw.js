@@ -1,4 +1,4 @@
-const CACHE_NAME = 'kho-cache-v51';
+const CACHE_NAME = 'kho-cache-v52';
 const urlsToCache = [
   './',
   './index.html',

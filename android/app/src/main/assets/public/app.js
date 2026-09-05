@@ -564,8 +564,14 @@ async function layCameraStream(targetDeviceId) {
     });
   } catch (eFacing) {}
 
+  try {
+    return await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: "environment" }
+    });
+  } catch (eFacing2) {}
+
   return await navigator.mediaDevices.getUserMedia({
-    video: { facingMode: "environment" }
+    video: true
   });
 }
 
@@ -627,42 +633,45 @@ async function khoiTaoCameraFast(videoId, onDecodedCallback) {
       stream = await layCameraStream(null);
     }
 
+    // Lưu lại camera ưu tiên cho các lần sau mà tuyệt đối không ngắt luồng đang chạy
     try {
       const devList = await navigator.mediaDevices.enumerateDevices();
       const exactCam0 = timCamera0(devList);
       if (exactCam0 && exactCam0.deviceId) {
         idCameraUuTien = exactCam0.deviceId;
         try { localStorage.setItem('camera_uu_tien', exactCam0.deviceId); } catch (e) {}
-
-        const activeTrack = stream ? stream.getVideoTracks()[0] : null;
-        const activeLabel = (activeTrack?.label || '').toLowerCase();
-        const isCam0Active = /camera2?\s*0\b/i.test(activeLabel) && !activeLabel.includes('10');
-
-        // Nếu camera đang mở chưa phải là Camera 0 Sony 48MP AF chính chủ, chuyển ngay sang Camera 0
-        if (!isCam0Active) {
-          try {
-            if (stream) stream.getTracks().forEach(t => t.stop());
-            await new Promise(r => setTimeout(r, 120));
-            const cam0Stream = await layCameraStream(exactCam0.deviceId);
-            if (cam0Stream) {
-              stream = cam0Stream;
-              videoEl.srcObject = cam0Stream;
-            }
-          } catch (eSwitch) {
-            console.warn("Lỗi chuyển sang Camera 0:", eSwitch);
-          }
-        }
       }
     } catch (eCheck) {}
 
-    videoEl.srcObject = stream;
-    videoEl.muted = true;
-    videoEl.setAttribute('playsinline', '');
-    videoEl.setAttribute('autoplay', '');
-    try {
-      await videoEl.play();
-    } catch (ePlay) {
-      console.warn("video.play() notice:", ePlay);
+    if (stream) {
+      // Thiết lập muted & playsinline trước khi gán stream để vượt qua chính sách Autoplay của trình duyệt
+      videoEl.muted = true;
+      videoEl.defaultMuted = true;
+      videoEl.playsInline = true;
+      videoEl.setAttribute('playsinline', '');
+      videoEl.setAttribute('webkit-playsinline', '');
+      videoEl.setAttribute('autoplay', '');
+      videoEl.srcObject = stream;
+
+      try {
+        const playPromise = videoEl.play();
+        if (playPromise && typeof playPromise.then === 'function') {
+          await playPromise;
+        }
+      } catch (ePlay) {
+        console.warn("video.play() notice:", ePlay);
+      }
+
+      // Cơ chế chống kẹt khung play: Chạm vào bất kỳ vị trí nào trên video hoặc khung ngắm sẽ kích hoạt play lại ngay
+      const tiepTucPhat = () => {
+        if (videoEl && videoEl.srcObject && videoEl.paused) {
+          videoEl.play().catch(() => {});
+        }
+      };
+      videoEl.onclick = tiepTucPhat;
+      if (videoEl.parentElement) {
+        videoEl.parentElement.onclick = tiepTucPhat;
+      }
     }
 
     // Tự động khôi phục luồng nếu phần cứng Camera HAL bị ngắt đột ngột
@@ -720,7 +729,15 @@ async function khoiTaoCameraFast(videoId, onDecodedCallback) {
       }, 400);
       return;
     }
-    if (videoEl.paused) return;
+    if (videoEl.paused) {
+      try { videoEl.play().catch(() => {}); } catch (e) {}
+      if (videoEl.paused) {
+        if (isScanning && videoEl.srcObject) {
+          animFrameMap[videoId] = setTimeout(quetKhungHinh, 200);
+        }
+        return;
+      }
+    }
 
     if (!isDecoding && videoEl.readyState >= 2 && videoEl.videoWidth > 0) {
       isDecoding = true;
