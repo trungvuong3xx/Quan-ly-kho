@@ -1881,3 +1881,33 @@ body { padding: 0 !important; background: var(--bg-body) !important; color: var(
   50% { transform: scale(1.05); box-shadow: 0 0 0 10px rgba(220, 38, 38, 0); }
   100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(220, 38, 38, 0); }
 }
+
+/* ── Camera Sleep Overlay (Tiet kiem pin & Lam mat may khi khong thao tac) ── */
+.cam-sleep-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(10, 15, 29, 0.88);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  z-index: 50;
+  cursor: pointer;
+  padding: 16px;
+  box-sizing: border-box;
+  animation: fadeIn 0.3s ease;
+}
+
+.cam-sleep-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
