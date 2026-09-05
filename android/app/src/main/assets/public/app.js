@@ -295,7 +295,9 @@ window.diToiTab = diToiTab;
 // Điều hướng tới 1 trang KHÔNG có nút riêng trên bottom-nav (vd: Lịch sử, chi tiết lịch sử)
 function chuyenTrangKhongNav(id) {
   document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
+  if (id !== "quetQR" && typeof dungQuet === "function") dungQuet();
   if (id !== "chiFor" && typeof dungCX1 === "function") dungCX1();
+  if (id !== "kiemKe" && typeof dungKiemKe === "function") dungKiemKe();
   if (id !== "btpPage") {
     document.body.classList.remove("cam-active");
     if (typeof dungBTP === "function") dungBTP();
@@ -397,7 +399,8 @@ let nativeBarcodeDetectorGlobal = null;
 const lastCameraCallbackMap = {};
 
 let danhSachCameraSau = [];
-let idCameraUuTien = localStorage.getItem('camera_uu_tien') || null;
+let idCameraUuTien = null;
+try { localStorage.removeItem('camera_uu_tien'); } catch (e) {}
 
 // Hàm nhận diện chính xác Camera 0 (Sony IMX586 48MP AF chính)
 function timCamera0(devices) {
@@ -448,11 +451,11 @@ async function quetDanhSachCameraSau() {
       return [cam0];
     }
 
-    // Lọc camera sau (loại bỏ triệt để camera trước pop-up)
+    // Lọc camera sau (loại bỏ triệt để camera trước pop-up trên K20 Pro)
     let backCams = videoInputs.filter(d => {
       const lbl = (d.label || '').toLowerCase();
-      if (!lbl) return true;
-      if (lbl.includes('front') || lbl.includes('truoc') || lbl.includes('selfie') || lbl.includes('user') || lbl.includes('camera2 1')) return false;
+      if (!lbl) return false;
+      if (lbl.includes('front') || lbl.includes('truoc') || lbl.includes('selfie') || lbl.includes('user') || lbl.includes('camera2 1') || lbl.includes('camera 1') || lbl.includes('facing front')) return false;
       return true;
     });
 
@@ -464,13 +467,14 @@ async function quetDanhSachCameraSau() {
   }
 }
 
-// Hàm mở luồng camera tối ưu chuẩn 4:3 (chắc chắn mở camera sau, không bao giờ mở camera trước)
+// Hàm mở luồng camera tối ưu chuẩn 4:3 (chắc chắn mở camera sau, TUYỆT ĐỐI KHÔNG mở camera trước pop-up)
 async function layCameraStream(targetDeviceId) {
   if (targetDeviceId) {
     try {
       return await navigator.mediaDevices.getUserMedia({
         video: {
           deviceId: { exact: targetDeviceId },
+          facingMode: { ideal: "environment" },
           width: { ideal: 1280 },
           height: { ideal: 960 }
         }
@@ -479,17 +483,19 @@ async function layCameraStream(targetDeviceId) {
       try {
         return await navigator.mediaDevices.getUserMedia({
           video: {
-            deviceId: { ideal: targetDeviceId }
+            deviceId: { exact: targetDeviceId },
+            facingMode: { ideal: "environment" }
           }
         });
       } catch (e2) {}
     }
   }
 
+  // 1. Khóa cứng Camera sau bằng exact: "environment"
   try {
     return await navigator.mediaDevices.getUserMedia({
       video: {
-        facingMode: { ideal: "environment" },
+        facingMode: { exact: "environment" },
         width: { ideal: 1280 },
         height: { ideal: 960 }
       }
@@ -499,18 +505,31 @@ async function layCameraStream(targetDeviceId) {
   try {
     return await navigator.mediaDevices.getUserMedia({
       video: {
-        facingMode: { ideal: "environment" }
+        facingMode: { exact: "environment" }
       }
     });
   } catch (e2) {}
+
+  // 2. Dự phòng facingMode "environment" chuẩn
+  try {
+    return await navigator.mediaDevices.getUserMedia({
+      video: {
+        facingMode: "environment",
+        width: { ideal: 1280 },
+        height: { ideal: 960 }
+      }
+    });
+  } catch (e3) {}
 
   try {
     return await navigator.mediaDevices.getUserMedia({
       video: { facingMode: "environment" }
     });
-  } catch (e3) {}
+  } catch (e4) {}
 
-  return await navigator.mediaDevices.getUserMedia({ video: true });
+  // TUYỆT ĐỐI KHÔNG fallback sang { video: true } để chống Android kích hoạt motor camera trước thò thụt
+  console.error("Không thể kết nối Camera Sau");
+  throw new Error("Không thể mở Camera Sau");
 }
 
 // Bật chế độ tự động lấy nét liên tục (Continuous Autofocus)
@@ -561,35 +580,18 @@ async function khoiTaoCameraFast(videoId, onDecodedCallback) {
   try {
     stream = await layCameraStream(targetId);
 
-    // Sau khi đã có stream, âm thầm lưu lại Camera 0 vào bộ nhớ nếu cần
+    // Kiểm tra an toàn: Nếu vô tình mở nhầm camera trước thì dừng ngay lập tức để bảo vệ motor
     try {
       const activeTrack = stream ? stream.getVideoTracks()[0] : null;
       const activeLabel = (activeTrack && activeTrack.label) ? activeTrack.label.toLowerCase() : '';
 
-      // Chỉ chuyển nếu lỡ bắt nhầm camera trước pop-up
-      const isFront = activeLabel.includes('front') || activeLabel.includes('truoc') || activeLabel.includes('selfie') || activeLabel.includes('user') || activeLabel.includes('camera2 1');
+      const isFront = activeLabel.includes('front') || activeLabel.includes('truoc') || activeLabel.includes('selfie') || activeLabel.includes('user') || activeLabel.includes('camera2 1') || activeLabel.includes('camera 1') || activeLabel.includes('facing front');
       if (isFront) {
-        const devList = await navigator.mediaDevices.enumerateDevices();
-        const exactCam0 = timCamera0(devList);
-        if (exactCam0 && exactCam0.deviceId) {
-          try {
-            if (stream) stream.getTracks().forEach(t => t.stop());
-            stream = await layCameraStream(exactCam0.deviceId);
-            idCameraUuTien = exactCam0.deviceId;
-            try { localStorage.setItem('camera_uu_tien', exactCam0.deviceId); } catch (e) {}
-          } catch (eSwitch) {
-            console.warn("Lỗi chuyển sang Camera 0:", eSwitch);
-          }
+        console.warn("Phát hiện camera trước, dừng ngay để bảo vệ motor");
+        if (stream) {
+          stream.getTracks().forEach(t => { try { t.stop(); } catch (e) {} });
         }
-      } else {
-        // Đã là camera sau chuẩn, âm thầm lưu deviceId nếu tìm thấy Camera 0 trong danh sách
-        navigator.mediaDevices.enumerateDevices().then(devList => {
-          const exactCam0 = timCamera0(devList);
-          if (exactCam0 && exactCam0.deviceId) {
-            idCameraUuTien = exactCam0.deviceId;
-            try { localStorage.setItem('camera_uu_tien', exactCam0.deviceId); } catch (e) {}
-          }
-        }).catch(() => {});
+        return null;
       }
     } catch (eCheck) {}
 
@@ -1190,16 +1192,25 @@ function triggerResumeCamera() {
   clearTimeout(resumeCameraTimer);
   resumeCameraTimer = setTimeout(async () => {
     const camBoxes = [
-      { vid: 'reader', box: 'cam-box', fallback: (txt) => { if (typeof xuLyMaQuet === 'function') xuLyMaQuet(txt); } },
-      { vid: 'kk-reader', box: 'kk-cam', fallback: (txt) => { if (typeof xuLyMaKiemKe === 'function') xuLyMaKiemKe(txt); } },
-      { vid: 'cx1-reader', box: 'cx1-cam', fallback: (txt) => { if (txt && window.dangQuetCX1 && typeof window.khiQuetDuocMa === 'function') window.khiQuetDuocMa({ getText: () => txt }); } },
-      { vid: 'btp-reader', box: 'btp-cam', fallback: (txt) => { if (txt && window.dangQuetBTP && typeof window.khiQuetDuocMaBTP === 'function') window.khiQuetDuocMaBTP({ getText: () => txt }); } }
+      { pageId: 'quetQR', vid: 'reader', box: 'cam-box', fallback: (txt) => { if (typeof xuLyMaQuet === 'function') xuLyMaQuet(txt); } },
+      { pageId: 'kiemKe', vid: 'kk-reader', box: 'kk-cam', fallback: (txt) => { if (typeof xuLyMaKiemKe === 'function') xuLyMaKiemKe(txt); } },
+      { pageId: 'chiFor', vid: 'cx1-reader', box: 'cx1-cam', fallback: (txt) => { if (txt && window.dangQuetCX1 && typeof window.khiQuetDuocMa === 'function') window.khiQuetDuocMa({ getText: () => txt }); } },
+      { pageId: 'btpPage', vid: 'btp-reader', box: 'btp-cam', fallback: (txt) => { if (txt && window.dangQuetBTP && typeof window.khiQuetDuocMaBTP === 'function') window.khiQuetDuocMaBTP({ getText: () => txt }); } }
     ];
 
     for (const item of camBoxes) {
+      const pageEl = document.getElementById(item.pageId);
       const boxEl = document.getElementById(item.box);
       const videoEl = document.getElementById(item.vid);
-      if (boxEl && window.getComputedStyle(boxEl).display !== 'none' && videoEl) {
+
+      // CHỈ khôi phục camera KHI VÀ CHỈ KHI:
+      // 1. Trang chứa camera đó đang thực sự hiển thị (.active)
+      // 2. Khung ngắm camera đang mở (style.display !== 'none')
+      // 3. Phần tử video tồn tại
+      const isPageActive = pageEl && pageEl.classList.contains('active');
+      const isBoxVisible = boxEl && boxEl.style.display !== 'none' && window.getComputedStyle(boxEl).display !== 'none';
+
+      if (isPageActive && isBoxVisible && videoEl) {
         // Luôn khôi phục lại luồng camera mới tinh để không bao giờ bị đứng hình sau khi ẩn app
         await khoiPhucCamera(item.vid, item.fallback);
       }
