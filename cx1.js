@@ -120,7 +120,7 @@ function khiQuetDuocMa(result) {
   }
   mapKhoaCX1.set(keyQR, now);
 
-  const trung = phienCX1.find(r => r.id === data.id && (data.kg > 0 ? r.kg === data.kg : true));
+  const trung = phienCX1.find(r => r.id === data.id && r.kg === data.kg);
   if (!choPhepTrung && trung) {
     mapKhoaCX1.set(keyQR, Date.now() + 1500); // Khóa 1.5s để không nháy cảnh báo liên tục
     if (typeof phatVibrateError === "function") phatVibrateError();
