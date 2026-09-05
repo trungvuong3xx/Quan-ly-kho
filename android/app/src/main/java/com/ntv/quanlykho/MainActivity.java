@@ -30,6 +30,28 @@ public class MainActivity extends BridgeActivity {
     }
 
     @Override
+    public void onPause() {
+        super.onPause();
+        if (getBridge() != null && getBridge().getWebView() != null) {
+            getBridge().getWebView().evaluateJavascript(
+                "if (window.ngatTatCaCamera) { window.ngatTatCaCamera(); }",
+                null
+            );
+        }
+    }
+
+    @Override
+    public void onDestroy() {
+        if (getBridge() != null && getBridge().getWebView() != null) {
+            getBridge().getWebView().evaluateJavascript(
+                "if (window.ngatTatCaCamera) { window.ngatTatCaCamera(); }",
+                null
+            );
+        }
+        super.onDestroy();
+    }
+
+    @Override
     public void onBackPressed() {
         if (getBridge() != null && getBridge().getWebView() != null) {
             getBridge().getWebView().evaluateJavascript(

@@ -1449,30 +1449,32 @@ function triggerResumeCamera() {
   }, 250);
 }
 
+function ngatTatCaCamera() {
+  const vids = ['reader', 'kk-reader', 'cx1-reader', 'btp-reader'];
+  for (const id of vids) {
+    const videoEl = document.getElementById(id);
+    if (videoEl && videoEl.srcObject) {
+      try {
+        videoEl.srcObject.getTracks().forEach(t => {
+          try { t.stop(); } catch (e) {}
+        });
+        videoEl.srcObject = null;
+      } catch (e) {}
+    }
+  }
+}
+window.ngatTatCaCamera = ngatTatCaCamera;
+
 document.addEventListener('visibilitychange', () => {
   if (document.visibilityState === 'hidden') {
-    // 1. Khi ẩn app hoặc tắt màn hình: Chủ động ngắt sạch phần cứng camera để giải phóng cảm biến
-    const camBoxes = [
-      { vid: 'reader', box: 'cam-box' },
-      { vid: 'kk-reader', box: 'kk-cam' },
-      { vid: 'cx1-reader', box: 'cx1-cam' },
-      { vid: 'btp-reader', box: 'btp-cam' }
-    ];
-    for (const item of camBoxes) {
-      const boxEl = document.getElementById(item.box);
-      const videoEl = document.getElementById(item.vid);
-      if (boxEl && window.getComputedStyle(boxEl).display !== 'none' && videoEl && videoEl.srcObject) {
-        try {
-          videoEl.srcObject.getTracks().forEach(t => t.stop());
-          videoEl.srcObject = null;
-        } catch (e) {}
-      }
-    }
+    // 1. Khi ẩn app hoặc tắt màn hình: Chủ động ngắt sạch phần cứng camera để giải phóng cảm biến cho hệ thống
+    ngatTatCaCamera();
   } else if (document.visibilityState === 'visible') {
     // 2. Khi quay lại app: Tự động khởi động lại luồng camera mới ngay lập tức
     triggerResumeCamera();
   }
 });
+window.addEventListener('pagehide', ngatTatCaCamera);
 
 // ── Hệ Thống Sao Lưu & Phục Hồi Dữ Liệu An Toàn ───────────────────
 const BACKUP_KEYS = [
