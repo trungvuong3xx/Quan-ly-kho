@@ -21,12 +21,24 @@
 <meta name="browsermode" content="application">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <script>
-  if ('serviceWorker' in navigator) {
+  const laAppCapacitor = window.location.hostname === 'localhost' || window.location.protocol === 'capacitor:';
+
+  if (laAppCapacitor) {
+    // Trong ứng dụng APK: Toàn bộ file đã nằm trực tiếp trong máy (assets/public/)
+    // Hủy bỏ hoàn toàn Service Worker và dọn sạch bộ nhớ Cache cũ để luôn chạy 100% code mới nhất ngay lần đầu mở app!
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.getRegistrations().then(regs => {
+        regs.forEach(r => r.unregister());
+      });
+    }
+    if ('caches' in window) {
+      caches.keys().then(keys => keys.forEach(k => caches.delete(k)));
+    }
+  } else if ('serviceWorker' in navigator) {
+    // Chỉ kích hoạt Service Worker khi chạy trên trình duyệt Web (GitHub Pages) để hỗ trợ Offline PWA
     window.addEventListener('load', () => {
       navigator.serviceWorker.register('./sw.js', { updateViaCache: 'none' }).then(reg => {
-        // Tự động kiểm tra bản cập nhật mới trên GitHub mỗi khi mở app hoặc quay lại app
         reg.update();
-
         reg.addEventListener('updatefound', () => {
           const newWorker = reg.installing;
           if (newWorker) {
@@ -34,13 +46,14 @@
               if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
                 console.log('🔄 Đã phát hiện code mới từ GitHub, đang tự động nạp...');
                 newWorker.postMessage({ action: 'skipWaiting' });
+                const toast = document.getElementById('pwa-update-toast');
+                if (toast) toast.style.display = 'block';
               }
             });
           }
         });
       }).catch(err => console.log('SW Reg Error:', err));
 
-      // Kiểm tra lại khi ứng dụng từ nền quay lại màn hình chính (Focus/Foreground)
       document.addEventListener('visibilitychange', () => {
         if (document.visibilityState === 'visible') {
           navigator.serviceWorker.ready.then(reg => reg.update()).catch(() => {});
@@ -48,7 +61,6 @@
       });
     });
 
-    // Tự động làm mới trang mượt mà ngay khi Service Worker mới kích hoạt
     let refreshing = false;
     navigator.serviceWorker.addEventListener('controllerchange', () => {
       if (!refreshing) {
@@ -57,6 +69,7 @@
       }
     });
   }
+</script>
 
   function capNhatGocXoayBaoVe() {
     const el = document.getElementById("app-viewport");
@@ -1230,20 +1243,6 @@
   🔄 Có bản cập nhật mới! Bấm để tải lại
 </div>
 
-<script>
-  if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('./sw.js').then(reg => {
-      reg.addEventListener('updatefound', () => {
-        const newWorker = reg.installing;
-        newWorker.addEventListener('statechange', () => {
-          if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-            document.getElementById('pwa-update-toast').style.display = 'block';
-          }
-        });
-      });
-    });
-  }
-</script>
 </body>
 </html>
 
