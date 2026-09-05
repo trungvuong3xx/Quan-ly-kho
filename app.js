@@ -19,14 +19,32 @@ function formatKg(value) {
   return String(num);
 }
 
-// ── Hàm tiện ích Xuất File Excel dùng chung ─────────
-function exportToExcel(filename, sheetName, dataArray) {
-  if (typeof XLSX === "undefined") {
-    alert("Thư viện xuất Excel chưa tải xong. Vui lòng thử lại sau vài giây!");
+// ── Hàm nạp lười thư viện xuất Excel (chỉ tải khi bấm Xuất, giúp mở app tức thì) ──
+function napThuVienXLSX(callback) {
+  if (typeof XLSX !== "undefined") {
+    if (callback) callback();
     return;
   }
+  const script = document.createElement("script");
+  script.src = "lib/xlsx.full.min.js";
+  script.onload = () => {
+    if (callback) callback();
+  };
+  script.onerror = () => {
+    alert("Không thể nạp thư viện xuất Excel. Vui lòng thử lại!");
+  };
+  document.head.appendChild(script);
+}
+window.napThuVienXLSX = napThuVienXLSX;
+
+// ── Hàm tiện ích Xuất File Excel dùng chung ─────────
+function exportToExcel(filename, sheetName, dataArray) {
   if (!dataArray || dataArray.length === 0) {
     alert("Không có dữ liệu để xuất file Excel!");
+    return;
+  }
+  if (typeof XLSX === "undefined") {
+    napThuVienXLSX(() => exportToExcel(filename, sheetName, dataArray));
     return;
   }
   try {
@@ -423,10 +441,20 @@ function showLoading(show) {
 
 // ── Bộ Engine Quét QR Siêu Tốc & Quản Lý Camera Thông Minh ─────────────────
 let animFrameMap = {};
-let nativeBarcodeDetectorGlobal = null;
 const lastCameraCallbackMap = {};
 const cameraSleepTimerMap = {};
 const CAMERA_IDLE_TIMEOUT_MS = 60000; // 60 giây không quét & không chạm -> tự ngủ để máy mát và tiết kiệm pin
+
+// Lắng nghe tương tác người dùng 1 lần duy nhất ở cấp document (ngăn rò rỉ listener khi camera ngủ/thức nhiều lần)
+function onGlobalCameraInteraction() {
+  for (const vid in cameraSleepTimerMap) {
+    if (cameraSleepTimerMap[vid]) {
+      resetSleepTimerCamera(vid);
+    }
+  }
+}
+document.addEventListener("touchstart", onGlobalCameraInteraction, { passive: true });
+document.addEventListener("click", onGlobalCameraInteraction);
 
 function hienSleepOverlayCamera(videoId) {
   const videoEl = document.getElementById(videoId);
@@ -488,7 +516,7 @@ window.resetSleepTimerCamera = resetSleepTimerCamera;
 
 let danhSachCameraSau = [];
 let idCameraUuTien = null;
-try { localStorage.removeItem('camera_uu_tien'); } catch (e) {}
+try { idCameraUuTien = localStorage.getItem('camera_uu_tien') || null; } catch (e) {}
 
 // Hàm nhận diện chính xác Camera 0 (Sony IMX586 48MP AF chính)
 function timCamera0(devices) {
@@ -561,6 +589,27 @@ async function moLuongCameraDungHuong() {
     lbl = (lbl || '').toLowerCase();
     return lbl.includes('front') || lbl.includes('truoc') || lbl.includes('selfie') || lbl.includes('user') || lbl.includes('camera2 1') || lbl.includes('camera 1') || lbl.includes('facing front');
   };
+
+  // 0. MỞ SIÊU TỐC (~200ms): Nếu đã nhận diện và lưu Camera 0 từ trước, mở thẳng trực tiếp
+  if (idCameraUuTien) {
+    try {
+      const fastStream = await navigator.mediaDevices.getUserMedia({
+        video: {
+          deviceId: { exact: idCameraUuTien },
+          width: { ideal: 1280 },
+          height: { ideal: 960 },
+          frameRate: { ideal: 24, max: 30 }
+        }
+      });
+      const track = fastStream.getVideoTracks()[0];
+      if (!laCameraTruoc(track && track.label)) {
+        return fastStream;
+      }
+      fastStream.getTracks().forEach(t => { try { t.stop(); } catch (e) {} });
+    } catch (eFast) {
+      // Nếu deviceId không còn khớp, tiếp tục quy trình nhận diện bên dưới
+    }
+  }
 
   let devices = await navigator.mediaDevices.enumerateDevices();
   let videoInputs = devices.filter(d => d.kind === 'videoinput');
@@ -760,11 +809,6 @@ async function khoiTaoCameraFast(videoId, onDecodedCallback) {
     if (videoEl.parentElement) {
       videoEl.parentElement.onclick = onUserInteraction;
       videoEl.parentElement.ontouchstart = onUserInteraction;
-    }
-    const activePage = videoEl.closest('.page');
-    if (activePage) {
-      activePage.addEventListener('touchstart', () => resetSleepTimerCamera(videoId), { passive: true });
-      activePage.addEventListener('click', () => resetSleepTimerCamera(videoId));
     }
 
     // Kích hoạt Continuous Autofocus

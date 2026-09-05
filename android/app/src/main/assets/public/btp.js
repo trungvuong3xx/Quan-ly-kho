@@ -948,12 +948,16 @@ function xuatExcelLichSuBTP(idPhien) {
     "Loại": r.kg,
     "Thời gian": r.thoiGian ? new Date(r.thoiGian).toLocaleTimeString("vi-VN") : ""
   }));
-  if (typeof XLSX !== "undefined") {
-    const ws = XLSX.utils.json_to_sheet(data);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "BTP");
-    XLSX.writeFile(wb, "Quet_BTP_" + dateStr + ".xlsx");
+  if (typeof XLSX === "undefined") {
+    if (typeof napThuVienXLSX === "function") {
+      napThuVienXLSX(() => xuatExcelLichSuBTP(targetId));
+    }
+    return;
   }
+  const ws = XLSX.utils.json_to_sheet(data);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "BTP");
+  XLSX.writeFile(wb, "Quet_BTP_" + dateStr + ".xlsx");
 }
 window.xuatExcelLichSuBTP = xuatExcelLichSuBTP;
 
@@ -978,6 +982,10 @@ function xuatCSVBTP() {
 
 function xuatExcelBTP() {
   if (typeof XLSX === "undefined") {
+    if (typeof napThuVienXLSX === "function") {
+      napThuVienXLSX(() => xuatExcelBTP());
+      return;
+    }
     xuatCSVBTP();
     return;
   }
