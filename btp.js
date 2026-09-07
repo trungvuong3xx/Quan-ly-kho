@@ -118,11 +118,12 @@ function nhapThuCongBTP(src) {
   const elCheck = document.getElementById("btp-cho-phep-trung-cam");
   const choPhepTrung = elCheck ? elCheck.checked : false;
 
-  if (!choPhepTrung && phienBTP.some(item => item.rawQR.toLowerCase() === data.rawQR.toLowerCase())) {
-    showCanhBaoBTP("⚠️ Mã QR đã tồn tại trong phiên quét!");
+  const trung = phienBTP.find(item => item.rawQR && item.rawQR.toLowerCase() === data.rawQR.toLowerCase());
+  if (!choPhepTrung && trung) {
     hienVienFeedbackBTP("duplicate");
     if (typeof window.phatVibrateError === "function") window.phatVibrateError();
-    showCanhBaoBTP("Trùng mã! Mã này đã được quét.");
+    const gioQuet = typeof dinhDangGioQuetTrung === "function" ? dinhDangGioQuetTrung(trung.thoiGian) : "";
+    showCanhBaoBTP("Đã quét " + gioQuet, "error");
     return;
   }
 
@@ -250,10 +251,12 @@ function khiQuetDuocMaBTP(result) {
   }
   mapKhoaBTP.set(data.rawQR, now);
 
-  if (!choPhepTrung && phienBTP.some(item => item.rawQR.toLowerCase() === data.rawQR.toLowerCase())) {
+  const trung = phienBTP.find(item => item.rawQR && item.rawQR.toLowerCase() === data.rawQR.toLowerCase());
+  if (!choPhepTrung && trung) {
     hienVienFeedbackBTP("duplicate");
     if (typeof window.phatVibrateError === "function") window.phatVibrateError();
-    showCanhBaoBTP("Trùng mã! Mã này đã được quét.");
+    const gioQuet = typeof dinhDangGioQuetTrung === "function" ? dinhDangGioQuetTrung(trung.thoiGian) : "";
+    showCanhBaoBTP("Đã quét " + gioQuet, "error");
     
     // Nếu quét trùng, phạt khóa mã này lâu hơn (2 giây) để tránh chớp đỏ liên tục nếu lỡ để quên camera
     mapKhoaBTP.set(data.rawQR, Date.now() + 1500); 
@@ -696,12 +699,42 @@ function quetMoiBTP() {
   document.getElementById("btp-form").style.display = "block";
 }
 
-function showCanhBaoBTP(text) {
+let timerCanhBaoBTP = null;
+function showCanhBaoBTP(text, type = "error") {
   const el = document.getElementById("canh-bao");
   if (!el) return;
   el.textContent = text;
+  
+  if (type === "success") {
+    el.style.background = "linear-gradient(135deg, #10b981, #059669)";
+    el.style.boxShadow = "0 8px 24px rgba(16, 185, 129, .4)";
+    el.style.border = "1px solid #34d399";
+  } else {
+    // Popup cảnh báo màu đỏ rực rỡ nổi bật
+    el.style.background = "linear-gradient(135deg, #ef4444, #dc2626)";
+    el.style.boxShadow = "0 8px 24px rgba(220, 38, 38, .5)";
+    el.style.border = "1px solid #f87171";
+  }
+  
+  el.style.color = "#ffffff";
+  el.style.fontSize = "14px";
+  el.style.fontWeight = "700";
+  el.style.padding = "12px 22px";
+  el.style.borderRadius = "14px";
+  el.style.position = "fixed";
+  el.style.top = "75px";
+  el.style.left = "50%";
+  el.style.transform = "translateX(-50%)";
+  el.style.zIndex = "999999";
+  el.style.whiteSpace = "nowrap";
+  el.style.maxWidth = "90vw";
+  el.style.textAlign = "center";
   el.style.display = "block";
-  setTimeout(() => { el.style.display = "none"; }, 2000);
+  
+  if (timerCanhBaoBTP) clearTimeout(timerCanhBaoBTP);
+  timerCanhBaoBTP = setTimeout(() => { 
+    if (el) el.style.display = "none"; 
+  }, 2000);
 }
 
 async function khoiPhucBTP(state) {

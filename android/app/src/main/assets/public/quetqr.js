@@ -91,6 +91,7 @@ async function batDauQuetQR() {
   }
 
   dangQuetQR = true;
+  window.dangQuetQR = true;
 
   document.getElementById("form-chon").style.display = "none";
   document.getElementById("cam-box").style.display = "block";
@@ -138,9 +139,16 @@ window.batDauQuet = batDauQuetQR;
 // ── Xử lý dữ liệu khi quét được mã QR ──────────────────────────────
 function khiQuetDuocMaQR(result) {
   if (!result || !dangQuetQR) return;
-  const rawText = typeof result.getText === "function" ? result.getText() : String(result);
-  const data = typeof parseQRText === "function" ? parseQRText(rawText) : null;
-  if (!data || !data.id || !data.msp) return;
+  const rawText = (typeof result.getText === "function" ? result.getText() : String(result || "")).trim();
+  if (!rawText) return;
+  const parsed = typeof parseQRText === "function" ? parseQRText(rawText) : null;
+  const data = (parsed && parsed.id) ? parsed : {
+    id: rawText,
+    msp: rawText,
+    qc: rawText,
+    kg: 0
+  };
+  if (!data || !data.id) return;
 
   const keyQR = (data.id || "").toLowerCase();
   const elCheck = document.getElementById("qr-cho-phep-trung-cam");
@@ -160,8 +168,9 @@ function khiQuetDuocMaQR(result) {
     if (typeof phatVibrateError === "function") phatVibrateError();
     else if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
 
-    // Hiện popup thông báo màu đỏ nổi bật khi quét trùng
-    showCanhBaoQR("⚠️ Trùng mã! Mã " + data.id + " đã quét rồi.", "error");
+    // Hiện popup thông báo màu đỏ nổi bật khi quét trùng: Đã quét + thời gian trong 2s
+    const gioQuet = typeof dinhDangGioQuetTrung === "function" ? dinhDangGioQuetTrung(trung.thoiGian) : "";
+    showCanhBaoQR("Đã quét " + gioQuet, "error");
 
     const vc = document.querySelector("#cam-box .video-container");
     if (vc) {
@@ -196,6 +205,7 @@ function khiQuetDuocMaQR(result) {
   const lockStatusEl = document.getElementById("qr-lock-status");
   if (lockStatusEl) lockStatusEl.innerHTML = '<i class="ti ti-check-double" style="color:var(--success)"></i> ' + data.id;
 }
+window.khiQuetDuocMaQR = khiQuetDuocMaQR;
 
 // ── Nhập tay mã thủ công ───────────────────────────────────────────
 function nhapThuCongQR() {
@@ -213,8 +223,10 @@ function nhapThuCongQR() {
   const elCheck = document.getElementById("qr-cho-phep-trung-cam");
   const choPhepTrung = elCheck ? elCheck.checked : false;
 
-  if (!choPhepTrung && phienQuetQR.some(r => r.id === id)) {
-    showCanhBaoQR("⚠️ Trùng mã! Mã " + id + " đã quét rồi.", "error");
+  const trung = phienQuetQR.find(r => r.id === id);
+  if (!choPhepTrung && trung) {
+    const gioQuet = typeof dinhDangGioQuetTrung === "function" ? dinhDangGioQuetTrung(trung.thoiGian) : "";
+    showCanhBaoQR("Đã quét " + gioQuet, "error");
     if (typeof phatVibrateError === "function") phatVibrateError();
     return;
   }
@@ -241,6 +253,7 @@ window.nhapThuCongQR = nhapThuCongQR;
 // ── Dừng / Tiếp tục Camera ─────────────────────────────────────────
 function dungQuetQR() {
   dangQuetQR = false;
+  window.dangQuetQR = false;
   if (zxingReaderQR) {
     dungCameraFast("reader", zxingReaderQR);
     zxingReaderQR = null;
@@ -414,6 +427,7 @@ function xemKetQuaQuetQR() {
   dungQuetQR();
   hienKetQuaQuetQR();
   luuPhienDoDangQR();
+  luuVaoLichSuQR();
 }
 window.xemKetQuaQuetQR = xemKetQuaQuetQR;
 
@@ -812,7 +826,8 @@ function xuatExcelPhienLichSuQR(idPhien) {
 }
 window.xuatExcelPhienLichSuQR = xuatExcelPhienLichSuQR;
 
-// ── Hiển thị Cảnh Báo Popup (Đỏ / Xanh) ─────────────────────────────
+// ── Hiển thị Cảnh Báo Popup (Đỏ / Xanh) trong 2s ───────────────────
+let timerCanhBaoQR = null;
 function showCanhBaoQR(text, type = "error") {
   const el = document.getElementById("canh-bao");
   if (!el) return;
@@ -838,12 +853,16 @@ function showCanhBaoQR(text, type = "error") {
   el.style.top = "75px";
   el.style.left = "50%";
   el.style.transform = "translateX(-50%)";
-  el.style.zIndex = "99999";
+  el.style.zIndex = "999999";
+  el.style.whiteSpace = "nowrap";
+  el.style.maxWidth = "90vw";
+  el.style.textAlign = "center";
   el.style.display = "block";
 
-  setTimeout(() => {
+  if (timerCanhBaoQR) clearTimeout(timerCanhBaoQR);
+  timerCanhBaoQR = setTimeout(() => {
     el.style.display = "none";
-  }, 2200);
+  }, 2000);
 }
 
 // ── Khởi chạy khi tải trang ────────────────────────────────────────

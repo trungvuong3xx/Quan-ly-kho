@@ -45,9 +45,11 @@ async function batDauKiemKe() {
       }
       if (!id) return;
 
-      // Kiểm tra trùng
-      if (dsQuetKiemKe.includes(id)) {
-        showCanhBaoKK("Mã " + id + " đã quét rồi");
+      // Kiểm tra trùng: Đã quét + thời gian trong 2s
+      const trungKK = dsChiTietQuetKK.find(r => r.id === id);
+      if (dsQuetKiemKe.includes(id) || trungKK) {
+        const gioQuet = typeof dinhDangGioQuetTrung === "function" ? dinhDangGioQuetTrung(trungKK ? trungKK.thoiGian : null) : "";
+        showCanhBaoKK("Đã quét " + gioQuet, "error");
         if (typeof phatVibrateError === "function") phatVibrateError();
         else if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
         const v = document.getElementById("kk-reader");
@@ -73,7 +75,7 @@ async function batDauKiemKe() {
       const ten = info.success ? info.ten : "—";
       const mau = info.success ? (info.mau || "—") : "—";
 
-      const itemRec = { id, msp, ten, mau, ngay: ngayKiemKe };
+      const itemRec = { id, msp, ten, mau, ngay: ngayKiemKe, thoiGian: new Date() };
       batch.push(itemRec);
       dsChiTietQuetKK.push(itemRec);
 
@@ -158,12 +160,42 @@ function xuatExcelKiemKe() {
 }
 window.xuatExcelKiemKe = xuatExcelKiemKe;
 
-function showCanhBaoKK(text) {
+let timerCanhBaoKK = null;
+function showCanhBaoKK(text, type = "error") {
   const el = document.getElementById("canh-bao");
   if (!el) return;
   el.textContent = text;
+  
+  if (type === "success") {
+    el.style.background = "linear-gradient(135deg, #10b981, #059669)";
+    el.style.boxShadow = "0 8px 24px rgba(16, 185, 129, .4)";
+    el.style.border = "1px solid #34d399";
+  } else {
+    // Popup cảnh báo màu đỏ rực rỡ nổi bật
+    el.style.background = "linear-gradient(135deg, #ef4444, #dc2626)";
+    el.style.boxShadow = "0 8px 24px rgba(220, 38, 38, .5)";
+    el.style.border = "1px solid #f87171";
+  }
+  
+  el.style.color = "#ffffff";
+  el.style.fontSize = "14px";
+  el.style.fontWeight = "700";
+  el.style.padding = "12px 22px";
+  el.style.borderRadius = "14px";
+  el.style.position = "fixed";
+  el.style.top = "75px";
+  el.style.left = "50%";
+  el.style.transform = "translateX(-50%)";
+  el.style.zIndex = "999999";
+  el.style.whiteSpace = "nowrap";
+  el.style.maxWidth = "90vw";
+  el.style.textAlign = "center";
   el.style.display = "block";
-  setTimeout(() => { el.style.display = "none"; }, 2000);
+  
+  if (timerCanhBaoKK) clearTimeout(timerCanhBaoKK);
+  timerCanhBaoKK = setTimeout(() => { 
+    if (el) el.style.display = "none"; 
+  }, 2000);
 }
 
 window.addEventListener("load", function() {

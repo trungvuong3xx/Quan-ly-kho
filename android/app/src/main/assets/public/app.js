@@ -323,6 +323,7 @@ function chuyenTrangKhongNav(id) {
   }
   const page = document.getElementById(id);
   if (page) page.classList.add("active");
+  if (id === "lichSuQuetQR" && typeof renderLichSuQR === "function") renderLichSuQR();
 }
 window.chuyenTrangKhongNav = chuyenTrangKhongNav;
 
@@ -443,10 +444,30 @@ function showLoading(show) {
 let animFrameMap = {};
 const lastCameraCallbackMap = {};
 const cameraSleepTimerMap = {};
+const cameraSleepingMap = {};
+const cameraWakingUpMap = {};
 const CAMERA_IDLE_TIMEOUT_MS = 60000; // 60 giây không quét & không chạm -> tự ngủ để máy mát và tiết kiệm pin
 
 // Lắng nghe tương tác người dùng 1 lần duy nhất ở cấp document (ngăn rò rỉ listener khi camera ngủ/thức nhiều lần)
 function onGlobalCameraInteraction() {
+  // 1. Nếu có camera của trang đang hiển thị đang ở chế độ ngủ -> Đánh thức ngay lập tức!
+  for (const vid of ['reader', 'kk-reader', 'cx1-reader', 'btp-reader']) {
+    if (cameraSleepingMap[vid]) {
+      const pageMap = {
+        'reader': 'quetQR',
+        'kk-reader': 'kiemKe',
+        'cx1-reader': 'chiFor',
+        'btp-reader': 'btpPage'
+      };
+      const pageEl = document.getElementById(pageMap[vid]);
+      if (pageEl && pageEl.classList.contains('active')) {
+        danhThucCamera(vid);
+        return;
+      }
+    }
+  }
+
+  // 2. Nếu camera đang thức -> gia hạn thêm 60 giây
   for (const vid in cameraSleepTimerMap) {
     if (cameraSleepTimerMap[vid]) {
       resetSleepTimerCamera(vid);
@@ -461,40 +482,125 @@ function hienSleepOverlayCamera(videoId) {
   const container = videoEl ? videoEl.parentElement : null;
   if (!container) return;
 
+  cameraSleepingMap[videoId] = true;
+
   let overlay = document.getElementById(videoId + "-sleep-overlay");
   if (!overlay) {
     overlay = document.createElement("div");
     overlay.id = videoId + "-sleep-overlay";
     overlay.className = "cam-sleep-overlay";
-    overlay.innerHTML = `
-      <div class="cam-sleep-card">
-        <i class="ti ti-moon-stars" style="font-size:36px; color:var(--brass); margin-bottom:8px;"></i>
-        <div style="font-weight:800; font-size:15px; color:var(--cream); margin-bottom:4px;">Camera đang tạm nghỉ</div>
-        <div style="font-size:12px; color:var(--cream-soft); margin-bottom:12px;">Tạm ngắt cảm biến để máy mát & tiết kiệm pin</div>
-        <div class="btn btn-blue" style="padding:6px 18px; font-size:13px; font-weight:700; border-radius:20px; display:inline-flex; align-items:center; gap:6px;">
-          <i class="ti ti-hand-finger"></i> Chạm để quét tiếp
-        </div>
-      </div>
-    `;
-    overlay.onclick = (e) => {
-      e.stopPropagation();
-      danhThucCamera(videoId);
-    };
     container.appendChild(overlay);
   }
+
+  overlay.innerHTML = `
+    <div class="cam-sleep-card">
+      <i class="ti ti-moon-stars" style="font-size:36px; color:var(--brass); margin-bottom:8px;"></i>
+      <div style="font-weight:800; font-size:15px; color:var(--cream); margin-bottom:4px;">Camera đang tạm nghỉ</div>
+      <div style="font-size:12px; color:var(--cream-soft); margin-bottom:12px;">Tạm ngắt cảm biến để máy mát & tiết kiệm pin</div>
+      <div class="btn btn-blue" style="padding:6px 18px; font-size:13px; font-weight:700; border-radius:20px; display:inline-flex; align-items:center; gap:6px;">
+        <i class="ti ti-hand-finger"></i> Chạm để quét tiếp
+      </div>
+    </div>
+  `;
+
+  // Bắt cả touchstart, pointerdown và click với preventDefault/stopPropagation để không bị hủy event trên mobile
+  const handleWakeup = (e) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    danhThucCamera(videoId);
+  };
+
+  overlay.onpointerdown = handleWakeup;
+  overlay.ontouchstart = handleWakeup;
+  overlay.onclick = handleWakeup;
+
   overlay.style.display = "flex";
 }
 
 function anSleepOverlayCamera(videoId) {
   const overlay = document.getElementById(videoId + "-sleep-overlay");
-  if (overlay) overlay.style.display = "none";
+  if (overlay) {
+    overlay.style.display = "none";
+  }
+}
+
+function choCameraNgu(videoId) {
+  const videoEl = document.getElementById(videoId);
+  if (!videoEl || !videoEl.srcObject) return;
+
+  cameraSleepingMap[videoId] = true;
+
+  if (cameraSleepTimerMap[videoId]) {
+    clearTimeout(cameraSleepTimerMap[videoId]);
+    cameraSleepTimerMap[videoId] = null;
+  }
+
+  if (animFrameMap[videoId]) {
+    clearTimeout(animFrameMap[videoId]);
+    animFrameMap[videoId] = null;
+  }
+
+  // Giải phóng phần cứng camera để máy mát và tiết kiệm pin
+  try {
+    videoEl.srcObject.getTracks().forEach(t => { try { t.stop(); } catch (e) {} });
+    videoEl.srcObject = null;
+  } catch (e) {}
+
+  hienSleepOverlayCamera(videoId);
 }
 
 async function danhThucCamera(videoId) {
-  anSleepOverlayCamera(videoId);
-  const cb = lastCameraCallbackMap[videoId];
-  await khoiPhucCamera(videoId, cb);
-  resetSleepTimerCamera(videoId);
+  if (cameraWakingUpMap[videoId]) return;
+  cameraWakingUpMap[videoId] = true;
+
+  // Hiển thị trạng thái đang kết nối trên overlay để người dùng có phản hồi trực quan
+  const overlay = document.getElementById(videoId + "-sleep-overlay");
+  if (overlay) {
+    overlay.innerHTML = `
+      <div class="cam-sleep-card">
+        <i class="ti ti-loader spin" style="font-size:36px; color:var(--brass); margin-bottom:8px;"></i>
+        <div style="font-weight:800; font-size:15px; color:var(--cream); margin-bottom:4px;">Đang bật lại camera...</div>
+        <div style="font-size:12px; color:var(--cream-soft);">Vui lòng chờ trong giây lát</div>
+      </div>
+    `;
+    overlay.style.display = "flex";
+  }
+
+  try {
+    let cb = lastCameraCallbackMap[videoId];
+    if (!cb) {
+      if (videoId === 'reader') {
+        cb = (txt) => { if (txt && window.dangQuetQR && typeof window.khiQuetDuocMaQR === 'function') window.khiQuetDuocMaQR({ getText: () => txt }); };
+      } else if (videoId === 'cx1-reader') {
+        cb = (txt) => { if (txt && window.dangQuetCX1 && typeof window.khiQuetDuocMa === 'function') window.khiQuetDuocMa({ getText: () => txt }); };
+      } else if (videoId === 'btp-reader') {
+        cb = (txt) => { if (txt && window.dangQuetBTP && typeof window.khiQuetDuocMaBTP === 'function') window.khiQuetDuocMaBTP({ getText: () => txt }); };
+      }
+    }
+
+    await khoiPhucCamera(videoId, cb);
+    cameraSleepingMap[videoId] = false;
+    anSleepOverlayCamera(videoId);
+    resetSleepTimerCamera(videoId);
+  } catch (err) {
+    console.error("Lỗi đánh thức camera:", err);
+    if (overlay) {
+      overlay.innerHTML = `
+        <div class="cam-sleep-card">
+          <i class="ti ti-alert-triangle" style="font-size:36px; color:var(--red); margin-bottom:8px;"></i>
+          <div style="font-weight:800; font-size:15px; color:var(--cream); margin-bottom:4px;">Không thể bật camera</div>
+          <div style="font-size:12px; color:var(--cream-soft); margin-bottom:12px;">Chạm vào đây để thử lại</div>
+          <div class="btn btn-blue" style="padding:6px 18px; font-size:13px; font-weight:700; border-radius:20px;">
+            <i class="ti ti-reload"></i> Thử lại
+          </div>
+        </div>
+      `;
+    }
+  } finally {
+    cameraWakingUpMap[videoId] = false;
+  }
 }
 window.danhThucCamera = danhThucCamera;
 
@@ -503,13 +609,11 @@ function resetSleepTimerCamera(videoId) {
     clearTimeout(cameraSleepTimerMap[videoId]);
     cameraSleepTimerMap[videoId] = null;
   }
+  cameraSleepingMap[videoId] = false;
   anSleepOverlayCamera(videoId);
 
   cameraSleepTimerMap[videoId] = setTimeout(() => {
-    const videoEl = document.getElementById(videoId);
-    if (!videoEl || !videoEl.srcObject) return;
-    dungCameraFast(videoId, null);
-    hienSleepOverlayCamera(videoId);
+    choCameraNgu(videoId);
   }, CAMERA_IDLE_TIMEOUT_MS);
 }
 window.resetSleepTimerCamera = resetSleepTimerCamera;
@@ -799,6 +903,10 @@ async function khoiTaoCameraFast(videoId, onDecodedCallback) {
 
     // Cơ chế chống kẹt khung play & Reset Sleep Timer khi người dùng chạm vào màn hình
     const onUserInteraction = () => {
+      if (cameraSleepingMap[videoId]) {
+        danhThucCamera(videoId);
+        return;
+      }
       if (videoEl && videoEl.srcObject && videoEl.paused) {
         videoEl.play().catch(() => {});
       }
@@ -934,6 +1042,8 @@ async function khoiTaoCameraFast(videoId, onDecodedCallback) {
 }
 
 function dungCameraFast(videoId, zxingReaderObj) {
+  cameraSleepingMap[videoId] = false;
+  cameraWakingUpMap[videoId] = false;
   if (cameraSleepTimerMap[videoId]) {
     clearTimeout(cameraSleepTimerMap[videoId]);
     cameraSleepTimerMap[videoId] = null;
@@ -1400,14 +1510,19 @@ async function khoiPhucCamera(videoId, fallbackCb) {
   const cb = lastCameraCallbackMap[videoId] || fallbackCb;
   if (!cb) return;
 
-  // 1. Dừng sạch luồng cũ và giải phóng timer cũ
-  dungCameraFast(videoId, null);
+  // 1. Chỉ dừng luồng cũ nếu nó còn đang chạy (nếu đã sleep thì srcObject đã là null)
+  if (videoEl.srcObject) {
+    dungCameraFast(videoId, null);
+    await new Promise(r => setTimeout(r, 200));
+  }
 
-  // 2. Nghỉ 250ms cho Camera HAL của Android giải phóng cảm biến
-  await new Promise(r => setTimeout(r, 250));
-
-  // 3. Khởi tạo lại camera và kích hoạt lại vòng lặp quét mới
-  await khoiTaoCameraFast(videoId, cb);
+  // 2. Khởi tạo lại camera và kích hoạt lại vòng lặp quét mới
+  const reader = await khoiTaoCameraFast(videoId, cb);
+  if (videoId === 'reader') window.zxingReaderQR = reader;
+  else if (videoId === 'cx1-reader') window.zxingReaderCX1 = reader;
+  else if (videoId === 'btp-reader') window.zxingReaderBTP = reader;
+  else if (videoId === 'kk-reader') window.zxingReaderKK = reader;
+  return reader;
 }
 
 // ── Tự động quản lý vòng đời Camera khi ẩn/mở lại app (Triệt tiêu 100% hiện tượng đứng hình) ──
@@ -1416,7 +1531,7 @@ function triggerResumeCamera() {
   clearTimeout(resumeCameraTimer);
   resumeCameraTimer = setTimeout(async () => {
     const camBoxes = [
-      { pageId: 'quetQR', vid: 'reader', box: 'cam-box', fallback: (txt) => { if (typeof xuLyMaQuet === 'function') xuLyMaQuet(txt); } },
+      { pageId: 'quetQR', vid: 'reader', box: 'cam-box', fallback: (txt) => { if (txt && window.dangQuetQR && typeof window.khiQuetDuocMaQR === 'function') window.khiQuetDuocMaQR({ getText: () => txt }); } },
       { pageId: 'kiemKe', vid: 'kk-reader', box: 'kk-cam', fallback: (txt) => { if (typeof xuLyMaKiemKe === 'function') xuLyMaKiemKe(txt); } },
       { pageId: 'chiFor', vid: 'cx1-reader', box: 'cx1-cam', fallback: (txt) => { if (txt && window.dangQuetCX1 && typeof window.khiQuetDuocMa === 'function') window.khiQuetDuocMa({ getText: () => txt }); } },
       { pageId: 'btpPage', vid: 'btp-reader', box: 'btp-cam', fallback: (txt) => { if (txt && window.dangQuetBTP && typeof window.khiQuetDuocMaBTP === 'function') window.khiQuetDuocMaBTP({ getText: () => txt }); } }
@@ -1581,3 +1696,66 @@ function xuLyFilePhucHoiDuLieu(event) {
   reader.readAsText(file);
 }
 window.xuLyFilePhucHoiDuLieu = xuLyFilePhucHoiDuLieu;
+
+// ── Hàm định dạng giờ quét trùng chuẩn HH:mm:ss ─────────────────────────────
+function dinhDangGioQuetTrung(tg) {
+  if (!tg) {
+    const now = new Date();
+    return String(now.getHours()).padStart(2, '0') + ':' +
+           String(now.getMinutes()).padStart(2, '0') + ':' +
+           String(now.getSeconds()).padStart(2, '0');
+  }
+  if (typeof tg === 'string' && /^\d{2}:\d{2}:\d{2}$/.test(tg.trim())) {
+    return tg.trim();
+  }
+  const d = (tg instanceof Date) ? tg : new Date(tg);
+  if (isNaN(d.getTime())) {
+    const now = new Date();
+    return String(now.getHours()).padStart(2, '0') + ':' +
+           String(now.getMinutes()).padStart(2, '0') + ':' +
+           String(now.getSeconds()).padStart(2, '0');
+  }
+  const hh = String(d.getHours()).padStart(2, '0');
+  const mm = String(d.getMinutes()).padStart(2, '0');
+  const ss = String(d.getSeconds()).padStart(2, '0');
+  return hh + ':' + mm + ':' + ss;
+}
+window.dinhDangGioQuetTrung = dinhDangGioQuetTrung;
+
+// ── Hàm hiển thị Popup Cảnh Báo chung (Đỏ 2s khi quét trùng/lỗi) ────────────
+let timerCanhBaoGlobal = null;
+function showCanhBao(text, type = "error") {
+  const el = document.getElementById("canh-bao");
+  if (!el) return;
+  el.textContent = text;
+  if (type === "success") {
+    el.style.background = "linear-gradient(135deg, #10b981, #059669)";
+    el.style.boxShadow = "0 8px 24px rgba(16, 185, 129, .4)";
+    el.style.border = "1px solid #34d399";
+  } else {
+    // Đỏ rực rỡ nổi bật
+    el.style.background = "linear-gradient(135deg, #ef4444, #dc2626)";
+    el.style.boxShadow = "0 8px 24px rgba(220, 38, 38, .5)";
+    el.style.border = "1px solid #f87171";
+  }
+  el.style.color = "#ffffff";
+  el.style.fontSize = "14px";
+  el.style.fontWeight = "700";
+  el.style.padding = "12px 22px";
+  el.style.borderRadius = "14px";
+  el.style.position = "fixed";
+  el.style.top = "75px";
+  el.style.left = "50%";
+  el.style.transform = "translateX(-50%)";
+  el.style.zIndex = "999999";
+  el.style.whiteSpace = "nowrap";
+  el.style.maxWidth = "90vw";
+  el.style.textAlign = "center";
+  el.style.display = "block";
+
+  if (timerCanhBaoGlobal) clearTimeout(timerCanhBaoGlobal);
+  timerCanhBaoGlobal = setTimeout(() => {
+    if (el) el.style.display = "none";
+  }, 2000);
+}
+window.showCanhBao = showCanhBao;

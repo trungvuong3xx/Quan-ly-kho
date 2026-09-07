@@ -126,8 +126,9 @@ function khiQuetDuocMa(result) {
     if (typeof phatVibrateError === "function") phatVibrateError();
     else if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
 
-    // Hiện popup thông báo màu đỏ nổi bật khi quét trùng
-    showCanhBaoCX1("⚠️ Trùng mã! Mã " + data.id + " đã quét rồi.", "error");
+    // Hiện popup thông báo màu đỏ nổi bật khi quét trùng: Đã quét + thời gian trong 2s
+    const gioQuet = typeof dinhDangGioQuetTrung === "function" ? dinhDangGioQuetTrung(trung.thoiGian) : "";
+    showCanhBaoCX1("Đã quét " + gioQuet, "error");
 
     const vc = document.querySelector("#cx1-cam .video-container");
     if (vc) {
@@ -737,7 +738,7 @@ function showCanhBaoCX1(text, type = "error") {
   if (timerCanhBaoCX1) clearTimeout(timerCanhBaoCX1);
   timerCanhBaoCX1 = setTimeout(() => { 
     if (el) el.style.display = "none"; 
-  }, 2200);
+  }, 2000);
 }
 
 // Khôi phục lại 1 phiên Chỉ For đã lưu (từ banner "Phiên dở dang" ở Trang chủ,
