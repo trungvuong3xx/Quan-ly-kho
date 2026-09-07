@@ -36,11 +36,15 @@ Project-level behavioral and tooling guidelines.
 
 ## BỘ QUY TẮC CỐ ĐỊNH BẤT DI BẤT DỊCH (BẢO VỆ DỰ ÁN)
 
-### 1. Cấu hình Android & Build APK (`build.gradle`):
-- **TUYỆT ĐỐI KHÔNG DÙNG Java 21 Bytecode**: `sourceCompatibility` và `targetCompatibility` PHẢI LUÔN LÀ `JavaVersion.VERSION_17`. Java 21 khiến hệ điều hành Android 14 (API 34) trên máy K20 Pro bị treo vô tận ở màn hình "Đang cài đặt" do trình biên dịch AOT (`dex2oat`) không phân tích được opcode.
-- **TỰ ĐỘNG TĂNG `versionCode`**: Mỗi khi có thay đổi code đẩy lên Git để build APK, `versionCode` PHẢI TĂNG LÊN (2, 3, 4...) để Android nhận diện là bản nâng cấp và cho phép **CÀI ĐÈ (Update in-place)**.
-- **CHỮ KÝ BẮT BUỘC**: Luôn dùng file `debug.keystore` cố định trong repo kèm `v1SigningEnabled true` và `v2SigningEnabled true`.
+### 1. Cấu hình Android & Build APK (TUYỆT ĐỐI KHÔNG DÙNG JAVA 21):
+- **CI WORKFLOW (`.github/workflows/build-apk.yml`)**: BẮT BUỘC `Setup Java 17` (`distribution: 'temurin'`, `java-version: 17`). TUYỆT ĐỐI CẤM dùng Java 21 runner!
+- **GRADLE COMPILATION (`android/app/build.gradle`)**: `sourceCompatibility` và `targetCompatibility` PHẢI LUÔN LÀ `JavaVersion.VERSION_17`.
+- **SUBPROJECTS & CAPACITOR (`android/build.gradle`)**: PHẢI CÓ khối `subprojects { afterEvaluate { project.android { compileOptions { sourceCompatibility = JavaVersion.VERSION_17; targetCompatibility = JavaVersion.VERSION_17 } } } }` để ép `:capacitor-android` không dùng Java 21!
+- **NGUYÊN NHÂN KỸ THUẬT**: Java 21 sinh ra opcode mà trình biên dịch AOT (`dex2oat`) trên Android 14 (API 34 - Redmi K20 Pro) không phân tích được, gây treo vô tận ở màn hình "Đang cài đặt".
+- **TỰ ĐỘNG TĂNG `versionCode`**: Mỗi khi có thay đổi code đẩy lên Git để build APK, `versionCode` PHẢI TĂNG LÊN (1, 2, 3, 4, 5...) để Android nhận diện là bản nâng cấp và cho phép **CÀI ĐÈ (Update in-place)**.
+- **CHỮ KÝ CỐ ĐỊNH**: Luôn dùng file `debug.keystore` cố định trong repo kèm `v1SigningEnabled true` và `v2SigningEnabled true` cho cả Debug và Release.
 - **TUYỆT ĐỐI KHÔNG KHUYÊN NGƯỜI DÙNG GỠ CÀI ĐẶT**: Gỡ app sẽ làm xóa sạch toàn bộ dữ liệu quét kho trong `localStorage`. Luôn đảm bảo APK mới cài đè được lên bản cũ.
+- **CHỐT CHẶN TỰ ĐỘNG**: Trong `build-web.js` đã có hàm `kiemTraQuyTacBuild()` tự động quét chặn `npm run build` nếu phát hiện Java 21 hoặc thiếu cấu hình trên.
 
 ### 2. Camera & Cảm biến (K20 Pro & Snapdragon 855):
 - **KHÔNG mở camera trước**: Luôn lọc và mở Camera 0 (Sony 48MP AF). Cấm dùng fallback `{ video: true }` để motor thò thụt không bao giờ nhảy lên gây lỗi Calibrate.
