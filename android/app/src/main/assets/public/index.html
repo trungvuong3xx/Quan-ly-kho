@@ -8,6 +8,7 @@
   <link rel="stylesheet" href="lib/tabler-icons.min.css">
   <script src="lib/qrcode.min.js" defer></script>
   <script src="lib/zxing.min.js" defer></script>
+  <script src="lib/db.js"></script>
 <link rel="manifest" href="manifest.json">
 <link rel="icon" type="image/png" sizes="64x64" href="favicon.png">
 <meta name="theme-color" content="#141b17">
@@ -173,10 +174,12 @@
 <div class="header" id="header" style="display:flex;">
   <div class="header-left">
     <div class="header-greeting" id="header-greeting">Xin chào, Admin</div>
-    <div class="title" id="header-title">Trung Vương</div>
+    <div class="title" id="header-title" onclick="moModalHopDen()" style="cursor:pointer;" title="Chạm để mở Hộp Đen Chẩn Đoán">Trung Vương</div>
   </div>
-  <div class="header-right" style="display:flex; gap:12px; align-items:center;">
-    
+  <div class="header-right" style="display:flex; gap:8px; align-items:center;">
+    <button class="theme-toggle" id="btn-hopden" onclick="moModalHopDen()" title="Hộp Đen Chẩn Đoán">
+      <i class="ti ti-activity-heartbeat" style="color:var(--primary);"></i>
+    </button>
     <button class="theme-toggle" id="btn-theme" title="Chuyển Sáng/Tối">
       <i class="ti ti-moon"></i>
     </button>
@@ -314,6 +317,9 @@
     </div>
 
     <div class="section-title"><i class="ti ti-device-floppy" style="color:var(--primary)"></i> Sao Lưu & Bảo Toàn Dữ Liệu</div>
+    <div id="auto-backup-status" style="margin: 0 24px 8px; font-size: 11px; color: var(--text-muted); display: flex; align-items: center; gap: 6px;">
+      ☁️ Tự động sao lưu: Đang khởi tạo...
+    </div>
     <div class="dashboard-grid">
       <div class="grid-card" onclick="saoLuuDuLieuToanBo()">
         <div class="grid-icon" style="background: linear-gradient(135deg, #10b981, #059669);"><i class="ti ti-download"></i></div>
@@ -325,16 +331,26 @@
       </div>
     </div>
     <input type="file" id="input-phuc-hoi-du-lieu" accept=".json" style="display:none" onchange="xuLyFilePhucHoiDuLieu(event)">
+
+    <!-- Danh sách Snapshot tự động cục bộ trong IndexedDB -->
+    <div style="margin: 0 24px 20px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+        <span style="font-size:12px; font-weight:700; color:var(--brass);"><i class="ti ti-history"></i> BẢN SAO LƯU TỰ ĐỘNG (INDEXEDDB)</span>
+        <button class="btn btn-blue" style="padding:2px 8px; font-size:11px; margin:0;" onclick="renderDanhSachSnapshotsCucBo()" title="Làm mới danh sách"><i class="ti ti-refresh"></i></button>
+      </div>
+      <div id="danh-sach-snapshot-cuc-bo"></div>
+    </div>
   </div>
 </div>
 
 
 <div id="lichSu" class="page">
   <div class="card">
-    <h3>Lịch Sử Chỉ For</h3>
+    <h3>Lịch Sử Chỉ X1</h3>
+    <input type="text" id="lichsu-cx1-tim" placeholder="Tìm theo ngày hoặc quy cách..." autocomplete="off" oninput="renderLichSuCX1()" style="margin-bottom:12px">
     <div id="lichsu-list"></div>
-    <button class="btn btn-excel btn-full mt-3" onclick="xuatExcelLichSuCX1()"><i class="ti ti-file-spreadsheet"></i> Xuất File Excel Lịch Sử</button>
-    
+    <button class="btn btn-excel btn-full mt-3" onclick="xuatExcelLichSuCX1()"><i class="ti ti-file-spreadsheet"></i> Xuất File Excel Lịch Sử X1</button>
+    <button class="btn btn-red btn-full" style="margin-top:8px" onclick="xoaTatCaLichSuCX1()">Xóa tất cả lịch sử</button>
   </div>
 </div>
 
@@ -509,6 +525,7 @@
               <th style="padding:10px; border-bottom:2px solid var(--line); text-align:left">QC</th>
               <th style="padding:10px; border-bottom:2px solid var(--line); text-align:center">Bao</th>
               <th style="padding:10px; border-bottom:2px solid var(--line); text-align:right">KG</th>
+              <th style="padding:10px; border-bottom:2px solid var(--line); text-align:center; width:65px">Thao tác</th>
             </tr>
           </thead>
           <tbody id="qr-tbody-dot"></tbody>
@@ -543,12 +560,11 @@
 
 <div id="lichSuQuetQR" class="page">
   <div class="card">
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-      <h3 style="margin:0">Lịch Sử Quét QR</h3>
-      <button class="btn btn-red" style="padding:6px 12px; font-size:13px;" onclick="xoaTatCaLichSuQR()">Xóa tất cả</button>
-    </div>
-    <input type="text" id="lichsu-qr-tim" placeholder="Tìm theo ngày, loại, mã..." oninput="renderLichSuQR()" style="margin-bottom:12px">
+    <h3>Lịch Sử Quét QR</h3>
+    <input type="text" id="lichsu-qr-tim" placeholder="Tìm theo ngày hoặc quy cách..." autocomplete="off" oninput="renderLichSuQR()" style="margin-bottom:12px">
     <div id="lichsu-qr-list"></div>
+    <button class="btn btn-excel btn-full mt-3" onclick="xuatExcelLichSuQR()"><i class="ti ti-file-spreadsheet"></i> Xuất File Excel Lịch Sử Quét QR</button>
+    <button class="btn btn-red btn-full" style="margin-top:8px" onclick="xoaTatCaLichSuQR()">Xóa tất cả lịch sử</button>
   </div>
 </div>
 
@@ -645,6 +661,7 @@
               <th style="padding:10px; border-bottom:2px solid var(--line); text-align:left">QC</th>
               <th style="padding:10px; border-bottom:2px solid var(--line); text-align:center">Bao</th>
               <th style="padding:10px; border-bottom:2px solid var(--line); text-align:right">KG</th>
+              <th style="padding:10px; border-bottom:2px solid var(--line); text-align:center; width:65px">Thao tác</th>
             </tr>
           </thead>
           <tbody id="cx1-tbody-dot"></tbody>
@@ -669,9 +686,14 @@
       </div>
     </div>
 
-    <button class="btn btn-green btn-full" onclick="quetTiepCX1()">Quét tiếp</button>
-    <button class="btn btn-blue btn-full mt-2" onclick="quetMoiCX1()">Quét mới</button>
-    <button class="btn btn-full bg-neutral-solid text-cream mt-2" onclick="xuatCSVCX1()">Xuất CSV</button>
+    <button id="btn-gui-dulieu-cx1" class="btn" style="width:100%; height:42px; font-size:14px; font-weight:700; margin:0 0 8px 0; background:linear-gradient(135deg, #f59e0b, #d97706); color:#1a1a2e; border:none; box-shadow:0 4px 12px rgba(245,158,11,0.4);" onclick="guiDuLieuCX1()"><i class="ti ti-cloud-upload"></i> Gửi dữ liệu lên Sheet</button>
+    <div style="display:flex; gap:8px; margin-bottom:8px;">
+      <button class="btn btn-green" style="flex:1; height:38px; font-size:13px; margin:0;" onclick="quetTiepCX1()">Quét tiếp</button>
+      <button class="btn btn-blue" style="flex:1; height:38px; font-size:13px; margin:0;" onclick="quetMoiCX1()">Quét mới</button>
+    </div>
+    <div style="display:flex; gap:8px;">
+      <button class="btn btn-excel btn-full" style="height:38px; font-size:13px; margin:0;" onclick="xuatExcelCX1()"><i class="ti ti-file-spreadsheet"></i> Xuất Excel</button>
+    </div>
   </div>
 </div>
 
@@ -817,13 +839,11 @@
 
 <div id="lichSuBTP" class="page">
   <div class="card">
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-      <h3 style="margin:0">Lịch Sử Quét BTP</h3>
-      <button class="btn btn-red" style="padding:6px 12px; font-size:13px;" onclick="xoaTatCaLichSuBTP()">Xóa tất cả</button>
-    </div>
-    <input type="text" id="lichsu-btp-tim" placeholder="Tìm theo ngày, mã BTP, loại..." oninput="renderLichSuBTP()" style="margin-bottom:12px">
+    <h3>Lịch Sử Quét BTP</h3>
+    <input type="text" id="lichsu-btp-tim" placeholder="Tìm theo ngày hoặc quy cách..." autocomplete="off" oninput="renderLichSuBTP()" style="margin-bottom:12px">
     <div id="lichsu-btp-list"></div>
-    
+    <button class="btn btn-excel btn-full mt-3" onclick="xuatExcelLichSuBTP()"><i class="ti ti-file-spreadsheet"></i> Xuất File Excel Lịch Sử BTP</button>
+    <button class="btn btn-red btn-full" style="margin-top:8px" onclick="xoaTatCaLichSuBTP()">Xóa tất cả lịch sử</button>
   </div>
 </div>
 
@@ -1096,6 +1116,20 @@
   </div>
 </div>
 
+<div class="overlay" id="app-overlay-prompt">
+  <div class="overlay-card" style="text-align:center;">
+    <div class="overlay-title" style="text-align:center;" id="app-prompt-tieude">Nhập thông tin</div>
+    <div style="color:var(--cream-soft);font-size:14px;margin:8px 0 14px;line-height:1.4;" id="app-prompt-noidung"></div>
+    <div style="margin-bottom:16px;">
+      <input type="text" id="app-prompt-input" style="width:100%;font-size:16px;text-align:center;padding:10px;border-radius:8px;background:var(--card-raised);color:var(--cream);border:1px solid var(--line);box-sizing:border-box;" autocomplete="off" onkeydown="if(event.key==='Enter'){event.preventDefault();dongPromptApp(true)}">
+    </div>
+    <div style="display:flex; gap:10px;">
+      <button class="btn" style="flex:1;background:var(--card-raised);color:var(--cream);border:1px solid var(--line);" onclick="dongPromptApp(false)">Hủy</button>
+      <button class="btn btn-blue" style="flex:1" onclick="dongPromptApp(true)">Xác nhận</button>
+    </div>
+  </div>
+</div>
+
 <div class="overlay" id="overlay-thoat">
   <div class="overlay-card" style="text-align:center;">
     <div class="overlay-title" style="text-align:center;">Bạn sợ à?</div>
@@ -1239,6 +1273,34 @@
 </script>
 <div id="pwa-update-toast" style="display:none; position:fixed; bottom:80px; left:50%; transform:translateX(-50%); background:var(--brass); color:var(--bg-deep); padding:10px 20px; border-radius:20px; font-weight:700; box-shadow:0 4px 12px rgba(245,158,11,0.5); z-index:9999; cursor:pointer;" onclick="window.location.reload(true);">
   🔄 Có bản cập nhật mới! Bấm để tải lại
+</div>
+
+<!-- Modal Hộp Đen Tự Chẩn Đoán & Báo Cáo Lỗi -->
+<div id="modal-hop-den" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.75); z-index:999999; justify-content:center; align-items:center; padding:16px; backdrop-filter:blur(8px);">
+  <div style="background:var(--card-raised, #161b22); border:1px solid var(--line-soft, rgba(255,255,255,0.15)); border-radius:20px; width:100%; max-width:440px; max-height:85vh; display:flex; flex-direction:column; overflow:hidden; box-shadow:0 20px 40px rgba(0,0,0,0.6);">
+    <div style="padding:14px 16px; border-bottom:1px solid var(--line, rgba(255,255,255,0.1)); display:flex; justify-content:space-between; align-items:center; background:var(--bg-body, #0f172a);">
+      <div style="font-weight:800; font-size:14px; color:var(--cream, #fff); display:flex; align-items:center; gap:8px;">
+        <i class="ti ti-activity-heartbeat" style="color:var(--primary, #3b82f6); font-size:18px;"></i>
+        <span>HỘP ĐEN & CHẨN ĐOÁN LỖI</span>
+      </div>
+      <button onclick="dongModalHopDen()" style="background:none; border:none; color:var(--cream-soft, #94a3b8); font-size:18px; cursor:pointer; padding:4px;">✕</button>
+    </div>
+    
+    <div style="padding:10px 16px; background:rgba(0,0,0,0.2); border-bottom:1px solid var(--line-soft, rgba(255,255,255,0.06));" id="hopden-system-stats"></div>
+
+    <div style="padding:12px 16px; flex:1; overflow-y:auto; min-height:160px; max-height:48vh;" id="hopden-log-list">
+      <!-- Logs render here -->
+    </div>
+
+    <div style="padding:12px 16px; border-top:1px solid var(--line, rgba(255,255,255,0.1)); display:flex; gap:8px; background:var(--bg-body, #0f172a);">
+      <button class="btn btn-blue" style="flex:2; margin:0; padding:10px; font-size:13px; font-weight:700;" onclick="saoChepBaoCaoHopDen()">
+        <i class="ti ti-copy"></i> Sao Chép Báo Cáo Lỗi
+      </button>
+      <button class="btn btn-red" style="flex:1; margin:0; padding:10px; font-size:13px;" onclick="xoaSachLogHopDen()">
+        <i class="ti ti-trash"></i> Xóa Log
+      </button>
+    </div>
+  </div>
 </div>
 
 </body>

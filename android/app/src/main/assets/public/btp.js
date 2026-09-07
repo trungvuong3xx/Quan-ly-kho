@@ -179,7 +179,7 @@ function xoaMaBTP(index, ev) {
 
   if (typeof moXacNhanApp === "function") {
     moXacNhanApp("Xóa mã " + tenMa + " khỏi phiên quét?", doXoa, "Xóa", null, "Hủy", "Xóa mã BTP");
-  } else if (confirm("Xóa mã " + tenMa + " khỏi phiên quét?")) {
+  } else {
     doXoa();
   }
 }
@@ -301,6 +301,7 @@ function luuPhienDoDangBTP() {
       phienBTP, ngayBTP, phienSoBTP, capNhat: new Date().toISOString(),
       idPhienHienTaiBTP, soLuongDaGuiHienTaiBTP, demSoDotBTP
     }));
+    if (typeof kichHoatKiemTraAutoBackup === "function") kichHoatKiemTraAutoBackup(4000);
   } catch (e) { }
   if (typeof capNhatTrangChu === "function") capNhatTrangChu();
 }
@@ -414,7 +415,7 @@ async function tiepTucBTP() {
       btpVid.play().catch(() => {});
     }
   } catch (e) {
-    alert("Lỗi camera: " + e);
+    if (typeof showCanhBaoBTP === "function") showCanhBaoBTP("Lỗi camera: " + e, "error");
     dungBTP();
   }
 }
@@ -684,7 +685,7 @@ async function quetTiepBTP() {
       btpVid.play().catch(() => {});
     }
   } catch (e) {
-    alert("Lỗi camera: " + e);
+    if (typeof showCanhBaoBTP === "function") showCanhBaoBTP("Lỗi camera: " + e, "error");
     dungBTP();
   }
 }
@@ -777,7 +778,7 @@ async function khoiPhucBTP(state) {
       btpVid.play().catch(() => {});
     }
   } catch (e) {
-    alert("Lỗi camera: " + e);
+    if (typeof showCanhBaoBTP === "function") showCanhBaoBTP("Lỗi camera: " + e, "error");
     dungBTP();
   }
 }
@@ -827,9 +828,6 @@ function xoaMotPhienLichSuBTP(idPhien, ev) {
       "Hủy",
       "Xóa phiên lịch sử"
     );
-  } else if (confirm("Xóa phiên lịch sử BTP này? Không thể hoàn tác.")) {
-    luuLichSuBTP(docLichSuBTP().filter(s => s.idPhien !== idPhien));
-    renderLichSuBTP();
   }
 }
 window.xoaMotPhienLichSuBTP = xoaMotPhienLichSuBTP;
@@ -849,9 +847,6 @@ function xoaTatCaLichSuBTP() {
       "Hủy",
       "Xóa tất cả lịch sử"
     );
-  } else if (confirm("Xóa toàn bộ " + list.length + " phiên lịch sử BTP? Không thể hoàn tác.")) {
-    luuLichSuBTP([]);
-    renderLichSuBTP();
   }
 }
 window.xoaTatCaLichSuBTP = xoaTatCaLichSuBTP;
@@ -903,11 +898,19 @@ function renderLichSuBTP() {
   container.innerHTML = list.map(function (s) {
     const gio = new Date(s.capNhatLuc).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" });
     const soDot = new Set(s.phienBTP.map(r => r.dotQuet || 1)).size;
-    return '<div class="irow" style="cursor:pointer;align-items:center" onclick="xemChiTietLichSuBTP(\'' + s.idPhien + '\')">'
-      + '<span class="ilabel" style="color:var(--cream)">' + s.ngay + ' · ' + gio + '</span>'
-      + '<span class="ivalue" style="display:inline-flex;align-items:center;gap:10px">'
-      + s.phienBTP.length + ' mã (' + soDot + ' đợt)'
-      + '<button class="cx5-del-btn" aria-label="Xóa phiên này" onclick="xoaMotPhienLichSuBTP(\'' + s.idPhien + '\', event)" style="margin-left:6px;background:none;border:none;color:var(--red);cursor:pointer;"><i class="ti ti-trash"></i></button>'
+    const daXongHet = (s.soLuongDaGui || 0) >= s.phienBTP.length && s.phienBTP.length > 0;
+    const trangThai = daXongHet
+      ? '<i class="ti ti-check cx5-trangthai-ok"></i>'
+      : '<i class="ti ti-x cx5-trangthai-mot-phan"></i>';
+
+    return '<div class="irow lichsu-row" style="cursor:pointer;align-items:center" onclick="xemChiTietLichSuBTP(\'' + s.idPhien + '\')">'
+      + '<span style="font-family:\'IBM Plex Sans\',sans-serif;color:var(--cream)">' + s.ngay + ' · ' + gio + '</span>'
+      + '<span style="font-family:\'IBM Plex Sans\',sans-serif;color:var(--cream);display:inline-flex;align-items:center;gap:10px">'
+      + soDot + ' đợt · ' + s.phienBTP.length + ' mã'
+      + '<span style="display:inline-flex;align-items:center;gap:8px;padding-left:8px;border-left:1px solid var(--line)">'
+      + trangThai
+      + '<button class="cx5-del-btn" aria-label="Xóa phiên này" onclick="xoaMotPhienLichSuBTP(\'' + s.idPhien + '\', event)"><i class="ti ti-trash"></i></button>'
+      + '</span>'
       + '</span>'
       + '</div>';
   }).join("");
@@ -966,36 +969,57 @@ window.tiepTucTuChiTietLichSuBTP = tiepTucTuChiTietLichSuBTP;
 function xuatExcelLichSuBTP(idPhien) {
   const targetId = idPhien || dangXemLichSuBTPId;
   const list = docLichSuBTP();
-  const entry = list.find(s => s.idPhien === targetId);
-  if (!entry || !entry.phienBTP || entry.phienBTP.length === 0) {
-    alert("Chưa có dữ liệu phiên này để xuất Excel!");
-    return;
-  }
-  const dateStr = entry.ngay || new Date().toISOString().split("T")[0];
-  const data = entry.phienBTP.map((r, i) => ({
-    "STT": i + 1,
-    "Đợt": r.dotQuet || 1,
-    "Ngày": entry.ngay,
-    "Mã QR Gốc": r.rawQR,
-    "Mã BTP": r.msp,
-    "Loại": r.kg,
-    "Thời gian": r.thoiGian ? new Date(r.thoiGian).toLocaleTimeString("vi-VN") : ""
-  }));
-  if (typeof XLSX === "undefined") {
-    if (typeof napThuVienXLSX === "function") {
-      napThuVienXLSX(() => xuatExcelLichSuBTP(targetId));
+  let data = [];
+  let fileTitle = "Quet_BTP";
+
+  if (targetId) {
+    const entry = list.find(s => s.idPhien === targetId);
+    if (!entry || !entry.phienBTP || entry.phienBTP.length === 0) {
+      showCanhBaoBTP("Chưa có dữ liệu phiên này để xuất Excel!", "warning");
+      return;
     }
-    return;
+    const dateStr = entry.ngay || new Date().toISOString().split("T")[0];
+    fileTitle = "Quet_BTP_" + dateStr;
+    data = entry.phienBTP.map((r, i) => ({
+      "STT": i + 1,
+      "Đợt": r.dotQuet || 1,
+      "Ngày": entry.ngay,
+      "Mã QR Gốc": r.rawQR,
+      "Mã BTP": r.msp,
+      "Loại": r.kg,
+      "Thời gian": r.thoiGian ? new Date(r.thoiGian).toLocaleTimeString("vi-VN") : ""
+    }));
+  } else {
+    // Xuất toàn bộ tất cả phiên
+    if (list.length === 0) {
+      showCanhBaoBTP("Chưa có dữ liệu lịch sử BTP để xuất Excel!", "warning");
+      return;
+    }
+    let stt = 1;
+    list.forEach(entry => {
+      (entry.phienBTP || []).forEach(r => {
+        data.push({
+          "STT": stt++,
+          "Đợt": r.dotQuet || 1,
+          "Ngày": entry.ngay,
+          "Mã QR Gốc": r.rawQR,
+          "Mã BTP": r.msp,
+          "Loại": r.kg,
+          "Thời gian": r.thoiGian ? new Date(r.thoiGian).toLocaleTimeString("vi-VN") : ""
+        });
+      });
+    });
+    fileTitle = "Quet_BTP_ToanBo_" + new Date().toISOString().split("T")[0];
   }
-  const ws = XLSX.utils.json_to_sheet(data);
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, "BTP");
-  XLSX.writeFile(wb, "Quet_BTP_" + dateStr + ".xlsx");
+
+  if (typeof exportToExcel === "function") {
+    exportToExcel(fileTitle, "BTP", data);
+  }
 }
 window.xuatExcelLichSuBTP = xuatExcelLichSuBTP;
 
 function xuatCSVBTP() {
-  if (phienBTP.length === 0) { alert("Chưa có dữ liệu để xuất"); return; }
+  if (phienBTP.length === 0) { showCanhBaoBTP("Chưa có dữ liệu để xuất", "warning"); return; }
   const header = ["Dot", "Mã QR Gốc", "Mã BTP", "Loại", "Thời Gian"];
   const rows = phienBTP.map(r => [r.dotQuet || 1, r.rawQR, r.msp, r.kg, r.thoiGian ? (typeof r.thoiGian.toISOString === "function" ? r.thoiGian.toISOString() : r.thoiGian) : ""]);
   const escapeCSV = v => `"${String(v).replace(/"/g, '""')}"`;
@@ -1014,15 +1038,7 @@ function xuatCSVBTP() {
 }
 
 function xuatExcelBTP() {
-  if (typeof XLSX === "undefined") {
-    if (typeof napThuVienXLSX === "function") {
-      napThuVienXLSX(() => xuatExcelBTP());
-      return;
-    }
-    xuatCSVBTP();
-    return;
-  }
-  if (phienBTP.length === 0) { alert("Chưa có dữ liệu để xuất"); return; }
+  if (phienBTP.length === 0) { showCanhBaoBTP("Chưa có dữ liệu để xuất", "warning"); return; }
   const ngay = ngayBTP || new Date().toISOString().split("T")[0];
   const data = phienBTP.map((r, i) => ({
     "STT": i + 1,

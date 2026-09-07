@@ -7,7 +7,7 @@ let ngayKiemKe = null;
 
 async function batDauKiemKe() {
   ngayKiemKe = document.getElementById("kk-ngay").value;
-  if (!ngayKiemKe) { alert("⚠️ Vui lòng chọn ngày!"); return; }
+  if (!ngayKiemKe) { showCanhBaoKK("⚠️ Vui lòng chọn ngày!", "warning"); return; }
 
   dsQuetKiemKe = [];
   batch = [];
@@ -88,7 +88,7 @@ async function batDauKiemKe() {
       }
     });
   } catch(e) {
-    alert("Lỗi camera: " + e);
+    showCanhBaoKK("Lỗi camera: " + e, "error");
     dungKiemKe();
   }
 }
@@ -142,7 +142,7 @@ let dsChiTietQuetKK = []; // Lưu chi tiết để xuất Excel
 
 function xuatExcelKiemKe() {
   if (!dsChiTietQuetKK || dsChiTietQuetKK.length === 0) {
-    alert("Chưa có dữ liệu kiểm kê để xuất Excel!");
+    showCanhBaoKK("Chưa có dữ liệu kiểm kê để xuất Excel!", "warning");
     return;
   }
   const dateStr = ngayKiemKe || new Date().toISOString().split("T")[0];

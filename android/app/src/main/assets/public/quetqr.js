@@ -74,11 +74,11 @@ async function batDauQuetQR() {
   loaiQuetQR = document.getElementById("chon-loai") ? document.getElementById("chon-loai").value : "";
 
   if (!ngayQuetQR) {
-    alert("⚠️ Vui lòng chọn ngày!");
+    showCanhBaoQR("⚠️ Vui lòng chọn ngày!", "warning");
     return;
   }
   if (!loaiQuetQR) {
-    alert("⚠️ Vui lòng chọn loại giao dịch (Nhập SX, Xuất SX...)!");
+    showCanhBaoQR("⚠️ Vui lòng chọn loại giao dịch (Nhập SX, Xuất SX...)!", "warning");
     return;
   }
 
@@ -127,7 +127,7 @@ async function batDauQuetQR() {
       videoEl.play().catch(() => {});
     }
   } catch (e) {
-    alert("Lỗi camera: " + e);
+    showCanhBaoQR("Lỗi camera: " + e, "error");
     dungQuetQR();
   }
 }
@@ -382,10 +382,13 @@ function taoHangKetQuaQuetQR(danhSach) {
         <td style="padding:10px; border-bottom:1px solid var(--line-soft); color:var(--brass); font-weight:700">Đợt ${item.dot}</td>
         <td style="padding:10px; border-bottom:1px solid var(--line-soft); font-weight:600">${item.qc}</td>
         <td style="padding:10px; border-bottom:1px solid var(--line-soft); text-align:center; font-weight:700">${item.soLuong}</td>
-        <td style="padding:10px; border-bottom:1px solid var(--line-soft); text-align:right; font-weight:700; color:var(--success)">
-          ${item.tongKG.toFixed(1)}
-          <button onclick="nhapTayKGQR(${item.dot}, '${item.qc}')" style="background:none; border:none; color:var(--blue); cursor:pointer; padding:0 0 0 8px; margin:0;" title="Nhập tay KG">
-            <i class="ti ti-pencil"></i>
+        <td style="padding:10px; border-bottom:1px solid var(--line-soft); text-align:right; font-weight:700; color:var(--success)">${item.tongKG.toFixed(1)}</td>
+        <td style="padding:10px; border-bottom:1px solid var(--line-soft); text-align:center; white-space:nowrap;">
+          <button onclick="nhapTayKGQR(${item.dot}, '${item.qc}')" style="background:none; border:none; color:var(--blue); cursor:pointer; padding:2px 4px; margin:0;" title="Sửa KG">
+            <i class="ti ti-pencil" style="font-size:16px;"></i>
+          </button>
+          <button onclick="xoaNhomDotQR(${item.dot}, '${item.qc}')" style="background:none; border:none; color:var(--red); cursor:pointer; padding:2px 4px; margin:0;" title="Xóa đợt này">
+            <i class="ti ti-trash" style="font-size:16px;"></i>
           </button>
         </td>
       </tr>
@@ -397,6 +400,7 @@ function taoHangKetQuaQuetQR(danhSach) {
       <td style="padding:10px;"></td>
       <td style="padding:10px; text-align:center; font-weight:700; color:var(--brass);">${tongBaoAll}</td>
       <td style="padding:10px; text-align:right; font-weight:700; color:var(--brass);">${tongKGAll.toFixed(1)}</td>
+      <td style="padding:10px; background:var(--card-raised);"></td>
     </tr>
   `;
 
@@ -463,36 +467,63 @@ function hienKetQuaQuetQR() {
 }
 window.hienKetQuaQuetQR = hienKetQuaQuetQR;
 
-// ── Sửa KG theo đợt & QC ───────────────────────────────────────────
+// ── Sửa KG theo đợt & QC (dùng moPromptApp thay thế prompt) ─────────
 function nhapTayKGQR(dot, qc) {
   const cacMa = phienQuetQR.filter(r => r.dotQuet === dot && r.qc === qc);
   if (cacMa.length === 0) return;
 
   const kgHienTai = cacMa.reduce((s, r) => s + (r.kg || 0), 0);
-  const moiStr = prompt(`Nhập tổng số KG cho Đợt ${dot} - QC ${qc} (${cacMa.length} bao):`, kgHienTai.toFixed(1));
-  if (moiStr === null) return;
+  if (typeof moPromptApp === "function") {
+    moPromptApp(
+      "Sửa KG Đợt " + dot,
+      `Nhập tổng số KG cho Đợt ${dot} - QC ${qc} (${cacMa.length} bao):`,
+      kgHienTai.toFixed(1),
+      (moiStr) => {
+        if (!moiStr) return;
+        const tongKGMoi = parseFloat(String(moiStr).replace(",", "."));
+        if (isNaN(tongKGMoi) || tongKGMoi < 0) {
+          showCanhBaoQR("⚠️ Số KG không hợp lệ!", "error");
+          return;
+        }
 
-  const tongKGMoi = parseFloat(moiStr);
-  if (isNaN(tongKGMoi) || tongKGMoi < 0) {
-    alert("⚠️ Số KG không hợp lệ!");
-    return;
+        // Chia đều số KG mới cho từng bao trong nhóm
+        const kgMoiTungBao = Number((tongKGMoi / cacMa.length).toFixed(3));
+        cacMa.forEach((r, idx) => {
+          if (idx === cacMa.length - 1) {
+            r.kg = Number((tongKGMoi - kgMoiTungBao * (cacMa.length - 1)).toFixed(2));
+          } else {
+            r.kg = kgMoiTungBao;
+          }
+        });
+
+        luuPhienDoDangQR();
+        hienKetQuaQuetQR();
+      },
+      "Nhập số kg..."
+    );
   }
-
-  // Chia đều số KG mới cho từng bao trong nhóm
-  const kgMoiTungBao = Number((tongKGMoi / cacMa.length).toFixed(3));
-  cacMa.forEach((r, idx) => {
-    if (idx === cacMa.length - 1) {
-      // Bao cuối bù phần dư làm tròn
-      r.kg = Number((tongKGMoi - kgMoiTungBao * (cacMa.length - 1)).toFixed(2));
-    } else {
-      r.kg = kgMoiTungBao;
-    }
-  });
-
-  luuPhienDoDangQR();
-  hienKetQuaQuetQR();
 }
 window.nhapTayKGQR = nhapTayKGQR;
+
+function xoaNhomDotQR(dot, qc) {
+  if (typeof moXacNhanApp === "function") {
+    moXacNhanApp(
+      `Xóa tất cả bao của QC ${qc} trong Đợt ${dot}?`,
+      () => {
+        phienQuetQR = phienQuetQR.filter(r => !(r.dotQuet === dot && r.qc === qc));
+        luuPhienDoDangQR();
+        hienKetQuaQuetQR();
+        capNhatLogQR();
+        showCanhBaoQR("Đã xóa nhóm mã Đợt " + dot, "success");
+      },
+      "Xóa nhóm",
+      null,
+      "Hủy",
+      "Xác nhận xóa"
+    );
+  }
+}
+window.xoaNhomDotQR = xoaNhomDotQR;
 
 // ── Quét Tiếp / Quét Mới ───────────────────────────────────────────
 async function quetTiepQuetQR() {
@@ -548,6 +579,7 @@ async function guiDuLieuQuetQR() {
     xoaPhienDoDangQR();
     luuVaoLichSuQR();
     showCanhBaoQR("✅ Đã gửi thành công " + rows.length + " bao lên Sheet!", "success");
+    if (typeof kichHoatKiemTraAutoBackup === "function") kichHoatKiemTraAutoBackup(1000);
 
     if (btnGui) {
       btnGui.innerHTML = '<i class="ti ti-circle-check"></i> Đã gửi thành công';
@@ -555,6 +587,9 @@ async function guiDuLieuQuetQR() {
       btnGui.style.color = "#fff";
     }
   } catch (err) {
+    if (typeof hopDenGhiLog === "function") {
+      hopDenGhiLog("SYNC_ERR", "Lỗi gửi Google Sheet QR: " + (err.message || String(err)));
+    }
     const pending = docPendingQuetQR();
     rows.forEach(r => {
       if (!pending.some(p => p.id === r.id && p.thoiGian === r.thoiGian)) {
@@ -562,6 +597,7 @@ async function guiDuLieuQuetQR() {
       }
     });
     luuPendingQuetQR(pending);
+    if (typeof kichHoatKiemTraAutoBackup === "function") kichHoatKiemTraAutoBackup(2000);
     showCanhBaoQR("Mất mạng — đã lưu tạm " + rows.length + " bao trên máy, sẽ tự gửi lại sau", "error");
     soLuongDaGuiHienTaiQR = phienQuetQR.length;
     luuVaoLichSuQR();
@@ -633,6 +669,7 @@ function luuPhienDoDangQR() {
       soLuongDaGuiHienTaiQR,
       capNhat: new Date().toISOString()
     }));
+    if (typeof kichHoatKiemTraAutoBackup === "function") kichHoatKiemTraAutoBackup(4000);
   } catch (e) {}
   if (typeof capNhatTrangChu === "function") capNhatTrangChu();
 }
@@ -667,12 +704,22 @@ function tiepTucPhienQuetQR() {
 window.tiepTucPhienQuetQR = tiepTucPhienQuetQR;
 
 function huyPhienQuetQR() {
-  if (confirm("Bạn có chắc muốn hủy phiên quét dở dang này không?")) {
-    xoaPhienDoDangQR();
-    phienQuetQR = [];
-    demSoDotQR = 1;
-    idPhienHienTaiQR = null;
-    soLuongDaGuiHienTaiQR = 0;
+  if (typeof moXacNhanApp === "function") {
+    moXacNhanApp(
+      "Bạn có chắc muốn hủy phiên quét dở dang này không?",
+      () => {
+        xoaPhienDoDangQR();
+        phienQuetQR = [];
+        demSoDotQR = 1;
+        idPhienHienTaiQR = null;
+        soLuongDaGuiHienTaiQR = 0;
+        showCanhBaoQR("Đã hủy phiên quét dở dang");
+      },
+      "Hủy phiên",
+      null,
+      "Không",
+      "Xác nhận hủy"
+    );
   }
 }
 window.huyPhienQuetQR = huyPhienQuetQR;
@@ -722,34 +769,31 @@ function renderLichSuQR() {
   });
 
   if (filtered.length === 0) {
-    container.innerHTML = '<div style="color:var(--cream-soft); text-align:center; padding:30px 0;">Không có lịch sử quét nào</div>';
+    container.innerHTML = '<div style="color:var(--cream-soft); text-align:center; padding:30px 0;">'
+      + (filterText ? "Không tìm thấy phiên nào khớp" : "Không có lịch sử quét nào")
+      + '</div>';
     return;
   }
 
-  container.innerHTML = filtered.map((entry, idx) => {
-    const timeStr = entry.thoiGian ? new Date(entry.thoiGian).toLocaleString("vi-VN") : "—";
-    return `
-      <div class="card" style="margin-bottom:12px; padding:12px; background:var(--card-raised);">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-          <div>
-            <div style="font-weight:700; color:var(--brass); font-size:15px;">${entry.loai || 'Giao dịch'}</div>
-            <div style="font-size:12px; color:var(--cream-soft);">${timeStr} · Ngày: ${entry.ngay || '—'}</div>
-          </div>
-          <div style="text-align:right;">
-            <div style="font-weight:800; color:var(--success); font-size:15px;">${(entry.tongKG || 0).toFixed(1)} kg</div>
-            <div style="font-size:12px; color:var(--cream); font-weight:600;">${entry.tongBao || 0} bao</div>
-          </div>
-        </div>
-        <div style="display:flex; gap:8px; margin-top:10px;">
-          <button class="btn btn-blue" style="flex:1; height:34px; font-size:12px; margin:0;" onclick="xemChiTietLichSuQR('${entry.idPhien}')">
-            <i class="ti ti-eye"></i> Xem 2 Bảng
-          </button>
-          <button class="btn btn-excel" style="flex:1; height:34px; font-size:12px; margin:0;" onclick="xuatExcelPhienLichSuQR('${entry.idPhien}')">
-            <i class="ti ti-file-spreadsheet"></i> Xuất Excel
-          </button>
-        </div>
-      </div>
-    `;
+  container.innerHTML = filtered.map((entry) => {
+    const timeObj = entry.thoiGian ? new Date(entry.thoiGian) : new Date();
+    const gio = timeObj.toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" });
+    const ngayStr = entry.ngay || timeObj.toISOString().split("T")[0];
+    const tongKg = (entry.tongKG || 0);
+    const tongBao = (entry.tongBao || (entry.phienQuetQR ? entry.phienQuetQR.length : 0));
+    const soDot = new Set((entry.phienQuetQR || []).map(r => r.dotQuet || 1)).size;
+    const trangThai = '<i class="ti ti-check cx5-trangthai-ok"></i>';
+
+    return '<div class="irow lichsu-row" style="cursor:pointer;align-items:center" onclick="xemChiTietLichSuQR(\'' + entry.idPhien + '\')">'
+      + '<span style="font-family:\'IBM Plex Sans\',sans-serif;color:var(--cream)">' + ngayStr + ' · ' + gio + '</span>'
+      + '<span style="font-family:\'IBM Plex Sans\',sans-serif;color:var(--cream);display:inline-flex;align-items:center;gap:10px">'
+      + soDot + ' đợt · ' + tongBao + ' bao · ' + tongKg.toLocaleString('vi-VN', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + ' kg'
+      + '<span style="display:inline-flex;align-items:center;gap:8px;padding-left:8px;border-left:1px solid var(--line)">'
+      + trangThai
+      + '<button class="cx5-del-btn" aria-label="Xóa phiên này" onclick="xoaMotPhienLichSuQR(\'' + entry.idPhien + '\', event)"><i class="ti ti-trash"></i></button>'
+      + '</span>'
+      + '</span>'
+      + '</div>';
   }).join("");
 }
 window.renderLichSuQR = renderLichSuQR;
@@ -770,10 +814,46 @@ function xemChiTietLichSuQR(idPhien) {
 }
 window.xemChiTietLichSuQR = xemChiTietLichSuQR;
 
+function xoaMotPhienLichSuQR(idPhien, ev) {
+  if (ev) ev.stopPropagation();
+  if (typeof moXacNhanApp === "function") {
+    moXacNhanApp(
+      "Xóa phiên lịch sử Quét QR này? Không thể hoàn tác.",
+      () => {
+        const raw = localStorage.getItem(QUETQR_LICHSU_KEY);
+        const list = raw ? JSON.parse(raw) : [];
+        const filtered = list.filter(e => e.idPhien !== idPhien);
+        localStorage.setItem(QUETQR_LICHSU_KEY, JSON.stringify(filtered));
+        renderLichSuQR();
+      },
+      "Xóa",
+      null,
+      "Hủy",
+      "Xóa phiên lịch sử"
+    );
+  }
+}
+window.xoaMotPhienLichSuQR = xoaMotPhienLichSuQR;
+
 function xoaTatCaLichSuQR() {
-  if (confirm("Bạn có chắc muốn xóa toàn bộ lịch sử Quét QR không?")) {
-    localStorage.removeItem(QUETQR_LICHSU_KEY);
-    renderLichSuQR();
+  const raw = localStorage.getItem(QUETQR_LICHSU_KEY);
+  const list = raw ? JSON.parse(raw) : [];
+  if (list.length === 0) {
+    showCanhBaoQR("Không có lịch sử để xóa");
+    return;
+  }
+  if (typeof moXacNhanApp === "function") {
+    moXacNhanApp(
+      "Xóa toàn bộ " + list.length + " phiên lịch sử Quét QR? Không thể hoàn tác.",
+      () => {
+        localStorage.removeItem(QUETQR_LICHSU_KEY);
+        renderLichSuQR();
+      },
+      "Xóa tất cả",
+      null,
+      "Hủy",
+      "Xóa tất cả lịch sử"
+    );
   }
 }
 window.xoaTatCaLichSuQR = xoaTatCaLichSuQR;
@@ -781,7 +861,7 @@ window.xoaTatCaLichSuQR = xoaTatCaLichSuQR;
 // ── Xuất File Excel ────────────────────────────────────────────────
 function xuatExcelQuetQR() {
   if (phienQuetQR.length === 0) {
-    alert("Chưa có dữ liệu để xuất Excel!");
+    showCanhBaoQR("Chưa có dữ liệu để xuất Excel!", "warning");
     return;
   }
   const dataExport = phienQuetQR.map((r, idx) => ({
@@ -797,11 +877,65 @@ function xuatExcelQuetQR() {
   }));
   if (typeof exportToExcel === "function") {
     exportToExcel("QuetQR_" + (loaiQuetQR || "Kho") + "_" + (ngayQuetQR || ""), "Chi Tiết", dataExport);
-  } else {
-    alert("Hàm exportToExcel chưa sẵn sàng!");
   }
 }
 window.xuatExcelQuetQR = xuatExcelQuetQR;
+
+function xuatExcelLichSuQR(idPhien) {
+  const raw = localStorage.getItem(QUETQR_LICHSU_KEY);
+  const list = raw ? JSON.parse(raw) : [];
+  if (list.length === 0) {
+    showCanhBaoQR("Chưa có dữ liệu lịch sử để xuất Excel!", "warning");
+    return;
+  }
+
+  let dataExport = [];
+  let fileTitle = "LichSu_QuetQR";
+
+  if (idPhien) {
+    const entry = list.find(e => e.idPhien === idPhien);
+    if (!entry || !entry.phienQuetQR || entry.phienQuetQR.length === 0) {
+      showCanhBaoQR("Chưa có dữ liệu phiên này để xuất Excel!", "warning");
+      return;
+    }
+    fileTitle = "LichSu_QuetQR_" + (entry.ngay || "");
+    dataExport = entry.phienQuetQR.map((r, idx) => ({
+      "STT": idx + 1,
+      "Đợt": r.dotQuet,
+      "Mã ID": r.id,
+      "Mã SP": r.msp,
+      "Quy Cách (QC)": r.qc,
+      "Số KG": r.kg || 0,
+      "Loại": entry.loai || "",
+      "Ngày": entry.ngay || "",
+      "Thời Gian": r.thoiGian ? new Date(r.thoiGian).toLocaleString("vi-VN") : ""
+    }));
+  } else {
+    // Xuất toàn bộ tất cả phiên lịch sử
+    let stt = 1;
+    list.forEach(entry => {
+      (entry.phienQuetQR || []).forEach(r => {
+        dataExport.push({
+          "STT": stt++,
+          "Đợt": r.dotQuet,
+          "Mã ID": r.id,
+          "Mã SP": r.msp,
+          "Quy Cách (QC)": r.qc,
+          "Số KG": r.kg || 0,
+          "Loại": entry.loai || "",
+          "Ngày": entry.ngay || "",
+          "Thời Gian": r.thoiGian ? new Date(r.thoiGian).toLocaleString("vi-VN") : ""
+        });
+      });
+    });
+    fileTitle = "LichSu_QuetQR_ToanBo_" + new Date().toISOString().split("T")[0];
+  }
+
+  if (typeof exportToExcel === "function") {
+    exportToExcel(fileTitle, "Quet QR", dataExport);
+  }
+}
+window.xuatExcelLichSuQR = xuatExcelLichSuQR;
 
 function xuatExcelPhienLichSuQR(idPhien) {
   const raw = localStorage.getItem(QUETQR_LICHSU_KEY);

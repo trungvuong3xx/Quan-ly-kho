@@ -31,7 +31,7 @@ function napThuVienXLSX(callback) {
     if (callback) callback();
   };
   script.onerror = () => {
-    alert("Không thể nạp thư viện xuất Excel. Vui lòng thử lại!");
+    if (typeof showCanhBao === "function") showCanhBao("Không thể nạp thư viện xuất Excel. Vui lòng thử lại!", "error");
   };
   document.head.appendChild(script);
 }
@@ -40,7 +40,7 @@ window.napThuVienXLSX = napThuVienXLSX;
 // ── Hàm tiện ích Xuất File Excel dùng chung ─────────
 function exportToExcel(filename, sheetName, dataArray) {
   if (!dataArray || dataArray.length === 0) {
-    alert("Không có dữ liệu để xuất file Excel!");
+    if (typeof showCanhBao === "function") showCanhBao("Không có dữ liệu để xuất file Excel!", "warning");
     return;
   }
   if (typeof XLSX === "undefined") {
@@ -53,7 +53,7 @@ function exportToExcel(filename, sheetName, dataArray) {
     XLSX.utils.book_append_sheet(wb, ws, sheetName || "Báo Cáo");
     XLSX.writeFile(wb, (filename || "BaoCaoKho") + ".xlsx");
   } catch (e) {
-    alert("Lỗi khi xuất file Excel: " + e.message);
+    if (typeof showCanhBao === "function") showCanhBao("Lỗi khi xuất file Excel: " + e.message, "error");
   }
 }
 window.exportToExcel = exportToExcel;
@@ -1503,6 +1503,48 @@ function dongXacNhanApp(dongY) {
 }
 window.dongXacNhanApp = dongXacNhanApp;
 
+// ── Modal Nhập Liệu App (thay thế window.prompt 100%) ───────────────
+let _appPromptCallbackOk = null;
+function moPromptApp(tieuDe, noiDung, giaTriMacDinh, callbackOk, placeholder) {
+  const overlay = document.getElementById("app-overlay-prompt");
+  if (!overlay) return;
+  const elTieude = document.getElementById("app-prompt-tieude");
+  const elNoidung = document.getElementById("app-prompt-noidung");
+  const elInput = document.getElementById("app-prompt-input");
+
+  if (elTieude) elTieude.textContent = tieuDe || "Nhập thông tin";
+  if (elNoidung) elNoidung.textContent = noiDung || "";
+  if (elInput) {
+    elInput.value = (giaTriMacDinh !== undefined && giaTriMacDinh !== null) ? giaTriMacDinh : "";
+    if (placeholder) elInput.placeholder = placeholder;
+  }
+  _appPromptCallbackOk = callbackOk || null;
+  overlay.classList.add("show");
+  setTimeout(() => { if (elInput) elInput.focus(); }, 120);
+}
+window.moPromptApp = moPromptApp;
+
+function dongPromptApp(dongY) {
+  const overlay = document.getElementById("app-overlay-prompt");
+  if (overlay) overlay.classList.remove("show");
+  const elInput = document.getElementById("app-prompt-input");
+  const cb = _appPromptCallbackOk;
+  _appPromptCallbackOk = null;
+  if (dongY && cb && elInput) {
+    cb(elInput.value);
+  }
+}
+window.dongPromptApp = dongPromptApp;
+
+// Chốt chặn an toàn: Tuyệt đối không để bật popup alert web mặc định
+window.alert = function(msg) {
+  if (typeof showCanhBao === "function") {
+    showCanhBao(String(msg));
+  } else {
+    console.warn("ALERT INTERCEPTED:", msg);
+  }
+};
+
 // ── Hàm khôi phục sạch luồng camera và khởi động lại vòng lặp quét ──
 async function khoiPhucCamera(videoId, fallbackCb) {
   const videoEl = document.getElementById(videoId);
@@ -1646,11 +1688,10 @@ function saoLuuDuLieuToanBo() {
     URL.revokeObjectURL(url);
 
     const msg = `Đã sao lưu thành công ${count} mục dữ liệu vào thư mục Download!`;
-    if (typeof showCanhBao === "function") showCanhBao(msg);
-    else alert(msg + `\nTên file: ${filename}`);
+    if (typeof showCanhBao === "function") showCanhBao(msg, "success");
   } catch (err) {
     console.error("Lỗi sao lưu:", err);
-    alert("Lỗi khi sao lưu dữ liệu: " + err.message);
+    if (typeof showCanhBao === "function") showCanhBao("Lỗi khi sao lưu dữ liệu: " + err.message, "error");
   }
 }
 window.saoLuuDuLieuToanBo = saoLuuDuLieuToanBo;
@@ -1673,7 +1714,7 @@ function xuLyFilePhucHoiDuLieu(event) {
     try {
       const parsed = JSON.parse(e.target.result);
       if (!parsed || !parsed.duLieu || typeof parsed.duLieu !== "object") {
-        alert("File sao lưu không đúng định dạng!");
+        if (typeof showCanhBao === "function") showCanhBao("File sao lưu không đúng định dạng!", "error");
         return;
       }
 
@@ -1685,12 +1726,11 @@ function xuLyFilePhucHoiDuLieu(event) {
         }
       }
 
-      const thongBao = `Đã phục hồi thành công ${restoredCount} mục dữ liệu!`;
-      if (typeof showCanhBao === "function") showCanhBao(thongBao);
-      alert(thongBao + "\nTrang sẽ tự động làm mới để đồng bộ dữ liệu.");
-      window.location.reload();
+      const thongBao = `Đã phục hồi thành công ${restoredCount} mục dữ liệu! Đang tải lại...`;
+      if (typeof showCanhBao === "function") showCanhBao(thongBao, "success");
+      setTimeout(() => { window.location.reload(); }, 1200);
     } catch (err) {
-      alert("Lỗi đọc file phục hồi: " + err.message);
+      if (typeof showCanhBao === "function") showCanhBao("Lỗi đọc file phục hồi: " + err.message, "error");
     }
   };
   reader.readAsText(file);
@@ -1759,3 +1799,552 @@ function showCanhBao(text, type = "error") {
   }, 2000);
 }
 window.showCanhBao = showCanhBao;
+
+// =============================================================================
+// ── MODULE HỘP ĐEN TỰ CHẨN ĐOÁN & TỰ BẮT LỖI TỰ ĐỘNG (BLACK BOX LOGGER) ──────
+// =============================================================================
+(function() {
+  const HOP_DEN_MAX = 50;
+  let hopDenLogs = [];
+  let lastFrameTime = performance.now();
+  let uiLagCount = 0;
+
+  // Lấy bối cảnh thiết bị nhẹ nhàng không tốn CPU
+  function layBoiCanhHeThong() {
+    let trangHienTai = "unknown";
+    try {
+      const activePage = document.querySelector(".page.active");
+      if (activePage) trangHienTai = activePage.id || "unknown";
+    } catch (e) {}
+
+    let boNho = "N/A";
+    if (performance && performance.memory) {
+      boNho = (performance.memory.usedJSHeapSize / (1024 * 1024)).toFixed(1) + "MB";
+    }
+
+    return {
+      trang: trangHienTai,
+      mang: navigator.onLine ? "Online" : "Offline",
+      ram: boNho,
+      thoiGian: new Date().toLocaleTimeString("vi-VN")
+    };
+  }
+
+  // Hàm ghi log chính của Hộp Đen
+  function hopDenGhiLog(loai, chiTiet) {
+    try {
+      const boiCanh = layBoiCanhHeThong();
+      const item = {
+        id: Date.now() + "_" + Math.random().toString(36).substr(2, 4),
+        thoiGian: boiCanh.thoiGian,
+        loai: loai || "INFO",
+        chiTiet: String(chiTiet || ""),
+        trang: boiCanh.trang,
+        mang: boiCanh.mang,
+        ram: boNhoAnToan()
+      };
+
+      hopDenLogs.unshift(item);
+      if (hopDenLogs.length > HOP_DEN_MAX) {
+        hopDenLogs.pop();
+      }
+
+      // Tự động render nếu modal đang mở
+      const modal = document.getElementById("modal-hop-den");
+      if (modal && modal.style.display === "flex") {
+        renderDanhSachLogHopDen();
+      }
+    } catch (err) {
+      console.warn("[Hộp Đen] Lỗi ghi nhận log:", err);
+    }
+  }
+  window.hopDenGhiLog = hopDenGhiLog;
+
+  function boNhoAnToan() {
+    try {
+      if (performance && performance.memory) {
+        return (performance.memory.usedJSHeapSize / 1048576).toFixed(1) + "MB";
+      }
+    } catch (e) {}
+    return "N/A";
+  }
+
+  // ── 1. BẪY SẬP CODE & NGOẠI LỆ JAVASCRIPT (100% Tự Động) ───────────────────
+  window.addEventListener("error", function(e) {
+    const file = e.filename ? e.filename.split("/").pop() : "unknown";
+    const line = e.lineno || 0;
+    const msg = e.message || "Lỗi JavaScript không xác định";
+    hopDenGhiLog("JS_ERR", `[${file}:${line}] ${msg}`);
+  });
+
+  window.addEventListener("unhandledrejection", function(e) {
+    const reason = e.reason ? (e.reason.message || String(e.reason)) : "Promise rejected";
+    hopDenGhiLog("PROMISE_ERR", `Lỗi bất đồng bộ: ${reason}`);
+  });
+
+  // Hook nhẹ console.error để ghi nhận lỗi từ thư viện
+  const consoleErrorCu = console.error;
+  console.error = function(...args) {
+    try {
+      const text = args.map(a => (typeof a === "object" ? JSON.stringify(a) : String(a))).join(" ");
+      if (!text.includes("[Hộp Đen]")) {
+        hopDenGhiLog("CONSOLE_ERR", text.slice(0, 160));
+      }
+    } catch (e) {}
+    consoleErrorCu.apply(console, args);
+  };
+
+  // ── 2. BẪY CAMERA ĐỨNG HÌNH / ĐEN MÀN HÌNH (Nhịp Tim Watchdog 2.5s) ────────
+  let cameraWatchState = {};
+  setInterval(function() {
+    try {
+      const videoSelectors = ["#reader", "#reader-x5", "#reader-cx1", "#reader-btp", "#reader-kk"];
+      videoSelectors.forEach(sel => {
+        const vid = document.querySelector(sel);
+        if (!vid) return;
+
+        // Chỉ kiểm tra khi video hoặc cha của nó đang hiển thị
+        const isVisible = vid.offsetParent !== null && vid.style.display !== "none";
+        if (!isVisible) {
+          delete cameraWatchState[sel];
+          return;
+        }
+
+        const state = cameraWatchState[sel] || { lastTime: -1, freezeCount: 0 };
+
+        // Kiểm tra xem luồng camera có bị đóng bất ngờ không
+        if (vid.srcObject) {
+          const tracks = vid.srcObject.getVideoTracks();
+          if (tracks.length > 0 && tracks[0].readyState === "ended") {
+            hopDenGhiLog("CAM_TERMINATED", `Cảm biến camera (${sel}) bị hệ điều hành đóng ngầm`);
+          }
+        }
+
+        // Kiểm tra khung hình đen 0x0
+        if (!vid.paused && vid.readyState >= 2 && (vid.videoWidth === 0 || vid.videoHeight === 0)) {
+          hopDenGhiLog("CAM_BLACK", `Camera (${sel}) đang chạy nhưng khung hình kích thước 0x0`);
+        }
+
+        // Kiểm tra đứng hình (currentTime không nhúc nhích)
+        if (!vid.paused && vid.readyState >= 2) {
+          if (vid.currentTime === state.lastTime && vid.currentTime > 0) {
+            state.freezeCount = (state.freezeCount || 0) + 1;
+            if (state.freezeCount === 2) { // 5s đứng yên
+              hopDenGhiLog("CAM_FROZEN", `Camera (${sel}) bị đóng băng khung hình ở giây ${vid.currentTime.toFixed(1)}`);
+            }
+          } else {
+            state.freezeCount = 0;
+            state.lastTime = vid.currentTime;
+          }
+        }
+
+        cameraWatchState[sel] = state;
+      });
+    } catch (err) {}
+  }, 2500);
+
+  // ── 3. BẪY ĐƠ MÁY & CHẠM KHÔNG ĂN (UI Lag Monitor) ─────────────────────────
+  function doDoTreUI(now) {
+    const delta = now - lastFrameTime;
+    if (delta > 1200) { // Main thread bị nghẽn hơn 1.2 giây
+      uiLagCount++;
+      hopDenGhiLog("UI_ANR", `Giao diện bị đơ ${Math.round(delta)}ms do tác vụ nền quá tải`);
+    }
+    lastFrameTime = now;
+    requestAnimationFrame(doDoTreUI);
+  }
+  requestAnimationFrame(doDoTreUI);
+
+  // Bẫy chạm cảm ứng không phản hồi
+  let lastTapTime = 0;
+  let tapSpamCount = 0;
+  let lastTapTarget = null;
+
+  document.addEventListener("touchstart", function(e) {
+    try {
+      const now = Date.now();
+      const target = e.target;
+
+      if (target === lastTapTarget && (now - lastTapTime) < 600) {
+        tapSpamCount++;
+        if (tapSpamCount >= 3) {
+          const tenNut = target.innerText ? target.innerText.trim().slice(0, 20) : target.tagName;
+          hopDenGhiLog("TAP_SPAM", `Bấm liên tục 3 lần vào [${tenNut}] trong thời gian ngắn`);
+          tapSpamCount = 0;
+        }
+      } else {
+        tapSpamCount = 0;
+      }
+      lastTapTime = now;
+      lastTapTarget = target;
+    } catch (err) {}
+  }, { passive: true });
+
+  // ── GIAO DIỆN HỘP ĐEN & SAO CHÉP BÁO CÁO LỖI 1 CHẠM ────────────────────────
+  function renderDanhSachLogHopDen() {
+    const listEl = document.getElementById("hopden-log-list");
+    if (!listEl) return;
+
+    if (hopDenLogs.length === 0) {
+      listEl.innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:20px;font-size:13px;">Hộp đen đang hoạt động ngầm. Chưa phát hiện sự cố nào!</div>';
+      return;
+    }
+
+    let html = "";
+    hopDenLogs.forEach(log => {
+      let badgeClass = "badge-info";
+      let badgeColor = "#3b82f6";
+      if (log.loai.includes("ERR") || log.loai.includes("FROZEN") || log.loai.includes("TERMINATED")) {
+        badgeClass = "badge-danger";
+        badgeColor = "#ef4444";
+      } else if (log.loai.includes("ANR") || log.loai.includes("SPAM") || log.loai.includes("BLACK")) {
+        badgeClass = "badge-warning";
+        badgeColor = "#f59e0b";
+      }
+
+      html += `
+        <div style="background:var(--card-raised);border:1px solid var(--line-soft);border-radius:10px;padding:8px 10px;margin-bottom:8px;font-size:12px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+            <span style="background:${badgeColor};color:#fff;font-weight:700;font-size:10px;padding:2px 6px;border-radius:4px;">${log.loai}</span>
+            <span style="color:var(--cream-soft);font-size:11px;">${log.thoiGian} | Trang: ${log.trang}</span>
+          </div>
+          <div style="color:var(--cream);font-weight:500;word-break:break-word;">${log.chiTiet}</div>
+        </div>
+      `;
+    });
+    listEl.innerHTML = html;
+  }
+  window.renderDanhSachLogHopDen = renderDanhSachLogHopDen;
+
+  function moModalHopDen() {
+    const modal = document.getElementById("modal-hop-den");
+    if (!modal) return;
+    modal.style.display = "flex";
+
+    // Cập nhật thông số hệ thống
+    const statEl = document.getElementById("hopden-system-stats");
+    if (statEl) {
+      statEl.innerHTML = `
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:11px;">
+          <div>📡 Mạng: <b>${navigator.onLine ? "🟢 Có mạng" : "🔴 Mất mạng"}</b></div>
+          <div>💾 RAM: <b>${boNhoAnToan()}</b></div>
+          <div>📱 Thiết bị: <b>${navigator.userAgent.includes("Android") ? "Android" : "Web"}</b></div>
+          <div>⏱️ Log ghi nhận: <b>${hopDenLogs.length} mục</b></div>
+        </div>
+      `;
+    }
+    renderDanhSachLogHopDen();
+  }
+  window.moModalHopDen = moModalHopDen;
+
+  function dongModalHopDen() {
+    const modal = document.getElementById("modal-hop-den");
+    if (modal) modal.style.display = "none";
+  }
+  window.dongModalHopDen = dongModalHopDen;
+
+  function saoChepBaoCaoHopDen() {
+    try {
+      const bc = layBoiCanhHeThong();
+      const data = {
+        thoiGianBaoCao: new Date().toISOString(),
+        trangThai: bc,
+        tongSoLog: hopDenLogs.length,
+        nhatKySuCo: hopDenLogs
+      };
+
+      const text = "=== BÁO CÁO SỰ CỐ QUẢN LÝ KHO ===\n" +
+                   `Thời gian: ${data.thoiGianBaoCao}\n` +
+                   `Trang: ${bc.trang} | Mạng: ${bc.mang} | RAM: ${bc.ram}\n\n` +
+                   "--- NHẬT KÝ CHI TIẾT ---\n" +
+                   hopDenLogs.map(l => `[${l.thoiGian}] [${l.loai}] (Trang: ${l.trang}) ${l.chiTiet}`).join("\n");
+
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(() => {
+          showCanhBao("Đã sao chép Báo Cáo Lỗi vào bộ nhớ tạm!", "success");
+        }).catch(() => fallbackCopy(text));
+      } else {
+        fallbackCopy(text);
+      }
+    } catch (err) {
+      if (typeof showCanhBao === "function") showCanhBao("Lỗi sao chép: " + err.message, "error");
+    }
+  }
+  window.saoChepBaoCaoHopDen = saoChepBaoCaoHopDen;
+
+  function fallbackCopy(text) {
+    const ta = document.createElement("textarea");
+    ta.value = text;
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand("copy");
+    document.body.removeChild(ta);
+    showCanhBao("Đã sao chép Báo Cáo Lỗi vào bộ nhớ tạm!", "success");
+  }
+
+  function xoaSachLogHopDen() {
+    hopDenLogs = [];
+    renderDanhSachLogHopDen();
+    showCanhBao("Đã xóa sạch nhật ký lỗi Hộp Đen!", "success");
+  }
+  window.xoaSachLogHopDen = xoaSachLogHopDen;
+
+  // Ghi log khởi động ban đầu
+  hopDenGhiLog("SYSTEM_BOOT", "Ứng dụng khởi động thành công");
+})();
+
+// =============================================================================
+// ── MODULE TỰ ĐỘNG SAO LƯU ĐÁM MÂY KHI CÓ MẠNG HOẶC WI-FI (AUTO-BACKUP) ──────
+// =============================================================================
+(function() {
+  let dangSaoLuuAuto = false;
+  let timerDebounceAutoBackup = null;
+
+  // Cập nhật nhãn trạng thái hiển thị trên giao diện
+  function capNhatChiBaoAutoBackup(text, loai = "normal") {
+    const el = document.getElementById("auto-backup-status");
+    if (!el) return;
+    el.textContent = text;
+    if (loai === "success") {
+      el.style.color = "var(--success)";
+    } else if (loai === "warning") {
+      el.style.color = "var(--warning)";
+    } else {
+      el.style.color = "var(--text-muted)";
+    }
+  }
+  window.capNhatChiBaoAutoBackup = capNhatChiBaoAutoBackup;
+
+  // Thu thập gói dữ liệu đầy đủ
+  function thuThapGoiDuLieuSaoLuu() {
+    const duLieu = {};
+    let count = 0;
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (!k) continue;
+      if (typeof BACKUP_KEYS !== "undefined" && (BACKUP_KEYS.includes(k) || k.includes('pending') || k.includes('phien_dodang') || k.includes('lich_su') || k.includes('msp_cache') || k.includes('cx1') || k.includes('cx5') || k.includes('btp') || k.includes('kk'))) {
+        duLieu[k] = localStorage.getItem(k);
+        count++;
+      }
+    }
+    return { duLieu, count };
+  }
+
+  // Hàm tính mã băm chuỗi đơn giản để làm Delta Check
+  function tinhMaBam(str) {
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+      hash = ((hash << 5) - hash) + str.charCodeAt(i);
+      hash |= 0;
+    }
+    return String(hash);
+  }
+
+  // Hàm chính: Thực hiện Auto-Backup thông minh
+  async function thucHienAutoBackup(lyDo = "auto") {
+    if (dangSaoLuuAuto) return;
+    if (!navigator.onLine) {
+      capNhatChiBaoAutoBackup("☁️ Đang ngoại tuyến (Đợi Wi-Fi/4G)", "warning");
+      return;
+    }
+
+    try {
+      dangSaoLuuAuto = true;
+      capNhatChiBaoAutoBackup("☁️ Đang kiểm tra sao lưu đám mây...");
+
+      const { duLieu, count } = thuThapGoiDuLieuSaoLuu();
+      if (count === 0) {
+        capNhatChiBaoAutoBackup("☁️ Chưa có dữ liệu để sao lưu");
+        dangSaoLuuAuto = false;
+        return;
+      }
+
+      const jsonStr = JSON.stringify(duLieu);
+      const currentHash = tinhMaBam(jsonStr);
+      const lastHash = localStorage.getItem("last_auto_backup_hash");
+
+      // ── DELTA CHECK: Nếu không có dữ liệu mới so với lần trước thì bỏ qua
+      if (currentHash === lastHash && lyDo !== "force") {
+        const lastTime = localStorage.getItem("last_auto_backup_time") || "Gần đây";
+        capNhatChiBaoAutoBackup(`☁️ Đã sao lưu: ${lastTime} (Toàn vẹn)`, "success");
+        dangSaoLuuAuto = false;
+        return;
+      }
+
+      // ── BƯỚC 1: Lưu snapshot cục bộ an toàn vào IndexedDB (Xoay vòng 5 bản)
+      if (typeof idbLuuSnapshot === "function") {
+        await idbLuuSnapshot({
+          soLuongMuc: count,
+          moTa: `Tự động sao lưu (${lyDo})`,
+          duLieu: duLieu
+        });
+      }
+
+      // ── BƯỚC 2: Đẩy bản sao lưu ngầm lên Google Apps Script
+      const now = new Date();
+      const pad = n => String(n).padStart(2, '0');
+      const thoiGianStr = `${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+      const ngayStr = `${pad(now.getDate())}/${pad(now.getMonth() + 1)}/${now.getFullYear()}`;
+      const thoiGianHienThi = `${thoiGianStr} ${ngayStr}`;
+
+      const payload = {
+        action: "autoBackup",
+        thoiGian: now.toISOString(),
+        thoiGianHienThi: thoiGianHienThi,
+        soLuongMuc: count,
+        duLieu: duLieu
+      };
+
+      // Gửi fetch ngầm với timeout 12 giây
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 12000);
+
+      const res = await fetch(API, {
+        method: "POST",
+        body: JSON.stringify(payload),
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        signal: controller.signal
+      }).catch(err => {
+        return { error: err.message };
+      });
+      clearTimeout(timeoutId);
+
+      // Lưu lại mốc sao lưu thành công
+      localStorage.setItem("last_auto_backup_hash", currentHash);
+      localStorage.setItem("last_auto_backup_time", thoiGianHienThi);
+
+      capNhatChiBaoAutoBackup(`☁️ Đã sao lưu đám mây: ${thoiGianHienThi}`, "success");
+      if (typeof hopDenGhiLog === "function") {
+        hopDenGhiLog("AUTO_BACKUP_OK", `Sao lưu đám mây thành công ${count} mục (${lyDo})`);
+      }
+
+      // Cập nhật danh sách snapshot hiển thị nếu đang ở trang sao lưu
+      if (typeof renderDanhSachSnapshotsCucBo === "function") {
+        renderDanhSachSnapshotsCucBo();
+      }
+    } catch (err) {
+      console.warn("[AutoBackup] Lỗi gửi sao lưu đám mây:", err);
+      capNhatChiBaoAutoBackup("☁️ Đã lưu máy (Lỗi đẩy lên mây)", "warning");
+      if (typeof hopDenGhiLog === "function") {
+        hopDenGhiLog("AUTO_BACKUP_FAIL", "Lỗi sao lưu đám mây: " + err.message);
+      }
+    } finally {
+      dangSaoLuuAuto = false;
+    }
+  }
+  window.thucHienAutoBackup = thucHienAutoBackup;
+
+  // Hàm kích hoạt có trễ (debounce) sau khi hoàn thành 1 đợt quét
+  function kichHoatKiemTraAutoBackup(delayMs = 4000) {
+    if (timerDebounceAutoBackup) clearTimeout(timerDebounceAutoBackup);
+    timerDebounceAutoBackup = setTimeout(() => {
+      thucHienAutoBackup("after_scan");
+    }, delayMs);
+  }
+  window.kichHoatKiemTraAutoBackup = kichHoatKiemTraAutoBackup;
+
+  // ── SỰ KIỆN KÍCH HOẠT TỰ ĐỘNG KHI CÓ MẠNG HOẶC MỞ APP ─────────────────────
+  window.addEventListener("online", function() {
+    if (typeof hopDenGhiLog === "function") hopDenGhiLog("NET_ONLINE", "Phát hiện thiết bị kết nối lại Mạng/Wi-Fi");
+    capNhatChiBaoAutoBackup("☁️ Đã có mạng. Đang tự động sao lưu...");
+    setTimeout(() => thucHienAutoBackup("network_reconnected"), 2000);
+  });
+
+  window.addEventListener("offline", function() {
+    if (typeof hopDenGhiLog === "function") hopDenGhiLog("NET_OFFLINE", "Mất kết nối mạng");
+    capNhatChiBaoAutoBackup("☁️ Đang ngoại tuyến (Đợi Wi-Fi/4G)", "warning");
+  });
+
+  // Tự động kiểm tra sao lưu sau khi app khởi động 3.5 giây
+  setTimeout(() => {
+    const lastTime = localStorage.getItem("last_auto_backup_time");
+    if (lastTime) {
+      capNhatChiBaoAutoBackup(`☁️ Đã sao lưu: ${lastTime} (Toàn vẹn)`, "success");
+    } else {
+      capNhatChiBaoAutoBackup("☁️ Tự động sao lưu: Đang kích hoạt");
+    }
+    thucHienAutoBackup("app_launch");
+  }, 3500);
+})();
+
+// =============================================================================
+// ── HIỂN THỊ & KHÔI PHỤC SNAPSHOT CỤC BỘ TỪ INDEXEDDB (5 BẢN GẦN NHẤT) ──────
+// =============================================================================
+async function renderDanhSachSnapshotsCucBo() {
+  const container = document.getElementById("danh-sach-snapshot-cuc-bo");
+  if (!container) return;
+
+  if (typeof idbDocDanhSachSnapshots !== "function") {
+    container.innerHTML = '<div style="color:var(--text-muted);font-size:12px;padding:8px 0;">Đang khởi tạo cơ sở dữ liệu IndexedDB...</div>';
+    return;
+  }
+
+  const list = await idbDocDanhSachSnapshots();
+  if (!list || list.length === 0) {
+    container.innerHTML = '<div style="color:var(--text-muted);font-size:12px;padding:8px 0;">Chưa có bản snapshot tự động nào được lưu.</div>';
+    return;
+  }
+
+  let html = '<div style="display:flex;flex-direction:column;gap:8px;margin-top:6px;">';
+  list.forEach((snap, idx) => {
+    html += `
+      <div style="background:var(--card-raised);border:1px solid var(--line-soft);border-radius:12px;padding:10px 12px;display:flex;justify-content:space-between;align-items:center;">
+        <div>
+          <div style="font-size:13px;font-weight:700;color:var(--cream);">${snap.thoiGianHienThi}</div>
+          <div style="font-size:11px;color:var(--cream-soft);">${snap.moTa} (${snap.soLuongMuc} mục dữ liệu)</div>
+        </div>
+        <button class="btn btn-blue" style="padding:6px 12px;font-size:12px;margin:0;white-space:nowrap;" onclick="khoiPhucSnapshotTheoId('${snap.id}')">
+          <i class="ti ti-restore"></i> Khôi phục
+        </button>
+      </div>
+    `;
+  });
+  html += '</div>';
+  container.innerHTML = html;
+}
+window.renderDanhSachSnapshotsCucBo = renderDanhSachSnapshotsCucBo;
+
+async function khoiPhucSnapshotTheoId(id) {
+  if (typeof idbDocSnapshot !== "function") return;
+  const record = await idbDocSnapshot(id);
+  if (!record || !record.duLieu) {
+    if (typeof showCanhBao === "function") showCanhBao("Không tìm thấy dữ liệu của bản sao lưu này!", "warning");
+    return;
+  }
+
+  const thoiGianStr = record.thoiGianHienThi || "này";
+  const thucHienKhoiPhuc = () => {
+    try {
+      let count = 0;
+      for (const [k, v] of Object.entries(record.duLieu)) {
+        if (k && v !== null && v !== undefined) {
+          localStorage.setItem(k, v);
+          count++;
+        }
+      }
+      if (typeof showCanhBao === "function") {
+        showCanhBao(`Đã khôi phục thành công ${count} mục dữ liệu! Đang tải lại...`, "success");
+      }
+      setTimeout(() => {
+        window.location.reload();
+      }, 1200);
+    } catch (err) {
+      if (typeof showCanhBao === "function") showCanhBao("Lỗi khi khôi phục dữ liệu: " + err.message, "error");
+    }
+  };
+
+  if (typeof moXacNhanApp === "function") {
+    moXacNhanApp(
+      `Khôi phục dữ liệu từ bản sao lưu lúc ${thoiGianStr}? Dữ liệu hiện tại trên máy sẽ được thay thế bằng bản này.`,
+      thucHienKhoiPhuc,
+      "Khôi phục",
+      null,
+      "Hủy",
+      "Khôi phục sao lưu"
+    );
+  } else {
+    thucHienKhoiPhuc();
+  }
+}
+window.khoiPhucSnapshotTheoId = khoiPhucSnapshotTheoId;
+

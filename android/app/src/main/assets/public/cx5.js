@@ -53,6 +53,7 @@ function luuPhienDoDangCX5() {
     }));
   } catch (e) { }
   luuPhienVaoLichSuCX5();
+  if (typeof kichHoatKiemTraAutoBackup === "function") kichHoatKiemTraAutoBackup(4000);
 }
 
 function xoaPhienDoDangCX5() {
@@ -1636,7 +1637,7 @@ function xuatExcelLichSuCX5(idPhien) {
   const entry = list.find(s => s.idPhien === idPhien || s.id === idPhien);
   const dataList = entry ? entry.phienCX5 : phienCX5;
   if (!dataList || dataList.length === 0) {
-    alert("Chưa có dữ liệu Chỉ X5 để xuất Excel!");
+    if (typeof showCanhBaoCX5 === "function") showCanhBaoCX5("Chưa có dữ liệu Chỉ X5 để xuất Excel!", "warning");
     return;
   }
   const dateStr = (entry ? entry.ngay : ngayCX5) || new Date().toISOString().split("T")[0];

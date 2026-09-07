@@ -199,7 +199,7 @@ let tkKetQuaTimKiemHienTai = [];
 
 function xuatExcelTonKho() {
   if (!tkKetQuaTimKiemHienTai || tkKetQuaTimKiemHienTai.length === 0) {
-    alert("Chưa có kết quả tra cứu tồn kho để xuất Excel!");
+    if (typeof showCanhBao === "function") showCanhBao("Chưa có kết quả tra cứu tồn kho để xuất Excel!", "warning");
     return;
   }
   const dateVal = document.getElementById("tk-ngay") ? document.getElementById("tk-ngay").value : "";
