@@ -491,8 +491,7 @@
         </div>
       </div>
       <div style="display:flex; gap:6px; align-items:center;">
-        <input type="text" id="qr-manual-input-cam" placeholder="Nhập tay mã QR..." style="flex:1; height:38px; padding:0 12px; font-size:13px; margin:0; box-sizing:border-box;" onkeydown="if(event.key==='Enter') nhapThuCongQR()">
-        <button class="btn btn-blue" style="height:38px; padding:0 16px; font-size:13px; white-space:nowrap; margin:0;" onclick="nhapThuCongQR()">Thêm</button>
+        <button id="btn-flash-qr" class="btn" style="width:100%; background:var(--surface-grad); border:1px solid var(--border); color:var(--text-main); margin:0; height:38px; font-size:14px;" onclick="toggleFlashQR()">Bật đèn pin</button>
       </div>
     </div>
 

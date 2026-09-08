@@ -208,47 +208,14 @@ function khiQuetDuocMaQR(result) {
 window.khiQuetDuocMaQR = khiQuetDuocMaQR;
 
 // ── Nhập tay mã thủ công ───────────────────────────────────────────
-function nhapThuCongQR() {
-  const inputEl = document.getElementById("qr-manual-input-cam");
-  if (!inputEl) return;
-  const raw = inputEl.value.trim();
-  if (!raw) return;
-
-  const data = typeof parseQRText === "function" ? parseQRText(raw) : null;
-  const id = data && data.id ? data.id : raw;
-  const msp = data && data.msp ? data.msp : raw;
-  const qc = data && data.qc ? data.qc : msp;
-  const kg = data && data.kg ? data.kg : 0;
-
-  const elCheck = document.getElementById("qr-cho-phep-trung-cam");
-  const choPhepTrung = elCheck ? elCheck.checked : false;
-
-  const trung = phienQuetQR.find(r => r.id === id);
-  if (!choPhepTrung && trung) {
-    const gioQuet = typeof dinhDangGioQuetTrung === "function" ? dinhDangGioQuetTrung(trung.thoiGian) : "";
-    showCanhBaoQR("Đã quét " + gioQuet, "error");
-    if (typeof phatVibrateError === "function") phatVibrateError();
-    return;
+let denPinBatQR = false;
+async function toggleFlashQR() {
+  if (!zxingReaderQR || !dangQuetQR) return;
+  if (typeof batTatDenPinCamera === "function") {
+    denPinBatQR = await batTatDenPinCamera("reader", "btn-flash-qr", denPinBatQR);
   }
-
-  phienQuetQR.push({
-    id,
-    msp,
-    qc,
-    kg,
-    thoiGian: new Date(),
-    dotQuet: demSoDotQR
-  });
-
-  inputEl.value = "";
-  const demEl = document.getElementById("qr-dem");
-  if (demEl) demEl.textContent = "Đã quét: " + phienQuetQR.length + " bao";
-
-  if (typeof phatVibrateSuccess === "function") phatVibrateSuccess();
-  luuPhienDoDangQR();
-  capNhatLogQR();
 }
-window.nhapThuCongQR = nhapThuCongQR;
+window.toggleFlashQR = toggleFlashQR;
 
 // ── Dừng / Tiếp tục Camera ─────────────────────────────────────────
 function dungQuetQR() {
@@ -627,10 +594,11 @@ async function guiLenSheetQuetQR(rows) {
           id: r.id,
           msp: r.msp,
           ten: r.qc || r.msp,
-          mau: r.qc || "—",
+          mau: r.qc || "",
           ngay: r.ngay,
           loai: r.loai,
-          kg: r.kg
+          kg: r.kg,
+          thoiGian: r.thoiGian
         })
       }).then(res => {
         if (!res.ok) throw new Error("HTTP " + res.status);
