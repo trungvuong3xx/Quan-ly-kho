@@ -83,19 +83,7 @@ function docGiongNoiBTP(msp, kg) {
 }
 
 function hienVienFeedbackBTP(loai) {
-  const videoBox = document.getElementById("btp-video-box");
-  if (!videoBox) return;
-  if (loai === "success") {
-    videoBox.style.borderColor = "#22c55e";
-    videoBox.style.boxShadow = "0 0 16px rgba(34, 197, 94, 0.75)";
-  } else {
-    videoBox.style.borderColor = "#ef4444";
-    videoBox.style.boxShadow = "0 0 16px rgba(239, 68, 68, 0.75)";
-  }
-  setTimeout(() => {
-    videoBox.style.borderColor = "transparent";
-    videoBox.style.boxShadow = "none";
-  }, 800);
+  if (typeof hienVienFeedbackCamera === "function") hienVienFeedbackCamera("btp-video-box", loai);
 }
 window.hienVienFeedbackBTP = hienVienFeedbackBTP;
 
@@ -341,7 +329,7 @@ async function batDauBTP() {
 }
 
 async function batDauPhienMoiBTP() {
-  document.body.classList.add("cam-active");
+  if (typeof khoaCuonTrangQuet === "function") khoaCuonTrangQuet(true); else document.body.classList.add("cam-active");
   phienBTP = [];
   demSoDotBTP = 1;
   dangQuetBTP = true;
@@ -397,7 +385,7 @@ function dungBTP() {
 }
 
 async function tiepTucBTP() {
-  document.body.classList.add("cam-active");
+  if (typeof khoaCuonTrangQuet === "function") khoaCuonTrangQuet(true); else document.body.classList.add("cam-active");
   const daQuetTrongDotNay = phienBTP.some(function(item) { return item.dotQuet === demSoDotBTP; }); if (daQuetTrongDotNay || (demSoDotBTP || 0) === 0) { demSoDotBTP = (demSoDotBTP || 0) + 1; }
   dangQuetBTP = true;
   document.getElementById("btp-status").innerHTML = '<i class="ti ti-radar" style="color:var(--success)"></i> Đang quét Đợt ' + demSoDotBTP + '...';
@@ -630,7 +618,7 @@ function taoHangKetQuaBTP(danhSach) {
 }
 
 function hienKetQuaBTP() {
-  document.body.classList.remove("cam-active");
+  if (typeof khoaCuonTrangQuet === "function") khoaCuonTrangQuet(false); else document.body.classList.remove("cam-active");
   const { hangDot, footDot, hangGom, footGom } = taoHangKetQuaBTP(phienBTP);
   const elDot = document.getElementById("btp-tbody-dot");
   const elFootDot = document.getElementById("btp-tfoot-dot");
@@ -656,7 +644,7 @@ function hienKetQuaBTP() {
 }
 
 async function quetTiepBTP() {
-  document.body.classList.add("cam-active");
+  if (typeof khoaCuonTrangQuet === "function") khoaCuonTrangQuet(true); else document.body.classList.add("cam-active");
   const daQuetTrongDotNay = phienBTP.some(function(item) { return item.dotQuet === demSoDotBTP; }); if (daQuetTrongDotNay || (demSoDotBTP || 0) === 0) { demSoDotBTP = (demSoDotBTP || 0) + 1; }
   dangQuetBTP = true;
   denPinBatBTP = false;
@@ -739,7 +727,7 @@ function showCanhBaoBTP(text, type = "error") {
 }
 
 async function khoiPhucBTP(state) {
-  document.body.classList.add("cam-active");
+  if (typeof khoaCuonTrangQuet === "function") khoaCuonTrangQuet(true); else document.body.classList.add("cam-active");
   phienBTP = state.phienBTP.map(r => ({ ...r, thoiGian: new Date(r.thoiGian) }));
   demSoDotBTP = state.demSoDotBTP || 1;
   ngayBTP = state.ngayBTP;

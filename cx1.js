@@ -22,19 +22,13 @@ if (typeof phatTiengBip !== "function") {
 
 async function toggleFlashCX1() {
   if (!zxingReaderCX1 || !dangQuetCX1) return;
-  try {
-    const stream = document.getElementById("cx1-reader").srcObject;
-    if (!stream) return;
-    const track = stream.getVideoTracks()[0];
-    const capabilities = track.getCapabilities();
-    if (!capabilities.torch) { showCanhBaoCX1("Thiết bị không hỗ trợ đèn pin."); return; }
-    denPinBat = !denPinBat;
-    await track.applyConstraints({ advanced: [{ torch: denPinBat }] });
-    const btnFlash = document.getElementById("btn-flash-cx1");
-    btnFlash.style.background = denPinBat ? "var(--brass)" : "var(--neutral)";
-    btnFlash.style.color = denPinBat ? "var(--bg)" : "var(--cream)";
-    btnFlash.textContent = denPinBat ? "Tắt đèn" : "Bật đèn";
-  } catch (err) {}
+  if (typeof batTatDenPinCamera === "function") {
+    denPinBat = await batTatDenPinCamera("cx1-reader", "btn-flash-cx1", denPinBat);
+  }
+}
+
+function hienVienFeedbackCX1(loai) {
+  if (typeof hienVienFeedbackCamera === "function") hienVienFeedbackCamera("#cx1-cam .video-container", loai);
 }
 
 function xuLyDuLieuQR(text) {
@@ -130,17 +124,17 @@ function khiQuetDuocMa(result) {
     const gioQuet = typeof dinhDangGioQuetTrung === "function" ? dinhDangGioQuetTrung(trung.thoiGian) : "";
     showCanhBaoCX1("Đã quét " + gioQuet, "error");
 
-    const vc = document.querySelector("#cx1-cam .video-container");
-    if (vc) {
-      vc.classList.add("canh-bao-trung");
-      setTimeout(() => vc.classList.remove("canh-bao-trung"), 500);
-    }
+    hienVienFeedbackCX1("duplicate");
     return;
   }
 
   // Quét thành công: KHÔNG HIỆN POPUP, chỉ phát âm thanh/rung và hiển thị dưới nhật ký (log)
   phatTiengBip();
   if (typeof phatVibrateSuccess === "function") phatVibrateSuccess();
+  hienVienFeedbackCX1("success");
+    
+  const lockStatusEl = document.getElementById("cx1-lock-status");
+  if (lockStatusEl) lockStatusEl.innerHTML = '<i class="ti ti-check-double" style="color:var(--success)"></i> ' + data.id;
 
   phienCX1.push({ 
     id: data.id, msp: data.msp, qc: data.qc, 
@@ -199,7 +193,7 @@ async function tiepTucKhoiTaoCX1() {
   idPhienHienTai = Date.now() + "-" + Math.random().toString(36).slice(2);
   soLuongDaGuiHienTai = 0;
 
-  document.body.classList.add("cam-active");
+  if (typeof khoaCuonTrangQuet === "function") khoaCuonTrangQuet(true); else document.body.classList.add("cam-active");
   document.getElementById("cx1-form").style.display = "none";
   document.getElementById("cx1-cam").style.display = "block";
   document.getElementById("cx1-ketqua").style.display = "none";
@@ -219,6 +213,10 @@ async function tiepTucKhoiTaoCX1() {
     const cx1Track = cx1Vid && cx1Vid.srcObject ? cx1Vid.srcObject.getVideoTracks()[0] : null;
     const isCamRunningCX1 = cx1Track && cx1Track.readyState === 'live';
     if (!zxingReaderCX1 || !isCamRunningCX1) {
+      if (zxingReaderCX1) {
+        if (typeof dungCameraFast === "function") dungCameraFast("cx1-reader", zxingReaderCX1);
+        zxingReaderCX1 = null;
+      }
       zxingReaderCX1 = await khoiTaoCameraFast("cx1-reader", (txt) => {
         if (txt && dangQuetCX1) {
           khiQuetDuocMa({ getText: () => txt });
@@ -257,6 +255,10 @@ async function tiepTucCX1() {
     const cx1Track = cx1Vid && cx1Vid.srcObject ? cx1Vid.srcObject.getVideoTracks()[0] : null;
     const isCamRunningCX1 = cx1Track && cx1Track.readyState === 'live';
     if (!zxingReaderCX1 || !isCamRunningCX1) {
+      if (zxingReaderCX1) {
+        if (typeof dungCameraFast === "function") dungCameraFast("cx1-reader", zxingReaderCX1);
+        zxingReaderCX1 = null;
+      }
       zxingReaderCX1 = await khoiTaoCameraFast("cx1-reader", (txt) => {
         if (txt && dangQuetCX1) {
           khiQuetDuocMa({ getText: () => txt });
@@ -684,7 +686,7 @@ function taoHangKetQuaCX1(danhSach) {
 }
 
 function hienKetQuaCX1() {
-  document.body.classList.remove("cam-active");
+  if (typeof khoaCuonTrangQuet === "function") khoaCuonTrangQuet(false); else document.body.classList.remove("cam-active");
   const { hangDot, hangGom } = taoHangKetQuaCX1(phienCX1);
   document.getElementById("cx1-tbody-dot").innerHTML = hangDot;
   document.getElementById("cx1-tbody-gom").innerHTML = hangGom;
@@ -704,7 +706,7 @@ async function quetTiepCX1() {
 
   document.getElementById("cx1-ketqua").style.display = "none";
   document.getElementById("cx1-cam").style.display = "block";
-  document.body.classList.add("cam-active");
+  if (typeof khoaCuonTrangQuet === "function") khoaCuonTrangQuet(true); else document.body.classList.add("cam-active");
   document.getElementById("cx1-status").textContent = "Đang quét Đợt " + demSoDot + "...";
 
   const btnToggle = document.getElementById("btn-dung-tieptuc-cx1");
@@ -716,6 +718,10 @@ async function quetTiepCX1() {
     const cx1Track = cx1Vid && cx1Vid.srcObject ? cx1Vid.srcObject.getVideoTracks()[0] : null;
     const isCamRunningCX1 = cx1Track && cx1Track.readyState === 'live';
     if (!zxingReaderCX1 || !isCamRunningCX1) {
+      if (zxingReaderCX1) {
+        if (typeof dungCameraFast === "function") dungCameraFast("cx1-reader", zxingReaderCX1);
+        zxingReaderCX1 = null;
+      }
       zxingReaderCX1 = await khoiTaoCameraFast("cx1-reader", (txt) => {
         if (txt && dangQuetCX1) {
           khiQuetDuocMa({ getText: () => txt });
@@ -791,7 +797,7 @@ async function khoiPhucCX1(state) {
   dangQuetCX1 = true;
   denPinBat = false;
 
-  document.body.classList.add("cam-active");
+  if (typeof khoaCuonTrangQuet === "function") khoaCuonTrangQuet(true); else document.body.classList.add("cam-active");
   document.getElementById("cx1-form").style.display = "none";
   document.getElementById("cx1-cam").style.display = "block";
   document.getElementById("cx1-ketqua").style.display = "none";
@@ -811,6 +817,10 @@ async function khoiPhucCX1(state) {
     const cx1Track = cx1Vid && cx1Vid.srcObject ? cx1Vid.srcObject.getVideoTracks()[0] : null;
     const isCamRunningCX1 = cx1Track && cx1Track.readyState === 'live';
     if (!zxingReaderCX1 || !isCamRunningCX1) {
+      if (zxingReaderCX1) {
+        if (typeof dungCameraFast === "function") dungCameraFast("cx1-reader", zxingReaderCX1);
+        zxingReaderCX1 = null;
+      }
       zxingReaderCX1 = await khoiTaoCameraFast("cx1-reader", (txt) => {
         if (txt && dangQuetCX1) {
           khiQuetDuocMa({ getText: () => txt });

@@ -2348,3 +2348,71 @@ async function khoiPhucSnapshotTheoId(id) {
 }
 window.khoiPhucSnapshotTheoId = khoiPhucSnapshotTheoId;
 
+// ── CÁC HÀM DÙNG CHUNG CHO TẤT CẢ CÁC MODULE QUÉT QR ─────────────────
+
+window.batTatDenPinCamera = async function(videoId, btnId, currentState) {
+  const videoEl = document.getElementById(videoId);
+  if (!videoEl || !videoEl.srcObject) {
+    if (typeof showCanhBao === "function") showCanhBao("Camera chưa sẵn sàng.", "warning");
+    return currentState;
+  }
+  const track = videoEl.srcObject.getVideoTracks()[0];
+  if (!track) return currentState;
+  
+  const capabilities = track.getCapabilities();
+  if (!capabilities.torch) { 
+    if (typeof showCanhBao === "function") showCanhBao("Thiết bị không hỗ trợ đèn pin.", "warning");
+    return currentState;
+  }
+
+  const btnFlash = document.getElementById(btnId);
+  if (btnFlash) btnFlash.disabled = true;
+
+  const newState = !currentState;
+  try {
+    await track.applyConstraints({ advanced: [{ torch: newState }] });
+    if (btnFlash) {
+      btnFlash.style.background = newState ? "var(--brass)" : "var(--neutral)";
+      btnFlash.style.color = newState ? "var(--bg)" : "var(--cream)";
+      btnFlash.textContent = newState ? "Tắt đèn" : "Bật đèn pin";
+    }
+    if (btnFlash) btnFlash.disabled = false;
+    return newState;
+  } catch (err) {
+    console.warn("Lỗi bật/tắt đèn pin:", err);
+    if (typeof showCanhBao === "function") showCanhBao("Không thể bật/tắt đèn pin.", "error");
+    if (btnFlash) btnFlash.disabled = false;
+    return currentState;
+  }
+};
+
+window.hienVienFeedbackCamera = function(containerSelector, loai) {
+  const element = document.querySelector(containerSelector) || document.getElementById(containerSelector);
+  if (!element) return;
+  if (loai === "success") {
+    element.style.borderColor = "#22c55e";
+    element.style.boxShadow = "0 0 16px rgba(34, 197, 94, 0.75)";
+  } else {
+    element.style.borderColor = "#ef4444";
+    element.style.boxShadow = "0 0 16px rgba(239, 68, 68, 0.75)";
+  }
+  setTimeout(() => {
+    element.style.borderColor = "";
+    element.style.boxShadow = "none";
+  }, 800);
+};
+
+window.khoaCuonTrangQuet = function(isLock) {
+  if (isLock) {
+    document.body.classList.add("cam-active");
+    window.scrollTo(0, 0);
+    document.body.style.overflow = "hidden";
+    document.documentElement.style.overflow = "hidden";
+  } else {
+    document.body.classList.remove("cam-active");
+    document.body.style.overflow = "";
+    document.documentElement.style.overflow = "";
+  }
+};
+
+
