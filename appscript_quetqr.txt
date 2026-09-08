@@ -1,0 +1,328 @@
+const DATA_START_ROW = 6;
+const COL_ID = 1;
+const COL_MSP = 2;
+const COL_QC = 3;
+const COL_BAO = 4;
+const COL_KG = 5;
+const COL_LOAI = 6;
+const COL_NGAY = 7;
+const COL_THOIGIAN = 8;
+
+function getInfo(msp) {
+  try {
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    const sh = ss.getSheetByName("DanhMuc");
+    if (!sh) return { error: "Không tìm thấy sheet 'DanhMuc'" };
+
+    const data = sh.getDataRange().getValues();
+    for (let i = 3; i < data.length; i++) {
+      if (String(data[i][0]).trim() === String(msp).trim()) {
+        return { success: true, ten: data[i][1], mau: data[i][2] };
+      }
+    }
+
+    return { success: false, message: "Không tìm thấy MSP: " + msp };
+  } catch (e) {
+    return { error: e.message };
+  }
+}
+
+function taoNhieuID(soLuong) {
+  try {
+    const ids = [];
+    for (let i = 0; i < soLuong; i++) {
+      let id;
+      do {
+        const so = Math.floor(Math.random() * 90000) + 10000;
+        id = "5C" + so;
+      } while (ids.includes(id));
+      ids.push(id);
+    }
+    return ids;
+  } catch(e) {
+    return { error: e.message };
+  }
+}
+
+function isNhap(loai) {
+  return String(loai || "").trim().startsWith("Nhập");
+}
+
+function isXuat(loai) {
+  const text = String(loai || "").trim();
+  return text.startsWith("Xuất") || text === "Bình Thuận";
+}
+
+function layTenSheet(loai) {
+  const text = String(loai || "").trim();
+  if (isNhap(text)) return "NHẬP";
+  if (text === "Bình Thuận") return "BÌNH THUẬN";
+  if (text.toUpperCase() === "XUẤT FOR") return "FOR";
+  if (text.startsWith("Xuất")) return "XUẤT";
+  return null;
+}
+
+function parseKg(value) {
+  if (value === "" || value === null || value === undefined) return 0;
+  const num = parseFloat(String(value).replace(",", "."));
+  return Number.isFinite(num) ? num : 0;
+}
+
+function lamTronKg(value) {
+  return Math.round((parseFloat(value) || 0) * 1000) / 1000;
+}
+
+function formatNgay(dateVal) {
+  if (!dateVal) return "";
+  return Utilities.formatDate(new Date(dateVal), Session.getScriptTimeZone(), "dd/MM/yyyy");
+}
+
+function formatGio(dateVal) {
+  if (!dateVal) return "";
+  return Utilities.formatDate(new Date(dateVal), Session.getScriptTimeZone(), "HH:mm:ss");
+}
+
+function getDataRows(sheet) {
+  if (!sheet) return [];
+  const lastRow = sheet.getLastRow();
+  if (lastRow < DATA_START_ROW) return [];
+
+  return sheet
+    .getRange(DATA_START_ROW, 1, lastRow - DATA_START_ROW + 1, COL_THOIGIAN)
+    .getValues()
+    .map((row, index) => ({ rowNumber: DATA_START_ROW + index, values: row }))
+    .filter(item => String(item.values[COL_ID - 1]).trim() !== "");
+}
+
+function rowId(row) {
+  return String(row.values[COL_ID - 1]).trim();
+}
+
+function rowKg(row) {
+  const kg = row.values[COL_KG - 1];
+  return parseKg(kg);
+}
+
+function thongTinTon(id) {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const shNhap = ss.getSheetByName("NHẬP");
+  const shXuat = ss.getSheetByName("XUẤT");
+  const shBinhThuan = ss.getSheetByName("BÌNH THUẬN");
+  const shFor = ss.getSheetByName("FOR");
+
+  const nhapRows = getDataRows(shNhap).filter(row => rowId(row) === String(id).trim());
+  const xuatRows = []
+    .concat(getDataRows(shXuat))
+    .concat(getDataRows(shBinhThuan))
+    .concat(getDataRows(shFor))
+    .filter(row => rowId(row) === String(id).trim());
+
+  const tongNhap = lamTronKg(nhapRows.reduce((sum, row) => sum + rowKg(row), 0));
+  const tongXuat = lamTronKg(xuatRows.reduce((sum, row) => sum + rowKg(row), 0));
+  const ton = lamTronKg(tongNhap - tongXuat);
+  
+  const nhapRow = nhapRows.length ? nhapRows[0] : null;
+
+  return {
+    tongNhap,
+    tongXuat,
+    ton,
+    kgNhap: nhapRow ? rowKg(nhapRow) : 0
+  };
+}
+
+function kiemTraQR(id, msp, loai) {
+  try {
+    const info = getInfo(msp);
+    if (info.error) return { error: info.error };
+
+    const tonInfo = thongTinTon(id);
+    const base = {
+      success: true,
+      ten: info.success ? info.ten : "",
+      mau: info.success ? info.mau : "",
+      tongNhap: tonInfo.tongNhap,
+      tongXuat: tonInfo.tongXuat,
+      ton: tonInfo.ton,
+      kgNhap: tonInfo.kgNhap
+    };
+
+    if (isNhap(loai)) {
+      base.cheDo = "nhapMoi"; // Xóa cơ chế ghi đè, luôn trả về nhapMoi
+      return base;
+    }
+
+    if (isXuat(loai)) {
+      if (tonInfo.tongNhap <= 0) return { error: "Mã chưa tồn" };
+      if (tonInfo.ton <= 0) return { error: "Mã đã hết tồn" };
+      base.cheDo = "xuat";
+      return base;
+    }
+
+    return { error: "Không xác định loại" };
+  } catch (e) {
+    return { error: e.message };
+  }
+}
+
+function ghiDong(sheet, id, msp, qc, bao, kg, loai, ngay, thoiGian) {
+  const dNgay = formatNgay(ngay);
+  const dGio = formatGio(thoiGian ? thoiGian : new Date());
+  
+  sheet.appendRow([
+    id,
+    msp,
+    qc,
+    bao,
+    kg,
+    loai,
+    dNgay,
+    dGio
+  ]);
+}
+
+function luuGiaoDich(id, msp, ten, mau, ngay, loai, kg, thoiGian) {
+  try {
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    const tenSheet = layTenSheet(loai);
+    if (!tenSheet) return { error: "Không xác định loại" };
+
+    const sh = ss.getSheetByName(tenSheet);
+    if (!sh) return { error: "Không tìm thấy sheet '" + tenSheet + "'" };
+
+    const kgGoc = lamTronKg(parseKg(kg));
+    if (kgGoc <= 0) return { error: "Kg không hợp lệ" };
+
+    const tonInfo = thongTinTon(id);
+    const qc = ten; // Ráp biến ten truyền từ app (r.qc) làm cột QC
+
+    if (isNhap(loai)) {
+      ghiDong(sh, id, msp, qc, 1, kgGoc, loai, ngay, thoiGian);
+      return {
+        success: true,
+        cheDo: "nhapMoi",
+        kgLuu: kgGoc,
+        kgGoc: kgGoc,
+        tongNhap: lamTronKg(tonInfo.tongNhap + kgGoc),
+        tongXuat: tonInfo.tongXuat,
+        ton: lamTronKg(tonInfo.tongNhap + kgGoc - tonInfo.tongXuat)
+      };
+    }
+
+    if (isXuat(loai)) {
+      if (tonInfo.tongNhap <= 0) return { error: "Mã chưa tồn" };
+      if (tonInfo.ton <= 0) return { error: "Mã đã hết tồn" };
+      if (kgGoc > tonInfo.ton) return { error: "Không đủ tồn: " + tonInfo.ton + " kg" };
+
+      ghiDong(sh, id, msp, qc, 1, kgGoc, loai, ngay, thoiGian);
+      return {
+        success: true,
+        cheDo: "xuat",
+        kgLuu: kgGoc,
+        kgGoc: kgGoc,
+        tongNhap: tonInfo.tongNhap,
+        tongXuat: lamTronKg(tonInfo.tongXuat + kgGoc),
+        ton: lamTronKg(tonInfo.ton - kgGoc)
+      };
+    }
+
+    return { error: "Không xác định loại" };
+  } catch (e) {
+    return { error: e.message };
+  }
+}
+
+// ─── Lưu kiểm kê batch ─────────────────────────────────────
+function luuKiemKe(data) {
+  try {
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    const sh = ss.getSheetByName("KIỂM KÊ");
+    if (!sh) return { error: "Không tìm thấy sheet 'KIỂM KÊ'" };
+
+    data.forEach(row => {
+      const dNgay = formatNgay(row.ngay);
+      const dGio = formatGio(row.thoiGian ? row.thoiGian : new Date());
+      sh.appendRow([row.id, row.msp, row.ten, 1, "", "Kiểm Kê", dNgay, dGio]);
+    });
+    return { success: true };
+  } catch(e) {
+    return { error: e.message };
+  }
+}
+
+function luuCX1(data) {
+  try {
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    let sh = ss.getSheetByName("CX1");
+    
+    if (!sh) {
+      sh = ss.insertSheet("CX1");
+      // Dựng tiêu đề 8 cột
+      sh.appendRow(["ID", "MSP", "QC", "Bao", "KG", "Loại", "Ngày", "Thời gian"]);
+      sh.getRange(1, 1, 1, 8).setFontWeight("bold").setBackground("#4f8ef7").setFontColor("white").setHorizontalAlignment("center");
+    }
+    
+    if (data && Array.isArray(data)) {
+      data.forEach(r => {
+        const id = String(r.id || "").trim();
+        const msp = String(r.msp || "").trim();
+        const qc = String(r.qc || "").trim();
+        const kg = parseFloat(r.kg) || 0;
+        const dNgay = formatNgay(new Date());
+        const dGio = formatGio(r.thoiGian ? r.thoiGian : new Date());
+
+        sh.appendRow([id, msp, qc, 1, kg, "Chỉ For", dNgay, dGio]);
+      });
+    }
+    
+    return { success: true };
+  } catch(e) {
+    return { error: "Lỗi ghi Sheet: " + e.message };
+  }
+}
+
+function doPost(e) {
+  const body = JSON.parse(e.postData.contents);
+  const action = body.action;
+
+  if (action === "getInfo") return reply(getInfo(body.msp));
+  if (action === "taoNhieuID") return reply(taoNhieuID(body.soLuong));
+  if (action === "kiemTraQR") return reply(kiemTraQR(body.id, body.msp, body.loai));
+  if (action === "luuKiemKe") return reply(luuKiemKe(body.data));
+  if (action === "luuCX1") return reply(luuCX1(body.data));
+
+  if (action === "luuGiaoDich") {
+    return reply(luuGiaoDich(
+      body.id,
+      body.msp,
+      body.ten,
+      body.mau,
+      body.ngay,
+      body.loai,
+      body.kg,
+      body.thoiGian // Nhận thêm thời gian truyền từ app
+    ));
+  }
+
+  return reply({ error: "Không rõ action" });
+}
+
+function reply(data) {
+  return ContentService
+    .createTextOutput(JSON.stringify(data))
+    .setMimeType(ContentService.MimeType.JSON);
+}
+
+function doOptions(e) {
+  return ContentService.createTextOutput("")
+    .setMimeType(ContentService.MimeType.TEXT);
+}
+
+function doGet(e) {
+  const key = e.parameter.key;
+  let role = "user";
+  if (key === "admin") role = "admin";
+  const html = HtmlService.createTemplateFromFile("index");
+  html.role = role;
+  return html.evaluate();
+}

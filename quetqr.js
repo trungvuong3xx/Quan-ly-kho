@@ -776,6 +776,9 @@ function xemChiTietLichSuQR(idPhien) {
   ngayQuetQR = entry.ngay;
   loaiQuetQR = entry.loai;
   soLuongDaGuiHienTaiQR = phienQuetQR.length;
+  idPhienHienTaiQR = idPhien;
+  const maxDot = Math.max(0, ...phienQuetQR.map(r => r.dotQuet || 1));
+  demSoDotQR = maxDot > 0 ? maxDot : 1;
 
   chuyenTrangKhongNav("quetQR");
   xemKetQuaQuetQR();
