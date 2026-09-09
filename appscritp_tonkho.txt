@@ -1,3 +1,52 @@
+// ========== APPSCRIPT TỒN KHO (Project riêng, deploy URL: API_TONKHO) ==========
+// File tham chiếu cho Google Apps Script project Tồn kho
+// URL: https://script.google.com/macros/s/AKfycbzo3rpqVvlryALLel9A6a6M8Azn_P0Qx1b28co0p3sXz-ozgAbvfhIcBZynV1e5AYbpGQ/exec
+
+const CONFIG = {
+  LIST_SHEET_NAME: 'LIST',
+  LIST_COL_TEN: 1,
+  LIST_COL_MSP: 2,
+  LIST_START_ROW: 2,
+  MSP_COL_IN_MONTH_SHEET: 7
+};
+
+const VUNG_THUONG_RANGES = [[6, 543], [637, 644]];
+const VUNG_FOR_RANGES = [[544, 630]];
+
+function doPost(e) {
+  let result;
+  try {
+    const body = JSON.parse(e.postData.contents);
+    switch (body.action) {
+      case "layDanhSachSanPhamTonKhoCX5":
+        result = layDanhSachSanPhamTonKhoCX5();
+        break;
+      case "layTonKhoCX5":
+        result = layTonKhoCX5(body.payload);
+        break;
+      default:
+        result = { success: false, message: "Action không hợp lệ: " + body.action };
+    }
+  } catch (err) {
+    result = { success: false, message: "Lỗi server: " + err.message };
+  }
+  return ContentService.createTextOutput(JSON.stringify(result)).setMimeType(ContentService.MimeType.JSON);
+}
+
+function findRowByMsp_(sheet, msp, ranges) {
+  const target = String(msp).trim();
+  for (const [start, end] of ranges) {
+    const numRows = end - start + 1;
+    const values = sheet.getRange(start, CONFIG.MSP_COL_IN_MONTH_SHEET, numRows, 1).getValues();
+    for (let i = 0; i < values.length; i++) {
+      if (String(values[i][0]).trim() === target) {
+        return start + i;
+      }
+    }
+  }
+  return -1;
+}
+
 function layDanhSachSanPhamTonKhoCX5() {
   try {
     const cacheKey = "tonKhoDanhSach_v1";
@@ -64,3 +113,4 @@ function layTonKhoCX5(payload) {
   } catch (err) {
     return { error: err.message };
   }
+}

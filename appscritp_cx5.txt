@@ -450,12 +450,7 @@ function doPost(e) {
       case "layChiTietNguonGocCX5":
         result = layChiTietNguonGocCX5(body.payload);
         break;
-      case "layDanhSachSanPhamTonKhoCX5":
-        result = layDanhSachSanPhamTonKhoCX5();
-        break;
-      case "layTonKhoCX5":
-        result = layTonKhoCX5(body.payload);
-        break;
+
       default:
         result = { success: false, message: "Action không hợp lệ: " + body.action };
     }
@@ -949,71 +944,4 @@ function xoaUngVienGhepCX5(payload) {
     return { success: false, message: "Lỗi: " + err.message };
   }
 }
-
-function layDanhSachSanPhamTonKhoCX5() {
-  try {
-    const cacheKey = "tonKhoDanhSach_v1";
-    const cache = CacheService.getScriptCache();
-    const cached = cache.get(cacheKey);
-    if (cached) {
-      try { return { list: JSON.parse(cached) }; } catch (e) {}
-    }
-
-    const ss = SpreadsheetApp.getActiveSpreadsheet();
-    const listSheet = ss.getSheetByName(CONFIG.LIST_SHEET_NAME);
-    if (!listSheet) return { list: [] };
-
-    const lastRow = listSheet.getLastRow();
-    if (lastRow < CONFIG.LIST_START_ROW) return { list: [] };
-
-    const numRows = lastRow - CONFIG.LIST_START_ROW + 1;
-    const data = listSheet.getRange(CONFIG.LIST_START_ROW, 1, numRows, 2).getValues();
-
-    const list = data
-      .filter(function (r) { return r[CONFIG.LIST_COL_TEN - 1] && r[CONFIG.LIST_COL_MSP - 1]; })
-      .map(function (r) {
-        return { ten: String(r[CONFIG.LIST_COL_TEN - 1]).trim(), msp: String(r[CONFIG.LIST_COL_MSP - 1]).trim() };
-      });
-
-    try { cache.put(cacheKey, JSON.stringify(list), 1800); } catch (e) {}
-
-    return { list: list };
-  } catch (err) {
-    return { error: err.message };
-  }
-}
-
-function layTonKhoCX5(payload) {
-  try {
-    const dateStr = payload && payload.dateStr;
-    const msps = (payload && payload.msps) || [];
-    if (msps.length === 0) return { list: [] };
-
-    const date = new Date(dateStr);
-    if (isNaN(date.getTime())) return { error: "Ngày không hợp lệ" };
-
-    const sheetName = String(date.getMonth() + 1);
-    const ss = SpreadsheetApp.getActiveSpreadsheet();
-    const sheet = ss.getSheetByName(sheetName);
-    if (!sheet) return { error: 'Chưa có sheet tháng "' + sheetName + '"' };
-
-    const ketQua = [];
-    msps.forEach(function (msp) {
-      const rowThuong = findRowByMsp_(sheet, msp, VUNG_THUONG_RANGES);
-      const rowFor = findRowByMsp_(sheet, msp, VUNG_FOR_RANGES);
-
-      if (rowThuong !== -1) {
-        const v = sheet.getRange(rowThuong, 8, 1, 4).getValues()[0];
-        ketQua.push({ msp: msp, kho: "Thường", baoDau: v[0] || 0, kgDau: v[1] || 0, baoCuoi: v[2] || 0, kgCuoi: v[3] || 0 });
-      }
-      if (rowFor !== -1) {
-        const v = sheet.getRange(rowFor, 8, 1, 4).getValues()[0];
-        ketQua.push({ msp: msp, kho: "FOR", baoDau: v[0] || 0, kgDau: v[1] || 0, baoCuoi: v[2] || 0, kgCuoi: v[3] || 0 });
-      }
-    });
-
-    return { list: ketQua };
-  } catch (err) {
-    return { error: err.message };
-  }
-}
+
