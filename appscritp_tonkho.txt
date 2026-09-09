@@ -1,7 +1,3 @@
-// ========== APPSCRIPT TỒN KHO (Project riêng, deploy URL: API_TONKHO) ==========
-// File tham chiếu cho Google Apps Script project Tồn kho
-// URL: https://script.google.com/macros/s/AKfycbzo3rpqVvlryALLel9A6a6M8Azn_P0Qx1b28co0p3sXz-ozgAbvfhIcBZynV1e5AYbpGQ/exec
-
 const CONFIG = {
   LIST_SHEET_NAME: 'LIST',
   LIST_COL_TEN: 1,
