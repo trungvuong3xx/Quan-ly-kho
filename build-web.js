@@ -104,8 +104,8 @@ function kiemTraQuyTacBuild() {
   const rootGradlePath = path.join(__dirname, 'android', 'build.gradle');
   if (fs.existsSync(rootGradlePath)) {
     const rootGradle = fs.readFileSync(rootGradlePath, 'utf8');
-    if (!rootGradle.includes('subprojects') || !rootGradle.includes('JavaVersion.VERSION_17')) {
-      console.error('\n❌ LỖI NGHIÊM TRỌNG: android/build.gradle thiếu khối subprojects ép Java 17 cho plugin Capacitor!\n');
+    if (!rootGradle.includes('subprojects') || !rootGradle.includes('JavaVersion.VERSION_17') || !rootGradle.includes('jvmTarget = "17"')) {
+      console.error('\n⚠️ LỖI NGHIÊM TRỌNG: android/build.gradle thiếu khối ép subprojects ép Java 17 và Kotlin jvmTarget 17!');
       process.exit(1);
     }
   }
@@ -114,4 +114,4 @@ function kiemTraQuyTacBuild() {
 }
 kiemTraQuyTacBuild();
 
-console.log('Build web completed successfully.');
+
