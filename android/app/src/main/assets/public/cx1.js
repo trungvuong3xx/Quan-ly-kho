@@ -964,8 +964,10 @@ function renderLichSuCX1() {
   }
 
   container.innerHTML = list.map(function (s) {
+    const parts = s.ngay ? s.ngay.split("-") : [];
+    const ngayNgan = parts.length === 3 ? parts[2] + "-" + parts[1] : s.ngay;
     const tongKg = s.phienCX1.reduce(function (t, r) { return t + (r.kg || 0); }, 0);
-    const soDot = new Set(s.phienCX1.map(r => r.dotQuet || 1)).size;
+    const soBao = s.phienCX1.length;
     const daXongHet = (s.soLuongDaGui || 0) >= s.phienCX1.length && s.phienCX1.length > 0;
     const trangThai = daXongHet
       ? '<i class="ti ti-check cx5-trangthai-ok"></i>'
@@ -973,13 +975,12 @@ function renderLichSuCX1() {
     const gio = new Date(s.capNhatLuc).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" });
 
     return '<div class="irow lichsu-row" style="cursor:pointer;align-items:center" onclick="xemChiTietLichSuCX1(\'' + s.idPhien + '\')">'
-      + '<span style="font-family:\'IBM Plex Sans\',sans-serif;color:var(--cream)">' + s.ngay + ' · ' + gio + '</span>'
-      + '<span style="font-family:\'IBM Plex Sans\',sans-serif;color:var(--cream);display:inline-flex;align-items:center;gap:10px">'
-      + soDot + ' đợt · ' + s.phienCX1.length + ' mã · ' + tongKg.toLocaleString('vi-VN', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + ' kg'
+      + '<span style="font-family:\'IBM Plex Sans\',sans-serif;color:var(--cream); flex: 1;">'
+      + ngayNgan + '&nbsp;&nbsp;&nbsp;' + gio + '&nbsp;&nbsp;&nbsp;' + soBao + 'b&nbsp;&nbsp;&nbsp;' + Math.round(tongKg) + 'kg'
+      + '</span>'
       + '<span style="display:inline-flex;align-items:center;gap:8px;padding-left:8px;border-left:1px solid var(--line)">'
       + trangThai
       + '<button class="cx5-del-btn" aria-label="Xóa phiên này" onclick="xoaMotPhienLichSuCX1(\'' + s.idPhien + '\', event)"><i class="ti ti-trash"></i></button>'
-      + '</span>'
       + '</span>'
       + '</div>';
   }).join("");

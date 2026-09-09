@@ -49,7 +49,7 @@ function luuPhienDoDangCX5() {
     localStorage.setItem("cx5_phien_dodang", JSON.stringify({
       phienCX5, ngayCX5, capNhat: new Date().toISOString(),
       idPhienHienTaiC5, seqCX5, doiChieuCX5, dangKetThucCX5,
-      luotDemCX5, luotHienTaiCX5, tongKgDataCX5
+      luotDemCX5, luotHienTaiCX5, tongKgDataCX5, tongKetPhienCX5
     }));
   } catch (e) { }
   luuPhienVaoLichSuCX5();
@@ -200,6 +200,8 @@ function batDauPhienMoiCX5() {
   doiChieuCX5 = {};
   luotDemCX5 = 0;
   luotHienTaiCX5 = null;
+  tongKgDataCX5 = {};
+  tongKetPhienCX5 = [];
 
   document.getElementById("cx5-form").style.display = "none";
   document.getElementById("cx5-doichieu").style.display = "none";
@@ -225,6 +227,7 @@ async function khoiPhucCX5(state) {
   luotDemCX5 = state.luotDemCX5 || phienCX5.reduce((m, r) => Math.max(m, r.luot || 0), 0);
   luotHienTaiCX5 = state.luotHienTaiCX5 || null;
   tongKgDataCX5 = state.tongKgDataCX5 || {};
+  tongKetPhienCX5 = state.tongKetPhienCX5 || [];
 
   document.getElementById("cx5-form").style.display = "none";
   document.getElementById("cx5-doichieu").style.display = "none";
@@ -575,8 +578,17 @@ function ketThucPhienCX5() {
 
 function dongDoiChieuCX5() {
   document.getElementById("cx5-doichieu").style.display = "none";
+  document.getElementById("cx5-tongkg").style.display = "none";
   document.getElementById("cx5-nhap").style.display = "block";
 }
+window.dongDoiChieuCX5 = dongDoiChieuCX5;
+
+function chuyenTrangCX5Nhap() {
+  document.getElementById("cx5-tongkg").style.display = "none";
+  document.getElementById("cx5-doichieu").style.display = "none";
+  document.getElementById("cx5-nhap").style.display = "block";
+}
+window.chuyenTrangCX5Nhap = chuyenTrangCX5Nhap;
 
 function moDoiChieuCX5() {
   document.getElementById("cx5-nhap").style.display = "none";
@@ -1445,21 +1457,22 @@ function xoaUngVienGhepCX5(key, idx) {
   const candidate = d && d.cu[idx];
   if (!candidate) return;
 
-  moXacNhanCX5("Ẩn ứng viên ghép pallet này khỏi danh sách? Muốn khôi phục phải sửa lại từ sheet gốc.", async () => {
-    showLoading(true);
-    try {
-      const r = await callApiCX5({ action: "xoaUngVienGhepCX5", payload: { row: candidate.row } });
-      if (!r.success) { showCanhBaoCX5("Lỗi: " + (r.message || "không rõ nguyên nhân")); return; }
-      Object.keys(tongKgDataCX5).forEach(function (keyKhoi) {
-        tongKgDataCX5[keyKhoi].cu = tongKgDataCX5[keyKhoi].cu.filter(function (c) { return c.row !== candidate.row; });
-      });
-      renderTongKgCX5();
-      luuPhienDoDangCX5();
-    } catch (e) {
-      showCanhBaoCX5("Mất mạng — thử lại: " + e.message);
-    } finally {
-      showLoading(false);
-    }
+  moXacNhanCX5("Ẩn ứng viên ghép pallet này khỏi danh sách? Muốn khôi phục phải sửa lại từ sheet gốc.", () => {
+    // Optimistic UI update: Ẩn ngay lập tức trên UI
+    Object.keys(tongKgDataCX5).forEach(function (keyKhoi) {
+      tongKgDataCX5[keyKhoi].cu = tongKgDataCX5[keyKhoi].cu.filter(function (c) { return c.row !== candidate.row; });
+    });
+    renderTongKgCX5();
+    luuPhienDoDangCX5();
+
+    // Chạy ngầm API xóa để không block UI 5s
+    callApiCX5({ action: "xoaUngVienGhepCX5", payload: { row: candidate.row } }).then(r => {
+      if (!r.success) {
+        showCanhBaoCX5("Lỗi khi ẩn: " + (r.message || "không rõ nguyên nhân"));
+      }
+    }).catch(e => {
+      showCanhBaoCX5("Mất mạng khi ẩn – thử lại: " + e.message);
+    });
   }, "Ẩn ứng viên");
 }
 window.xoaUngVienGhepCX5 = xoaUngVienGhepCX5;
@@ -1733,7 +1746,8 @@ function luuPhienVaoLichSuCX5() {
     dangKetThucCX5: dangKetThucCX5,
     luotDemCX5: luotDemCX5,
     luotHienTaiCX5: luotHienTaiCX5,
-    tongKgDataCX5: tongKgDataCX5
+    tongKgDataCX5: tongKgDataCX5,
+    tongKetPhienCX5: tongKetPhienCX5
   };
   if (idx >= 0) list[idx] = banGhi; else list.push(banGhi);
   luuLichSuCX5(list);
@@ -1765,6 +1779,8 @@ function renderLichSuCX5() {
     return;
   }
   container.innerHTML = list.map(s => {
+    const parts = s.ngay.split("-");
+    const ngayNgan = parts.length === 3 ? parts[2] + "-" + parts[1] : s.ngay;
     const tongKg = s.phienCX5.reduce((t, r) => t + r.kg, 0);
     const soLuot = new Set(s.phienCX5.map(r => r.luot)).size;
     const daXongHet = s.phienCX5.every(r => r.daDongBo);
@@ -1773,13 +1789,12 @@ function renderLichSuCX5() {
       : '<i class="ti ti-x cx5-trangthai-mot-phan"></i>';
     const gio = new Date(s.capNhatLuc).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" });
     return '<div class="irow lichsu-row" style="cursor:pointer;align-items:center" onclick="xemChiTietLichSuCX5(\'' + s.idPhien + '\')">'
-      + '<span style="font-family:\'IBM Plex Sans\',sans-serif;color:var(--cream)">' + s.ngay + " · " + gio + '</span>'
-      + '<span style="font-family:\'IBM Plex Sans\',sans-serif;color:var(--cream);display:inline-flex;align-items:center;gap:10px">'
-      + soLuot + ' lượt · ' + tongKg.toLocaleString('vi-VN', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + ' kg'
+      + '<span style="font-family:\'IBM Plex Sans\',sans-serif;color:var(--cream); flex: 1;">'
+      + ngayNgan + '&nbsp;&nbsp;&nbsp;' + gio + '&nbsp;&nbsp;&nbsp;' + soLuot + 'b&nbsp;&nbsp;&nbsp;' + Math.round(tongKg) + 'kg'
+      + '</span>'
       + '<span style="display:inline-flex;align-items:center;gap:8px;padding-left:8px;border-left:1px solid var(--line)">'
       + trangThai
       + '<button class="cx5-del-btn" aria-label="Xóa phiên này" onclick="xoaMotPhienLichSuCX5(\'' + s.idPhien + '\', event)"><i class="ti ti-trash"></i></button>'
-      + '</span>'
       + '</span>'
       + '</div>';
   }).join("");
@@ -1787,26 +1802,7 @@ function renderLichSuCX5() {
 window.renderLichSuCX5 = renderLichSuCX5;
 
 function xemChiTietLichSuCX5(idPhien) {
-  const entry = docLichSuCX5().find(s => s.idPhien === idPhien);
-  if (!entry) return;
-
-  const gom = {};
-  entry.phienCX5.forEach(r => {
-    const key = r.msp + "|" + r.ten;
-    if (!gom[key]) gom[key] = { ten: r.ten, bao: 0, kg: 0 };
-    gom[key].bao += 1;
-    gom[key].kg += r.kg;
-  });
-  const hang = Object.values(gom);
-
-  const gio = new Date(entry.capNhatLuc).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" });
-  document.getElementById("cx5-ctls-tieude").textContent = entry.ngay + " · " + gio;
-  document.getElementById("cx5-ctls-noidung").innerHTML = hang.map(h =>
-    '<div class="irow"><span class="ilabel">' + h.ten + '</span><span class="ivalue">'
-    + h.bao + ' bao · ' + h.kg.toLocaleString('vi-VN', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + ' kg</span></div>'
-  ).join("");
-  document.getElementById("cx5-ctls-tieptuc").setAttribute("onclick", "dongChiTietLichSuCX5();tiepTucLichSuCX5('" + idPhien + "')");
-  document.getElementById("cx5-overlay-chitiet-lichsu").classList.add("show");
+  tiepTucLichSuCX5(idPhien);
 }
 window.xemChiTietLichSuCX5 = xemChiTietLichSuCX5;
 
@@ -1831,11 +1827,15 @@ function tiepTucLichSuCX5(idPhien) {
     doiChieuCX5: entry.doiChieuCX5,
     dangKetThucCX5: entry.dangKetThucCX5,
     luotDemCX5: entry.luotDemCX5,
-    luotHienTaiCX5: entry.luotHienTaiCX5
+    luotHienTaiCX5: entry.luotHienTaiCX5,
+    tongKgDataCX5: entry.tongKgDataCX5,
+    tongKetPhienCX5: entry.tongKetPhienCX5
   });
   // Coi phiên vừa mở từ lịch sử là phiên "đang dở dang" hiện tại, để nếu
   // thoát app giữa chừng thì lần sau vẫn thấy banner tiếp tục đúng phiên này.
   luuPhienDoDangCX5();
+  moTongKgCX5(); // Nhảy thẳng vào bảng tổng kết
+
 }
 window.tiepTucLichSuCX5 = tiepTucLichSuCX5;
 

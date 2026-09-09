@@ -208,47 +208,14 @@ function khiQuetDuocMaQR(result) {
 window.khiQuetDuocMaQR = khiQuetDuocMaQR;
 
 // ── Nhập tay mã thủ công ───────────────────────────────────────────
-function nhapThuCongQR() {
-  const inputEl = document.getElementById("qr-manual-input-cam");
-  if (!inputEl) return;
-  const raw = inputEl.value.trim();
-  if (!raw) return;
-
-  const data = typeof parseQRText === "function" ? parseQRText(raw) : null;
-  const id = data && data.id ? data.id : raw;
-  const msp = data && data.msp ? data.msp : raw;
-  const qc = data && data.qc ? data.qc : msp;
-  const kg = data && data.kg ? data.kg : 0;
-
-  const elCheck = document.getElementById("qr-cho-phep-trung-cam");
-  const choPhepTrung = elCheck ? elCheck.checked : false;
-
-  const trung = phienQuetQR.find(r => r.id === id);
-  if (!choPhepTrung && trung) {
-    const gioQuet = typeof dinhDangGioQuetTrung === "function" ? dinhDangGioQuetTrung(trung.thoiGian) : "";
-    showCanhBaoQR("Đã quét " + gioQuet, "error");
-    if (typeof phatVibrateError === "function") phatVibrateError();
-    return;
+let denPinBatQR = false;
+async function toggleFlashQR() {
+  if (!zxingReaderQR || !dangQuetQR) return;
+  if (typeof batTatDenPinCamera === "function") {
+    denPinBatQR = await batTatDenPinCamera("reader", "btn-flash-qr", denPinBatQR);
   }
-
-  phienQuetQR.push({
-    id,
-    msp,
-    qc,
-    kg,
-    thoiGian: new Date(),
-    dotQuet: demSoDotQR
-  });
-
-  inputEl.value = "";
-  const demEl = document.getElementById("qr-dem");
-  if (demEl) demEl.textContent = "Đã quét: " + phienQuetQR.length + " bao";
-
-  if (typeof phatVibrateSuccess === "function") phatVibrateSuccess();
-  luuPhienDoDangQR();
-  capNhatLogQR();
 }
-window.nhapThuCongQR = nhapThuCongQR;
+window.toggleFlashQR = toggleFlashQR;
 
 // ── Dừng / Tiếp tục Camera ─────────────────────────────────────────
 function dungQuetQR() {
@@ -447,6 +414,7 @@ function hienKetQuaQuetQR() {
   if (tieuDeKetQua) tieuDeKetQua.textContent = "Hoàn tất: " + (loaiQuetQR || "Giao dịch") + " (" + (ngayQuetQR || "") + ")";
 
   document.getElementById("cam-box").style.display = "none";
+  document.getElementById("form-chon").style.display = "none";
   document.getElementById("qr-ketqua").style.display = "block";
 
   // Cập nhật trạng thái nút gửi
@@ -627,10 +595,11 @@ async function guiLenSheetQuetQR(rows) {
           id: r.id,
           msp: r.msp,
           ten: r.qc || r.msp,
-          mau: r.qc || "—",
+          mau: r.qc || "",
           ngay: r.ngay,
           loai: r.loai,
-          kg: r.kg
+          kg: r.kg,
+          thoiGian: r.thoiGian
         })
       }).then(res => {
         if (!res.ok) throw new Error("HTTP " + res.status);
@@ -779,19 +748,19 @@ function renderLichSuQR() {
     const timeObj = entry.thoiGian ? new Date(entry.thoiGian) : new Date();
     const gio = timeObj.toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" });
     const ngayStr = entry.ngay || timeObj.toISOString().split("T")[0];
+    const parts = ngayStr.split("-");
+    const ngayNgan = parts.length === 3 ? parts[2] + "-" + parts[1] : ngayStr;
     const tongKg = (entry.tongKG || 0);
     const tongBao = (entry.tongBao || (entry.phienQuetQR ? entry.phienQuetQR.length : 0));
-    const soDot = new Set((entry.phienQuetQR || []).map(r => r.dotQuet || 1)).size;
     const trangThai = '<i class="ti ti-check cx5-trangthai-ok"></i>';
 
     return '<div class="irow lichsu-row" style="cursor:pointer;align-items:center" onclick="xemChiTietLichSuQR(\'' + entry.idPhien + '\')">'
-      + '<span style="font-family:\'IBM Plex Sans\',sans-serif;color:var(--cream)">' + ngayStr + ' · ' + gio + '</span>'
-      + '<span style="font-family:\'IBM Plex Sans\',sans-serif;color:var(--cream);display:inline-flex;align-items:center;gap:10px">'
-      + soDot + ' đợt · ' + tongBao + ' bao · ' + tongKg.toLocaleString('vi-VN', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + ' kg'
+      + '<span style="font-family:\'IBM Plex Sans\',sans-serif;color:var(--cream); flex: 1;">'
+      + ngayNgan + '&nbsp;&nbsp;&nbsp;' + gio + '&nbsp;&nbsp;&nbsp;' + tongBao + 'b&nbsp;&nbsp;&nbsp;' + Math.round(tongKg) + 'kg'
+      + '</span>'
       + '<span style="display:inline-flex;align-items:center;gap:8px;padding-left:8px;border-left:1px solid var(--line)">'
       + trangThai
       + '<button class="cx5-del-btn" aria-label="Xóa phiên này" onclick="xoaMotPhienLichSuQR(\'' + entry.idPhien + '\', event)"><i class="ti ti-trash"></i></button>'
-      + '</span>'
       + '</span>'
       + '</div>';
   }).join("");
@@ -808,6 +777,9 @@ function xemChiTietLichSuQR(idPhien) {
   ngayQuetQR = entry.ngay;
   loaiQuetQR = entry.loai;
   soLuongDaGuiHienTaiQR = phienQuetQR.length;
+  idPhienHienTaiQR = idPhien;
+  const maxDot = Math.max(0, ...phienQuetQR.map(r => r.dotQuet || 1));
+  demSoDotQR = maxDot > 0 ? maxDot : 1;
 
   chuyenTrangKhongNav("quetQR");
   xemKetQuaQuetQR();

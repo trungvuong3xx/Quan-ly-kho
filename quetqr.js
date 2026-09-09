@@ -414,6 +414,7 @@ function hienKetQuaQuetQR() {
   if (tieuDeKetQua) tieuDeKetQua.textContent = "Hoàn tất: " + (loaiQuetQR || "Giao dịch") + " (" + (ngayQuetQR || "") + ")";
 
   document.getElementById("cam-box").style.display = "none";
+  document.getElementById("form-chon").style.display = "none";
   document.getElementById("qr-ketqua").style.display = "block";
 
   // Cập nhật trạng thái nút gửi
@@ -747,19 +748,19 @@ function renderLichSuQR() {
     const timeObj = entry.thoiGian ? new Date(entry.thoiGian) : new Date();
     const gio = timeObj.toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" });
     const ngayStr = entry.ngay || timeObj.toISOString().split("T")[0];
+    const parts = ngayStr.split("-");
+    const ngayNgan = parts.length === 3 ? parts[2] + "-" + parts[1] : ngayStr;
     const tongKg = (entry.tongKG || 0);
     const tongBao = (entry.tongBao || (entry.phienQuetQR ? entry.phienQuetQR.length : 0));
-    const soDot = new Set((entry.phienQuetQR || []).map(r => r.dotQuet || 1)).size;
     const trangThai = '<i class="ti ti-check cx5-trangthai-ok"></i>';
 
     return '<div class="irow lichsu-row" style="cursor:pointer;align-items:center" onclick="xemChiTietLichSuQR(\'' + entry.idPhien + '\')">'
-      + '<span style="font-family:\'IBM Plex Sans\',sans-serif;color:var(--cream)">' + ngayStr + ' · ' + gio + '</span>'
-      + '<span style="font-family:\'IBM Plex Sans\',sans-serif;color:var(--cream);display:inline-flex;align-items:center;gap:10px">'
-      + soDot + ' đợt · ' + tongBao + ' bao · ' + tongKg.toLocaleString('vi-VN', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + ' kg'
+      + '<span style="font-family:\'IBM Plex Sans\',sans-serif;color:var(--cream); flex: 1;">'
+      + ngayNgan + '&nbsp;&nbsp;&nbsp;' + gio + '&nbsp;&nbsp;&nbsp;' + tongBao + 'b&nbsp;&nbsp;&nbsp;' + Math.round(tongKg) + 'kg'
+      + '</span>'
       + '<span style="display:inline-flex;align-items:center;gap:8px;padding-left:8px;border-left:1px solid var(--line)">'
       + trangThai
       + '<button class="cx5-del-btn" aria-label="Xóa phiên này" onclick="xoaMotPhienLichSuQR(\'' + entry.idPhien + '\', event)"><i class="ti ti-trash"></i></button>'
-      + '</span>'
       + '</span>'
       + '</div>';
   }).join("");

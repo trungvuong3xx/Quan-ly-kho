@@ -491,8 +491,7 @@
         </div>
       </div>
       <div style="display:flex; gap:6px; align-items:center;">
-        <input type="text" id="qr-manual-input-cam" placeholder="Nhập tay mã QR..." style="flex:1; height:38px; padding:0 12px; font-size:13px; margin:0; box-sizing:border-box;" onkeydown="if(event.key==='Enter') nhapThuCongQR()">
-        <button class="btn btn-blue" style="height:38px; padding:0 16px; font-size:13px; white-space:nowrap; margin:0;" onclick="nhapThuCongQR()">Thêm</button>
+        <button id="btn-flash-qr" class="btn" style="width:100%; background:var(--surface-grad); border:1px solid var(--border); color:var(--text-main); margin:0; height:38px; font-size:14px;" onclick="toggleFlashQR()">Bật đèn pin</button>
       </div>
     </div>
 
@@ -1016,6 +1015,7 @@
     </div>
     <button id="cx5-btn-ghep" class="btn btn-blue btn-full" style="margin-top:12px" onclick="dongBoGhepCX5()"><i class="ti ti-refresh"></i> Đồng bộ Bảng Tổng kết</button>
     <button class="btn btn-full bg-neutral-solid text-cream mt-2" onclick="quayLaiDoiChieuCX5()"><i class="ti ti-arrow-left"></i> Quay lại đối chiếu</button>
+    <button class="btn btn-full" style="background:var(--brass); color:#000; margin-top:8px" onclick="chuyenTrangCX5Nhap()"><i class="ti ti-pencil"></i> Chỉnh sửa / Nhập thêm</button>
     
   </div>
 </div>
@@ -1197,14 +1197,27 @@
 
     const btnTheme = document.getElementById('btn-theme');
     const htmlEl = document.documentElement;
+    
+    // Khôi phục theme từ localStorage khi khởi động
+    const savedTheme = localStorage.getItem('user_theme');
+    if (savedTheme === 'dark') {
+      htmlEl.setAttribute('data-theme', 'dark');
+      if (btnTheme) btnTheme.innerHTML = '<i class="ti ti-sun"></i>';
+    } else if (savedTheme === 'light') {
+      htmlEl.setAttribute('data-theme', 'light');
+      if (btnTheme) btnTheme.innerHTML = '<i class="ti ti-moon"></i>';
+    }
+
     if(btnTheme) {
       btnTheme.addEventListener('click', () => {
         if (htmlEl.getAttribute('data-theme') === 'dark') {
           htmlEl.setAttribute('data-theme', 'light');
           btnTheme.innerHTML = '<i class="ti ti-moon"></i>';
+          localStorage.setItem('user_theme', 'light');
         } else {
           htmlEl.setAttribute('data-theme', 'dark');
           btnTheme.innerHTML = '<i class="ti ti-sun"></i>';
+          localStorage.setItem('user_theme', 'dark');
         }
         if (navigator.vibrate) navigator.vibrate(50);
       });
