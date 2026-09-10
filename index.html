@@ -356,7 +356,10 @@
 
 <div id="tonKho" class="page">
   <div class="card">
-    <h3>Tồn Kho</h3>
+    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:14px;">
+      <h3 style="margin:0; display:flex; align-items:center; gap:8px;"><i class="ti ti-database" style="color:var(--primary)"></i> Tra Tồn Kho</h3>
+      <button class="btn btn-blue" style="padding:4px 10px; font-size:12px; margin:0;" onclick="chuyenTrangKhongNav('trangChu')"><i class="ti ti-arrow-left"></i> Trang chủ</button>
+    </div>
 
     <div id="tk-search-box">
       <label>Ngày</label>
@@ -380,7 +383,7 @@
 
     <div id="tk-ket-qua"></div>
 
-    
+    <button class="btn btn-full" style="background:var(--card-raised); color:var(--cream); border:1px solid var(--line); margin-top:14px" onclick="chuyenTrangKhongNav('trangChu')"><i class="ti ti-arrow-left"></i> Quay lại Trang chủ</button>
   </div>
 </div>
 

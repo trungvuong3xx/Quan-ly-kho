@@ -1,6 +1,4 @@
-// ── Tồn kho (tra cứu dữ liệu nhanh, không cần đăng nhập Google) ─────────
-
-const API_TONKHO = "https://script.google.com/macros/s/AKfycbzo3rpqVvlryALLel9A6a6M8Azn_P0Qx1b28co0p3sXz-ozgAbvfhIcBZynV1e5AYbpGQ/exec";
+const API_TONKHO = "https://script.google.com/macros/s/AKfycbzJeVkfapKOzkiZpeZvUWhmn3KEiS4wlYGJv1BSR2TUFnwYYuCkI28oGo6OB0Bjui-P/exec";
 const TK_FREQ_KEY = "tk_search_freq";
 
 let tkListCache = null;
