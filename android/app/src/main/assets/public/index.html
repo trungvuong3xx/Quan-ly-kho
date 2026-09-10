@@ -4,6 +4,19 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Trung Vương - Sổ Cái Kho Vận</title>
+  <script>
+    // Khôi phục theme người dùng đã chọn trước khi render CSS để không bao giờ bị lóe sáng
+    (function() {
+      try {
+        var t = localStorage.getItem('user_theme');
+        if (t === 'dark') {
+          document.documentElement.setAttribute('data-theme', 'dark');
+        } else {
+          document.documentElement.setAttribute('data-theme', 'light');
+        }
+      } catch (e) {}
+    })();
+  </script>
   <link rel="stylesheet" href="style.css?v=20260822-v62">
   <link rel="stylesheet" href="lib/tabler-icons.min.css">
   <script src="lib/qrcode.min.js" defer></script>
@@ -1201,27 +1214,28 @@
     const btnTheme = document.getElementById('btn-theme');
     const htmlEl = document.documentElement;
     
-    // Khôi phục theme từ localStorage khi khởi động
-    const savedTheme = localStorage.getItem('user_theme');
-    if (savedTheme === 'dark') {
-      htmlEl.setAttribute('data-theme', 'dark');
-      if (btnTheme) btnTheme.innerHTML = '<i class="ti ti-sun"></i>';
-    } else if (savedTheme === 'light') {
-      htmlEl.setAttribute('data-theme', 'light');
-      if (btnTheme) btnTheme.innerHTML = '<i class="ti ti-moon"></i>';
+    function capNhatIconTheme() {
+      const isDark = htmlEl.getAttribute('data-theme') === 'dark';
+      if (btnTheme) {
+        btnTheme.innerHTML = isDark ? '<i class="ti ti-sun"></i>' : '<i class="ti ti-moon"></i>';
+        btnTheme.title = isDark ? 'Đang bật Tối - Bấm chuyển sang Sáng' : 'Đang bật Sáng - Bấm chuyển sang Tối';
+      }
+      const metaTheme = document.querySelector('meta[name="theme-color"]');
+      if (metaTheme) {
+        metaTheme.setAttribute('content', isDark ? '#0f172a' : '#f9f7f1');
+      }
     }
+    capNhatIconTheme();
 
-    if(btnTheme) {
+    if (btnTheme) {
       btnTheme.addEventListener('click', () => {
-        if (htmlEl.getAttribute('data-theme') === 'dark') {
-          htmlEl.setAttribute('data-theme', 'light');
-          btnTheme.innerHTML = '<i class="ti ti-moon"></i>';
-          localStorage.setItem('user_theme', 'light');
-        } else {
-          htmlEl.setAttribute('data-theme', 'dark');
-          btnTheme.innerHTML = '<i class="ti ti-sun"></i>';
-          localStorage.setItem('user_theme', 'dark');
-        }
+        const isDark = htmlEl.getAttribute('data-theme') === 'dark';
+        const newTheme = isDark ? 'light' : 'dark';
+        htmlEl.setAttribute('data-theme', newTheme);
+        try {
+          localStorage.setItem('user_theme', newTheme);
+        } catch (e) {}
+        capNhatIconTheme();
         if (navigator.vibrate) navigator.vibrate(50);
       });
     }

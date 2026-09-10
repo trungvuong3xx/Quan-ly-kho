@@ -238,7 +238,9 @@ function submitEntry(payload) {
       Math.round(kgResult.val * 100) / 100
     ]]);
 
-    sheet.getRange(foundRow, baoCol + 1).setNote(payload.ghiChu || '');
+    if (payload.ghiChu) {
+      sheet.getRange(foundRow, baoCol + 1).setNote(payload.ghiChu);
+    }
 
     const vungThucTe = (ranges === VUNG_FOR_RANGES) ? 'FOR' : 'NORMAL';
 
@@ -450,15 +452,12 @@ function doPost(e) {
       case "layChiTietNguonGocCX5":
         result = layChiTietNguonGocCX5(body.payload);
         break;
-
-      // === Tồn Kho ===
       case "layDanhSachSanPhamTonKhoCX5":
         result = layDanhSachSanPhamTonKhoCX5();
         break;
       case "layTonKhoCX5":
         result = layTonKhoCX5(body.payload);
         break;
-
       default:
         result = { success: false, message: "Action không hợp lệ: " + body.action };
     }
@@ -467,7 +466,6 @@ function doPost(e) {
   }
   return ContentService.createTextOutput(JSON.stringify(result)).setMimeType(ContentService.MimeType.JSON);
 }
-
 
 function submitEntryX5(payload) {
   try {
@@ -529,8 +527,15 @@ function batchSubmitEntryX5(payload) {
       const mspData = sheet.getRange(6, CONFIG.MSP_COL_IN_MONTH_SHEET, 639, 1).getValues();
       const dataRange = sheet.getRange(6, baoCol, 639, 2);
       const dataValues = dataRange.getValues();
-      const noteRange = sheet.getRange(6, baoCol + 1, 639, 1);
-      const noteValues = noteRange.getNotes();
+
+      // TỐI ƯU HÓA: Chỉ đọc/ghi 639 Notes khi thực sự có item chứa ghiChu
+      const hasAnyGhiChu = dateItems.some(function (it) { return !!it.ghiChu; });
+      let noteRange = null;
+      let noteValues = null;
+      if (hasAnyGhiChu) {
+        noteRange = sheet.getRange(6, baoCol + 1, 639, 1);
+        noteValues = noteRange.getNotes();
+      }
 
       const mspMapNormal = {};
       for (let i = 0; i < mspData.length; i++) {
@@ -575,7 +580,7 @@ function batchSubmitEntryX5(payload) {
 
         dataValues[idx][0] = Math.round(baoResult.val * 100) / 100;
         dataValues[idx][1] = Math.round(kgResult.val * 100) / 100;
-        if (item.ghiChu) noteValues[idx][0] = item.ghiChu;
+        if (item.ghiChu && noteValues) noteValues[idx][0] = item.ghiChu;
         hasChanges = true;
 
         results.push({ key: item.key, msp: item.msp, ten: item.ten, success: true, message: 'Đã ghi vào sheet ' + sheetName + ', dòng ' + (6 + idx) });
@@ -583,7 +588,9 @@ function batchSubmitEntryX5(payload) {
 
       if (hasChanges) {
         dataRange.setValues(dataValues);
-        noteRange.setNotes(noteValues);
+        if (hasAnyGhiChu && noteRange && noteValues) {
+          noteRange.setNotes(noteValues);
+        }
       }
     }
 
@@ -608,39 +615,56 @@ function ghiLichSuC5(payload) {
     if (lots.length === 0) return {};
 
     const sh = layLSC5_();
-    let row = Math.max(sh.getLastRow() + 1, 3);
+    const startRow = Math.max(sh.getLastRow() + 1, 3);
+    let currentRow = startRow;
     const lotMap = {};
+    const matrix = [];
 
     lots.forEach(function (lot) {
       const kgList = lot.kgList || [];
       if (kgList.length === 0) return;
 
+      const tongKg = Math.round(kgList.reduce(function (s, v) { return s + (Number(v) || 0); }, 0) * 100) / 100;
       let idx = 0;
-      let dongDauTien = true;
-      let dongCuoiCung = row;
+      let isFirst = true;
+      let dongCuoiLot = currentRow;
+      const numChunks = Math.ceil(kgList.length / 12);
+      let chunkIdx = 0;
 
       while (idx < kgList.length) {
+        chunkIdx++;
+        const isLastChunk = (chunkIdx === numChunks);
         const chunk = kgList.slice(idx, idx + 12);
-        const gia = [];
-        for (let i = 0; i < 12; i++) gia.push(chunk[i] || "");
 
-        if (dongDauTien) {
-          sh.getRange(row, 2, 1, 3).setValues([[payload.dateStr, payload.msp, payload.ten]]);
-          dongDauTien = false;
+        // Hàng 20 cột (Cột 2 đến 21 trong Sheet LSC5)
+        const rowData = new Array(20).fill("");
+        if (isFirst) {
+          rowData[0] = payload.dateStr;
+          rowData[1] = payload.msp;
+          rowData[2] = payload.ten;
+          isFirst = false;
         }
-        sh.getRange(row, 5, 1, 12).setValues([gia]);
-
-        dongCuoiCung = row;
+        for (let i = 0; i < 12; i++) {
+          rowData[3 + i] = (chunk[i] !== undefined && chunk[i] !== null && chunk[i] !== "") ? chunk[i] : "";
+        }
+        if (isLastChunk) {
+          rowData[16] = tongKg;        // Cột 18: Tổng KG
+          rowData[18] = kgList.length; // Cột 20: Số bao
+          rowData[19] = tongKg;        // Cột 21: Tổng KG hiệu lực
+        }
+        matrix.push(rowData);
+        dongCuoiLot = currentRow;
         idx += 12;
-        row += 1;
+        currentRow++;
       }
 
-      const tongKg = kgList.reduce(function (s, v) { return s + (Number(v) || 0); }, 0);
-      sh.getRange(dongCuoiCung, 18).setValue(Math.round(tongKg * 100) / 100);
-      sh.getRange(dongCuoiCung, 20, 1, 2).setValues([[kgList.length, Math.round(tongKg * 100) / 100]]);
-      
-      if (lot.lotId) lotMap[lot.lotId] = dongCuoiCung;
+      if (lot.lotId) lotMap[lot.lotId] = dongCuoiLot;
     });
+
+    // TỐI ƯU HÓA: Ghi toàn bộ dữ liệu các lot trong 1 lần gọi duy nhất
+    if (matrix.length > 0) {
+      sh.getRange(startRow, 2, matrix.length, 20).setValues(matrix);
+    }
     return lotMap;
   } catch (e) { return {}; }
 }
@@ -760,7 +784,7 @@ function layUngVienGhepCX5(payload) {
       };
       if (b.ngay === dateStr) {
         result[key].homNay.push(item);
-      } else if (b.ngay < dateStr && !b.daAn && b.baoHieuLuc > 0 && b.baoHieuLuc < 10) {
+      } else if (!b.daAn && b.baoHieuLuc > 0 && b.baoHieuLuc < 10) {
         result[key].cu.push(item);
       }
     });
@@ -787,37 +811,46 @@ function ghiGhepCX5(payload) {
 
     // 1) Ghi dữ liệu lượt nhập phiên hôm nay vào LSC5 (kiểm tra chống trùng)
     const sessionEntries = (payload && payload.sessionEntries) ? payload.sessionEntries : [];
-    const existingBlocks = docCacKhoiLSC5_();
     const lotIdToRowMap = {};
-    
-    const existingCounts = {};
-    existingBlocks.forEach(function (b) {
-      const key = b.ngay + "|" + b.msp + "|" + b.bao + "|" + Math.round(b.kg * 100)/100;
-      existingCounts[key] = (existingCounts[key] || 0) + 1;
-    });
+    let blocks = null;
+    let anyNewLotsAdded = false;
 
-    sessionEntries.forEach(function (se) {
-      let cacLotMoi = [];
-      if (se.lots) {
-        se.lots.forEach(function (lot) {
-          if (!lot.kgList || lot.kgList.length === 0) return;
-          let lotBao = lot.kgList.length;
-          let lotKg = 0;
-          lot.kgList.forEach(function (v) { lotKg += (Number(v) || 0); });
-          const checkKey = se.dateStr + "|" + se.msp + "|" + lotBao + "|" + Math.round(lotKg * 100) / 100;
-          if (existingCounts[checkKey] > 0) {
-            existingCounts[checkKey]--;
-          } else {
-            cacLotMoi.push(lot);
-          }
-        });
+    if (sessionEntries.length > 0) {
+      const existingBlocks = docCacKhoiLSC5_();
+      const existingCounts = {};
+      existingBlocks.forEach(function (b) {
+        const key = b.ngay + "|" + b.msp + "|" + b.bao + "|" + Math.round(b.kg * 100)/100;
+        existingCounts[key] = (existingCounts[key] || 0) + 1;
+      });
+
+      sessionEntries.forEach(function (se) {
+        let cacLotMoi = [];
+        if (se.lots) {
+          se.lots.forEach(function (lot) {
+            if (!lot.kgList || lot.kgList.length === 0) return;
+            let lotBao = lot.kgList.length;
+            let lotKg = 0;
+            lot.kgList.forEach(function (v) { lotKg += (Number(v) || 0); });
+            const checkKey = se.dateStr + "|" + se.msp + "|" + lotBao + "|" + Math.round(lotKg * 100) / 100;
+            if (existingCounts[checkKey] > 0) {
+              existingCounts[checkKey]--;
+            } else {
+              cacLotMoi.push(lot);
+            }
+          });
+        }
+        if (cacLotMoi.length > 0) {
+          anyNewLotsAdded = true;
+          const seMoi = { dateStr: se.dateStr, msp: se.msp, ten: se.ten, lots: cacLotMoi };
+          const newMap = ghiLichSuC5(seMoi);
+          Object.assign(lotIdToRowMap, newMap);
+        }
+      });
+
+      if (!anyNewLotsAdded) {
+        blocks = existingBlocks; // Tái sử dụng, tránh đọc lại LSC5 lần 2
       }
-      if (cacLotMoi.length > 0) {
-        const seMoi = { dateStr: se.dateStr, msp: se.msp, ten: se.ten, lots: cacLotMoi };
-        const newMap = ghiLichSuC5(seMoi);
-        Object.assign(lotIdToRowMap, newMap);
-      }
-    });
+    }
 
     // 2) Ghép pallet nếu có các khối được chọn
     const groups = (payload && payload.groups) ? payload.groups : [];
@@ -825,12 +858,19 @@ function ghiGhepCX5(payload) {
       return { success: true, message: "Đã ghi dữ liệu phiên vào Sheet LSC5 thành công" };
     }
 
-    const blocks = docCacKhoiLSC5_();
+    // TỐI ƯU HÓA: Chỉ đọc lại sheet LSC5 khi thực sự cần giải quyết rowNeo
+    if (!blocks) {
+      const canTimNeo = groups.some(function (g) { return !g.rowNeo && !(g.lotIdNeo && lotIdToRowMap[g.lotIdNeo]); });
+      if (canTimNeo || anyNewLotsAdded) {
+        blocks = docCacKhoiLSC5_();
+      }
+    }
+
     groups.forEach(function (g) {
       if (g.lotIdNeo && lotIdToRowMap[g.lotIdNeo]) {
         g.rowNeo = lotIdToRowMap[g.lotIdNeo];
       }
-      if (!g.rowNeo && g.key) {
+      if (!g.rowNeo && g.key && blocks) {
         const parts = g.key.split("|");
         const msp = parts[0], ten = parts[1];
         const match = blocks.slice().reverse().find(function (b) {
@@ -841,57 +881,56 @@ function ghiGhepCX5(payload) {
     });
 
     const rowsCu = [];
-    let maxRowNeo = 0;
     groups.forEach(function (g) {
-      if (g.rowNeo && g.rowNeo > maxRowNeo) maxRowNeo = g.rowNeo;
       (g.cuList || []).forEach(function (item) { rowsCu.push(Number(item.row)); });
     });
     if (new Set(rowsCu).size !== rowsCu.length) {
       return { success: false, message: "Một số dư đang được chọn ở nhiều khối" };
     }
 
-    // Batch read để tối ưu tốc độ đọc (Lấy hết cột V và W)
-    const maxRowCu = rowsCu.length > 0 ? Math.max(...rowsCu) : 0;
-    const maxRowToRead = Math.max(maxRowCu, maxRowNeo, sh.getLastRow());
-    let vData = [], wData = [];
-    if (maxRowToRead >= 3) {
-      const batchData = sh.getRange(1, 22, maxRowToRead, 2).getValues();
-      vData = batchData.map(function(r) { return r[0]; });
-      wData = batchData.map(function(r) { return r[1]; });
-    }
+    // TỐI ƯU HÓA: Đọc toàn bộ cột V và W (22, 23) 1 lần duy nhất để kiểm tra
+    let maxRow = 3;
+    if (rowsCu.length > 0) maxRow = Math.max.apply(null, rowsCu);
+    groups.forEach(function (g) { if (g.rowNeo && g.rowNeo > maxRow) maxRow = g.rowNeo; });
+    
+    const vwData = sh.getRange(1, 22, maxRow, 2).getValues();
 
     for (let i = 0; i < rowsCu.length; i++) {
-      const rowIndex = rowsCu[i] - 1; // getValues trả về mảng 0-indexed
-      if (vData[rowIndex] === "X") {
+      if (vwData[rowsCu[i] - 1][0] === "X") {
         return { success: false, message: "Một số dư đã được ghép hoặc đã hủy" };
       }
     }
 
-    const allRowsToX = [];
+    const xRowsList = [];
     groups.forEach(function (g) {
       if (g.rowNeo) {
-        const rowIndexNeo = g.rowNeo - 1;
-        const wHienCo = chuoiThanhDsSo_(wData[rowIndexNeo]);
+        const wHienCo = chuoiThanhDsSo_(vwData[g.rowNeo - 1][1]);
         const wMoi = new Set(wHienCo);
 
         (g.cuList || []).forEach(function (item) {
           wMoi.add(Number(item.row));
-          const rowIndexCu = item.row - 1;
-          chuoiThanhDsSo_(wData[rowIndexCu]).forEach(function (r) { wMoi.add(r); });
+          chuoiThanhDsSo_(vwData[item.row - 1][1]).forEach(function (r) { wMoi.add(r); });
         });
 
-        sh.getRange(g.rowNeo, 20, 1, 2).setValues([[g.tongBao, Math.round(g.tongKg * 100) / 100]]);
-        if (wMoi.size > 0) {
-          sh.getRange(g.rowNeo, 23).setValue(Array.from(wMoi).join(","));
-        }
+        const vCell = vwData[g.rowNeo - 1][0];
+        const wCell = (wMoi.size > 0) ? Array.from(wMoi).join(",") : (vwData[g.rowNeo - 1][1] || "");
+
+        // Ghi cột 20..23 (T, U, V, W) trong 1 lần gọi duy nhất
+        sh.getRange(g.rowNeo, 20, 1, 4).setValues([[
+          g.tongBao,
+          Math.round(g.tongKg * 100) / 100,
+          vCell,
+          wCell
+        ]]);
       }
       (g.cuList || []).forEach(function (item) {
-        allRowsToX.push("V" + item.row);
+        xRowsList.push("V" + item.row);
       });
     });
 
-    if (allRowsToX.length > 0) {
-      sh.getRangeList(allRowsToX).setValue("X");
+    // TỐI ƯU HÓA: Đánh dấu X hàng loạt trong 1 lần gọi API duy nhất thay vì loop
+    if (xRowsList.length > 0) {
+      sh.getRangeList(xRowsList).setValue("X");
     }
 
     return { success: true };
@@ -901,21 +940,22 @@ function ghiGhepCX5(payload) {
 }
 
 function docThongTinLuotLSC5_(sh, rowCuoi) {
-  let rowDau = rowCuoi;
-  while (rowDau > 3) {
-    const bTruoc = sh.getRange(rowDau - 1, 2).getValue();
-    if (bTruoc !== "" && bTruoc !== null) break;
-    rowDau -= 1;
+  // Dự phòng khi gọi đơn lẻ
+  const startRow = Math.max(3, rowCuoi - 25);
+  const data = sh.getRange(startRow, 2, rowCuoi - startRow + 1, 15).getValues();
+  let relIdx = rowCuoi - startRow;
+  let startRelIdx = relIdx;
+  while (startRelIdx > 0) {
+    if (data[startRelIdx - 1][0] !== "" && data[startRelIdx - 1][0] !== null) break;
+    startRelIdx--;
   }
-
-  const ngay = chuanHoaNgayLSC5_(sh.getRange(rowDau, 2).getValue());
-  const soDong = rowCuoi - rowDau + 1;
-  const data = sh.getRange(rowDau, 5, soDong, 12).getValues();
+  const ngay = chuanHoaNgayLSC5_(data[startRelIdx][0]);
   const kgList = [];
-  data.forEach(function (r) {
-    r.forEach(function (v) { if (v !== "" && v !== null) kgList.push(Number(v) || 0); });
-  });
-
+  for (let i = startRelIdx; i <= relIdx; i++) {
+    data[i].slice(3, 15).forEach(function (v) {
+      if (v !== "" && v !== null) kgList.push(Number(v) || 0);
+    });
+  }
   return { ngay: ngay, kgList: kgList };
 }
 
@@ -930,9 +970,34 @@ function layChiTietNguonGocCX5(payload) {
 
     const dsDong = [row].concat(chuoiThanhDsSo_(sheetLSC5.getRange(row, 23).getValue()));
 
+    // TỐI ƯU HÓA: Đọc toàn bộ vùng dữ liệu các dòng nguồn gốc trong 1 lần duy nhất
+    let minRow = Math.min.apply(null, dsDong) - 20;
+    if (minRow < 3) minRow = 3;
+    const maxRow = Math.max.apply(null, dsDong);
+    const numRows = maxRow - minRow + 1;
+    const rangeData = sheetLSC5.getRange(minRow, 2, numRows, 15).getValues();
+
     const nguon = dsDong.map(function (r) {
-      const tt = docThongTinLuotLSC5_(sheetLSC5, r);
-      return { row: r, ngay: tt.ngay, kgList: tt.kgList };
+      const idx = r - minRow;
+      if (idx < 0 || idx >= rangeData.length) return { row: r, ngay: "", kgList: [] };
+
+      let startIdx = idx;
+      while (startIdx > 0) {
+        const bVal = rangeData[startIdx - 1][0];
+        if (bVal !== "" && bVal !== null) break;
+        startIdx--;
+      }
+
+      const ngay = chuanHoaNgayLSC5_(rangeData[startIdx][0]);
+      const kgList = [];
+      for (let k = startIdx; k <= idx; k++) {
+        const cells = rangeData[k].slice(3, 15);
+        cells.forEach(function (v) {
+          if (v !== "" && v !== null) kgList.push(Number(v) || 0);
+        });
+      }
+
+      return { row: r, ngay: ngay, kgList: kgList };
     });
 
     return { nguon: nguon };
@@ -953,4 +1018,93 @@ function xoaUngVienGhepCX5(payload) {
     return { success: false, message: "Lỗi: " + err.message };
   }
 }
-
+
+function layDanhSachSanPhamTonKhoCX5() {
+  try {
+    const cacheKey = "tonKhoDanhSach_v1";
+    const cache = CacheService.getScriptCache();
+    const cached = cache.get(cacheKey);
+    if (cached) {
+      try { return { list: JSON.parse(cached) }; } catch (e) {}
+    }
+
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    const listSheet = ss.getSheetByName(CONFIG.LIST_SHEET_NAME);
+    if (!listSheet) return { list: [] };
+
+    const lastRow = listSheet.getLastRow();
+    if (lastRow < CONFIG.LIST_START_ROW) return { list: [] };
+
+    const numRows = lastRow - CONFIG.LIST_START_ROW + 1;
+    const data = listSheet.getRange(CONFIG.LIST_START_ROW, 1, numRows, 2).getValues();
+
+    const list = data
+      .filter(function (r) { return r[CONFIG.LIST_COL_TEN - 1] && r[CONFIG.LIST_COL_MSP - 1]; })
+      .map(function (r) {
+        return { ten: String(r[CONFIG.LIST_COL_TEN - 1]).trim(), msp: String(r[CONFIG.LIST_COL_MSP - 1]).trim() };
+      });
+
+    try { cache.put(cacheKey, JSON.stringify(list), 1800); } catch (e) {}
+
+    return { list: list };
+  } catch (err) {
+    return { error: err.message };
+  }
+}
+
+function layTonKhoCX5(payload) {
+  try {
+    const dateStr = payload && payload.dateStr;
+    const msps = (payload && payload.msps) || [];
+    if (msps.length === 0) return { list: [] };
+
+    const date = new Date(dateStr);
+    if (isNaN(date.getTime())) return { error: "Ngày không hợp lệ" };
+
+    const sheetName = String(date.getMonth() + 1);
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    const sheet = ss.getSheetByName(sheetName);
+    if (!sheet) return { error: 'Chưa có sheet tháng "' + sheetName + '"' };
+
+    // TỐI ƯU HÓA: Đọc 1 lần duy nhất toàn bộ bảng (dòng 6-644, 639 dòng) từ Cột 7 (G: MSP) đến Cột 11 (K: KG Cuối)
+    // Thay thế vòng lặp gọi hàng trăm API thành đúng 1 lần đọc duy nhất
+    const data = sheet.getRange(6, 7, 639, 5).getValues();
+
+    const mspMapThuong = {};
+    const mspMapFor = {};
+
+    for (let i = 0; i < data.length; i++) {
+      const rowNum = 6 + i;
+      const m = String(data[i][0]).trim();
+      if (!m) continue;
+      const rowInfo = {
+        baoDau: data[i][1] || 0,
+        kgDau: data[i][2] || 0,
+        baoCuoi: data[i][3] || 0,
+        kgCuoi: data[i][4] || 0
+      };
+      if ((rowNum >= 6 && rowNum <= 543) || (rowNum >= 637 && rowNum <= 644)) {
+        if (!mspMapThuong[m]) mspMapThuong[m] = rowInfo;
+      } else if (rowNum >= 544 && rowNum <= 630) {
+        if (!mspMapFor[m]) mspMapFor[m] = rowInfo;
+      }
+    }
+
+    const ketQua = [];
+    msps.forEach(function (msp) {
+      const m = String(msp).trim();
+      if (mspMapThuong[m]) {
+        const v = mspMapThuong[m];
+        ketQua.push({ msp: m, kho: "Thường", baoDau: v.baoDau, kgDau: v.kgDau, baoCuoi: v.baoCuoi, kgCuoi: v.kgCuoi });
+      }
+      if (mspMapFor[m]) {
+        const v = mspMapFor[m];
+        ketQua.push({ msp: m, kho: "FOR", baoDau: v.baoDau, kgDau: v.kgDau, baoCuoi: v.baoCuoi, kgCuoi: v.kgCuoi });
+      }
+    });
+
+    return { list: ketQua };
+  } catch (err) {
+    return { error: err.message };
+  }
+}
