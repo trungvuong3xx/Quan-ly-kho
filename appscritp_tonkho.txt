@@ -1,4 +1,9 @@
-const CONFIG = {
+// ============================================================================
+// GOOGLE APPS SCRIPT: TRA CỨU TỒN KHO (tonkho.gs)
+// Dùng cho Web App tra cứu tồn kho độc lập hoặc đính kèm cùng Sheet
+// ============================================================================
+
+var CONFIG_TONKHO = {
   LIST_SHEET_NAME: 'LIST',
   LIST_COL_TEN: 1,
   LIST_COL_MSP: 2,
@@ -6,8 +11,8 @@ const CONFIG = {
   MSP_COL_IN_MONTH_SHEET: 7
 };
 
-const VUNG_THUONG_RANGES = [[6, 543], [637, 644]];
-const VUNG_FOR_RANGES = [[544, 630]];
+var VUNG_THUONG_TK_RANGES = [[6, 543], [637, 644]];
+var VUNG_FOR_TK_RANGES = [[544, 630]];
 
 function doPost(e) {
   let result;
@@ -29,11 +34,11 @@ function doPost(e) {
   return ContentService.createTextOutput(JSON.stringify(result)).setMimeType(ContentService.MimeType.JSON);
 }
 
-function findRowByMsp_(sheet, msp, ranges) {
+function findRowByMspTonKho_(sheet, msp, ranges) {
   const target = String(msp).trim();
   for (const [start, end] of ranges) {
     const numRows = end - start + 1;
-    const values = sheet.getRange(start, CONFIG.MSP_COL_IN_MONTH_SHEET, numRows, 1).getValues();
+    const values = sheet.getRange(start, CONFIG_TONKHO.MSP_COL_IN_MONTH_SHEET, numRows, 1).getValues();
     for (let i = 0; i < values.length; i++) {
       if (String(values[i][0]).trim() === target) {
         return start + i;
@@ -53,19 +58,19 @@ function layDanhSachSanPhamTonKhoCX5() {
     }
 
     const ss = SpreadsheetApp.getActiveSpreadsheet();
-    const listSheet = ss.getSheetByName(CONFIG.LIST_SHEET_NAME);
+    const listSheet = ss.getSheetByName(CONFIG_TONKHO.LIST_SHEET_NAME);
     if (!listSheet) return { list: [] };
 
     const lastRow = listSheet.getLastRow();
-    if (lastRow < CONFIG.LIST_START_ROW) return { list: [] };
+    if (lastRow < CONFIG_TONKHO.LIST_START_ROW) return { list: [] };
 
-    const numRows = lastRow - CONFIG.LIST_START_ROW + 1;
-    const data = listSheet.getRange(CONFIG.LIST_START_ROW, 1, numRows, 2).getValues();
+    const numRows = lastRow - CONFIG_TONKHO.LIST_START_ROW + 1;
+    const data = listSheet.getRange(CONFIG_TONKHO.LIST_START_ROW, 1, numRows, 2).getValues();
 
     const list = data
-      .filter(function (r) { return r[CONFIG.LIST_COL_TEN - 1] && r[CONFIG.LIST_COL_MSP - 1]; })
+      .filter(function (r) { return r[CONFIG_TONKHO.LIST_COL_TEN - 1] && r[CONFIG_TONKHO.LIST_COL_MSP - 1]; })
       .map(function (r) {
-        return { ten: String(r[CONFIG.LIST_COL_TEN - 1]).trim(), msp: String(r[CONFIG.LIST_COL_MSP - 1]).trim() };
+        return { ten: String(r[CONFIG_TONKHO.LIST_COL_TEN - 1]).trim(), msp: String(r[CONFIG_TONKHO.LIST_COL_MSP - 1]).trim() };
       });
 
     try { cache.put(cacheKey, JSON.stringify(list), 1800); } catch (e) {}
@@ -92,8 +97,8 @@ function layTonKhoCX5(payload) {
 
     const ketQua = [];
     msps.forEach(function (msp) {
-      const rowThuong = findRowByMsp_(sheet, msp, VUNG_THUONG_RANGES);
-      const rowFor = findRowByMsp_(sheet, msp, VUNG_FOR_RANGES);
+      const rowThuong = findRowByMspTonKho_(sheet, msp, VUNG_THUONG_TK_RANGES);
+      const rowFor = findRowByMspTonKho_(sheet, msp, VUNG_FOR_TK_RANGES);
 
       if (rowThuong !== -1) {
         const v = sheet.getRange(rowThuong, 8, 1, 4).getValues()[0];
