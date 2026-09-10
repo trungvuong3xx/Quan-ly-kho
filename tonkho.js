@@ -1,4 +1,4 @@
-const API_TONKHO = "https://script.google.com/macros/s/AKfycbzo3rpqVvlryALLel9A6a6M8Azn_P0Qx1b28co0p3sXz-ozgAbvfhIcBZynV1e5AYbpGQ/exec";
+const API_TONKHO = "https://script.google.com/macros/s/AKfycbyOhUM1KCg0eUsj-tBPDFnyJXS_PDlxcsRWRqzR7ZdoX9ZCMRlvPApouk9Jn6yghVS1xg/exec";
 const TK_FREQ_KEY = "tk_search_freq";
 
 let tkListCache = null;

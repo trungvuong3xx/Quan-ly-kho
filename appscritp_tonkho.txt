@@ -1,8 +1,3 @@
-// ============================================================================
-// GOOGLE APPS SCRIPT: TRA CỨU TỒN KHO (tonkho.gs)
-// Dùng cho Web App tra cứu tồn kho độc lập hoặc đính kèm cùng Sheet
-// ============================================================================
-
 var CONFIG_TONKHO = {
   LIST_SHEET_NAME: 'LIST',
   LIST_COL_TEN: 1,
@@ -14,25 +9,7 @@ var CONFIG_TONKHO = {
 var VUNG_THUONG_TK_RANGES = [[6, 543], [637, 644]];
 var VUNG_FOR_TK_RANGES = [[544, 630]];
 
-function doPost(e) {
-  let result;
-  try {
-    const body = JSON.parse(e.postData.contents);
-    switch (body.action) {
-      case "layDanhSachSanPhamTonKhoCX5":
-        result = layDanhSachSanPhamTonKhoCX5();
-        break;
-      case "layTonKhoCX5":
-        result = layTonKhoCX5(body.payload);
-        break;
-      default:
-        result = { success: false, message: "Action không hợp lệ: " + body.action };
-    }
-  } catch (err) {
-    result = { success: false, message: "Lỗi server: " + err.message };
-  }
-  return ContentService.createTextOutput(JSON.stringify(result)).setMimeType(ContentService.MimeType.JSON);
-}
+// NOTE: doPost được định nghĩa trong file cx5.gs (không được khai báo lại ở đây)
 
 function findRowByMspTonKho_(sheet, msp, ranges) {
   const target = String(msp).trim();

@@ -451,6 +451,14 @@ function doPost(e) {
         result = layChiTietNguonGocCX5(body.payload);
         break;
 
+      // === Tồn Kho ===
+      case "layDanhSachSanPhamTonKhoCX5":
+        result = layDanhSachSanPhamTonKhoCX5();
+        break;
+      case "layTonKhoCX5":
+        result = layTonKhoCX5(body.payload);
+        break;
+
       default:
         result = { success: false, message: "Action không hợp lệ: " + body.action };
     }
@@ -459,6 +467,7 @@ function doPost(e) {
   }
   return ContentService.createTextOutput(JSON.stringify(result)).setMimeType(ContentService.MimeType.JSON);
 }
+
 
 function submitEntryX5(payload) {
   try {
