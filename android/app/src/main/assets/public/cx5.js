@@ -2116,7 +2116,7 @@ window.setOneHandCX5 = setOneHandCX5;
     '<div class="cx5-bp-key cx5-bp-key-enter" data-action="enter">Enter</div>' +
     '<div class="cx5-bp-key cx5-bp-key-zero-kg" data-action="so" data-val="0">0</div>' +
     '<div class="cx5-bp-key" data-action="so" data-val=".">.</div>' +
-    '<div class="cx5-bp-key cx5-bp-key-next" data-action="next">Tiếp ⇥</div>' +
+    '<div class="cx5-bp-key cx5-bp-key-next" data-action="next">QC ⇦</div>' +
     '</div>';
   document.body.appendChild(kgPanel);
 
@@ -2534,23 +2534,16 @@ function bpKgEnterCX5() {
 window.bpKgEnterCX5 = bpKgEnterCX5;
 
 function bpKgNextCX5() {
-  if (!banPhimActiveElCX5) return;
-  const id = banPhimActiveElCX5.id;
-  if (id === "cx5-ten") {
-    const bao = document.getElementById("cx5-bao");
-    if (bao) { bao.focus(); moBanPhimCX5(bao, "kg"); }
-  } else if (id === "cx5-bao") {
-    const kg = document.getElementById("cx5-kg");
-    if (kg) { kg.focus(); moBanPhimCX5(kg, "kg"); }
-  } else if (id === "cx5-kg") {
-    bpKgEnterCX5();
-  } else if (id === "cx5-sl-ten-tim") {
-    const slKg = document.getElementById("cx5-sl-them-kg");
-    if (slKg) { slKg.focus(); moBanPhimCX5(slKg, "kg"); }
-  } else if (id === "cx5-sl-them-kg") {
-    bpKgEnterCX5();
+  const slWrap = document.getElementById("cx5-sl-doi-qc-wrap");
+  if (slWrap && slWrap.style.display !== "none") {
+    const slTen = document.getElementById("cx5-sl-ten-tim");
+    if (slTen) { slTen.focus(); moBanPhimCX5(slTen, "qc"); return; }
+  }
+  if (typeof moKhoaQCCX5 === "function") {
+    moKhoaQCCX5();
   } else {
-    bpKgEnterCX5();
+    const ten = document.getElementById("cx5-ten");
+    if (ten) { ten.focus(); moBanPhimCX5(ten, "qc"); }
   }
 }
 window.bpKgNextCX5 = bpKgNextCX5;
