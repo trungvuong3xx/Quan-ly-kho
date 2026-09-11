@@ -4,7 +4,12 @@ const API = "https://script.google.com/macros/s/AKfycbzXjzccld3X04iJgIpEvKm01in0
 async function callAPI(body) {
   try {
     const res = await fetch(API, { method: "POST", body: JSON.stringify(body), redirect: "follow" });
-    return await res.json();
+    const text = await res.text();
+    try {
+      return JSON.parse(text);
+    } catch (parseErr) {
+      return { error: "Máy chủ phản hồi chậm hoặc gián đoạn (Timeout), vui lòng thử lại." };
+    }
   } catch (err) {
     return { error: "Mất kết nối mạng, vui lòng thử lại." };
   }
@@ -1762,16 +1767,62 @@ function dinhDangGioQuetTrung(tg) {
 }
 window.dinhDangGioQuetTrung = dinhDangGioQuetTrung;
 
+// ── Hàm chuẩn hóa và rút gọn thông báo lỗi (chống tràn màn hình điện thoại) ──
+function rutGonThongBaoLoi(msg) {
+  if (msg == null) return "";
+  let str = String(msg).trim();
+
+  // 1. Nhận diện các lỗi HTML/JSON do Timeout proxy Google Apps Script (504, 502, 500)
+  if (
+    str.includes("Unexpected token") ||
+    str.includes("<!DOCTYPE") ||
+    str.includes("<html") ||
+    str.includes("is not valid JSON") ||
+    str.includes("JSON.parse") ||
+    str.includes("SyntaxError")
+  ) {
+    return "Máy chủ phản hồi chậm hoặc gián đoạn (Timeout), vui lòng thử lại!";
+  }
+
+  // 2. Nhận diện lỗi mất kết nối mạng
+  if (
+    str.includes("Failed to fetch") ||
+    str.includes("NetworkError") ||
+    str.includes("Network request failed") ||
+    str.includes("network error")
+  ) {
+    return "Mất kết nối Internet, vui lòng kiểm tra lại mạng!";
+  }
+
+  // 3. Nhận diện lỗi Camera
+  if (str.includes("OverconstrainedError") || str.includes("NotReadableError")) {
+    return "Camera đang bận hoặc không tương thích!";
+  }
+
+  // 4. Nếu thông báo vẫn quá dài (trên 75 ký tự), cắt gọn đẹp mắt
+  if (str.length > 75) {
+    return str.slice(0, 72) + "...";
+  }
+
+  return str;
+}
+window.rutGonThongBaoLoi = rutGonThongBaoLoi;
+
 // ── Hàm hiển thị Popup Cảnh Báo chung (Đỏ 2s khi quét trùng/lỗi) ────────────
 let timerCanhBaoGlobal = null;
 function showCanhBao(text, type = "error") {
   const el = document.getElementById("canh-bao");
   if (!el) return;
+  text = typeof rutGonThongBaoLoi === "function" ? rutGonThongBaoLoi(text) : text;
   el.textContent = text;
   if (type === "success") {
     el.style.background = "linear-gradient(135deg, #10b981, #059669)";
     el.style.boxShadow = "0 8px 24px rgba(16, 185, 129, .4)";
     el.style.border = "1px solid #34d399";
+  } else if (type === "warning") {
+    el.style.background = "linear-gradient(135deg, #f59e0b, #d97706)";
+    el.style.boxShadow = "0 8px 24px rgba(245, 158, 11, .4)";
+    el.style.border = "1px solid #fbbf24";
   } else {
     // Đỏ rực rỡ nổi bật
     el.style.background = "linear-gradient(135deg, #ef4444, #dc2626)";
@@ -1779,24 +1830,29 @@ function showCanhBao(text, type = "error") {
     el.style.border = "1px solid #f87171";
   }
   el.style.color = "#ffffff";
-  el.style.fontSize = "14px";
+  el.style.fontSize = "13.5px";
   el.style.fontWeight = "700";
-  el.style.padding = "12px 22px";
+  el.style.padding = "10px 18px";
   el.style.borderRadius = "14px";
   el.style.position = "fixed";
   el.style.top = "75px";
   el.style.left = "50%";
   el.style.transform = "translateX(-50%)";
   el.style.zIndex = "999999";
-  el.style.whiteSpace = "nowrap";
-  el.style.maxWidth = "90vw";
+  el.style.whiteSpace = "normal";
+  el.style.wordBreak = "break-word";
+  el.style.overflowWrap = "break-word";
+  el.style.maxWidth = "calc(100vw - 32px)";
+  el.style.width = "max-content";
+  el.style.boxSizing = "border-box";
+  el.style.lineHeight = "1.4";
   el.style.textAlign = "center";
   el.style.display = "block";
 
   if (timerCanhBaoGlobal) clearTimeout(timerCanhBaoGlobal);
   timerCanhBaoGlobal = setTimeout(() => {
     if (el) el.style.display = "none";
-  }, 2000);
+  }, 2200);
 }
 window.showCanhBao = showCanhBao;
 

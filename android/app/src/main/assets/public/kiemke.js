@@ -162,8 +162,13 @@ window.xuatExcelKiemKe = xuatExcelKiemKe;
 
 let timerCanhBaoKK = null;
 function showCanhBaoKK(text, type = "error") {
+  if (typeof showCanhBao === "function") {
+    showCanhBao(text, type);
+    return;
+  }
   const el = document.getElementById("canh-bao");
   if (!el) return;
+  text = typeof rutGonThongBaoLoi === "function" ? rutGonThongBaoLoi(text) : text;
   el.textContent = text;
   
   if (type === "success") {

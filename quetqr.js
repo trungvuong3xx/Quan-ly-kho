@@ -601,9 +601,14 @@ async function guiLenSheetQuetQR(rows) {
           kg: r.kg,
           thoiGian: r.thoiGian
         })
-      }).then(res => {
+      }).then(async res => {
         if (!res.ok) throw new Error("HTTP " + res.status);
-        return res.json();
+        const text = await res.text();
+        try {
+          return JSON.parse(text);
+        } catch (err) {
+          throw new Error("Máy chủ phản hồi chậm hoặc gián đoạn (Timeout)");
+        }
       });
     });
     await Promise.all(promises);
@@ -935,8 +940,13 @@ window.xuatExcelPhienLichSuQR = xuatExcelPhienLichSuQR;
 // ── Hiển thị Cảnh Báo Popup (Đỏ / Xanh) trong 2s ───────────────────
 let timerCanhBaoQR = null;
 function showCanhBaoQR(text, type = "error") {
+  if (typeof showCanhBao === "function") {
+    showCanhBao(text, type);
+    return;
+  }
   const el = document.getElementById("canh-bao");
   if (!el) return;
+  text = typeof rutGonThongBaoLoi === "function" ? rutGonThongBaoLoi(text) : text;
   el.textContent = text;
 
   if (type === "success") {

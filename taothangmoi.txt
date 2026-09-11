@@ -1,0 +1,193 @@
+function taoThangMoi() {
+  var html = HtmlService.createHtmlOutput(getFormHtml_())
+    .setWidth(420)
+    .setHeight(255);
+  SpreadsheetApp.getUi().showModalDialog(html, "Tạo tháng mới");
+}
+
+function getFormHtml_() {
+  return '' +
+    '<link rel="preconnect" href="https://fonts.googleapis.com">' +
+    '<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">' +
+    '<style>' +
+      '* { box-sizing: border-box; }' +
+      'html, body {' +
+        'margin: 0;' +
+        'padding: 0;' +
+        'overflow: hidden;' +
+        'background: #ffffff;' +
+        'border-radius: 0 0 12px 12px;' +
+      '}' +
+      'body {' +
+        "font-family: 'IBM Plex Mono', Consolas, monospace;" +
+        'font-size: 14px;' +
+        'padding: 20px 24px 12px;' +
+        'color: #111111;' +
+      '}' +
+      'label {' +
+        'display: block;' +
+        'margin-top: 14px;' +
+        'font-weight: bold;' +
+        'letter-spacing: 0.5px;' +
+        'color: #111111;' +
+        'text-transform: uppercase;' +
+        'font-size: 12px;' +
+      '}' +
+      'input {' +
+        'width: 100%;' +
+        'padding: 8px;' +
+        'margin-top: 6px;' +
+        'background: #ffffff;' +
+        'border: 1.5px solid #111111;' +
+        'border-radius: 4px;' +
+        'color: #111111;' +
+        "font-family: 'IBM Plex Mono', Consolas, monospace;" +
+        'font-size: 14px;' +
+      '}' +
+      'input:focus {' +
+        'outline: none;' +
+        'border-color: #000000;' +
+        'background: #f5f5f5;' +
+      '}' +
+      'input.loi {' +
+        'border-color: #c0392b;' +
+        'box-shadow: 0 0 0 1px #c0392b;' +
+      '}' +
+      '.btns { margin-top: 18px; text-align: right; }' +
+      'button {' +
+        'padding: 8px 18px;' +
+        'margin-left: 8px;' +
+        'cursor: pointer;' +
+        'background: #111111;' +
+        'border: 1.5px solid #111111;' +
+        'border-radius: 4px;' +
+        'color: #ffffff;' +
+        "font-family: 'IBM Plex Mono', Consolas, monospace;" +
+        'text-transform: uppercase;' +
+        'font-size: 12px;' +
+        'letter-spacing: 0.5px;' +
+      '}' +
+      'button:hover { background: #333333; border-color: #333333; }' +
+      '#btnHuy {' +
+        'background: #ffffff;' +
+        'color: #111111;' +
+      '}' +
+      '#btnHuy:hover { background: #f0f0f0; }' +
+      '#btnOk:disabled {' +
+        'opacity: 0.5;' +
+        'cursor: not-allowed;' +
+      '}' +
+    '</style>' +
+    '<label>Sheet Cũ</label>' +
+    '<input type="text" id="tenCu" autocomplete="off">' +
+    '<label>Sheet Mới</label>' +
+    '<input type="text" id="tenMoi" autocomplete="off">' +
+    '<div class="btns">' +
+      '<button id="btnHuy" onclick="google.script.host.close()">Hủy</button>' +
+      '<button id="btnOk" onclick="submitForm()">OK</button>' +
+    '</div>' +
+    '<script>' +
+      'window.onload = function() {' +
+        "document.getElementById('tenCu').focus();" +
+      '};' +
+      'var dangXuLy = false;' +
+      'function xoaLoi(el) { el.classList.remove("loi"); }' +
+      'function submitForm() {' +
+        'if (dangXuLy) return;' +
+        "var elCu = document.getElementById('tenCu');" +
+        "var elMoi = document.getElementById('tenMoi');" +
+        'var tenCu = elCu.value.trim();' +
+        'var tenMoi = elMoi.value.trim();' +
+        'var hopLe = true;' +
+        'if (!tenCu) { elCu.classList.add("loi"); hopLe = false; }' +
+        'if (!tenMoi) { elMoi.classList.add("loi"); hopLe = false; }' +
+        'if (!hopLe) return;' +
+        'dangXuLy = true;' +
+        "var btnOk = document.getElementById('btnOk');" +
+        'btnOk.disabled = true;' +
+        "btnOk.textContent = '...';" +
+        'google.script.run' +
+          '.withSuccessHandler(function() { google.script.host.close(); })' +
+          '.withFailureHandler(function(e) {' +
+            'dangXuLy = false;' +
+            'btnOk.disabled = false;' +
+            "btnOk.textContent = 'OK';" +
+            "alert('Lỗi: ' + e.message);" +
+          '})' +
+          '.xuLyTaoThangMoi(tenCu, tenMoi);' +
+      '}' +
+      "document.getElementById('tenCu').addEventListener('input', function() { xoaLoi(this); });" +
+      "document.getElementById('tenMoi').addEventListener('input', function() { xoaLoi(this); });" +
+      "document.getElementById('tenCu').addEventListener('keydown', function(e) {" +
+        "if (e.key === 'Enter') {" +
+          'e.preventDefault();' +
+          "document.getElementById('tenMoi').focus();" +
+        '}' +
+      '});' +
+      "document.getElementById('tenMoi').addEventListener('keydown', function(e) {" +
+        "if (e.key === 'Enter') {" +
+          'e.preventDefault();' +
+          'submitForm();' +
+        '}' +
+      '});' +
+    '</script>';
+}
+
+function xuLyTaoThangMoi(tenCu, tenMoi) {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var ui = SpreadsheetApp.getUi();
+
+  if (!tenCu) throw new Error("Chưa nhập tên sheet cũ");
+  if (!tenMoi) throw new Error("Chưa nhập tên sheet mới");
+
+  var shCu = ss.getSheetByName(tenCu);
+  if (!shCu) throw new Error("Làm gì có cái sheet nào như thế??? " + tenCu);
+
+  var shMoiCheck = ss.getSheetByName(tenMoi);
+  if (shMoiCheck) ss.deleteSheet(shMoiCheck);
+
+  var shMoi = shCu.copyTo(ss).setName(tenMoi);
+  ss.setActiveSheet(shMoi);
+
+  // Xóa tất cả ghi chú khi tạo tháng mới
+  shMoi.getRange(1, 1, shMoi.getMaxRows(), shMoi.getMaxColumns()).clearNote();
+
+  var VUNG_XOA = [
+    "AF6:JS299",
+    "AF301:JS314",
+    "AF319:JS457",
+    "AF461:JS536",
+    "AF540:JS540",
+    "AF544:JS630",
+    "AF637:JS664",
+    "AF668:JS673",
+    "AF677:JS679"
+  ];
+  shMoi.getRangeList(VUNG_XOA).clearContent();
+
+  var VUNG_HI = [
+    [6,   299],
+    [301, 314],
+    [319, 457],
+    [461, 536],
+    [540, 540],
+    [544, 630],
+    [637, 664],
+    [668, 673],
+    [677, 679]
+  ];
+
+  for (var v = 0; v < VUNG_HI.length; v++) {
+    var dongDau = VUNG_HI[v][0];
+    var dongCuoi = VUNG_HI[v][1];
+    var soDong = dongCuoi - dongDau + 1;
+    var congThucHI = [];
+    for (var i = 0; i < soDong; i++) {
+      var dong = dongDau + i;
+      congThucHI.push(["='" + tenCu + "'!J" + dong, "='" + tenCu + "'!K" + dong]);
+    }
+    shMoi.getRange(dongDau, 8, soDong, 2).setFormulas(congThucHI);
+  }
+
+  ui.alert("Vạn tuế! Vạn Vạn tuế!", "Khởi bẩm Bệ hạ, Thần đã tạo xong tháng mới 🙇", ui.ButtonSet.OK);
+}

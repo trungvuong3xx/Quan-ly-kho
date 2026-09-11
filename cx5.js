@@ -25,7 +25,15 @@ let tongKetPhienCX5 = [];
 
 async function callApiCX5(body) {
   const res = await fetch(API_CX5, { method: "POST", body: JSON.stringify(body) });
-  return await res.json();
+  const text = await res.text();
+  try {
+    return JSON.parse(text);
+  } catch (err) {
+    if (text.includes("<!DOCTYPE") || text.includes("<html") || text.includes("504") || text.includes("502")) {
+      throw new Error("Máy chủ phản hồi chậm hoặc gián đoạn (Timeout)");
+    }
+    throw new Error("Dữ liệu phản hồi không hợp lệ");
+  }
 }
 
 function boDauCX5(str) {
@@ -153,8 +161,13 @@ async function taiDanhSachQCX5(dateStr, forceRefresh) {
 }
 
 function showCanhBaoCX5(text, type = "error") {
+  if (typeof showCanhBao === "function") {
+    showCanhBao(text, type);
+    return;
+  }
   const el = document.getElementById("canh-bao");
   if (!el) return;
+  text = typeof rutGonThongBaoLoi === "function" ? rutGonThongBaoLoi(text) : text;
   el.textContent = text;
   
   if (type === "success") {
@@ -1534,7 +1547,7 @@ async function dongBoGhepCX5() {
 
   try {
     const payloadGroups = groups.map(function (g) {
-      return { key: g.key, rowNeo: g.rowNeo, baoNeo: g.baoNeo, kgNeo: g.kgNeo, tongBao: g.tongBao, tongKg: g.tongKg, cuList: g.cuList };
+      return { key: g.key, rowNeo: g.rowNeo, lotIdNeo: g.lotIdNeo, baoNeo: g.baoNeo, kgNeo: g.kgNeo, tongBao: g.tongBao, tongKg: g.tongKg, cuList: g.cuList };
     });
     const r = await callApiCX5({
       action: "ghiGhepCX5",

@@ -689,7 +689,8 @@ function docCacKhoiLSC5_() {
   if (lastRow < 3) return blocks;
 
   const numRows = lastRow - 3 + 1;
-  const data = sh.getRange(3, 2, numRows, 21).getValues();
+  // Đọc 22 cột: Từ Cột 2 (B: Ngày) đến Cột 23 (W: Nguồn gốc)
+  const data = sh.getRange(3, 2, numRows, 22).getValues();
 
   let cur = null;
   let curNgay = "";
@@ -722,6 +723,7 @@ function docCacKhoiLSC5_() {
     const baoGhepCell = r[18];
     const kgGhepCell = r[19];
     const anCell = r[20];
+    const wCell = r[21];
 
     if (msp !== "" && msp !== null) {
       dongLai();
@@ -734,6 +736,7 @@ function docCacKhoiLSC5_() {
         baoGhep: null,
         kgGhep: null,
         daAn: false,
+        w: "",
         rowDauTien: rowNum,
         rowCuoiCung: rowNum,
         daGhep: false
@@ -753,6 +756,7 @@ function docCacKhoiLSC5_() {
       if (baoGhepCell !== "" && baoGhepCell !== null) cur.baoGhep = Number(baoGhepCell) || 0;
       if (kgGhepCell !== "" && kgGhepCell !== null) cur.kgGhep = Number(kgGhepCell) || 0;
       if (String(anCell == null ? "" : anCell).trim().toUpperCase() === "X") cur.daAn = true;
+      if (wCell !== "" && wCell !== null) cur.w = String(wCell).trim();
     }
   }
   dongLai();
@@ -809,68 +813,122 @@ function ghiGhepCX5(payload) {
     let sh = ss.getSheetByName("LSC5");
     if (!sh) sh = ss.insertSheet("LSC5");
 
-    // 1) Ghi dữ liệu lượt nhập phiên hôm nay vào LSC5 (kiểm tra chống trùng)
     const sessionEntries = (payload && payload.sessionEntries) ? payload.sessionEntries : [];
-    const lotIdToRowMap = {};
-    let blocks = null;
-    let anyNewLotsAdded = false;
+    const groups = (payload && payload.groups) ? payload.groups : [];
 
-    if (sessionEntries.length > 0) {
-      const existingBlocks = docCacKhoiLSC5_();
-      const existingCounts = {};
-      existingBlocks.forEach(function (b) {
-        const key = b.ngay + "|" + b.msp + "|" + b.bao + "|" + Math.round(b.kg * 100)/100;
-        existingCounts[key] = (existingCounts[key] || 0) + 1;
-      });
-
-      sessionEntries.forEach(function (se) {
-        let cacLotMoi = [];
-        if (se.lots) {
-          se.lots.forEach(function (lot) {
-            if (!lot.kgList || lot.kgList.length === 0) return;
-            let lotBao = lot.kgList.length;
-            let lotKg = 0;
-            lot.kgList.forEach(function (v) { lotKg += (Number(v) || 0); });
-            const checkKey = se.dateStr + "|" + se.msp + "|" + lotBao + "|" + Math.round(lotKg * 100) / 100;
-            if (existingCounts[checkKey] > 0) {
-              existingCounts[checkKey]--;
-            } else {
-              cacLotMoi.push(lot);
-            }
-          });
-        }
-        if (cacLotMoi.length > 0) {
-          anyNewLotsAdded = true;
-          const seMoi = { dateStr: se.dateStr, msp: se.msp, ten: se.ten, lots: cacLotMoi };
-          const newMap = ghiLichSuC5(seMoi);
-          Object.assign(lotIdToRowMap, newMap);
-        }
-      });
-
-      if (!anyNewLotsAdded) {
-        blocks = existingBlocks; // Tái sử dụng, tránh đọc lại LSC5 lần 2
-      }
+    if (sessionEntries.length === 0 && groups.length === 0) {
+      return { success: true, message: "Không có dữ liệu cần đồng bộ" };
     }
 
-    // 2) Ghép pallet nếu có các khối được chọn
-    const groups = (payload && payload.groups) ? payload.groups : [];
+    // BƯỚC 1: Đọc blocks hiện có từ LSC5 ĐÚNG 1 LẦN DUY NHẤT
+    const blocks = docCacKhoiLSC5_();
+    const existingCounts = {};
+    blocks.forEach(function (b) {
+      const key = b.ngay + "|" + b.msp + "|" + b.bao + "|" + Math.round(b.kg * 100) / 100;
+      existingCounts[key] = (existingCounts[key] || 0) + 1;
+    });
+
+    // BƯỚC 2: Gom TẤT CẢ các lot mới của mọi sessionEntries vào 1 matrix duy nhất
+    const lotIdToRowMap = {};
+    const bigMatrix = [];
+    let currentRow = Math.max(sh.getLastRow() + 1, 3);
+    const startRowGhi = currentRow;
+
+    sessionEntries.forEach(function (se) {
+      if (!se.lots) return;
+      se.lots.forEach(function (lot) {
+        const kgList = lot.kgList || [];
+        if (kgList.length === 0) return;
+        const lotBao = kgList.length;
+        let lotKg = 0;
+        kgList.forEach(function (v) { lotKg += (Number(v) || 0); });
+        lotKg = Math.round(lotKg * 100) / 100;
+
+        const checkKey = se.dateStr + "|" + se.msp + "|" + lotBao + "|" + lotKg;
+        if (existingCounts[checkKey] > 0) {
+          existingCounts[checkKey]--;
+          return; // Đã có trong LSC5, bỏ qua chống trùng
+        }
+
+        const dongDauLot = currentRow;
+        let dongCuoiLot = currentRow;
+        const numChunks = Math.ceil(kgList.length / 12);
+        let idx = 0;
+        let chunkIdx = 0;
+        let isFirst = true;
+
+        while (idx < kgList.length) {
+          chunkIdx++;
+          const isLastChunk = (chunkIdx === numChunks);
+          const chunk = kgList.slice(idx, idx + 12);
+
+          // Hàng 20 cột (Cột 2 đến 21 trong Sheet LSC5)
+          const rowData = new Array(20).fill("");
+          if (isFirst) {
+            rowData[0] = se.dateStr;
+            rowData[1] = se.msp;
+            rowData[2] = se.ten;
+            isFirst = false;
+          }
+          for (let i = 0; i < 12; i++) {
+            rowData[3 + i] = (chunk[i] !== undefined && chunk[i] !== null && chunk[i] !== "") ? chunk[i] : "";
+          }
+          if (isLastChunk) {
+            rowData[16] = lotKg;         // Cột 18: Tổng KG
+            rowData[18] = lotBao;        // Cột 20: Số bao
+            rowData[19] = lotKg;         // Cột 21: Tổng KG hiệu lực
+          }
+          bigMatrix.push(rowData);
+          dongCuoiLot = currentRow;
+          idx += 12;
+          currentRow++;
+        }
+
+        if (lot.lotId) {
+          lotIdToRowMap[lot.lotId] = dongCuoiLot;
+        }
+
+        // Tạo block trực tiếp trong RAM - KHÔNG CẦN ĐỌC LẠI SHEET LẦN 2
+        blocks.push({
+          msp: String(se.msp || "").trim(),
+          ten: String(se.ten || "").trim(),
+          ngay: String(se.dateStr || "").trim(),
+          bao: lotBao,
+          kg: lotKg,
+          baoGhep: null,
+          kgGhep: null,
+          baoHieuLuc: lotBao,
+          kgHieuLuc: lotKg,
+          daAn: false,
+          w: "",
+          rowDauTien: dongDauLot,
+          rowCuoiCung: dongCuoiLot,
+          daGhep: false
+        });
+      });
+    });
+
+    // TỐI ƯU TUYỆT ĐỐI: Ghi toàn bộ dữ liệu phiên hôm nay trong ĐÚNG 1 LẦN GỌI DUY NHẤT
+    if (bigMatrix.length > 0) {
+      sh.getRange(startRowGhi, 2, bigMatrix.length, 20).setValues(bigMatrix);
+    }
+
+    // Nếu không có khối ghép nào thì kết thúc ngay
     if (groups.length === 0) {
       return { success: true, message: "Đã ghi dữ liệu phiên vào Sheet LSC5 thành công" };
     }
 
-    // TỐI ƯU HÓA: Chỉ đọc lại sheet LSC5 khi thực sự cần giải quyết rowNeo
-    if (!blocks) {
-      const canTimNeo = groups.some(function (g) { return !g.rowNeo && !(g.lotIdNeo && lotIdToRowMap[g.lotIdNeo]); });
-      if (canTimNeo || anyNewLotsAdded) {
-        blocks = docCacKhoiLSC5_();
-      }
-    }
+    // BƯỚC 3: Ghép pallet (hoàn toàn tra cứu trên RAM, 0 lần đọc sheet)
+    const blockByRowCuoi = {};
+    blocks.forEach(function (b) {
+      blockByRowCuoi[b.rowCuoiCung] = b;
+    });
 
     groups.forEach(function (g) {
       if (g.lotIdNeo && lotIdToRowMap[g.lotIdNeo]) {
         g.rowNeo = lotIdToRowMap[g.lotIdNeo];
       }
-      if (!g.rowNeo && g.key && blocks) {
+      if (!g.rowNeo && g.key) {
         const parts = g.key.split("|");
         const msp = parts[0], ten = parts[1];
         const match = blocks.slice().reverse().find(function (b) {
@@ -888,15 +946,10 @@ function ghiGhepCX5(payload) {
       return { success: false, message: "Một số dư đang được chọn ở nhiều khối" };
     }
 
-    // TỐI ƯU HÓA: Đọc toàn bộ cột V và W (22, 23) 1 lần duy nhất để kiểm tra
-    let maxRow = 3;
-    if (rowsCu.length > 0) maxRow = Math.max.apply(null, rowsCu);
-    groups.forEach(function (g) { if (g.rowNeo && g.rowNeo > maxRow) maxRow = g.rowNeo; });
-    
-    const vwData = sh.getRange(1, 22, maxRow, 2).getValues();
-
+    // Kiểm tra số dư cũ đã ghép chưa - kiểm tra hoàn toàn trên RAM không gọi API sheet
     for (let i = 0; i < rowsCu.length; i++) {
-      if (vwData[rowsCu[i] - 1][0] === "X") {
+      const blk = blockByRowCuoi[rowsCu[i]];
+      if (blk && blk.daAn) {
         return { success: false, message: "Một số dư đã được ghép hoặc đã hủy" };
       }
     }
@@ -904,18 +957,28 @@ function ghiGhepCX5(payload) {
     const xRowsList = [];
     groups.forEach(function (g) {
       if (g.rowNeo) {
-        const wHienCo = chuoiThanhDsSo_(vwData[g.rowNeo - 1][1]);
+        const blkNeo = blockByRowCuoi[g.rowNeo];
+        const wHienCo = chuoiThanhDsSo_(blkNeo ? blkNeo.w : "");
         const wMoi = new Set(wHienCo);
 
         (g.cuList || []).forEach(function (item) {
           wMoi.add(Number(item.row));
-          chuoiThanhDsSo_(vwData[item.row - 1][1]).forEach(function (r) { wMoi.add(r); });
+          const blkCu = blockByRowCuoi[item.row];
+          if (blkCu && blkCu.w) {
+            chuoiThanhDsSo_(blkCu.w).forEach(function (r) { wMoi.add(r); });
+          }
         });
 
-        const vCell = vwData[g.rowNeo - 1][0];
-        const wCell = (wMoi.size > 0) ? Array.from(wMoi).join(",") : (vwData[g.rowNeo - 1][1] || "");
+        const vCell = (blkNeo && blkNeo.daAn) ? "X" : "";
+        const wCell = (wMoi.size > 0) ? Array.from(wMoi).join(",") : (blkNeo ? blkNeo.w : "");
 
-        // Ghi cột 20..23 (T, U, V, W) trong 1 lần gọi duy nhất
+        if (blkNeo) {
+          blkNeo.baoHieuLuc = g.tongBao;
+          blkNeo.kgHieuLuc = g.tongKg;
+          blkNeo.w = wCell;
+        }
+
+        // Ghi cột 20..23 (T, U, V, W) cho dòng neo trong 1 lần gọi
         sh.getRange(g.rowNeo, 20, 1, 4).setValues([[
           g.tongBao,
           Math.round(g.tongKg * 100) / 100,
@@ -923,17 +986,21 @@ function ghiGhepCX5(payload) {
           wCell
         ]]);
       }
+
       (g.cuList || []).forEach(function (item) {
         xRowsList.push("V" + item.row);
+        const blkCu = blockByRowCuoi[item.row];
+        if (blkCu) blkCu.daAn = true;
       });
     });
 
-    // TỐI ƯU HÓA: Đánh dấu X hàng loạt trong 1 lần gọi API duy nhất thay vì loop
-    if (xRowsList.length > 0) {
-      sh.getRangeList(xRowsList).setValue("X");
+    // Đánh dấu X hàng loạt trong 1 lần gọi API duy nhất
+    const uniqueXRows = Array.from(new Set(xRowsList));
+    if (uniqueXRows.length > 0) {
+      sh.getRangeList(uniqueXRows).setValue("X");
     }
 
-    return { success: true };
+    return { success: true, message: "Đã đồng bộ LSC5 thành công" };
   } catch (err) {
     return { success: false, message: "Lỗi: " + err.message };
   }

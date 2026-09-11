@@ -479,7 +479,13 @@ async function guiLenSheetBTP(rows) {
     body: JSON.stringify({ action: "luuBTP", data: rows })
   });
   if (!res.ok) throw new Error("Lỗi kết nối server HTTP " + res.status);
-  const json = await res.json();
+  const text = await res.text();
+  let json;
+  try {
+    json = JSON.parse(text);
+  } catch (err) {
+    throw new Error("Máy chủ phản hồi chậm hoặc gián đoạn (Timeout)");
+  }
   if (json && json.error) throw new Error(json.error);
 }
 
@@ -690,8 +696,13 @@ function quetMoiBTP() {
 
 let timerCanhBaoBTP = null;
 function showCanhBaoBTP(text, type = "error") {
+  if (typeof showCanhBao === "function") {
+    showCanhBao(text, type);
+    return;
+  }
   const el = document.getElementById("canh-bao");
   if (!el) return;
+  text = typeof rutGonThongBaoLoi === "function" ? rutGonThongBaoLoi(text) : text;
   el.textContent = text;
   
   if (type === "success") {

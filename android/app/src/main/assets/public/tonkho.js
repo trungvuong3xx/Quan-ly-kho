@@ -109,7 +109,10 @@ async function tkTaiDanhSachLIST(forceRefresh = false) {
         method: "POST",
         body: JSON.stringify({ action: "layDanhSachSanPhamTonKhoCX5" }),
         redirect: "follow"
-      }).then(r => r.json());
+      }).then(async r => {
+        const text = await r.text();
+        try { return JSON.parse(text); } catch (e) { return { list: [] }; }
+      });
 
       if (res && res.list && Array.isArray(res.list)) {
         tkListCache = res.list;
@@ -133,7 +136,8 @@ function tkClearKetQua() {
 
 function tkBaoLoi(text) {
   const el = document.getElementById("tk-ket-qua");
-  if (el) el.innerHTML = '<div class="tk-loi">' + String(text).replace(/</g, "&lt;") + "</div>";
+  const msg = typeof rutGonThongBaoLoi === "function" ? rutGonThongBaoLoi(text) : text;
+  if (el) el.innerHTML = '<div class="tk-loi">' + String(msg).replace(/</g, "&lt;") + "</div>";
 }
 
 async function tkTimTonKho() {
@@ -173,7 +177,10 @@ async function tkTimTonKho() {
       method: "POST",
       body: JSON.stringify({ action: "layTonKhoCX5", payload: { dateStr, msps } }),
       redirect: "follow"
-    }).then(r => r.json());
+    }).then(async r => {
+      const text = await r.text();
+      try { return JSON.parse(text); } catch (e) { return { error: "Máy chủ phản hồi chậm hoặc gián đoạn (Timeout)" }; }
+    });
 
     if (!res || res.error) {
       tkBaoLoi((res && res.error) || "Không tra được tồn kho.");
