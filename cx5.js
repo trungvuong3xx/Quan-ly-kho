@@ -1834,33 +1834,133 @@ function xemChiTietLichSuCX5(idPhien) {
       '</div>';
   }
 
+  // Tái tạo BẢNG TỔNG KẾT của trang Tổng kg pallet chuẩn 100% theo logic renderTongKetPhienTongKgCX5
+  const luotMap = new Map();
+  const thuTuLuot = [];
+  (entry.phienCX5 || []).forEach(r => {
+    if (!luotMap.has(r.luot)) { luotMap.set(r.luot, []); thuTuLuot.push(r.luot); }
+    luotMap.get(r.luot).push(r);
+  });
+
+  const tkData = entry.tongKgDataCX5 || {};
+  const tkPhien = entry.tongKetPhienCX5 || [];
+  const appliedCards = new Set();
+  const danhSach = [];
+
+  thuTuLuot.slice().reverse().forEach(function (lid) {
+    const rows = luotMap.get(lid);
+    const first = rows[0];
+    let bao = rows.length;
+    let kg = rows.reduce((s, r) => s + r.kg, 0);
+    let trangThaiHtml = '<i class="ti ti-minus" style="color:var(--cream-soft);font-size:18px" title="Chưa ghép"></i>';
+
+    let cardKey = Object.keys(tkData).find(function (k) {
+      const kBao = tkData[k].homNay.bao - (tkData[k].daGhepBao || 0);
+      const kKg = tkData[k].homNay.kg - (tkData[k].daGhepKg || 0);
+      return k.indexOf(first.msp) !== -1 && kBao === bao && Math.abs(kKg - kg) < 0.2 && !appliedCards.has(k);
+    });
+    if (!cardKey) {
+      cardKey = Object.keys(tkData).find(function (k) {
+        return k.indexOf(first.msp) !== -1 && !appliedCards.has(k);
+      });
+    }
+
+    if (cardKey && tkData[cardKey]) {
+      const card = tkData[cardKey];
+      const chosen = (card.cu || []).filter(function (c) { return c.checked; });
+      let extraBao = 0, extraKg = 0;
+      if (chosen.length > 0) {
+        extraBao = chosen.reduce(function (s, c) { return s + c.bao; }, 0);
+        extraKg = chosen.reduce(function (s, c) { return s + c.kg; }, 0);
+      } else if (card.daGhepBao) {
+        extraBao = card.daGhepBao;
+        extraKg = card.daGhepKg;
+      }
+
+      if ((extraBao > 0 || extraKg > 0) && bao < 10 && !appliedCards.has(cardKey)) {
+        appliedCards.add(cardKey);
+        bao += extraBao;
+        kg += extraKg;
+        trangThaiHtml = '<i class="ti ti-layers-intersect" style="color:var(--brass);font-size:18px" title="Đã chọn ghép"></i>';
+      } else if (bao >= 10) {
+        trangThaiHtml = '<i class="ti ti-check" style="color:var(--success);font-size:18px" title="OK (≥10 bao)"></i>';
+      }
+    } else if (bao >= 10) {
+      trangThaiHtml = '<i class="ti ti-check" style="color:var(--success);font-size:18px" title="OK (≥10 bao)"></i>';
+    } else if (first.daDongBo) {
+      trangThaiHtml = '<i class="ti ti-check" style="color:var(--success);font-size:18px" title="Đã đồng bộ"></i>';
+    }
+
+    let bagInfo = "";
+    if (rows.length >= 1) {
+      bagInfo = rows[0].kg.toFixed(1);
+      if (rows.length >= 6) {
+        bagInfo += "-" + rows[5].kg.toFixed(1);
+      }
+    }
+
+    danhSach.push({
+      ten: first.ten,
+      bao: bao,
+      kg: Math.round(kg * 10) / 10,
+      trangThaiHtml: trangThaiHtml,
+      bagInfo: bagInfo
+    });
+  });
+
+  // 2) Quy cách dư từ server
+  tkPhien.forEach(function (item) {
+    const daduocHien = danhSach.some(function (d) {
+      return d.ten === item.ten && d.bao === item.bao && Math.abs(d.kg - item.kg) < 0.2;
+    });
+    if (!daduocHien) {
+      let bao = item.bao;
+      let kg = item.kg;
+      let trangThaiHtml = '<i class="ti ti-minus" style="color:var(--cream-soft);font-size:18px"></i>';
+      const cardKey = Object.keys(tkData).find(function(k) {
+        return tkData[k].ten === item.ten && tkData[k].homNay.bao === item.bao && Math.abs(tkData[k].homNay.kg - item.kg) < 0.2 && !appliedCards.has(k);
+      });
+      if (cardKey) {
+        const card = tkData[cardKey];
+        const chosen = (card.cu || []).filter(function (c) { return c.checked; });
+        if (chosen.length > 0 && bao < 10 && !appliedCards.has(cardKey)) {
+          appliedCards.add(cardKey);
+          bao += chosen.reduce(function (s, c) { return s + c.bao; }, 0);
+          kg += chosen.reduce(function (s, c) { return s + c.kg; }, 0);
+          trangThaiHtml = '<i class="ti ti-layers-intersect" style="color:var(--brass);font-size:18px"></i>';
+        }
+      }
+      danhSach.push({
+        ten: item.ten,
+        bao: bao,
+        kg: Math.round(kg * 10) / 10,
+        trangThaiHtml: trangThaiHtml,
+        bagInfo: ""
+      });
+    }
+  });
+
   let html = '';
-  if (entry.tongKetPhienCX5 && entry.tongKetPhienCX5.length > 0) {
-    html += '<table class="cx5-table" style="width:100%;margin-bottom:10px">';
-    html += '<thead><tr><th>QC</th><th>Bao</th><th>Kg</th><th>Đồng bộ</th></tr></thead><tbody>';
-    entry.tongKetPhienCX5.forEach(tk => {
-      const dbIcon = tk.daDongBo ? '<i class="ti ti-check cx5-trangthai-ok"></i>' : '<i class="ti ti-x cx5-trangthai-mot-phan"></i>';
-      html += '<tr><td>' + escHtmlCX5(tk.ten) + '</td><td>' + tk.bao + '</td><td>' + Number(tk.kg).toFixed(1) + '</td><td>' + dbIcon + '</td></tr>';
-    });
-    html += '</tbody></table>';
-  } else if (entry.phienCX5 && entry.phienCX5.length > 0) {
-    const gom = {};
-    entry.phienCX5.forEach(r => {
-      const k = r.msp + "|" + r.ten;
-      if (!gom[k]) gom[k] = { ten: r.ten, bao: 0, kg: 0, daDongBo: 0 };
-      gom[k].bao++;
-      gom[k].kg += r.kg;
-      if (r.daDongBo) gom[k].daDongBo++;
-    });
-    html += '<table class="cx5-table" style="width:100%;margin-bottom:10px">';
-    html += '<thead><tr><th>QC</th><th>Bao</th><th>Kg</th><th>Đồng bộ</th></tr></thead><tbody>';
-    Object.values(gom).forEach(g => {
-      const dbIcon = g.daDongBo === g.bao ? '<i class="ti ti-check cx5-trangthai-ok"></i>' : '<i class="ti ti-x cx5-trangthai-mot-phan"></i>';
-      html += '<tr><td>' + escHtmlCX5(g.ten) + '</td><td>' + g.bao + '</td><td>' + g.kg.toFixed(1) + '</td><td>' + dbIcon + '</td></tr>';
-    });
-    html += '</tbody></table>';
+  if (danhSach.length === 0) {
+    html = '<div style="text-align:center;color:var(--cream-soft);padding:16px 0">Chưa có dữ liệu chi tiết</div>';
   } else {
-    html = '<div style="text-align:center;color:var(--cream-soft);padding:16px;">Phiên không có dữ liệu chi tiết</div>';
+    html += '<div style="margin-bottom:8px;font-size:13px;font-weight:700;color:var(--brass);text-transform:uppercase;letter-spacing:0.5px;">BẢNG TỔNG KẾT</div>';
+    html += '<div class="cx5-scroll" style="max-height:52vh;overflow:auto;border-radius:10px;border:1px solid var(--line-soft);">';
+    html += '<table class="cx5-table" style="width:100%;font-size:13px;margin:0;">';
+    html += '<thead><tr><th style="text-align:left">QC</th><th style="text-align:center">BAO</th><th style="text-align:right">KG</th><th style="text-align:center">TRẠNG THÁI</th></tr></thead><tbody>';
+    html += danhSach.map(function (item) {
+      let tenHtml = escHtmlCX5(item.ten);
+      if (item.bagInfo) {
+        tenHtml += '<br><span style="font-size:11px;color:var(--accent-2);font-weight:600">' + item.bagInfo + '</span>';
+      }
+      return '<tr>' +
+        '<td>' + tenHtml + '</td>' +
+        '<td style="text-align:center;font-weight:700">' + item.bao + '</td>' +
+        '<td style="text-align:right;font-weight:700;color:var(--cream)">' + item.kg.toFixed(1) + '</td>' +
+        '<td style="text-align:center">' + item.trangThaiHtml + '</td>' +
+        '</tr>';
+    }).join('');
+    html += '</tbody></table></div>';
   }
 
   if (noidungEl) noidungEl.innerHTML = html;
@@ -2047,11 +2147,34 @@ window.setOneHandCX5 = setOneHandCX5;
     '<div class="cx5-bp-key" data-action="so" data-val="3">3</div>' +
     '<div class="cx5-bp-key cx5-bp-key-enter" data-action="enter">Enter</div>' +
     '<div class="cx5-bp-key cx5-bp-key-zero" data-action="so" data-val="0">0</div>' +
-    '<div class="cx5-bp-key cx5-bp-key-next" data-action="next">Tiếp ⇥</div>' +
     '</div>';
   document.body.appendChild(qcPanel);
 
-  // Đăng ký sự kiện pointerdown (0ms delay & chống mất focus)
+  // Tạo bong bóng phóng to phím (Key Preview Bubble)
+  let bpBubble = document.getElementById("cx5-bp-bubble");
+  if (!bpBubble) {
+    bpBubble = document.createElement("div");
+    bpBubble.id = "cx5-bp-bubble";
+    bpBubble.className = "cx5-bp-bubble";
+    document.body.appendChild(bpBubble);
+  }
+
+  function hienBongBongPhim(key, val) {
+    if (!bpBubble || !key) return;
+    if (val === "enter" || val === "next") return;
+    const hienThi = (val === "del") ? "⌫" : (val === "clear") ? "C" : val;
+    bpBubble.textContent = hienThi;
+    const rect = key.getBoundingClientRect();
+    bpBubble.style.left = (rect.left + rect.width / 2) + "px";
+    bpBubble.style.top = (rect.top - 8) + "px";
+    bpBubble.classList.add("show");
+  }
+
+  function anBongBongPhim() {
+    if (bpBubble) bpBubble.classList.remove("show");
+  }
+
+  // Đăng ký sự kiện pointerdown (0ms delay & chống mất focus & hiện bong bóng)
   function ganPointerEvent(panel, loai) {
     panel.addEventListener("pointerdown", function(e) {
       const key = e.target.closest(".cx5-bp-key, .cx5-bp-letter-key");
@@ -2059,6 +2182,12 @@ window.setOneHandCX5 = setOneHandCX5;
       e.preventDefault();
       const act = key.getAttribute("data-action");
       const val = key.getAttribute("data-val");
+
+      // Hiện bong bóng phóng to phím ngay khi chạm
+      if (val || act === "del" || act === "clear") {
+        hienBongBongPhim(key, val || act);
+      }
+
       if (loai === "kg") {
         if (act === "so") bpKgSoCX5(val);
         else if (act === "del") bpKgXoaLuiCX5();
@@ -2070,10 +2199,14 @@ window.setOneHandCX5 = setOneHandCX5;
         else if (act === "del") bpQcXoaLuiCX5();
         else if (act === "clear") bpQcXoaHetCX5();
         else if (act === "enter") bpQcEnterCX5();
-        else if (act === "next") bpKgNextCX5();
       }
     });
+
+    panel.addEventListener("pointerup", anBongBongPhim);
+    panel.addEventListener("pointercancel", anBongBongPhim);
+    panel.addEventListener("pointerleave", anBongBongPhim);
   }
+  document.addEventListener("pointerup", anBongBongPhim);
   ganPointerEvent(kgPanel, "kg");
   ganPointerEvent(qcPanel, "qc");
 

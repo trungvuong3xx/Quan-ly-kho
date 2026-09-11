@@ -1588,6 +1588,40 @@ table thead th,
 .cx5-bp-key-zero { grid-column: span 3; }
 .cx5-bp-key-zero-kg { grid-column: span 1; }
 
+/* Bong bóng phóng to khi chạm phím (Key Preview Bubble) */
+.cx5-bp-bubble {
+  position: fixed;
+  pointer-events: none;
+  z-index: 10700;
+  width: 52px;
+  height: 56px;
+  background: var(--card-raised);
+  border: 2px solid var(--brass);
+  border-radius: 12px;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  color: var(--brass);
+  font-size: 26px;
+  font-weight: 800;
+  font-family: 'IBM Plex Mono', monospace;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
+  transform: translate(-50%, -100%);
+}
+.cx5-bp-bubble.show {
+  display: flex;
+}
+.cx5-bp-bubble::after {
+  content: '';
+  position: absolute;
+  bottom: -6px;
+  left: 50%;
+  transform: translateX(-50%);
+  border-width: 6px 6px 0;
+  border-style: solid;
+  border-color: var(--brass) transparent transparent;
+}
+
 /* ============================================================
    TINH CH?NH N�NG C?P THEME (�?ng b? 6 n�t, K�nh m? & Vi?n n?i)
    ============================================================ */
