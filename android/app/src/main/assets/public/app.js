@@ -56,7 +56,33 @@ function exportToExcel(filename, sheetName, dataArray) {
     const ws = XLSX.utils.json_to_sheet(dataArray);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, sheetName || "Báo Cáo");
-    XLSX.writeFile(wb, (filename || "BaoCaoKho") + ".xlsx");
+    const fullFileName = (filename || "BaoCaoKho") + ".xlsx";
+
+    if (window.AndroidNative && typeof window.AndroidNative.saveFileToDownload === "function") {
+      const base64Data = XLSX.write(wb, { bookType: 'xlsx', type: 'base64' });
+      const res = window.AndroidNative.saveFileToDownload(fullFileName, base64Data, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+      if (res && res.startsWith("OK")) {
+        if (typeof moXacNhanApp === "function") {
+          moXacNhanApp(
+            `Đã lưu file Excel:\n${fullFileName}\nvào thư mục Download của điện thoại!\n\nBạn có muốn gửi file này qua Zalo hoặc mở bằng Excel không?`,
+            () => {
+              if (typeof window.AndroidNative.shareFile === "function") {
+                window.AndroidNative.shareFile(fullFileName, base64Data, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+              }
+            },
+            "Chia sẻ / Mở file",
+            null,
+            "Đóng",
+            "Xuất Excel thành công"
+          );
+        } else if (typeof showCanhBao === "function") {
+          showCanhBao("Đã lưu " + fullFileName + " vào Download!", "success");
+        }
+        return;
+      }
+    }
+
+    XLSX.writeFile(wb, fullFileName);
   } catch (e) {
     if (typeof showCanhBao === "function") showCanhBao("Lỗi khi xuất file Excel: " + e.message, "error");
   }
@@ -1657,7 +1683,21 @@ const BACKUP_KEYS = [
   "user_theme"
 ];
 
-function saoLuuDuLieuToanBo() {
+function chuoiSangBase64Utf8(str) {
+  try {
+    const bytes = new TextEncoder().encode(str);
+    let bin = "";
+    const len = bytes.byteLength;
+    for (let i = 0; i < len; i++) {
+      bin += String.fromCharCode(bytes[i]);
+    }
+    return btoa(bin);
+  } catch (e) {
+    return btoa(unescape(encodeURIComponent(str)));
+  }
+}
+
+async function saoLuuDuLieuToanBo() {
   try {
     const backupData = {
       phienBan: "1.0",
@@ -1669,21 +1709,66 @@ function saoLuuDuLieuToanBo() {
     for (let i = 0; i < localStorage.length; i++) {
       const k = localStorage.key(i);
       if (!k) continue;
-      if (BACKUP_KEYS.includes(k) || k.includes('pending') || k.includes('phien_dodang') || k.includes('lich_su') || k.includes('msp_cache')) {
+      if (BACKUP_KEYS.includes(k) || k.includes('pending') || k.includes('phien_dodang') || k.includes('lich_su') || k.includes('msp_cache') || k.includes('cx1') || k.includes('cx5') || k.includes('btp') || k.includes('kk')) {
         backupData.duLieu[k] = localStorage.getItem(k);
         count++;
       }
     }
 
-    const jsonStr = JSON.stringify(backupData, null, 2);
-    const blob = new Blob([jsonStr], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
+    if (count === 0) {
+      if (typeof showCanhBao === "function") showCanhBao("Chưa có dữ liệu nào để sao lưu!", "warning");
+      return;
+    }
 
+    // 1. Tự động lưu 1 bản snapshot vào cơ sở dữ liệu IndexedDB an toàn
+    if (typeof idbLuuSnapshot === "function") {
+      await idbLuuSnapshot({
+        soLuongMuc: count,
+        moTa: "Sao lưu thủ công",
+        duLieu: backupData.duLieu
+      });
+      if (typeof renderDanhSachSnapshotsCucBo === "function") {
+        renderDanhSachSnapshotsCucBo();
+      }
+    }
+
+    const jsonStr = JSON.stringify(backupData, null, 2);
     const d = new Date();
     const pad = n => String(n).padStart(2, '0');
     const timeStr = `${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}_${pad(d.getHours())}h${pad(d.getMinutes())}`;
     const filename = `QuanLyKho_Backup_${timeStr}.json`;
 
+    // 2. Chuyển đổi Base64
+    const base64Data = chuoiSangBase64Utf8(jsonStr);
+
+    // 3. Nếu đang chạy trên Android APK (qua cầu nối AndroidNative)
+    if (window.AndroidNative && typeof window.AndroidNative.saveFileToDownload === "function") {
+      const res = window.AndroidNative.saveFileToDownload(filename, base64Data, "application/json");
+      if (res && res.startsWith("OK")) {
+        const msg = `Đã sao lưu ${count} mục và LƯU FILE vào thư mục Download của điện thoại!\n\nTên file:\n${filename}\n\nBạn có muốn gửi file này qua Zalo hoặc lưu vào Google Drive để an toàn tuyệt đối không?`;
+        if (typeof moXacNhanApp === "function") {
+          moXacNhanApp(
+            msg,
+            () => {
+              if (typeof window.AndroidNative.shareFile === "function") {
+                window.AndroidNative.shareFile(filename, base64Data, "application/json");
+              }
+            },
+            "Chia sẻ ra Zalo/Drive",
+            null,
+            "Đóng",
+            "Sao lưu thành công"
+          );
+        } else if (typeof showCanhBao === "function") {
+          showCanhBao(`Đã lưu ${filename} vào thư mục Download!`, "success");
+        }
+        return;
+      }
+    }
+
+    // 4. Fallback cho Web Desktop Browser
+    const blob = new Blob([jsonStr], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
     a.download = filename;
@@ -1692,7 +1777,7 @@ function saoLuuDuLieuToanBo() {
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
 
-    const msg = `Đã sao lưu thành công ${count} mục dữ liệu vào thư mục Download!`;
+    const msg = `Đã sao lưu thành công ${count} mục dữ liệu (${filename})!`;
     if (typeof showCanhBao === "function") showCanhBao(msg, "success");
   } catch (err) {
     console.error("Lỗi sao lưu:", err);
@@ -1701,7 +1786,40 @@ function saoLuuDuLieuToanBo() {
 }
 window.saoLuuDuLieuToanBo = saoLuuDuLieuToanBo;
 
-function kichHoatPhucHoiDuLieu() {
+async function kichHoatPhucHoiDuLieu() {
+  let list = [];
+  if (typeof idbDocDanhSachSnapshots === "function") {
+    try {
+      list = await idbDocDanhSachSnapshots();
+    } catch (e) {
+      list = [];
+    }
+  }
+
+  if (list && list.length > 0) {
+    const snapMoiNhat = list[0];
+    if (typeof moXacNhanApp === "function") {
+      moXacNhanApp(
+        `Bạn muốn phục hồi dữ liệu từ nguồn nào?\n\n• [Khôi phục nhanh]: Dùng bản sao lưu lúc ${snapMoiNhat.thoiGianHienThi} (${snapMoiNhat.soLuongMuc} mục).\n• [Chọn file .json]: Chọn file sao lưu đã lưu trong thư mục Download của máy.`,
+        () => {
+          khoiPhucSnapshotTheoId(snapMoiNhat.id);
+        },
+        "Khôi phục nhanh",
+        () => {
+          const fileInput = document.getElementById("input-phuc-hoi-du-lieu");
+          if (fileInput) {
+            fileInput.value = "";
+            fileInput.click();
+          }
+        },
+        "Chọn file .json",
+        "Phục hồi dữ liệu"
+      );
+      return;
+    }
+  }
+
+  // Mở trình chọn file nếu chưa có snapshot trong bộ nhớ nội bộ
   const fileInput = document.getElementById("input-phuc-hoi-du-lieu");
   if (fileInput) {
     fileInput.value = "";
@@ -1715,7 +1833,7 @@ function xuLyFilePhucHoiDuLieu(event) {
   if (!file) return;
 
   const reader = new FileReader();
-  reader.onload = function(e) {
+  reader.onload = async function(e) {
     try {
       const parsed = JSON.parse(e.target.result);
       if (!parsed || !parsed.duLieu || typeof parsed.duLieu !== "object") {
@@ -1725,10 +1843,20 @@ function xuLyFilePhucHoiDuLieu(event) {
 
       let restoredCount = 0;
       for (const [key, val] of Object.entries(parsed.duLieu)) {
-        if (typeof val === "string") {
-          localStorage.setItem(key, val);
+        if (val !== null && val !== undefined) {
+          const valToStore = typeof val === "string" ? val : JSON.stringify(val);
+          localStorage.setItem(key, valToStore);
           restoredCount++;
         }
+      }
+
+      // Lưu lại vào IndexedDB để sau này có sẵn snapshot nhanh
+      if (typeof idbLuuSnapshot === "function") {
+        await idbLuuSnapshot({
+          soLuongMuc: restoredCount,
+          moTa: "Khôi phục từ file (" + file.name + ")",
+          duLieu: parsed.duLieu
+        });
       }
 
       const thongBao = `Đã phục hồi thành công ${restoredCount} mục dữ liệu! Đang tải lại...`;
@@ -2359,6 +2487,13 @@ async function renderDanhSachSnapshotsCucBo() {
   container.innerHTML = html;
 }
 window.renderDanhSachSnapshotsCucBo = renderDanhSachSnapshotsCucBo;
+
+// Tự động hiển thị danh sách snapshot khi app khởi động
+setTimeout(() => {
+  if (typeof renderDanhSachSnapshotsCucBo === "function") {
+    renderDanhSachSnapshotsCucBo();
+  }
+}, 800);
 
 async function khoiPhucSnapshotTheoId(id) {
   if (typeof idbDocSnapshot !== "function") return;
