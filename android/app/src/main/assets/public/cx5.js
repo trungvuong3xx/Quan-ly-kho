@@ -1815,12 +1815,72 @@ function renderLichSuCX5() {
 window.renderLichSuCX5 = renderLichSuCX5;
 
 function xemChiTietLichSuCX5(idPhien) {
-  tiepTucLichSuCX5(idPhien);
+  const list = docLichSuCX5();
+  const entry = list.find(s => s.idPhien === idPhien);
+  if (!entry) return;
+
+  const tieudeEl = document.getElementById("cx5-ctls-tieude");
+  const noidungEl = document.getElementById("cx5-ctls-noidung");
+  const btnTiepTuc = document.getElementById("cx5-ctls-tieptuc");
+
+  const parts = (entry.ngay || "").split("-");
+  const ngayNgan = parts.length === 3 ? parts[2] + "/" + parts[1] + "/" + parts[0] : (entry.ngay || "");
+  const tongKg = entry.phienCX5 ? entry.phienCX5.reduce((t, r) => t + r.kg, 0) : 0;
+  const soLuot = entry.phienCX5 ? new Set(entry.phienCX5.map(r => r.luot)).size : 0;
+
+  if (tieudeEl) {
+    tieudeEl.innerHTML = '<div style="display:flex;align-items:center;justify-content:space-between;width:100%">' +
+      '<span style="font-size:15px;font-weight:700;color:var(--cream)">' + ngayNgan + ' (' + soLuot + ' bao · ' + Math.round(tongKg) + 'kg)</span>' +
+      '</div>';
+  }
+
+  let html = '';
+  if (entry.tongKetPhienCX5 && entry.tongKetPhienCX5.length > 0) {
+    html += '<table class="cx5-table" style="width:100%;margin-bottom:10px">';
+    html += '<thead><tr><th>QC</th><th>Bao</th><th>Kg</th><th>Đồng bộ</th></tr></thead><tbody>';
+    entry.tongKetPhienCX5.forEach(tk => {
+      const dbIcon = tk.daDongBo ? '<i class="ti ti-check cx5-trangthai-ok"></i>' : '<i class="ti ti-x cx5-trangthai-mot-phan"></i>';
+      html += '<tr><td>' + escHtmlCX5(tk.ten) + '</td><td>' + tk.bao + '</td><td>' + Number(tk.kg).toFixed(1) + '</td><td>' + dbIcon + '</td></tr>';
+    });
+    html += '</tbody></table>';
+  } else if (entry.phienCX5 && entry.phienCX5.length > 0) {
+    const gom = {};
+    entry.phienCX5.forEach(r => {
+      const k = r.msp + "|" + r.ten;
+      if (!gom[k]) gom[k] = { ten: r.ten, bao: 0, kg: 0, daDongBo: 0 };
+      gom[k].bao++;
+      gom[k].kg += r.kg;
+      if (r.daDongBo) gom[k].daDongBo++;
+    });
+    html += '<table class="cx5-table" style="width:100%;margin-bottom:10px">';
+    html += '<thead><tr><th>QC</th><th>Bao</th><th>Kg</th><th>Đồng bộ</th></tr></thead><tbody>';
+    Object.values(gom).forEach(g => {
+      const dbIcon = g.daDongBo === g.bao ? '<i class="ti ti-check cx5-trangthai-ok"></i>' : '<i class="ti ti-x cx5-trangthai-mot-phan"></i>';
+      html += '<tr><td>' + escHtmlCX5(g.ten) + '</td><td>' + g.bao + '</td><td>' + g.kg.toFixed(1) + '</td><td>' + dbIcon + '</td></tr>';
+    });
+    html += '</tbody></table>';
+  } else {
+    html = '<div style="text-align:center;color:var(--cream-soft);padding:16px;">Phiên không có dữ liệu chi tiết</div>';
+  }
+
+  if (noidungEl) noidungEl.innerHTML = html;
+
+  if (btnTiepTuc) {
+    btnTiepTuc.textContent = "Tiếp tục sửa phiên này";
+    btnTiepTuc.onclick = function() {
+      dongChiTietLichSuCX5();
+      tiepTucLichSuCX5(idPhien);
+    };
+  }
+
+  const overlay = document.getElementById("cx5-overlay-chitiet-lichsu");
+  if (overlay) overlay.classList.add("show");
 }
 window.xemChiTietLichSuCX5 = xemChiTietLichSuCX5;
 
 function dongChiTietLichSuCX5() {
-  document.getElementById("cx5-overlay-chitiet-lichsu").classList.remove("show");
+  const overlay = document.getElementById("cx5-overlay-chitiet-lichsu");
+  if (overlay) overlay.classList.remove("show");
 }
 window.dongChiTietLichSuCX5 = dongChiTietLichSuCX5;
 
@@ -1912,80 +1972,117 @@ let banPhimActiveElCX5 = null;
 let banPhimLoaiCX5 = null;
 let banPhimQCPendingCX5 = null;
 
+function toggleOneHandCX5() {
+  const kg = document.getElementById("cx5-bp-kg");
+  const isOneHand = kg && kg.classList.contains("one-handed");
+  setOneHandCX5(!isOneHand);
+}
+window.toggleOneHandCX5 = toggleOneHandCX5;
+
+function setOneHandCX5(enable) {
+  const kg = document.getElementById("cx5-bp-kg");
+  const qc = document.getElementById("cx5-bp-qc");
+  const btnKg = document.getElementById("cx5-onehand-btn");
+  const btnQc = document.getElementById("cx5-onehand-qc-btn");
+  if (kg) kg.classList.toggle("one-handed", enable);
+  if (qc) qc.classList.toggle("one-handed", enable);
+  if (btnKg) btnKg.classList.toggle("active", enable);
+  if (btnQc) btnQc.classList.toggle("active", enable);
+  try { localStorage.setItem("cx5_bp_onehand", enable ? "1" : "0"); } catch (e) {}
+}
+window.setOneHandCX5 = setOneHandCX5;
+
 (function themBanPhimCX5() {
   const kgPanel = document.createElement("div");
   kgPanel.id = "cx5-bp-kg";
   kgPanel.className = "cx5-bp-panel";
   kgPanel.innerHTML =
-    '<div style="display:flex; justify-content:space-between; align-items:center; padding-bottom:8px;">' +
-    '<span class="cx5-bp-close" onclick="dongBanPhimCX5()">Đóng bàn phím ⬇</span>' +
-    '<button id="cx5-mic-btn" class="cx5-mic-btn"><i class="ti ti-microphone"></i> Giữ đọc số Kg</button>' +
+    '<div class="cx5-bp-header">' +
+    '<span class="cx5-bp-close" onclick="dongBanPhimCX5()"><i class="ti ti-chevron-down"></i> Đóng</span>' +
+    '<button id="cx5-onehand-btn" class="cx5-bp-onehand-btn" onclick="toggleOneHandCX5()"><i class="ti ti-hand-stop"></i> 1 Tay</button>' +
     '</div>' +
     '<div class="cx5-bp-grid">' +
-    '<div class="cx5-bp-key" onclick="bpKgSoCX5(\'7\')">7</div>' +
-    '<div class="cx5-bp-key" onclick="bpKgSoCX5(\'8\')">8</div>' +
-    '<div class="cx5-bp-key" onclick="bpKgSoCX5(\'9\')">9</div>' +
-    '<div class="cx5-bp-key cx5-bp-key-fn" onclick="bpKgXoaLuiCX5()">⌫</div>' +
-    '<div class="cx5-bp-key" onclick="bpKgSoCX5(\'4\')">4</div>' +
-    '<div class="cx5-bp-key" onclick="bpKgSoCX5(\'5\')">5</div>' +
-    '<div class="cx5-bp-key" onclick="bpKgSoCX5(\'6\')">6</div>' +
-    '<div class="cx5-bp-key cx5-bp-key-fn" onclick="bpKgXoaHetCX5()">C</div>' +
-    '<div class="cx5-bp-key" onclick="bpKgSoCX5(\'1\')">1</div>' +
-    '<div class="cx5-bp-key" onclick="bpKgSoCX5(\'2\')">2</div>' +
-    '<div class="cx5-bp-key" onclick="bpKgSoCX5(\'3\')">3</div>' +
-    '<div class="cx5-bp-key cx5-bp-key-enter" onclick="bpKgEnterCX5()">Enter</div>' +
-    '<div class="cx5-bp-key cx5-bp-key-zero-kg" onclick="bpKgSoCX5(\'0\')">0</div>' +
-    '<div class="cx5-bp-key" onclick="bpKgSoCX5(\'.\')">.</div>' +
-    "</div>";
+    '<div class="cx5-bp-key" data-action="so" data-val="7">7</div>' +
+    '<div class="cx5-bp-key" data-action="so" data-val="8">8</div>' +
+    '<div class="cx5-bp-key" data-action="so" data-val="9">9</div>' +
+    '<div class="cx5-bp-key cx5-bp-key-fn" data-action="del">⌫</div>' +
+    '<div class="cx5-bp-key" data-action="so" data-val="4">4</div>' +
+    '<div class="cx5-bp-key" data-action="so" data-val="5">5</div>' +
+    '<div class="cx5-bp-key" data-action="so" data-val="6">6</div>' +
+    '<div class="cx5-bp-key cx5-bp-key-fn" data-action="clear">C</div>' +
+    '<div class="cx5-bp-key" data-action="so" data-val="1">1</div>' +
+    '<div class="cx5-bp-key" data-action="so" data-val="2">2</div>' +
+    '<div class="cx5-bp-key" data-action="so" data-val="3">3</div>' +
+    '<div class="cx5-bp-key cx5-bp-key-enter" data-action="enter">Enter</div>' +
+    '<div class="cx5-bp-key cx5-bp-key-zero-kg" data-action="so" data-val="0">0</div>' +
+    '<div class="cx5-bp-key" data-action="so" data-val=".">.</div>' +
+    '<div class="cx5-bp-key cx5-bp-key-next" data-action="next">Tiếp ⇥</div>' +
+    '</div>';
   document.body.appendChild(kgPanel);
-
-  // Thêm sự kiện cho nút Micro
-  const micBtn = document.getElementById("cx5-mic-btn");
-  if (micBtn) {
-    micBtn.addEventListener("mousedown", batDauNgheCX5);
-    micBtn.addEventListener("mouseup", dungNgheCX5);
-    micBtn.addEventListener("mouseleave", dungNgheCX5);
-    
-    micBtn.addEventListener("touchstart", function(e) {
-      e.preventDefault(); // Ngăn hành vi cuộn/click mặc định trên mobile
-      batDauNgheCX5(e);
-    }, {passive: false});
-    micBtn.addEventListener("touchend", function(e) {
-      e.preventDefault();
-      dungNgheCX5(e);
-    }, {passive: false});
-    micBtn.addEventListener("touchcancel", function(e) {
-      e.preventDefault();
-      dungNgheCX5(e);
-    }, {passive: false});
-  }
 
   const qcPanel = document.createElement("div");
   qcPanel.id = "cx5-bp-qc";
   qcPanel.className = "cx5-bp-panel";
   const letters = ["A", "B", "D", "E", "R", "X", "/", ".", "P", "M"];
   const letterBarHtml = '<div class="cx5-bp-letter-bar">' +
-    letters.map(l => '<div class="cx5-bp-letter-key" onclick="bpQcSoCX5(\'' + l + '\')">' + l + '</div>').join("") +
+    letters.map(l => '<div class="cx5-bp-letter-key" data-action="letter" data-val="' + l + '">' + l + '</div>').join("") +
     '</div>';
   qcPanel.innerHTML =
-    '<span class="cx5-bp-close" onclick="dongBanPhimCX5()">Đóng bàn phím ▾</span>' +
+    '<div class="cx5-bp-header">' +
+    '<span class="cx5-bp-close" onclick="dongBanPhimCX5()"><i class="ti ti-chevron-down"></i> Đóng</span>' +
+    '<button id="cx5-onehand-qc-btn" class="cx5-bp-onehand-btn" onclick="toggleOneHandCX5()"><i class="ti ti-hand-stop"></i> 1 Tay</button>' +
+    '</div>' +
     letterBarHtml +
     '<div class="cx5-bp-grid">' +
-    '<div class="cx5-bp-key" onclick="bpQcSoCX5(\'7\')">7</div>' +
-    '<div class="cx5-bp-key" onclick="bpQcSoCX5(\'8\')">8</div>' +
-    '<div class="cx5-bp-key" onclick="bpQcSoCX5(\'9\')">9</div>' +
-    '<div class="cx5-bp-key cx5-bp-key-fn" onclick="bpQcXoaLuiCX5()">⌫</div>' +
-    '<div class="cx5-bp-key" onclick="bpQcSoCX5(\'4\')">4</div>' +
-    '<div class="cx5-bp-key" onclick="bpQcSoCX5(\'5\')">5</div>' +
-    '<div class="cx5-bp-key" onclick="bpQcSoCX5(\'6\')">6</div>' +
-    '<div class="cx5-bp-key cx5-bp-key-fn" onclick="bpQcXoaHetCX5()">C</div>' +
-    '<div class="cx5-bp-key" onclick="bpQcSoCX5(\'1\')">1</div>' +
-    '<div class="cx5-bp-key" onclick="bpQcSoCX5(\'2\')">2</div>' +
-    '<div class="cx5-bp-key" onclick="bpQcSoCX5(\'3\')">3</div>' +
-    '<div class="cx5-bp-key cx5-bp-key-enter" onclick="bpQcEnterCX5()">Enter</div>' +
-    '<div class="cx5-bp-key cx5-bp-key-zero" onclick="bpQcSoCX5(\'0\')">0</div>' +
-    "</div>";
+    '<div class="cx5-bp-key" data-action="so" data-val="7">7</div>' +
+    '<div class="cx5-bp-key" data-action="so" data-val="8">8</div>' +
+    '<div class="cx5-bp-key" data-action="so" data-val="9">9</div>' +
+    '<div class="cx5-bp-key cx5-bp-key-fn" data-action="del">⌫</div>' +
+    '<div class="cx5-bp-key" data-action="so" data-val="4">4</div>' +
+    '<div class="cx5-bp-key" data-action="so" data-val="5">5</div>' +
+    '<div class="cx5-bp-key" data-action="so" data-val="6">6</div>' +
+    '<div class="cx5-bp-key cx5-bp-key-fn" data-action="clear">C</div>' +
+    '<div class="cx5-bp-key" data-action="so" data-val="1">1</div>' +
+    '<div class="cx5-bp-key" data-action="so" data-val="2">2</div>' +
+    '<div class="cx5-bp-key" data-action="so" data-val="3">3</div>' +
+    '<div class="cx5-bp-key cx5-bp-key-enter" data-action="enter">Enter</div>' +
+    '<div class="cx5-bp-key cx5-bp-key-zero" data-action="so" data-val="0">0</div>' +
+    '<div class="cx5-bp-key cx5-bp-key-next" data-action="next">Tiếp ⇥</div>' +
+    '</div>';
   document.body.appendChild(qcPanel);
+
+  // Đăng ký sự kiện pointerdown (0ms delay & chống mất focus)
+  function ganPointerEvent(panel, loai) {
+    panel.addEventListener("pointerdown", function(e) {
+      const key = e.target.closest(".cx5-bp-key, .cx5-bp-letter-key");
+      if (!key) return;
+      e.preventDefault();
+      const act = key.getAttribute("data-action");
+      const val = key.getAttribute("data-val");
+      if (loai === "kg") {
+        if (act === "so") bpKgSoCX5(val);
+        else if (act === "del") bpKgXoaLuiCX5();
+        else if (act === "clear") bpKgXoaHetCX5();
+        else if (act === "enter") bpKgEnterCX5();
+        else if (act === "next") bpKgNextCX5();
+      } else {
+        if (act === "letter" || act === "so") bpQcSoCX5(val);
+        else if (act === "del") bpQcXoaLuiCX5();
+        else if (act === "clear") bpQcXoaHetCX5();
+        else if (act === "enter") bpQcEnterCX5();
+        else if (act === "next") bpKgNextCX5();
+      }
+    });
+  }
+  ganPointerEvent(kgPanel, "kg");
+  ganPointerEvent(qcPanel, "qc");
+
+  // Khôi phục trạng thái 1 tay đã lưu
+  try {
+    if (localStorage.getItem("cx5_bp_onehand") === "1") {
+      setOneHandCX5(true);
+    }
+  } catch (e) {}
 
   document.addEventListener("focus", function (e) {
     const el = e.target;
@@ -2302,6 +2399,28 @@ function bpKgEnterCX5() {
   }
 }
 window.bpKgEnterCX5 = bpKgEnterCX5;
+
+function bpKgNextCX5() {
+  if (!banPhimActiveElCX5) return;
+  const id = banPhimActiveElCX5.id;
+  if (id === "cx5-ten") {
+    const bao = document.getElementById("cx5-bao");
+    if (bao) { bao.focus(); moBanPhimCX5(bao, "kg"); }
+  } else if (id === "cx5-bao") {
+    const kg = document.getElementById("cx5-kg");
+    if (kg) { kg.focus(); moBanPhimCX5(kg, "kg"); }
+  } else if (id === "cx5-kg") {
+    bpKgEnterCX5();
+  } else if (id === "cx5-sl-ten-tim") {
+    const slKg = document.getElementById("cx5-sl-them-kg");
+    if (slKg) { slKg.focus(); moBanPhimCX5(slKg, "kg"); }
+  } else if (id === "cx5-sl-them-kg") {
+    bpKgEnterCX5();
+  } else {
+    bpKgEnterCX5();
+  }
+}
+window.bpKgNextCX5 = bpKgNextCX5;
 
 function bpQcSoCX5(ky) {
   if (!banPhimActiveElCX5) return;
