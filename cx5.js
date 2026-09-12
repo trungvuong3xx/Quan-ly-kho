@@ -2534,13 +2534,36 @@ function bpKgEnterCX5() {
 window.bpKgEnterCX5 = bpKgEnterCX5;
 
 function bpKgNextCX5() {
+  // 1. Kiểm tra nếu đang ở màn hình Đối Chiếu (cx5-doichieu) hoặc đang ở ô nhập kg SX (cx5-sx-kg)
+  const dcCard = document.getElementById("cx5-doichieu");
+  const isDoiChieu = (dcCard && dcCard.style.display !== "none") || (banPhimActiveElCX5 && banPhimActiveElCX5.id === "cx5-sx-kg");
+  if (isDoiChieu) {
+    const sxTen = document.getElementById("cx5-sx-ten");
+    const sxMsp = document.getElementById("cx5-sx-msp");
+    const sxKg = document.getElementById("cx5-sx-kg");
+    if (sxKg) sxKg.value = "";
+    if (sxTen) {
+      sxTen.value = "";
+      if (sxMsp) sxMsp.value = "";
+      if (typeof closeDropdownSXCX5 === "function") closeDropdownSXCX5();
+      sxTen.focus();
+      moBanPhimCX5(sxTen, "qc");
+      return;
+    }
+  }
+
+  // 2. Kiểm tra nếu đang ở popup Sửa Lượt (cx5-sl-doi-qc-wrap)
   const slWrap = document.getElementById("cx5-sl-doi-qc-wrap");
   if (slWrap && slWrap.style.display !== "none") {
     const slTen = document.getElementById("cx5-sl-ten-tim");
     if (slTen) { slTen.focus(); moBanPhimCX5(slTen, "qc"); return; }
   }
+
+  // 3. Mặc định ở màn hình nhập kho CX5 chính (cx5-nhap)
   if (typeof moKhoaQCCX5 === "function") {
     moKhoaQCCX5();
+    const ten = document.getElementById("cx5-ten");
+    if (ten) moBanPhimCX5(ten, "qc");
   } else {
     const ten = document.getElementById("cx5-ten");
     if (ten) { ten.focus(); moBanPhimCX5(ten, "qc"); }
