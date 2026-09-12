@@ -6,6 +6,7 @@ const URL_API_QUETQR = "https://script.google.com/macros/s/AKfycbzXjzccld3X04iJg
 const QUETQR_DODANG_KEY = "quetqr_phien_dodang";
 const QUETQR_PENDING_KEY = "quetqr_pending_saves";
 const QUETQR_LICHSU_KEY = "quetqr_lichsu";
+const QUETQR_LICHSU_SO_NGAY_GIU = 30;
 
 let phienQuetQR = [];
 let demSoDotQR = 1;
@@ -698,11 +699,27 @@ function huyPhienQuetQR() {
 }
 window.huyPhienQuetQR = huyPhienQuetQR;
 
-// ── Quản lý Lịch Sử Phiên Quét ─────────────────────────────────────
+// ── Quản lý Lịch Sử Phiên Quét (lưu 30 ngày gần nhất) ───────────────
+function docLichSuQR() {
+  let list = [];
+  try { list = JSON.parse(localStorage.getItem(QUETQR_LICHSU_KEY)) || []; } catch (e) { list = []; }
+  const homNay = new Date();
+  homNay.setHours(0, 0, 0, 0);
+  return list.filter(s => {
+    if (!s.ngay) return false;
+    const ngayPhien = new Date(s.ngay + "T00:00:00");
+    const soNgayCach = Math.floor((homNay - ngayPhien) / 86400000);
+    return soNgayCach >= 0 && soNgayCach < QUETQR_LICHSU_SO_NGAY_GIU;
+  });
+}
+
+function luuLichSuQR(list) {
+  try { localStorage.setItem(QUETQR_LICHSU_KEY, JSON.stringify(list)); } catch (e) {}
+}
+
 function luuVaoLichSuQR() {
   try {
-    const raw = localStorage.getItem(QUETQR_LICHSU_KEY);
-    const list = raw ? JSON.parse(raw) : [];
+    const list = docLichSuQR();
     const entryIndex = list.findIndex(e => e.idPhien === idPhienHienTaiQR);
 
     const newEntry = {
@@ -721,8 +738,7 @@ function luuVaoLichSuQR() {
       list.unshift(newEntry);
     }
 
-    if (list.length > 50) list.pop();
-    localStorage.setItem(QUETQR_LICHSU_KEY, JSON.stringify(list));
+    luuLichSuQR(list);
   } catch (e) {}
 }
 
@@ -730,8 +746,7 @@ function renderLichSuQR() {
   const container = document.getElementById("lichsu-qr-list");
   if (!container) return;
 
-  const raw = localStorage.getItem(QUETQR_LICHSU_KEY);
-  const list = raw ? JSON.parse(raw) : [];
+  const list = docLichSuQR();
 
   const filterText = (document.getElementById("lichsu-qr-tim") ? document.getElementById("lichsu-qr-tim").value : "").toLowerCase().trim();
 
@@ -744,7 +759,7 @@ function renderLichSuQR() {
 
   if (filtered.length === 0) {
     container.innerHTML = '<div style="color:var(--cream-soft); text-align:center; padding:30px 0;">'
-      + (filterText ? "Không tìm thấy phiên nào khớp" : "Không có lịch sử quét nào")
+      + (filterText ? "Không tìm thấy phiên nào khớp" : "Chưa có phiên nào trong " + QUETQR_LICHSU_SO_NGAY_GIU + " ngày qua")
       + '</div>';
     return;
   }
@@ -773,8 +788,7 @@ function renderLichSuQR() {
 window.renderLichSuQR = renderLichSuQR;
 
 function xemChiTietLichSuQR(idPhien) {
-  const raw = localStorage.getItem(QUETQR_LICHSU_KEY);
-  const list = raw ? JSON.parse(raw) : [];
+  const list = docLichSuQR();
   const entry = list.find(e => e.idPhien === idPhien);
   if (!entry) return;
 
@@ -797,10 +811,9 @@ function xoaMotPhienLichSuQR(idPhien, ev) {
     moXacNhanApp(
       "Xóa phiên lịch sử Quét QR này? Không thể hoàn tác.",
       () => {
-        const raw = localStorage.getItem(QUETQR_LICHSU_KEY);
-        const list = raw ? JSON.parse(raw) : [];
+        const list = docLichSuQR();
         const filtered = list.filter(e => e.idPhien !== idPhien);
-        localStorage.setItem(QUETQR_LICHSU_KEY, JSON.stringify(filtered));
+        luuLichSuQR(filtered);
         renderLichSuQR();
       },
       "Xóa",
@@ -859,8 +872,7 @@ function xuatExcelQuetQR() {
 window.xuatExcelQuetQR = xuatExcelQuetQR;
 
 function xuatExcelLichSuQR(idPhien) {
-  const raw = localStorage.getItem(QUETQR_LICHSU_KEY);
-  const list = raw ? JSON.parse(raw) : [];
+  const list = docLichSuQR();
   if (list.length === 0) {
     showCanhBaoQR("Chưa có dữ liệu lịch sử để xuất Excel!", "warning");
     return;
@@ -915,8 +927,7 @@ function xuatExcelLichSuQR(idPhien) {
 window.xuatExcelLichSuQR = xuatExcelLichSuQR;
 
 function xuatExcelPhienLichSuQR(idPhien) {
-  const raw = localStorage.getItem(QUETQR_LICHSU_KEY);
-  const list = raw ? JSON.parse(raw) : [];
+  const list = docLichSuQR();
   const entry = list.find(e => e.idPhien === idPhien);
   if (!entry || !entry.phienQuetQR) return;
 

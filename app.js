@@ -1496,7 +1496,7 @@ window.addEventListener("load", () => {
   capNhatTrangThaiMang();
   dongBoTatCaOfflineApp();
 });
-setInterval(capNhatTrangThaiMang, 3000);
+setInterval(capNhatTrangThaiMang, 12000);
 window.capNhatTrangThaiMang = capNhatTrangThaiMang;
 
 let _appXacNhanCallbackOk = null;
@@ -2374,93 +2374,7 @@ window.showCanhBao = showCanhBao;
   }, 3500);
 })();
 
-// =============================================================================
-// ── HIỂN THỊ & KHÔI PHỤC SNAPSHOT CỤC BỘ TỪ INDEXEDDB (5 BẢN GẦN NHẤT) ──────
-// =============================================================================
-async function renderDanhSachSnapshotsCucBo() {
-  const container = document.getElementById("danh-sach-snapshot-cuc-bo");
-  if (!container) return;
 
-  if (typeof idbDocDanhSachSnapshots !== "function") {
-    container.innerHTML = '<div style="color:var(--text-muted);font-size:12px;padding:8px 0;">Đang khởi tạo cơ sở dữ liệu IndexedDB...</div>';
-    return;
-  }
-
-  const list = await idbDocDanhSachSnapshots();
-  if (!list || list.length === 0) {
-    container.innerHTML = '<div style="color:var(--text-muted);font-size:12px;padding:8px 0;">Chưa có bản snapshot tự động nào được lưu.</div>';
-    return;
-  }
-
-  let html = '<div style="display:flex;flex-direction:column;gap:8px;margin-top:6px;">';
-  list.forEach((snap, idx) => {
-    html += `
-      <div style="background:var(--card-raised);border:1px solid var(--line-soft);border-radius:12px;padding:10px 12px;display:flex;justify-content:space-between;align-items:center;">
-        <div>
-          <div style="font-size:13px;font-weight:700;color:var(--cream);">${snap.thoiGianHienThi}</div>
-          <div style="font-size:11px;color:var(--cream-soft);">${snap.moTa} (${snap.soLuongMuc} mục dữ liệu)</div>
-        </div>
-        <button class="btn btn-blue" style="padding:6px 12px;font-size:12px;margin:0;white-space:nowrap;" onclick="khoiPhucSnapshotTheoId('${snap.id}')">
-          <i class="ti ti-restore"></i> Khôi phục
-        </button>
-      </div>
-    `;
-  });
-  html += '</div>';
-  container.innerHTML = html;
-}
-window.renderDanhSachSnapshotsCucBo = renderDanhSachSnapshotsCucBo;
-
-// Tự động hiển thị danh sách snapshot khi app khởi động
-setTimeout(() => {
-  if (typeof renderDanhSachSnapshotsCucBo === "function") {
-    renderDanhSachSnapshotsCucBo();
-  }
-}, 800);
-
-async function khoiPhucSnapshotTheoId(id) {
-  if (typeof idbDocSnapshot !== "function") return;
-  const record = await idbDocSnapshot(id);
-  if (!record || !record.duLieu) {
-    if (typeof showCanhBao === "function") showCanhBao("Không tìm thấy dữ liệu của bản sao lưu này!", "warning");
-    return;
-  }
-
-  const thoiGianStr = record.thoiGianHienThi || "này";
-  const thucHienKhoiPhuc = () => {
-    try {
-      let count = 0;
-      for (const [k, v] of Object.entries(record.duLieu)) {
-        if (k && v !== null && v !== undefined) {
-          localStorage.setItem(k, v);
-          count++;
-        }
-      }
-      if (typeof showCanhBao === "function") {
-        showCanhBao(`Đã khôi phục thành công ${count} mục dữ liệu! Đang tải lại...`, "success");
-      }
-      setTimeout(() => {
-        window.location.reload();
-      }, 1200);
-    } catch (err) {
-      if (typeof showCanhBao === "function") showCanhBao("Lỗi khi khôi phục dữ liệu: " + err.message, "error");
-    }
-  };
-
-  if (typeof moXacNhanApp === "function") {
-    moXacNhanApp(
-      `Khôi phục dữ liệu từ bản sao lưu lúc ${thoiGianStr}? Dữ liệu hiện tại trên máy sẽ được thay thế bằng bản này.`,
-      thucHienKhoiPhuc,
-      "Khôi phục",
-      null,
-      "Hủy",
-      "Khôi phục sao lưu"
-    );
-  } else {
-    thucHienKhoiPhuc();
-  }
-}
-window.khoiPhucSnapshotTheoId = khoiPhucSnapshotTheoId;
 
 // ── CÁC HÀM DÙNG CHUNG CHO TẤT CẢ CÁC MODULE QUÉT QR ─────────────────
 

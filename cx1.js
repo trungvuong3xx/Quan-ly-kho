@@ -11,7 +11,7 @@ let idPhienHienTai = null;
 let soLuongDaGuiHienTai = 0;
 
 const CX1_LICHSU_KEY = "cx1_lich_su";
-const CX1_LICHSU_SO_NGAY_GIU = 3;
+const CX1_LICHSU_SO_NGAY_GIU = 30;
 
 // Bộ máy âm thanh phát tiếng bíp quét QR dùng trung tâm từ app.js
 if (typeof phatTiengBip !== "function") {
@@ -906,7 +906,7 @@ function xuatCSVCX1() {
   URL.revokeObjectURL(url);
 }
 
-// ── Lịch sử Chỉ For (lưu 3 ngày gần nhất, xem lại + tiếp tục quét) ─────
+// ── Lịch sử Chỉ For (lưu 30 ngày gần nhất, xem lại + tiếp tục quét) ─────
 let dangXemLichSuId = null;
 
 function docLichSuCX1() {
