@@ -938,6 +938,7 @@ async function khoiTaoCameraFast(videoId, onDecodedCallback) {
           videoEl.play().catch(() => {});
         }
       }, 100);
+    }
     if (window.AndroidNative && typeof window.AndroidNative.setKeepScreenOn === "function") {
       try { window.AndroidNative.setKeepScreenOn(true); } catch (e) {}
     }
