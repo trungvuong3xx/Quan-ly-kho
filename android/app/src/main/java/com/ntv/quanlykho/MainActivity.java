@@ -44,6 +44,14 @@ public class MainActivity extends BridgeActivity {
                     try {
                         byte[] bytes = Base64.decode(base64Data, Base64.DEFAULT);
                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                            // Xóa bản ghi cũ cùng tên trong MediaStore để ép ghi đè sạch sẽ, không sinh file (1), (2)
+                            try {
+                                Uri queryUri = MediaStore.Downloads.EXTERNAL_CONTENT_URI;
+                                String selection = MediaStore.MediaColumns.DISPLAY_NAME + "=?";
+                                String[] selectionArgs = new String[]{fileName};
+                                getContentResolver().delete(queryUri, selection, selectionArgs);
+                            } catch (Exception ignore) {}
+
                             ContentValues values = new ContentValues();
                             values.put(MediaStore.MediaColumns.DISPLAY_NAME, fileName);
                             values.put(MediaStore.MediaColumns.MIME_TYPE, mimeType != null ? mimeType : "application/octet-stream");
@@ -65,6 +73,9 @@ public class MainActivity extends BridgeActivity {
                             downloadDir.mkdirs();
                         }
                         File destFile = new File(downloadDir, fileName);
+                        if (destFile.exists()) {
+                            destFile.delete();
+                        }
                         try (FileOutputStream fos = new FileOutputStream(destFile)) {
                             fos.write(bytes);
                             fos.flush();

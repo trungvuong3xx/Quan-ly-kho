@@ -1701,6 +1701,7 @@ async function saoLuuDuLieuToanBo() {
   try {
     const backupData = {
       phienBan: "1.0",
+      loai: "auto_backup",
       thoiGian: new Date().toISOString(),
       duLieu: {}
     };
@@ -1720,32 +1721,27 @@ async function saoLuuDuLieuToanBo() {
       return;
     }
 
-    // 1. Tự động lưu 1 bản snapshot vào cơ sở dữ liệu IndexedDB an toàn
-    if (typeof idbLuuSnapshot === "function") {
-      await idbLuuSnapshot({
-        soLuongMuc: count,
-        moTa: "Sao lưu thủ công",
-        duLieu: backupData.duLieu
-      });
-      if (typeof renderDanhSachSnapshotsCucBo === "function") {
-        renderDanhSachSnapshotsCucBo();
-      }
-    }
-
     const jsonStr = JSON.stringify(backupData, null, 2);
-    const d = new Date();
-    const pad = n => String(n).padStart(2, '0');
-    const timeStr = `${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}_${pad(d.getHours())}h${pad(d.getMinutes())}`;
-    const filename = `QuanLyKho_Backup_${timeStr}.json`;
-
-    // 2. Chuyển đổi Base64
+    const filename = "QuanLyKho_AutoBackup.json";
     const base64Data = chuoiSangBase64Utf8(jsonStr);
 
-    // 3. Nếu đang chạy trên Android APK (qua cầu nối AndroidNative)
+    const now = new Date();
+    const pad = n => String(n).padStart(2, '0');
+    const thoiGianHienThi = `${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())} ${pad(now.getDate())}/${pad(now.getMonth() + 1)}/${now.getFullYear()}`;
+
+    // Lưu lại mốc sao lưu
+    const currentHash = tinhMaBam(JSON.stringify(backupData.duLieu));
+    localStorage.setItem("last_auto_backup_hash", currentHash);
+    localStorage.setItem("last_auto_backup_time", thoiGianHienThi);
+    if (typeof capNhatChiBaoAutoBackup === "function") {
+      capNhatChiBaoAutoBackup(`💾 Tự động sao lưu: ${thoiGianHienThi}`, "success");
+    }
+
+    // 1. Nếu đang chạy trên Android APK (qua cầu nối AndroidNative)
     if (window.AndroidNative && typeof window.AndroidNative.saveFileToDownload === "function") {
       const res = window.AndroidNative.saveFileToDownload(filename, base64Data, "application/json");
       if (res && res.startsWith("OK")) {
-        const msg = `Đã sao lưu ${count} mục và LƯU FILE vào thư mục Download của điện thoại!\n\nTên file:\n${filename}\n\nBạn có muốn gửi file này qua Zalo hoặc lưu vào Google Drive để an toàn tuyệt đối không?`;
+        const msg = `Đã cập nhật và GHI ĐÈ bản sao lưu mới nhất (${count} mục) vào thư mục Download của điện thoại!\n\nTên file:\n${filename}\n\nBạn có muốn chia sẻ file này qua Zalo để lưu trữ thêm không?`;
         if (typeof moXacNhanApp === "function") {
           moXacNhanApp(
             msg,
@@ -1754,19 +1750,19 @@ async function saoLuuDuLieuToanBo() {
                 window.AndroidNative.shareFile(filename, base64Data, "application/json");
               }
             },
-            "Chia sẻ ra Zalo/Drive",
+            "Chia sẻ qua Zalo",
             null,
             "Đóng",
             "Sao lưu thành công"
           );
         } else if (typeof showCanhBao === "function") {
-          showCanhBao(`Đã lưu ${filename} vào thư mục Download!`, "success");
+          showCanhBao(`Đã ghi đè ${filename} vào thư mục Download!`, "success");
         }
         return;
       }
     }
 
-    // 4. Fallback cho Web Desktop Browser
+    // 2. Fallback cho Web Desktop Browser
     const blob = new Blob([jsonStr], { type: "application/json" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -1786,47 +1782,21 @@ async function saoLuuDuLieuToanBo() {
 }
 window.saoLuuDuLieuToanBo = saoLuuDuLieuToanBo;
 
-async function kichHoatPhucHoiDuLieu() {
-  let list = [];
-  if (typeof idbDocDanhSachSnapshots === "function") {
-    try {
-      list = await idbDocDanhSachSnapshots();
-    } catch (e) {
-      list = [];
-    }
+function kichHoatPhucHoiDuLieu() {
+  if (typeof chuyenTrangKhongNav === "function") {
+    chuyenTrangKhongNav("trangPhucHoi");
   }
+}
+window.kichHoatPhucHoiDuLieu = kichHoatPhucHoiDuLieu;
 
-  if (list && list.length > 0) {
-    const snapMoiNhat = list[0];
-    if (typeof moXacNhanApp === "function") {
-      moXacNhanApp(
-        `Bạn muốn phục hồi dữ liệu từ nguồn nào?\n\n• [Khôi phục nhanh]: Dùng bản sao lưu lúc ${snapMoiNhat.thoiGianHienThi} (${snapMoiNhat.soLuongMuc} mục).\n• [Chọn file .json]: Chọn file sao lưu đã lưu trong thư mục Download của máy.`,
-        () => {
-          khoiPhucSnapshotTheoId(snapMoiNhat.id);
-        },
-        "Khôi phục nhanh",
-        () => {
-          const fileInput = document.getElementById("input-phuc-hoi-du-lieu");
-          if (fileInput) {
-            fileInput.value = "";
-            fileInput.click();
-          }
-        },
-        "Chọn file .json",
-        "Phục hồi dữ liệu"
-      );
-      return;
-    }
-  }
-
-  // Mở trình chọn file nếu chưa có snapshot trong bộ nhớ nội bộ
+function kichHoatChonFilePhucHoi() {
   const fileInput = document.getElementById("input-phuc-hoi-du-lieu");
   if (fileInput) {
     fileInput.value = "";
     fileInput.click();
   }
 }
-window.kichHoatPhucHoiDuLieu = kichHoatPhucHoiDuLieu;
+window.kichHoatChonFilePhucHoi = kichHoatChonFilePhucHoi;
 
 function xuLyFilePhucHoiDuLieu(event) {
   const file = event.target.files && event.target.files[0];
@@ -1850,20 +1820,15 @@ function xuLyFilePhucHoiDuLieu(event) {
         }
       }
 
-      // Lưu lại vào IndexedDB để sau này có sẵn snapshot nhanh
-      if (typeof idbLuuSnapshot === "function") {
-        await idbLuuSnapshot({
-          soLuongMuc: restoredCount,
-          moTa: "Khôi phục từ file (" + file.name + ")",
-          duLieu: parsed.duLieu
-        });
-      }
-
-      const thongBao = `Đã phục hồi thành công ${restoredCount} mục dữ liệu! Đang tải lại...`;
+      const thongBao = `Đã phục hồi thành công ${restoredCount} mục dữ liệu từ file (${file.name})! Đang nạp lại dữ liệu...`;
       if (typeof showCanhBao === "function") showCanhBao(thongBao, "success");
-      setTimeout(() => { window.location.reload(); }, 1200);
+      setTimeout(() => {
+        if (typeof capNhatTrangChu === "function") capNhatTrangChu();
+        if (typeof chuyenTrangKhongNav === "function") chuyenTrangKhongNav("trangChu");
+      }, 1000);
     } catch (err) {
-      if (typeof showCanhBao === "function") showCanhBao("Lỗi đọc file phục hồi: " + err.message, "error");
+      console.error("Lỗi phục hồi:", err);
+      if (typeof showCanhBao === "function") showCanhBao("Lỗi khi phục hồi dữ liệu: " + err.message, "error");
     }
   };
   reader.readAsText(file);
@@ -2324,21 +2289,15 @@ window.showCanhBao = showCanhBao;
     return String(hash);
   }
 
-  // Hàm chính: Thực hiện Auto-Backup thông minh
+  // Hàm chính: Thực hiện Auto-Backup thông minh ghi đè máy
   async function thucHienAutoBackup(lyDo = "auto") {
     if (dangSaoLuuAuto) return;
-    if (!navigator.onLine) {
-      capNhatChiBaoAutoBackup("☁️ Đang ngoại tuyến (Đợi Wi-Fi/4G)", "warning");
-      return;
-    }
 
     try {
       dangSaoLuuAuto = true;
-      capNhatChiBaoAutoBackup("☁️ Đang kiểm tra sao lưu đám mây...");
 
       const { duLieu, count } = thuThapGoiDuLieuSaoLuu();
       if (count === 0) {
-        capNhatChiBaoAutoBackup("☁️ Chưa có dữ liệu để sao lưu");
         dangSaoLuuAuto = false;
         return;
       }
@@ -2350,68 +2309,44 @@ window.showCanhBao = showCanhBao;
       // ── DELTA CHECK: Nếu không có dữ liệu mới so với lần trước thì bỏ qua
       if (currentHash === lastHash && lyDo !== "force") {
         const lastTime = localStorage.getItem("last_auto_backup_time") || "Gần đây";
-        capNhatChiBaoAutoBackup(`☁️ Đã sao lưu: ${lastTime} (Toàn vẹn)`, "success");
+        capNhatChiBaoAutoBackup(`💾 Tự động sao lưu: ${lastTime} (Toàn vẹn)`, "success");
         dangSaoLuuAuto = false;
         return;
       }
 
-      // ── BƯỚC 1: Lưu snapshot cục bộ an toàn vào IndexedDB (Xoay vòng 5 bản)
-      if (typeof idbLuuSnapshot === "function") {
-        await idbLuuSnapshot({
-          soLuongMuc: count,
-          moTa: `Tự động sao lưu (${lyDo})`,
-          duLieu: duLieu
-        });
-      }
-
-      // ── BƯỚC 2: Đẩy bản sao lưu ngầm lên Google Apps Script
       const now = new Date();
       const pad = n => String(n).padStart(2, '0');
       const thoiGianStr = `${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
       const ngayStr = `${pad(now.getDate())}/${pad(now.getMonth() + 1)}/${now.getFullYear()}`;
       const thoiGianHienThi = `${thoiGianStr} ${ngayStr}`;
 
-      const payload = {
-        action: "autoBackup",
+      const backupData = {
+        phienBan: "1.0",
+        loai: "auto_backup",
         thoiGian: now.toISOString(),
         thoiGianHienThi: thoiGianHienThi,
         soLuongMuc: count,
         duLieu: duLieu
       };
 
-      // Gửi fetch ngầm với timeout 12 giây
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 12000);
+      const base64Data = chuoiSangBase64Utf8(JSON.stringify(backupData, null, 2));
 
-      const res = await fetch(API, {
-        method: "POST",
-        body: JSON.stringify(payload),
-        headers: { "Content-Type": "text/plain;charset=utf-8" },
-        signal: controller.signal
-      }).catch(err => {
-        return { error: err.message };
-      });
-      clearTimeout(timeoutId);
+      // Ghi đè file cố định vào Download trên Android
+      if (window.AndroidNative && typeof window.AndroidNative.saveFileToDownload === "function") {
+        window.AndroidNative.saveFileToDownload("QuanLyKho_AutoBackup.json", base64Data, "application/json");
+      }
 
       // Lưu lại mốc sao lưu thành công
       localStorage.setItem("last_auto_backup_hash", currentHash);
       localStorage.setItem("last_auto_backup_time", thoiGianHienThi);
 
-      capNhatChiBaoAutoBackup(`☁️ Đã sao lưu đám mây: ${thoiGianHienThi}`, "success");
+      capNhatChiBaoAutoBackup(`💾 Tự động sao lưu: ${thoiGianHienThi}`, "success");
       if (typeof hopDenGhiLog === "function") {
-        hopDenGhiLog("AUTO_BACKUP_OK", `Sao lưu đám mây thành công ${count} mục (${lyDo})`);
-      }
-
-      // Cập nhật danh sách snapshot hiển thị nếu đang ở trang sao lưu
-      if (typeof renderDanhSachSnapshotsCucBo === "function") {
-        renderDanhSachSnapshotsCucBo();
+        hopDenGhiLog("AUTO_BACKUP_OK", `Tự động ghi đè ${count} mục vào QuanLyKho_AutoBackup.json (${lyDo})`);
       }
     } catch (err) {
-      console.warn("[AutoBackup] Lỗi gửi sao lưu đám mây:", err);
-      capNhatChiBaoAutoBackup("☁️ Đã lưu máy (Lỗi đẩy lên mây)", "warning");
-      if (typeof hopDenGhiLog === "function") {
-        hopDenGhiLog("AUTO_BACKUP_FAIL", "Lỗi sao lưu đám mây: " + err.message);
-      }
+      console.warn("[AutoBackup] Lỗi tự động sao lưu:", err);
+      capNhatChiBaoAutoBackup("💾 Lỗi tự động sao lưu: " + err.message, "warning");
     } finally {
       dangSaoLuuAuto = false;
     }
@@ -2427,25 +2362,13 @@ window.showCanhBao = showCanhBao;
   }
   window.kichHoatKiemTraAutoBackup = kichHoatKiemTraAutoBackup;
 
-  // ── SỰ KIỆN KÍCH HOẠT TỰ ĐỘNG KHI CÓ MẠNG HOẶC MỞ APP ─────────────────────
-  window.addEventListener("online", function() {
-    if (typeof hopDenGhiLog === "function") hopDenGhiLog("NET_ONLINE", "Phát hiện thiết bị kết nối lại Mạng/Wi-Fi");
-    capNhatChiBaoAutoBackup("☁️ Đã có mạng. Đang tự động sao lưu...");
-    setTimeout(() => thucHienAutoBackup("network_reconnected"), 2000);
-  });
-
-  window.addEventListener("offline", function() {
-    if (typeof hopDenGhiLog === "function") hopDenGhiLog("NET_OFFLINE", "Mất kết nối mạng");
-    capNhatChiBaoAutoBackup("☁️ Đang ngoại tuyến (Đợi Wi-Fi/4G)", "warning");
-  });
-
   // Tự động kiểm tra sao lưu sau khi app khởi động 3.5 giây
   setTimeout(() => {
     const lastTime = localStorage.getItem("last_auto_backup_time");
     if (lastTime) {
-      capNhatChiBaoAutoBackup(`☁️ Đã sao lưu: ${lastTime} (Toàn vẹn)`, "success");
+      capNhatChiBaoAutoBackup(`💾 Tự động sao lưu: ${lastTime} (Toàn vẹn)`, "success");
     } else {
-      capNhatChiBaoAutoBackup("☁️ Tự động sao lưu: Đang kích hoạt");
+      capNhatChiBaoAutoBackup("💾 Tự động sao lưu: Đang kích hoạt");
     }
     thucHienAutoBackup("app_launch");
   }, 3500);
