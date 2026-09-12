@@ -19,6 +19,7 @@
             android:theme="@style/AppTheme.NoActionBarLaunch"
             android:launchMode="singleTask"
             android:hardwareAccelerated="true"
+            android:screenOrientation="portrait"
             android:exported="true">
 
             <intent-filter>

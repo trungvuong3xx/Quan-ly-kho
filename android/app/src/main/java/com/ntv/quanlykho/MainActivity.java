@@ -17,6 +17,12 @@ import android.webkit.WebView;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.core.content.FileProvider;
+import android.content.pm.ActivityInfo;
+import android.graphics.Color;
+import android.os.VibrationEffect;
+import android.os.Vibrator;
+import android.view.View;
+import android.view.WindowManager;
 import com.getcapacitor.BridgeActivity;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -26,9 +32,17 @@ public class MainActivity extends BridgeActivity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            getWindow().setNavigationBarColor(Color.parseColor("#141b17"));
+            getWindow().setStatusBarColor(Color.parseColor("#141b17"));
+        }
+
         WebView.setWebContentsDebuggingEnabled(true);
         if (getBridge() != null && getBridge().getWebView() != null) {
             WebView webView = getBridge().getWebView();
+            webView.setLayerType(View.LAYER_TYPE_HARDWARE, null);
             webView.getSettings().setMediaPlaybackRequiresUserGesture(false);
             webView.getSettings().setCacheMode(WebSettings.LOAD_NO_CACHE);
             webView.addJavascriptInterface(new Object() {
@@ -120,6 +134,31 @@ public class MainActivity extends BridgeActivity {
                         return false;
                     }
                 }
+
+                @JavascriptInterface
+                public void setKeepScreenOn(boolean keepOn) {
+                    runOnUiThread(() -> {
+                        if (keepOn) {
+                            getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+                        } else {
+                            getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+                        }
+                    });
+                }
+
+                @JavascriptInterface
+                public void vibrate(long ms) {
+                    try {
+                        Vibrator v = (Vibrator) getSystemService(VIBRATOR_SERVICE);
+                        if (v != null && v.hasVibrator()) {
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                                v.vibrate(VibrationEffect.createOneShot(ms > 0 ? ms : 70, VibrationEffect.DEFAULT_AMPLITUDE));
+                            } else {
+                                v.vibrate(ms > 0 ? ms : 70);
+                            }
+                        }
+                    } catch (Exception ignore) {}
+                }
             }, "AndroidNative");
         }
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
@@ -140,6 +179,9 @@ public class MainActivity extends BridgeActivity {
     @Override
     public void onPause() {
         super.onPause();
+        runOnUiThread(() -> {
+            getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+        });
         if (getBridge() != null && getBridge().getWebView() != null) {
             getBridge().getWebView().evaluateJavascript(
                 "if (window.ngatTatCaCamera) { window.ngatTatCaCamera(); }",

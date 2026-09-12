@@ -128,8 +128,16 @@ window.addEventListener("click", unlockFastAudioEngine, { passive: true, capture
 window.addEventListener("pointerdown", unlockFastAudioEngine, { passive: true, capture: true });
 window.addEventListener("keydown", unlockFastAudioEngine, { passive: true, capture: true });
 
+function phatVibrateNative(ms) {
+  if (window.AndroidNative && typeof window.AndroidNative.vibrate === "function") {
+    try { window.AndroidNative.vibrate(ms); return true; } catch (e) {}
+  }
+  return false;
+}
+window.phatVibrateNative = phatVibrateNative;
+
 function phatTiengBip() {
-  if (navigator.vibrate) {
+  if (!phatVibrateNative(70) && navigator.vibrate) {
     try { navigator.vibrate(70); } catch (e) { }
   }
 
@@ -222,14 +230,14 @@ function phatAmThanhSung(ctx) {
 }
 
 function phatVibrateSuccess() {
-  if (navigator.vibrate) {
+  if (!phatVibrateNative(90) && navigator.vibrate) {
     try { navigator.vibrate(90); } catch (e) { }
   }
 }
 window.phatVibrateSuccess = phatVibrateSuccess;
 
 function phatVibrateError() {
-  if (navigator.vibrate) {
+  if (!phatVibrateNative(180) && navigator.vibrate) {
     try { navigator.vibrate([100, 50, 100]); } catch (e) { }
   }
 }
@@ -930,6 +938,8 @@ async function khoiTaoCameraFast(videoId, onDecodedCallback) {
           videoEl.play().catch(() => {});
         }
       }, 100);
+    if (window.AndroidNative && typeof window.AndroidNative.setKeepScreenOn === "function") {
+      try { window.AndroidNative.setKeepScreenOn(true); } catch (e) {}
     }
 
     // Cơ chế chống kẹt khung play & Reset Sleep Timer khi người dùng chạm vào màn hình
@@ -1092,6 +1102,9 @@ function dungCameraFast(videoId, zxingReaderObj) {
   if (videoEl && videoEl.srcObject) {
     videoEl.srcObject.getTracks().forEach(t => t.stop());
     videoEl.srcObject = null;
+  }
+  if (window.AndroidNative && typeof window.AndroidNative.setKeepScreenOn === "function") {
+    try { window.AndroidNative.setKeepScreenOn(false); } catch (e) {}
   }
 }
 
