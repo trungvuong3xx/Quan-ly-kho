@@ -222,6 +222,7 @@ window.toggleFlashQR = toggleFlashQR;
 function dungQuetQR() {
   dangQuetQR = false;
   window.dangQuetQR = false;
+  if (typeof setNativeCameraVisible === 'function') setNativeCameraVisible(false);
   if (zxingReaderQR) {
     dungCameraFast("reader", zxingReaderQR);
     zxingReaderQR = null;
@@ -404,6 +405,7 @@ function xemKetQuaQuetQR() {
 window.xemKetQuaQuetQR = xemKetQuaQuetQR;
 
 function hienKetQuaQuetQR() {
+  if (typeof setNativeCameraVisible === 'function') setNativeCameraVisible(false);
   const { hangDot, hangGom } = taoHangKetQuaQuetQR(phienQuetQR);
   const tbodyDot = document.getElementById("qr-tbody-dot");
   const tbodyGom = document.getElementById("qr-tbody-gom");
@@ -511,6 +513,7 @@ function quetMoiQuetQR() {
   idPhienHienTaiQR = null;
   soLuongDaGuiHienTaiQR = 0;
   xoaPhienDoDangQR();
+  if (typeof setNativeCameraVisible === 'function') setNativeCameraVisible(false);
   document.getElementById("qr-ketqua").style.display = "none";
   document.getElementById("cam-box").style.display = "none";
   document.getElementById("form-chon").style.display = "block";

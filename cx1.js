@@ -233,6 +233,7 @@ async function tiepTucKhoiTaoCX1() {
 
 function dungCX1() {
   dangQuetCX1 = false;
+  if (typeof setNativeCameraVisible === 'function') setNativeCameraVisible(false);
   // Giữ nguyên phần cứng camera chạy ngầm để bật lại tức thì
   // dungCameraFast("cx1-reader", zxingReaderCX1);
   // zxingReaderCX1 = null;
@@ -246,6 +247,7 @@ async function tiepTucCX1() {
   }
   dangQuetCX1 = true;
   denPinBat = false;
+  if (typeof setNativeCameraVisible === 'function') setNativeCameraVisible(true);
   document.getElementById("cx1-status").textContent = "Đang quét Đợt " + demSoDot + "...";
   document.getElementById("btn-flash-cx1").style.background = "var(--neutral)";
   document.getElementById("btn-flash-cx1").style.color = "var(--cream)";
@@ -693,6 +695,7 @@ function taoHangKetQuaCX1(danhSach) {
 
 function hienKetQuaCX1() {
   if (typeof khoaCuonTrangQuet === "function") khoaCuonTrangQuet(false); else document.body.classList.remove("cam-active");
+  if (typeof setNativeCameraVisible === 'function') setNativeCameraVisible(false);
   const { hangDot, hangGom } = taoHangKetQuaCX1(phienCX1);
   document.getElementById("cx1-tbody-dot").innerHTML = hangDot;
   document.getElementById("cx1-tbody-gom").innerHTML = hangGom;
@@ -712,6 +715,7 @@ async function quetTiepCX1() {
 
   document.getElementById("cx1-ketqua").style.display = "none";
   document.getElementById("cx1-cam").style.display = "block";
+  if (typeof setNativeCameraVisible === 'function') setNativeCameraVisible(true);
   if (typeof khoaCuonTrangQuet === "function") khoaCuonTrangQuet(true); else document.body.classList.add("cam-active");
   document.getElementById("cx1-status").textContent = "Đang quét Đợt " + demSoDot + "...";
 
@@ -748,6 +752,7 @@ function quetMoiCX1() {
   idPhienHienTai = null;
   soLuongDaGuiHienTai = 0;
   xoaPhienDoDangCX1();
+  if (typeof setNativeCameraVisible === 'function') setNativeCameraVisible(false);
   document.getElementById("cx1-ketqua").style.display = "none";
   document.getElementById("cx1-form").style.display = "block";
   capNhatLogCX1();

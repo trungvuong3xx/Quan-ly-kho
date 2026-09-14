@@ -333,6 +333,7 @@ function chuyenTrang(id, el) {
     if (typeof dungBTP === "function") dungBTP();
   }
   if (id === "trangChu" && typeof capNhatTrangChu === "function") capNhatTrangChu();
+  if (typeof kiemTraVaDongBoNativeCamera === "function") kiemTraVaDongBoNativeCamera();
 
   // Tự động khởi tạo ngày hôm nay nếu ô chọn ngày đang trống
   const today = layNgayHomNayLocal();
@@ -363,6 +364,7 @@ function chuyenTrangKhongNav(id) {
   const page = document.getElementById(id);
   if (page) page.classList.add("active");
   if (id === "lichSuQuetQR" && typeof renderLichSuQR === "function") renderLichSuQR();
+  if (typeof kiemTraVaDongBoNativeCamera === "function") kiemTraVaDongBoNativeCamera();
 }
 window.chuyenTrangKhongNav = chuyenTrangKhongNav;
 
@@ -904,16 +906,18 @@ async function khoiTaoCameraFast(videoId, onDecodedCallback) {
   // ── ƯU TIÊN SỐ 1: Native CameraX + Google ML Kit (Khi chạy trên Android APK) ──
   if (window.AndroidNative && typeof window.AndroidNative.startNativeScanner === 'function') {
     try {
-      let rect = videoEl.getBoundingClientRect();
-      if (!rect || rect.width === 0 || rect.height === 0) {
-        const parent = videoEl.parentElement;
-        const pRect = parent ? parent.getBoundingClientRect() : null;
-        rect = {
-          left: (pRect && pRect.left) || 16,
-          top: (pRect && pRect.top) || 60,
-          width: (pRect && pRect.width) || (window.innerWidth - 32),
-          height: (pRect && pRect.height) || 220
-        };
+      const layToaDoBox = () => {
+        const box = videoEl.closest('.video-container') || videoEl.parentElement || videoEl;
+        if (!box) return null;
+        const r = box.getBoundingClientRect();
+        return (r && r.width > 0 && r.height > 0) ? r : null;
+      };
+
+      let rBox = layToaDoBox();
+      if (!rBox) {
+        const w = window.innerWidth - 24;
+        const h = Math.round(w * 0.6); // Chuẩn tỉ lệ 60% của video-container
+        rBox = { left: 12, top: 76, width: w, height: h };
       }
 
       window.onNativeBarcodeDecoded = (code) => {
@@ -926,14 +930,27 @@ async function khoiTaoCameraFast(videoId, onDecodedCallback) {
         }
       };
 
-      window.AndroidNative.startNativeScanner(rect.left, rect.top, rect.width, rect.height);
+      window.AndroidNative.startNativeScanner(rBox.left, rBox.top, rBox.width, rBox.height);
       if (typeof window.AndroidNative.setKeepScreenOn === 'function') {
         window.AndroidNative.setKeepScreenOn(true);
       }
       capNhatNutDoiCamera(videoEl);
 
+      // Cập nhật lại bounds thật chính xác ngay khi DOM hoàn tất reflow
+      const capNhatLai = () => {
+        const r = layToaDoBox();
+        if (r && window.AndroidNative && typeof window.AndroidNative.updateNativeScannerBounds === 'function') {
+          window.AndroidNative.updateNativeScannerBounds(r.left, r.top, r.width, r.height);
+        }
+      };
+      requestAnimationFrame(() => {
+        capNhatLai();
+        setTimeout(capNhatLai, 120);
+      });
+
       return {
         reset: () => {
+          if (typeof setNativeCameraVisible === 'function') setNativeCameraVisible(false);
           if (window.AndroidNative && typeof window.AndroidNative.stopNativeScanner === 'function') {
             window.AndroidNative.stopNativeScanner();
           }
@@ -1128,6 +1145,7 @@ async function khoiTaoCameraFast(videoId, onDecodedCallback) {
 }
 
 function dungCameraFast(videoId, zxingReaderObj) {
+  if (typeof setNativeCameraVisible === 'function') setNativeCameraVisible(false);
   if (window.AndroidNative && typeof window.AndroidNative.stopNativeScanner === 'function') {
     try { window.AndroidNative.stopNativeScanner(); } catch (e) {}
   }
@@ -1604,6 +1622,19 @@ function setNativeCameraVisible(visible) {
   }
 }
 window.setNativeCameraVisible = setNativeCameraVisible;
+
+function kiemTraVaDongBoNativeCamera() {
+  if (!window.AndroidNative || typeof window.AndroidNative.setNativeCameraVisible !== 'function') return;
+  setTimeout(() => {
+    const camBoxes = ['cam-box', 'btp-cam', 'cx1-cam', 'kk-box'];
+    const hasActiveBox = camBoxes.some(id => {
+      const el = document.getElementById(id);
+      return el && window.getComputedStyle(el).display !== 'none';
+    });
+    window.AndroidNative.setNativeCameraVisible(hasActiveBox);
+  }, 60);
+}
+window.kiemTraVaDongBoNativeCamera = kiemTraVaDongBoNativeCamera;
 
 let _appPromptCallbackOk = null;
 function moPromptApp(tieuDe, noiDung, giaTriMacDinh, callbackOk, placeholder) {
