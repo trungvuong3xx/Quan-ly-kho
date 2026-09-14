@@ -22,6 +22,8 @@ let doiChieuCX5 = {};
 
 let tongKgDataCX5 = {};
 let tongKetPhienCX5 = [];
+let dangTaiUngVienCX5 = false;
+let loiTaiUngVienCX5 = false;
 
 async function callApiCX5(body) {
   const res = await fetch(API_CX5, { method: "POST", body: JSON.stringify(body) });
@@ -215,6 +217,8 @@ function batDauPhienMoiCX5() {
   luotHienTaiCX5 = null;
   tongKgDataCX5 = {};
   tongKetPhienCX5 = [];
+  dangTaiUngVienCX5 = false;
+  loiTaiUngVienCX5 = false;
 
   document.getElementById("cx5-form").style.display = "none";
   document.getElementById("cx5-doichieu").style.display = "none";
@@ -1087,6 +1091,61 @@ async function dongBoTatCaCX5() {
   // TÁCH BIỆT HOÀN TOÀN: Bảng đối chiếu chỉ đồng bộ dữ liệu vào Sheet Tháng, không tự chuyển sang LSC5
 }
 
+function buildLocalTongKgDataCX5(dsQC) {
+  if (!dsQC || dsQC.length === 0) return;
+  const oldState = Object.assign({}, tongKgDataCX5);
+  const daXuLyQC = new Set();
+
+  dsQC.forEach(function (q) {
+    const mspNorm = String(q.msp || "").trim();
+    const tenNorm = String(q.ten || "").trim();
+    const key = mspNorm + "|" + tenNorm;
+    if (daXuLyQC.has(key)) return;
+    daXuLyQC.add(key);
+
+    const luotMapLocal = new Map();
+    phienCX5.forEach(function (r) {
+      if (String(r.msp || "").trim() === mspNorm && String(r.ten || "").trim() === tenNorm) {
+        if (!luotMapLocal.has(r.luot)) luotMapLocal.set(r.luot, []);
+        luotMapLocal.get(r.luot).push(r);
+      }
+    });
+
+    const thuTuLocal = Array.from(luotMapLocal.keys());
+    const localCandidates = [];
+    for (let i = 0; i < thuTuLocal.length; i++) {
+      const rows = luotMapLocal.get(thuTuLocal[i]);
+      if (rows.length > 0) {
+        localCandidates.push({
+          lotId: idPhienHienTaiC5 + "_" + thuTuLocal[i],
+          bao: rows.length,
+          kg: Math.round(rows.reduce(function (s, r) { return s + r.kg; }, 0) * 10) / 10,
+          rows: rows
+        });
+      }
+    }
+
+    if (localCandidates.length === 0) {
+      localCandidates.push({ lotId: null, bao: 0, kg: 0, rows: null });
+    }
+
+    localCandidates.forEach((lc, idx) => {
+      if (lc.bao > 0) {
+        const cardKey = key + "|" + idx;
+        const existingCard = oldState[cardKey];
+        tongKgDataCX5[cardKey] = {
+          ten: tenNorm,
+          msp: mspNorm,
+          homNay: { row: (existingCard && existingCard.homNay) ? existingCard.homNay.row : null, lotId: lc.lotId, bao: lc.bao, kg: lc.kg, rows: lc.rows },
+          cu: (existingCard && existingCard.cu) ? existingCard.cu : [],
+          daGhepBao: existingCard ? existingCard.daGhepBao : 0,
+          daGhepKg: existingCard ? existingCard.daGhepKg : 0
+        };
+      }
+    });
+  });
+}
+
 function moTongKgCX5(dsQC) {
   // CHUYỂN THẺ TỨC THÌ (0ms Delay): Không chặn UI chờ mạng
   document.getElementById("cx5-form").style.display = "none";
@@ -1094,23 +1153,50 @@ function moTongKgCX5(dsQC) {
   document.getElementById("cx5-nhap").style.display = "none";
   document.getElementById("cx5-tongkg").style.display = "block";
 
-  // Vẽ bảng tổng kết ngay từ phienCX5 trên RAM lập tức
+  // Tự động suy luận dsQC nếu chưa truyền vào (ví dụ gọi từ lịch sử)
+  if (!dsQC || dsQC.length === 0) {
+    const gom = tomTatCX5();
+    dsQC = Object.keys(gom)
+      .filter(key => gom[key] && (gom[key].bao > 0 || (gom[key].baoDaDongBo || 0) > 0))
+      .map(key => ({ msp: gom[key].msp, ten: gom[key].ten }));
+    if (dsQC.length === 0) {
+      phienCX5.forEach(r => {
+        const mspNorm = String(r.msp || "").trim();
+        const tenNorm = String(r.ten || "").trim();
+        if (!dsQC.some(q => q.msp === mspNorm && q.ten === tenNorm)) {
+          dsQC.push({ msp: mspNorm, ten: tenNorm });
+        }
+      });
+    }
+  }
+
+  // BƯỚC 1: Xây dựng thẻ pallet cục bộ NGAY LẬP TỨC từ phienCX5 trên RAM (0ms, không phụ thuộc mạng)
+  buildLocalTongKgDataCX5(dsQC);
+
+  dangTaiUngVienCX5 = true;
+  loiTaiUngVienCX5 = false;
   renderTongKgCX5();
 
-  // Tải danh sách ứng viên ghép pallet ngày cũ ngầm không chặn UI
+  // BƯỚC 2: Tải danh sách ứng viên ghép pallet ngày cũ ngầm không chặn UI
   if (dsQC && dsQC.length > 0) {
     callApiCX5({ action: "layUngVienGhepCX5", payload: { dsQC: dsQC, dateStr: ngayCX5 } }).then(res => {
-      if (!res || res.error) return;
+      dangTaiUngVienCX5 = false;
+      if (!res || res.error) {
+        loiTaiUngVienCX5 = true;
+        renderTongKgCX5();
+        return;
+      }
       
       const oldState = Object.assign({}, tongKgDataCX5);
-      tongKgDataCX5 = {};
       tongKetPhienCX5 = [];
       const daXuLyQC = new Set();
       dsQC.forEach(function (q) {
-        const key = q.msp + "|" + q.ten;
+        const mspNorm = String(q.msp || "").trim();
+        const tenNorm = String(q.ten || "").trim();
+        const key = mspNorm + "|" + tenNorm;
         if (daXuLyQC.has(key)) return;
         daXuLyQC.add(key);
-        const duLieuQC = res[key] || { homNay: [], cu: [] };
+        const duLieuQC = res[key] || res[q.msp + "|" + q.ten] || { homNay: [], cu: [] };
         
         const homNayList = (duLieuQC.homNay || []).filter(function (c) {
           return c.v !== "X";
@@ -1123,7 +1209,7 @@ function moTongKgCX5(dsQC) {
 
         const luotMapLocal = new Map();
         phienCX5.forEach(function (r) {
-          if (r.msp === q.msp && r.ten === q.ten) {
+          if (String(r.msp || "").trim() === mspNorm && String(r.ten || "").trim() === tenNorm) {
             if (!luotMapLocal.has(r.luot)) luotMapLocal.set(r.luot, []);
             luotMapLocal.get(r.luot).push(r);
           }
@@ -1209,8 +1295,8 @@ function moTongKgCX5(dsQC) {
             }
 
             tongKgDataCX5[cardKey] = {
-              ten: q.ten,
-              msp: q.msp,
+              ten: tenNorm,
+              msp: mspNorm,
               homNay: anchor,
               cu: cu.map(function (c) {
                 let isChecked = false;
@@ -1234,7 +1320,14 @@ function moTongKgCX5(dsQC) {
 
       renderTongKgCX5();
       luuPhienDoDangCX5();
-    }).catch(() => {});
+    }).catch(() => {
+      dangTaiUngVienCX5 = false;
+      loiTaiUngVienCX5 = true;
+      renderTongKgCX5();
+    });
+  } else {
+    dangTaiUngVienCX5 = false;
+    renderTongKgCX5();
   }
 }
 
@@ -1243,22 +1336,31 @@ function renderTongKgCX5() {
   const keys = Object.keys(tongKgDataCX5);
 
   if (keys.length === 0) {
-    container.innerHTML = '<div style="text-align:center;color:var(--cream-soft);padding:16px 0">Không có quy cách nào dưới 10 bao cần ghép</div>';
+    container.innerHTML = '<div style="text-align:center;color:var(--cream-soft);padding:16px 0">Phiên này chưa có quy cách nào được quét</div>';
     renderTongKetPhienTongKgCX5();
     return;
+  }
+
+  let bannerHtml = "";
+  if (dangTaiUngVienCX5) {
+    bannerHtml = '<div style="display:flex;align-items:center;gap:8px;padding:8px 12px;background:rgba(59,130,246,0.12);border-radius:8px;color:#60a5fa;font-size:13px;margin-bottom:12px;"><i class="ti ti-loader spin"></i> Đang tìm ứng viên ngày cũ từ Sheet...</div>';
+  } else if (loiTaiUngVienCX5) {
+    bannerHtml = '<div style="display:flex;align-items:center;gap:8px;padding:8px 12px;background:rgba(239,68,68,0.12);border-radius:8px;color:#f87171;font-size:13px;margin-bottom:12px;"><i class="ti ti-cloud-off"></i> Không thể kết nối máy chủ để tìm ngày cũ (Chế độ ngoại tuyến)</div>';
   }
 
   const html = keys.map(function (key) {
     const d = tongKgDataCX5[key];
     let tongBao = d.homNay.bao, tongKg = d.homNay.kg;
-    d.cu.forEach(function (c) {
-      if (c.checked) {
-        tongBao += c.effBao !== undefined ? c.effBao : c.bao;
-        tongKg += c.effKg !== undefined ? c.effKg : c.kg;
-      }
-    });
+    if (d.cu) {
+      d.cu.forEach(function (c) {
+        if (c.checked) {
+          tongBao += c.effBao !== undefined ? c.effBao : c.bao;
+          tongKg += c.effKg !== undefined ? c.effKg : c.kg;
+        }
+      });
+    }
 
-    const dsCu = d.cu.map(function (c, idx) {
+    const dsCu = (d.cu && d.cu.length > 0) ? d.cu.map(function (c, idx) {
       const daChonOKhoiKhac = dangDuocChonODauKhacCX5(c.row, key);
       const disabled = daChonOKhoiKhac ? " disabled" : "";
       const lopMo = daChonOKhoiKhac ? " cx5-tk-row-disabled" : "";
@@ -1273,7 +1375,7 @@ function renderTongKgCX5() {
         (daChonOKhoiKhac ? ' (đã chọn)' : '') + '</span>' +
         '<button type="button" class="cx5-tk-xoa"' + disabled + ' title="Ẩn vĩnh viễn" aria-label="Ẩn" onclick="xoaUngVienGhepCX5(\'' + key + '\',' + idx + ')"><i class="ti ti-x"></i></button>' +
         '</div>';
-    }).join("");
+    }).join("") : "";
 
     let bagInfoText = "";
     if (d.homNay.rows) {
@@ -1286,37 +1388,56 @@ function renderTongKgCX5() {
       else if (len >= 9) bagInfoText = d.homNay.rows[0].kg.toFixed(1) + "-" + d.homNay.rows[5].kg.toFixed(1);
     }
 
-    const dongTenHtml = '<div style="display: flex; justify-content: space-between; align-items: center;">' +
-      '<div>' +
-      '<span style="font-weight: 600; color: var(--text-main); font-size: 15px;">' + escHtmlCX5(d.ten) + '</span>' +
-      (bagInfoText ? '<span style="font-size:13px; color:var(--accent-2); margin-left:6px;">' + bagInfoText + '</span>' : '') +
-      '</div>' +
-      '<div style="text-align: right; font-weight: 600; color: var(--brass); font-size: 14px;">' +
-      (!dsCu ? tongKg.toFixed(1) + ' (' + tongBao + ')' : d.homNay.kg.toFixed(1) + ' (' + d.homNay.bao + ')') +
-      '</div>' +
-      '</div>';
+    const isDuPallet = d.homNay.bao >= 10;
+    const tagHtml = isDuPallet 
+      ? '<span style="font-size:11px;padding:2px 6px;border-radius:4px;background:rgba(34,197,94,0.15);color:var(--success);font-weight:600"><i class="ti ti-check"></i> Đủ 10 bao</span>'
+      : '<span style="font-size:11px;padding:2px 6px;border-radius:4px;background:rgba(234,179,8,0.15);color:var(--brass);font-weight:600"><i class="ti ti-layers-intersect"></i> Cần ghép</span>';
 
-    if (!dsCu) {
-      return '<div style="padding: 10px 0; border-bottom: 1px solid var(--line-soft);">' + dongTenHtml + '</div>';
-    } else {
-      return '<div style="padding: 12px 0; border-bottom: 1px solid var(--line-soft);">' +
-        dongTenHtml +
-        '<div style="margin-top:4px">' + dsCu + '</div>' +
-        '<div style="margin-top: 8px; text-align: right; font-size: 14px;">' +
-        'Tổng: <b style="color: var(--brass);">' + tongKg.toFixed(1) + ' (' + tongBao + ')</b>' +
+    return '<div class="cx5-dc-card" style="margin-bottom:12px;background:var(--card-raised);border:1px solid var(--line);border-radius:12px;padding:12px;">' +
+      '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px;">' +
+        '<div>' +
+          '<div style="font-weight:600;color:var(--text-main);font-size:15px;display:flex;align-items:center;gap:6px;">' +
+            '<i class="ti ti-box" style="color:var(--accent-2);font-size:17px"></i>' +
+            '<span>' + escHtmlCX5(d.ten) + '</span>' +
+            tagHtml +
+          '</div>' +
+          (bagInfoText ? '<div style="font-size:12px;color:var(--accent-2);margin-top:2px;">Cân từng bao: ' + bagInfoText + '</div>' : '') +
         '</div>' +
-        '</div>';
-    }
+        '<div style="text-align:right;">' +
+          '<div style="font-weight:700;color:var(--brass);font-size:15px;">' + d.homNay.kg.toFixed(1) + ' kg</div>' +
+          '<div style="font-size:12px;color:var(--steel);font-weight:600;">' + d.homNay.bao + ' bao</div>' +
+        '</div>' +
+      '</div>' +
+      (dsCu ? (
+        '<div style="border-top:1px dashed var(--line-soft);padding-top:8px;margin-top:6px;">' +
+          '<div style="font-size:12px;color:var(--cream-soft);margin-bottom:4px;font-weight:600;"><i class="ti ti-history"></i> Ứng viên ghép ngày cũ:</div>' +
+          dsCu +
+          '<div style="margin-top:8px;text-align:right;font-size:14px;border-top:1px solid var(--line-soft);padding-top:6px;">' +
+            'Tổng sau ghép: <b style="color:var(--brass);font-size:15px;">' + tongKg.toFixed(1) + ' kg (' + tongBao + ' bao)</b>' +
+          '</div>' +
+        '</div>'
+      ) : (
+        dangTaiUngVienCX5 ? (
+          '<div style="border-top:1px dashed var(--line-soft);padding-top:6px;margin-top:6px;font-size:12px;color:var(--cream-soft);font-style:italic;">' +
+            '<i class="ti ti-loader spin"></i> Đang tìm ứng viên ngày cũ từ Sheet...' +
+          '</div>'
+        ) : (
+          '<div style="border-top:1px dashed var(--line-soft);padding-top:6px;margin-top:6px;font-size:12px;color:var(--cream-soft);font-style:italic;">' +
+            (isDuPallet ? '✓ Pallet này đã đủ ≥ 10 bao' : 'Không có ứng viên ngày cũ dư trên Sheet để ghép') +
+          '</div>'
+        )
+      )) +
+    '</div>';
   }).join("");
 
-  container.innerHTML = html;
+  container.innerHTML = bannerHtml + html;
   renderTongKetPhienTongKgCX5();
 }
 window.renderTongKgCX5 = renderTongKgCX5;
 
 function dangDuocChonODauKhacCX5(row, keyHienTai) {
   return Object.keys(tongKgDataCX5).some(function (key) {
-    return key !== keyHienTai && tongKgDataCX5[key].cu.some(function (c) { return c.row === row && c.checked; });
+    return key !== keyHienTai && tongKgDataCX5[key].cu && tongKgDataCX5[key].cu.some(function (c) { return c.row === row && c.checked; });
   });
 }
 
