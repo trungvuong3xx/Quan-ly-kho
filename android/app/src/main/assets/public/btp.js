@@ -411,6 +411,38 @@ async function tiepTucBTP() {
   }
 }
 
+async function tiepTucQuetHienTaiBTP() {
+  if (typeof khoaCuonTrangQuet === "function") khoaCuonTrangQuet(true);
+  else document.body.classList.add("cam-active");
+  dangQuetBTP = true;
+  window.dangQuetBTP = true;
+  if (typeof setNativeCameraVisible === 'function') setNativeCameraVisible(true);
+  const statusEl = document.getElementById("btp-status");
+  if (statusEl) statusEl.innerHTML = '<i class="ti ti-radar" style="color:var(--success)"></i> Đang quét Đợt ' + (demSoDotBTP || 1) + '...';
+  const btn = document.getElementById("btn-dung-tieptuc-btp");
+  if (btn) {
+    btn.textContent = "Dừng quét";
+    btn.className = "btn btn-red btn-full";
+  }
+  try {
+    const btpVid = document.getElementById("btp-reader");
+    const btpTrack = btpVid && btpVid.srcObject ? btpVid.srcObject.getVideoTracks()[0] : null;
+    const isCamRunningBTP = btpTrack && btpTrack.readyState === 'live';
+    if (!zxingReaderBTP || !isCamRunningBTP) {
+      zxingReaderBTP = await khoiTaoCameraFast("btp-reader", (txt) => {
+        if (txt && dangQuetBTP) {
+          khiQuetDuocMaBTP({ getText: () => txt });
+        }
+      });
+    } else if (btpVid && btpVid.paused) {
+      btpVid.play().catch(() => {});
+    }
+  } catch (e) {
+    if (typeof showCanhBaoBTP === "function") showCanhBaoBTP("Lỗi camera: " + e, "error");
+  }
+}
+window.tiepTucQuetHienTaiBTP = tiepTucQuetHienTaiBTP;
+
 function toggleDungTiepTucBTP() {
   const btn = document.getElementById("btn-dung-tieptuc-btp");
   if (!btn) return;

@@ -340,6 +340,25 @@ function chuyenTrang(id, el) {
   if (id !== "chiFor" && typeof dungCX1 === "function") dungCX1();
   if (id !== "kiemKe" && typeof dungKiemKe === "function") dungKiemKe();
   if (id !== "btpPage" && typeof dungBTP === "function") dungBTP();
+
+  // Tự động khôi phục quét camera nếu quay lại tab quét đang mở khung cam
+  if (id === "btpPage") {
+    const btpCam = document.getElementById("btp-cam");
+    if (btpCam && !btpCam.classList.contains("hidden") && btpCam.style.display !== "none") {
+      if (typeof tiepTucQuetHienTaiBTP === "function") tiepTucQuetHienTaiBTP();
+    }
+  } else if (id === "chiFor") {
+    const cx1Cam = document.getElementById("cx1-cam");
+    if (cx1Cam && !cx1Cam.classList.contains("hidden") && cx1Cam.style.display !== "none") {
+      if (typeof tiepTucQuetHienTaiCX1 === "function") tiepTucQuetHienTaiCX1();
+    }
+  } else if (id === "quetQR") {
+    const qrCam = document.getElementById("cam-box");
+    if (qrCam && !qrCam.classList.contains("hidden") && qrCam.style.display !== "none") {
+      if (typeof tiepTucQuetHienTaiQR === "function") tiepTucQuetHienTaiQR();
+    }
+  }
+
   const isTargetScanning = (id === "btpPage" && window.dangQuetBTP) ||
                            (id === "chiFor" && window.dangQuetCX1) ||
                            (id === "quetQR" && window.dangQuetQR);
@@ -380,6 +399,25 @@ function chuyenTrangKhongNav(id) {
   if (id !== "chiFor" && typeof dungCX1 === "function") dungCX1();
   if (id !== "kiemKe" && typeof dungKiemKe === "function") dungKiemKe();
   if (id !== "btpPage" && typeof dungBTP === "function") dungBTP();
+
+  // Tự động khôi phục quét camera nếu quay lại tab quét đang mở khung cam
+  if (id === "btpPage") {
+    const btpCam = document.getElementById("btp-cam");
+    if (btpCam && !btpCam.classList.contains("hidden") && btpCam.style.display !== "none") {
+      if (typeof tiepTucQuetHienTaiBTP === "function") tiepTucQuetHienTaiBTP();
+    }
+  } else if (id === "chiFor") {
+    const cx1Cam = document.getElementById("cx1-cam");
+    if (cx1Cam && !cx1Cam.classList.contains("hidden") && cx1Cam.style.display !== "none") {
+      if (typeof tiepTucQuetHienTaiCX1 === "function") tiepTucQuetHienTaiCX1();
+    }
+  } else if (id === "quetQR") {
+    const qrCam = document.getElementById("cam-box");
+    if (qrCam && !qrCam.classList.contains("hidden") && qrCam.style.display !== "none") {
+      if (typeof tiepTucQuetHienTaiQR === "function") tiepTucQuetHienTaiQR();
+    }
+  }
+
   const isTargetScanning = (id === "btpPage" && window.dangQuetBTP) ||
                            (id === "chiFor" && window.dangQuetCX1) ||
                            (id === "quetQR" && window.dangQuetQR);

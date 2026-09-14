@@ -1768,6 +1768,22 @@ body.cam-active #cx1-cam:not(.hidden) {
   overflow: hidden !important;
 }
 
+/* Triệt tiêu hoàn toàn biểu tượng nút Play mặc định của HTML5 Video trên WebView */
+video::-webkit-media-controls-start-playback-button,
+video::-webkit-media-controls-play-button,
+video::-webkit-media-controls-overlay-play-button,
+video::-webkit-media-controls {
+  display: none !important;
+  -webkit-appearance: none !important;
+  opacity: 0 !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+
+video {
+  pointer-events: none !important;
+}
+
 body.cam-active #btp-video-box,
 body.cam-active .video-container {
   flex: 0 0 auto !important;
