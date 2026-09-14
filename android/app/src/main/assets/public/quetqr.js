@@ -94,13 +94,10 @@ async function batDauQuetQR() {
   dangQuetQR = true;
   window.dangQuetQR = true;
 
-  if (typeof khoaCuonTrangQuet === "function") khoaCuonTrangQuet(true); else document.body.classList.add("cam-active");
-  const formElQR = document.getElementById("form-chon");
-  const camElQR = document.getElementById("cam-box");
-  const kqElQR = document.getElementById("qr-ketqua");
-  if (formElQR) { formElQR.classList.add("hidden"); formElQR.style.setProperty("display", "none", "important"); }
-  if (camElQR) { camElQR.classList.remove("hidden"); camElQR.style.removeProperty("display"); }
-  if (kqElQR) { kqElQR.classList.add("hidden"); kqElQR.style.setProperty("display", "none", "important"); }
+  document.getElementById("form-chon").style.display = "none";
+  document.getElementById("cam-box").style.display = "block";
+  document.getElementById("qr-ketqua").style.display = "none";
+  document.body.classList.add("cam-active");
 
   const statusEl = document.getElementById("qr-status");
   if (statusEl) statusEl.textContent = "🟢 " + loaiQuetQR + " | Đợt " + demSoDotQR;
@@ -225,7 +222,6 @@ window.toggleFlashQR = toggleFlashQR;
 function dungQuetQR() {
   dangQuetQR = false;
   window.dangQuetQR = false;
-  if (typeof setNativeCameraVisible === 'function') setNativeCameraVisible(false);
   if (zxingReaderQR) {
     dungCameraFast("reader", zxingReaderQR);
     zxingReaderQR = null;
@@ -244,38 +240,6 @@ function tiepTucQuetQR() {
   batDauQuetQR();
 }
 window.tiepTucQuetQR = tiepTucQuetQR;
-
-async function tiepTucQuetHienTaiQR() {
-  if (typeof khoaCuonTrangQuet === "function") khoaCuonTrangQuet(true);
-  else document.body.classList.add("cam-active");
-  dangQuetQR = true;
-  window.dangQuetQR = true;
-  if (typeof setNativeCameraVisible === 'function') setNativeCameraVisible(true);
-  const statusEl = document.getElementById("qr-status");
-  if (statusEl) statusEl.textContent = "🟢 " + (loaiQuetQR || "") + " | Đợt " + (demSoDotQR || 1);
-  const btn = document.getElementById("btn-dung-tieptuc-qr");
-  if (btn) {
-    btn.textContent = "Dừng quét";
-    btn.className = "btn btn-red btn-full";
-  }
-  try {
-    const qrVid = document.getElementById("reader");
-    const qrTrack = qrVid && qrVid.srcObject ? qrVid.srcObject.getVideoTracks()[0] : null;
-    const isCamRunningQR = qrTrack && qrTrack.readyState === 'live';
-    if (!zxingReaderQR || !isCamRunningQR) {
-      zxingReaderQR = await khoiTaoCameraFast("reader", (txt) => {
-        if (txt && dangQuetQR) {
-          khiQuetDuocMaQR({ getText: () => txt });
-        }
-      });
-    } else if (qrVid && qrVid.paused) {
-      qrVid.play().catch(() => {});
-    }
-  } catch (e) {
-    if (typeof showCanhBaoQR === "function") showCanhBaoQR("Lỗi camera: " + e, "error");
-  }
-}
-window.tiepTucQuetHienTaiQR = tiepTucQuetHienTaiQR;
 
 function toggleDungTiepTucQR() {
   if (dangQuetQR) dungQuetQR();
@@ -440,9 +404,6 @@ function xemKetQuaQuetQR() {
 window.xemKetQuaQuetQR = xemKetQuaQuetQR;
 
 function hienKetQuaQuetQR() {
-  dangQuetQR = false;
-  window.dangQuetQR = false;
-  if (typeof setNativeCameraVisible === 'function') setNativeCameraVisible(false);
   const { hangDot, hangGom } = taoHangKetQuaQuetQR(phienQuetQR);
   const tbodyDot = document.getElementById("qr-tbody-dot");
   const tbodyGom = document.getElementById("qr-tbody-gom");
@@ -453,13 +414,9 @@ function hienKetQuaQuetQR() {
   const tieuDeKetQua = document.getElementById("qr-ketqua-tieude");
   if (tieuDeKetQua) tieuDeKetQua.textContent = "Hoàn tất: " + (loaiQuetQR || "Giao dịch") + " (" + (ngayQuetQR || "") + ")";
 
-  if (typeof khoaCuonTrangQuet === "function") khoaCuonTrangQuet(false); else document.body.classList.remove("cam-active");
-  const formElQR = document.getElementById("form-chon");
-  const camElQR = document.getElementById("cam-box");
-  const kqElQR = document.getElementById("qr-ketqua");
-  if (camElQR) { camElQR.classList.add("hidden"); camElQR.style.setProperty("display", "none", "important"); }
-  if (formElQR) { formElQR.classList.add("hidden"); formElQR.style.setProperty("display", "none", "important"); }
-  if (kqElQR) { kqElQR.classList.remove("hidden"); kqElQR.style.removeProperty("display"); kqElQR.style.display = "block"; }
+  document.getElementById("cam-box").style.display = "none";
+  document.getElementById("form-chon").style.display = "none";
+  document.getElementById("qr-ketqua").style.display = "block";
 
   // Cập nhật trạng thái nút gửi
   const btnGui = document.getElementById("btn-gui-dulieu-qr");
@@ -553,17 +510,10 @@ function quetMoiQuetQR() {
   demSoDotQR = 1;
   idPhienHienTaiQR = null;
   soLuongDaGuiHienTaiQR = 0;
-  dangQuetQR = false;
-  window.dangQuetQR = false;
   xoaPhienDoDangQR();
-  if (typeof setNativeCameraVisible === 'function') setNativeCameraVisible(false);
-  if (typeof khoaCuonTrangQuet === "function") khoaCuonTrangQuet(false); else document.body.classList.remove("cam-active");
-  const formElQR = document.getElementById("form-chon");
-  const camElQR = document.getElementById("cam-box");
-  const kqElQR = document.getElementById("qr-ketqua");
-  if (camElQR) { camElQR.classList.add("hidden"); camElQR.style.setProperty("display", "none", "important"); }
-  if (kqElQR) { kqElQR.classList.add("hidden"); kqElQR.style.setProperty("display", "none", "important"); }
-  if (formElQR) { formElQR.classList.remove("hidden"); formElQR.style.removeProperty("display"); formElQR.style.display = "block"; }
+  document.getElementById("qr-ketqua").style.display = "none";
+  document.getElementById("cam-box").style.display = "none";
+  document.getElementById("form-chon").style.display = "block";
 }
 window.quetMoiQuetQR = quetMoiQuetQR;
 

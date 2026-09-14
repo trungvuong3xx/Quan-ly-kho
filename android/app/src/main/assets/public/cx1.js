@@ -189,18 +189,14 @@ async function tiepTucKhoiTaoCX1() {
   phienCX1 = [];
   demSoDot = 1; 
   dangQuetCX1 = true;
-  window.dangQuetCX1 = true;
   denPinBat = false;
   idPhienHienTai = Date.now() + "-" + Math.random().toString(36).slice(2);
   soLuongDaGuiHienTai = 0;
 
   if (typeof khoaCuonTrangQuet === "function") khoaCuonTrangQuet(true); else document.body.classList.add("cam-active");
-  const formElCX1 = document.getElementById("cx1-form");
-  const camElCX1 = document.getElementById("cx1-cam");
-  const kqElCX1 = document.getElementById("cx1-ketqua");
-  if (formElCX1) { formElCX1.classList.add("hidden"); formElCX1.style.setProperty("display", "none", "important"); }
-  if (camElCX1) { camElCX1.classList.remove("hidden"); camElCX1.style.removeProperty("display"); }
-  if (kqElCX1) { kqElCX1.classList.add("hidden"); kqElCX1.style.setProperty("display", "none", "important"); }
+  document.getElementById("cx1-form").style.display = "none";
+  document.getElementById("cx1-cam").style.display = "block";
+  document.getElementById("cx1-ketqua").style.display = "none";
   document.getElementById("cx1-dem").textContent = "Đã quét: 0 mã";
   document.getElementById("cx1-status").textContent = "Đang quét Đợt 1...";
   document.getElementById("btn-flash-cx1").style.background = "var(--neutral)";
@@ -237,8 +233,6 @@ async function tiepTucKhoiTaoCX1() {
 
 function dungCX1() {
   dangQuetCX1 = false;
-  window.dangQuetCX1 = false;
-  if (typeof setNativeCameraVisible === 'function') setNativeCameraVisible(false);
   // Giữ nguyên phần cứng camera chạy ngầm để bật lại tức thì
   // dungCameraFast("cx1-reader", zxingReaderCX1);
   // zxingReaderCX1 = null;
@@ -251,9 +245,7 @@ async function tiepTucCX1() {
     demSoDot += 1; 
   }
   dangQuetCX1 = true;
-  window.dangQuetCX1 = true;
   denPinBat = false;
-  if (typeof setNativeCameraVisible === 'function') setNativeCameraVisible(true);
   document.getElementById("cx1-status").textContent = "Đang quét Đợt " + demSoDot + "...";
   document.getElementById("btn-flash-cx1").style.background = "var(--neutral)";
   document.getElementById("btn-flash-cx1").style.color = "var(--cream)";
@@ -280,38 +272,6 @@ async function tiepTucCX1() {
     dungCX1();
   }
 }
-
-async function tiepTucQuetHienTaiCX1() {
-  if (typeof khoaCuonTrangQuet === "function") khoaCuonTrangQuet(true);
-  else document.body.classList.add("cam-active");
-  dangQuetCX1 = true;
-  window.dangQuetCX1 = true;
-  if (typeof setNativeCameraVisible === "function") setNativeCameraVisible(true);
-  const statusEl = document.getElementById("cx1-status");
-  if (statusEl) statusEl.textContent = "Đang quét Đợt " + (demSoDot || 1) + "...";
-  const btn = document.getElementById("btn-dung-tieptuc-cx1");
-  if (btn) {
-    btn.textContent = "Dừng quét";
-    btn.className = "btn btn-red btn-full";
-  }
-  try {
-    const cx1Vid = document.getElementById("cx1-reader");
-    const cx1Track = cx1Vid && cx1Vid.srcObject ? cx1Vid.srcObject.getVideoTracks()[0] : null;
-    const isCamRunningCX1 = cx1Track && cx1Track.readyState === "live";
-    if (!zxingReaderCX1 || !isCamRunningCX1) {
-      zxingReaderCX1 = await khoiTaoCameraFast("cx1-reader", (txt) => {
-        if (txt && dangQuetCX1) {
-          khiQuetDuocMa({ getText: () => txt });
-        }
-      });
-    } else if (cx1Vid && cx1Vid.paused) {
-      cx1Vid.play().catch(() => {});
-    }
-  } catch (e) {
-    if (typeof showCanhBaoCX1 === "function") showCanhBaoCX1("Lỗi camera: " + e, "error");
-  }
-}
-window.tiepTucQuetHienTaiCX1 = tiepTucQuetHienTaiCX1;
 
 function toggleDungTiepTuc() {
   const btn = document.getElementById("btn-dung-tieptuc-cx1");
@@ -732,20 +692,13 @@ function taoHangKetQuaCX1(danhSach) {
 }
 
 function hienKetQuaCX1() {
-  dangQuetCX1 = false;
-  window.dangQuetCX1 = false;
   if (typeof khoaCuonTrangQuet === "function") khoaCuonTrangQuet(false); else document.body.classList.remove("cam-active");
-  if (typeof setNativeCameraVisible === 'function') setNativeCameraVisible(false);
   const { hangDot, hangGom } = taoHangKetQuaCX1(phienCX1);
   document.getElementById("cx1-tbody-dot").innerHTML = hangDot;
   document.getElementById("cx1-tbody-gom").innerHTML = hangGom;
 
-  const formElCX1 = document.getElementById("cx1-form");
-  const camElCX1 = document.getElementById("cx1-cam");
-  const kqElCX1 = document.getElementById("cx1-ketqua");
-  if (camElCX1) { camElCX1.classList.add("hidden"); camElCX1.style.setProperty("display", "none", "important"); }
-  if (formElCX1) { formElCX1.classList.add("hidden"); formElCX1.style.setProperty("display", "none", "important"); }
-  if (kqElCX1) { kqElCX1.classList.remove("hidden"); kqElCX1.style.removeProperty("display"); kqElCX1.style.display = "block"; }
+  document.getElementById("cx1-cam").style.display = "none";
+  document.getElementById("cx1-ketqua").style.display = "block";
 }
 
 async function quetTiepCX1() {
@@ -755,16 +708,10 @@ async function quetTiepCX1() {
     demSoDot += 1;
   }
   dangQuetCX1 = true;
-  window.dangQuetCX1 = true;
   denPinBat = false;
 
-  const formElCX1 = document.getElementById("cx1-form");
-  const camElCX1 = document.getElementById("cx1-cam");
-  const kqElCX1 = document.getElementById("cx1-ketqua");
-  if (formElCX1) { formElCX1.classList.add("hidden"); formElCX1.style.setProperty("display", "none", "important"); }
-  if (camElCX1) { camElCX1.classList.remove("hidden"); camElCX1.style.removeProperty("display"); }
-  if (kqElCX1) { kqElCX1.classList.add("hidden"); kqElCX1.style.setProperty("display", "none", "important"); }
-  if (typeof setNativeCameraVisible === 'function') setNativeCameraVisible(true);
+  document.getElementById("cx1-ketqua").style.display = "none";
+  document.getElementById("cx1-cam").style.display = "block";
   if (typeof khoaCuonTrangQuet === "function") khoaCuonTrangQuet(true); else document.body.classList.add("cam-active");
   document.getElementById("cx1-status").textContent = "Đang quét Đợt " + demSoDot + "...";
 
@@ -800,17 +747,9 @@ function quetMoiCX1() {
   demSoDot = 0;
   idPhienHienTai = null;
   soLuongDaGuiHienTai = 0;
-  dangQuetCX1 = false;
-  window.dangQuetCX1 = false;
   xoaPhienDoDangCX1();
-  if (typeof setNativeCameraVisible === 'function') setNativeCameraVisible(false);
-  if (typeof khoaCuonTrangQuet === "function") khoaCuonTrangQuet(false); else document.body.classList.remove("cam-active");
-  const formElCX1 = document.getElementById("cx1-form");
-  const camElCX1 = document.getElementById("cx1-cam");
-  const kqElCX1 = document.getElementById("cx1-ketqua");
-  if (camElCX1) { camElCX1.classList.add("hidden"); camElCX1.style.setProperty("display", "none", "important"); }
-  if (kqElCX1) { kqElCX1.classList.add("hidden"); kqElCX1.style.setProperty("display", "none", "important"); }
-  if (formElCX1) { formElCX1.classList.remove("hidden"); formElCX1.style.removeProperty("display"); formElCX1.style.display = "block"; }
+  document.getElementById("cx1-ketqua").style.display = "none";
+  document.getElementById("cx1-form").style.display = "block";
   capNhatLogCX1();
 }
 
@@ -870,12 +809,9 @@ async function khoiPhucCX1(state) {
   denPinBat = false;
 
   if (typeof khoaCuonTrangQuet === "function") khoaCuonTrangQuet(true); else document.body.classList.add("cam-active");
-  const formElCX1 = document.getElementById("cx1-form");
-  const camElCX1 = document.getElementById("cx1-cam");
-  const kqElCX1 = document.getElementById("cx1-ketqua");
-  if (formElCX1) { formElCX1.classList.add("hidden"); formElCX1.style.setProperty("display", "none", "important"); }
-  if (camElCX1) { camElCX1.classList.remove("hidden"); camElCX1.style.removeProperty("display"); }
-  if (kqElCX1) { kqElCX1.classList.add("hidden"); kqElCX1.style.setProperty("display", "none", "important"); }
+  document.getElementById("cx1-form").style.display = "none";
+  document.getElementById("cx1-cam").style.display = "block";
+  document.getElementById("cx1-ketqua").style.display = "none";
   document.getElementById("cx1-dem").textContent = "Đã quét: " + phienCX1.length + " mã";
   document.getElementById("cx1-status").textContent = "Đang quét Đợt " + demSoDot + "...";
   document.getElementById("btn-flash-cx1").style.background = "var(--neutral)";

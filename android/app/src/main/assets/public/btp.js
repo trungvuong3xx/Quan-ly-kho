@@ -333,19 +333,15 @@ async function batDauPhienMoiBTP() {
   phienBTP = [];
   demSoDotBTP = 1;
   dangQuetBTP = true;
-  window.dangQuetBTP = true;
   denPinBatBTP = false;
   idPhienHienTaiBTP = Date.now() + "-" + Math.random().toString(36).slice(2);
   soLuongDaGuiHienTaiBTP = 0;
 
   luuPhienDoDangBTP();
 
-  const formElBTP = document.getElementById("btp-form");
-  const camElBTP = document.getElementById("btp-cam");
-  const kqElBTP = document.getElementById("btp-ketqua");
-  if (formElBTP) { formElBTP.classList.add("hidden"); formElBTP.style.setProperty("display", "none", "important"); }
-  if (camElBTP) { camElBTP.classList.remove("hidden"); camElBTP.style.removeProperty("display"); }
-  if (kqElBTP) { kqElBTP.classList.add("hidden"); kqElBTP.style.setProperty("display", "none", "important"); }
+  document.getElementById("btp-form").style.display = "none";
+  document.getElementById("btp-cam").style.display = "block";
+  document.getElementById("btp-ketqua").style.display = "none";
   document.getElementById("btp-dem").textContent = "Đã quét: 0 mã";
   document.getElementById("btp-status").innerHTML = '<i class="ti ti-radar" style="color:var(--success)"></i> Đang quét Đợt 1...';
 
@@ -379,8 +375,11 @@ async function batDauPhienMoiBTP() {
 function dungBTP() {
   // document.body.classList.remove("cam-active");
   dangQuetBTP = false;
-  window.dangQuetBTP = false;
-  if (typeof setNativeCameraVisible === 'function') setNativeCameraVisible(false);
+  // Giữ nguyên phần cứng camera chạy ngầm để bật lại tức thì
+  // if (typeof dungCameraFast === "function" && zxingReaderBTP) {
+  //   dungCameraFast("btp-reader", zxingReaderBTP);
+  // }
+  // zxingReaderBTP = null;
   const statusEl = document.getElementById("btp-status");
   if (statusEl) statusEl.innerHTML = '<i class="ti ti-player-pause" style="color:var(--red)"></i> Đã dừng quét (Đợt ' + (demSoDotBTP || 1) + ')';
 }
@@ -389,8 +388,6 @@ async function tiepTucBTP() {
   if (typeof khoaCuonTrangQuet === "function") khoaCuonTrangQuet(true); else document.body.classList.add("cam-active");
   const daQuetTrongDotNay = phienBTP.some(function(item) { return item.dotQuet === demSoDotBTP; }); if (daQuetTrongDotNay || (demSoDotBTP || 0) === 0) { demSoDotBTP = (demSoDotBTP || 0) + 1; }
   dangQuetBTP = true;
-  window.dangQuetBTP = true;
-  if (typeof setNativeCameraVisible === 'function') setNativeCameraVisible(true);
   document.getElementById("btp-status").innerHTML = '<i class="ti ti-radar" style="color:var(--success)"></i> Đang quét Đợt ' + demSoDotBTP + '...';
   try {
     const btpVid = document.getElementById("btp-reader");
@@ -410,38 +407,6 @@ async function tiepTucBTP() {
     dungBTP();
   }
 }
-
-async function tiepTucQuetHienTaiBTP() {
-  if (typeof khoaCuonTrangQuet === "function") khoaCuonTrangQuet(true);
-  else document.body.classList.add("cam-active");
-  dangQuetBTP = true;
-  window.dangQuetBTP = true;
-  if (typeof setNativeCameraVisible === 'function') setNativeCameraVisible(true);
-  const statusEl = document.getElementById("btp-status");
-  if (statusEl) statusEl.innerHTML = '<i class="ti ti-radar" style="color:var(--success)"></i> Đang quét Đợt ' + (demSoDotBTP || 1) + '...';
-  const btn = document.getElementById("btn-dung-tieptuc-btp");
-  if (btn) {
-    btn.textContent = "Dừng quét";
-    btn.className = "btn btn-red btn-full";
-  }
-  try {
-    const btpVid = document.getElementById("btp-reader");
-    const btpTrack = btpVid && btpVid.srcObject ? btpVid.srcObject.getVideoTracks()[0] : null;
-    const isCamRunningBTP = btpTrack && btpTrack.readyState === 'live';
-    if (!zxingReaderBTP || !isCamRunningBTP) {
-      zxingReaderBTP = await khoiTaoCameraFast("btp-reader", (txt) => {
-        if (txt && dangQuetBTP) {
-          khiQuetDuocMaBTP({ getText: () => txt });
-        }
-      });
-    } else if (btpVid && btpVid.paused) {
-      btpVid.play().catch(() => {});
-    }
-  } catch (e) {
-    if (typeof showCanhBaoBTP === "function") showCanhBaoBTP("Lỗi camera: " + e, "error");
-  }
-}
-window.tiepTucQuetHienTaiBTP = tiepTucQuetHienTaiBTP;
 
 function toggleDungTiepTucBTP() {
   const btn = document.getElementById("btn-dung-tieptuc-btp");
@@ -659,10 +624,7 @@ function taoHangKetQuaBTP(danhSach) {
 }
 
 function hienKetQuaBTP() {
-  dangQuetBTP = false;
-  window.dangQuetBTP = false;
   if (typeof khoaCuonTrangQuet === "function") khoaCuonTrangQuet(false); else document.body.classList.remove("cam-active");
-  if (typeof setNativeCameraVisible === 'function') setNativeCameraVisible(false);
   const { hangDot, footDot, hangGom, footGom } = taoHangKetQuaBTP(phienBTP);
   const elDot = document.getElementById("btp-tbody-dot");
   const elFootDot = document.getElementById("btp-tfoot-dot");
@@ -674,12 +636,8 @@ function hienKetQuaBTP() {
   if (elGom) elGom.innerHTML = hangGom;
   if (elFootGom) elFootGom.innerHTML = footGom;
 
-  const formElBTP = document.getElementById("btp-form");
-  const camElBTP = document.getElementById("btp-cam");
-  const kqElBTP = document.getElementById("btp-ketqua");
-  if (camElBTP) { camElBTP.classList.add("hidden"); camElBTP.style.setProperty("display", "none", "important"); }
-  if (formElBTP) { formElBTP.classList.add("hidden"); formElBTP.style.setProperty("display", "none", "important"); }
-  if (kqElBTP) { kqElBTP.classList.remove("hidden"); kqElBTP.style.removeProperty("display"); kqElBTP.style.display = "block"; }
+  document.getElementById("btp-cam").style.display = "none";
+  document.getElementById("btp-ketqua").style.display = "block";
 
   // Reset nút gửi về trạng thái ban đầu
   const btnGui = document.getElementById("btn-gui-dulieu-btp");
@@ -695,16 +653,10 @@ async function quetTiepBTP() {
   if (typeof khoaCuonTrangQuet === "function") khoaCuonTrangQuet(true); else document.body.classList.add("cam-active");
   const daQuetTrongDotNay = phienBTP.some(function(item) { return item.dotQuet === demSoDotBTP; }); if (daQuetTrongDotNay || (demSoDotBTP || 0) === 0) { demSoDotBTP = (demSoDotBTP || 0) + 1; }
   dangQuetBTP = true;
-  window.dangQuetBTP = true;
   denPinBatBTP = false;
 
-  const formElBTP = document.getElementById("btp-form");
-  const camElBTP = document.getElementById("btp-cam");
-  const kqElBTP = document.getElementById("btp-ketqua");
-  if (formElBTP) { formElBTP.classList.add("hidden"); formElBTP.style.setProperty("display", "none", "important"); }
-  if (camElBTP) { camElBTP.classList.remove("hidden"); camElBTP.style.removeProperty("display"); }
-  if (kqElBTP) { kqElBTP.classList.add("hidden"); kqElBTP.style.setProperty("display", "none", "important"); }
-  if (typeof setNativeCameraVisible === 'function') setNativeCameraVisible(true);
+  document.getElementById("btp-ketqua").style.display = "none";
+  document.getElementById("btp-cam").style.display = "block";
   document.getElementById("btp-status").innerHTML = '<i class="ti ti-radar" style="color:var(--success)"></i> Đang quét Đợt ' + demSoDotBTP + '...';
 
   const btnToggle = document.getElementById("btn-dung-tieptuc-btp");
@@ -737,17 +689,9 @@ function quetMoiBTP() {
   demSoDotBTP = 0;
   idPhienHienTaiBTP = null;
   soLuongDaGuiHienTaiBTP = 0;
-  dangQuetBTP = false;
-  window.dangQuetBTP = false;
   xoaPhienDoDangBTP();
-  if (typeof setNativeCameraVisible === 'function') setNativeCameraVisible(false);
-  if (typeof khoaCuonTrangQuet === "function") khoaCuonTrangQuet(false); else document.body.classList.remove("cam-active");
-  const formElBTP = document.getElementById("btp-form");
-  const camElBTP = document.getElementById("btp-cam");
-  const kqElBTP = document.getElementById("btp-ketqua");
-  if (camElBTP) { camElBTP.classList.add("hidden"); camElBTP.style.setProperty("display", "none", "important"); }
-  if (kqElBTP) { kqElBTP.classList.add("hidden"); kqElBTP.style.setProperty("display", "none", "important"); }
-  if (formElBTP) { formElBTP.classList.remove("hidden"); formElBTP.style.removeProperty("display"); formElBTP.style.display = "block"; }
+  document.getElementById("btp-ketqua").style.display = "none";
+  document.getElementById("btp-form").style.display = "block";
 }
 
 let timerCanhBaoBTP = null;
@@ -805,12 +749,9 @@ async function khoiPhucBTP(state) {
   dangQuetBTP = true;
   denPinBatBTP = false;
 
-  const formElBTP = document.getElementById("btp-form");
-  const camElBTP = document.getElementById("btp-cam");
-  const kqElBTP = document.getElementById("btp-ketqua");
-  if (formElBTP) { formElBTP.classList.add("hidden"); formElBTP.style.setProperty("display", "none", "important"); }
-  if (camElBTP) { camElBTP.classList.remove("hidden"); camElBTP.style.removeProperty("display"); }
-  if (kqElBTP) { kqElBTP.classList.add("hidden"); kqElBTP.style.setProperty("display", "none", "important"); }
+  document.getElementById("btp-form").style.display = "none";
+  document.getElementById("btp-cam").style.display = "block";
+  document.getElementById("btp-ketqua").style.display = "none";
   document.getElementById("btp-dem").textContent = "Đã quét: " + phienBTP.length + " mã";
   document.getElementById("btp-status").innerHTML = '<i class="ti ti-radar" style="color:var(--success)"></i> Đang quét Đợt ' + demSoDotBTP + '...';
 

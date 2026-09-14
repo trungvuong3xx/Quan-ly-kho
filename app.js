@@ -321,53 +321,18 @@ function layNgayHomNayLocal() {
 window.layNgayHomNayLocal = layNgayHomNayLocal;
 
 function chuyenTrang(id, el) {
-  // 1. Tắt ngay camera native lập tức khi bắt đầu chuyển trang
-  setNativeCameraVisible(false);
-
   document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
-  document.querySelectorAll(".nav-item, .bnav-btn").forEach(b => b.classList.remove("active"));
-  const targetPage = document.getElementById(id);
-  if (targetPage) targetPage.classList.add("active");
-
-  if (el) {
-    el.classList.add("active");
-  } else {
-    const matchedBtn = document.querySelector('.nav-item[data-page="' + id + '"], .bnav-btn[data-page="' + id + '"]');
-    if (matchedBtn) matchedBtn.classList.add("active");
-  }
-
+  document.querySelectorAll(".bnav-btn").forEach(b => b.classList.remove("active"));
+  document.getElementById(id).classList.add("active");
+  if (el) el.classList.add("active");
   if (id !== "quetQR" && typeof dungQuet === "function") dungQuet();
   if (id !== "chiFor" && typeof dungCX1 === "function") dungCX1();
   if (id !== "kiemKe" && typeof dungKiemKe === "function") dungKiemKe();
-  if (id !== "btpPage" && typeof dungBTP === "function") dungBTP();
-
-  // Tự động khôi phục quét camera nếu quay lại tab quét đang mở khung cam
-  if (id === "btpPage") {
-    const btpCam = document.getElementById("btp-cam");
-    if (btpCam && !btpCam.classList.contains("hidden") && btpCam.style.display !== "none") {
-      if (typeof tiepTucQuetHienTaiBTP === "function") tiepTucQuetHienTaiBTP();
-    }
-  } else if (id === "chiFor") {
-    const cx1Cam = document.getElementById("cx1-cam");
-    if (cx1Cam && !cx1Cam.classList.contains("hidden") && cx1Cam.style.display !== "none") {
-      if (typeof tiepTucQuetHienTaiCX1 === "function") tiepTucQuetHienTaiCX1();
-    }
-  } else if (id === "quetQR") {
-    const qrCam = document.getElementById("cam-box");
-    if (qrCam && !qrCam.classList.contains("hidden") && qrCam.style.display !== "none") {
-      if (typeof tiepTucQuetHienTaiQR === "function") tiepTucQuetHienTaiQR();
-    }
-  }
-
-  const isTargetScanning = (id === "btpPage" && window.dangQuetBTP) ||
-                           (id === "chiFor" && window.dangQuetCX1) ||
-                           (id === "quetQR" && window.dangQuetQR);
-  if (!isTargetScanning) {
-    if (typeof khoaCuonTrangQuet === "function") khoaCuonTrangQuet(false);
-    else document.body.classList.remove("cam-active");
+  if (id !== "btpPage") {
+    document.body.classList.remove("cam-active");
+    if (typeof dungBTP === "function") dungBTP();
   }
   if (id === "trangChu" && typeof capNhatTrangChu === "function") capNhatTrangChu();
-  if (typeof kiemTraVaDongBoNativeCamera === "function") kiemTraVaDongBoNativeCamera();
 
   // Tự động khởi tạo ngày hôm nay nếu ô chọn ngày đang trống
   const today = layNgayHomNayLocal();
@@ -379,7 +344,7 @@ function chuyenTrang(id, el) {
 
 // Điều hướng tới 1 tab từ nơi khác ngoài bottom-nav (nút tắt ở Trang chủ, banner tiếp tục...)
 function diToiTab(id) {
-  const btn = document.querySelector('.nav-item[data-page="' + id + '"]') || document.querySelector('.bnav-btn[data-page="' + id + '"]');
+  const btn = document.querySelector('.bnav-btn[data-page="' + id + '"]');
   if (btn) chuyenTrang(id, btn);
   else chuyenTrangKhongNav(id);
 }
@@ -387,48 +352,17 @@ window.diToiTab = diToiTab;
 
 // Điều hướng tới 1 trang KHÔNG có nút riêng trên bottom-nav (vd: Lịch sử, chi tiết lịch sử)
 function chuyenTrangKhongNav(id) {
-  // 1. Tắt ngay camera native lập tức
-  setNativeCameraVisible(false);
-
   document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
-  document.querySelectorAll(".nav-item, .bnav-btn").forEach(b => b.classList.remove("active"));
-  const matchedBtn = document.querySelector('.nav-item[data-page="' + id + '"], .bnav-btn[data-page="' + id + '"]');
-  if (matchedBtn) matchedBtn.classList.add("active");
-
   if (id !== "quetQR" && typeof dungQuet === "function") dungQuet();
   if (id !== "chiFor" && typeof dungCX1 === "function") dungCX1();
   if (id !== "kiemKe" && typeof dungKiemKe === "function") dungKiemKe();
-  if (id !== "btpPage" && typeof dungBTP === "function") dungBTP();
-
-  // Tự động khôi phục quét camera nếu quay lại tab quét đang mở khung cam
-  if (id === "btpPage") {
-    const btpCam = document.getElementById("btp-cam");
-    if (btpCam && !btpCam.classList.contains("hidden") && btpCam.style.display !== "none") {
-      if (typeof tiepTucQuetHienTaiBTP === "function") tiepTucQuetHienTaiBTP();
-    }
-  } else if (id === "chiFor") {
-    const cx1Cam = document.getElementById("cx1-cam");
-    if (cx1Cam && !cx1Cam.classList.contains("hidden") && cx1Cam.style.display !== "none") {
-      if (typeof tiepTucQuetHienTaiCX1 === "function") tiepTucQuetHienTaiCX1();
-    }
-  } else if (id === "quetQR") {
-    const qrCam = document.getElementById("cam-box");
-    if (qrCam && !qrCam.classList.contains("hidden") && qrCam.style.display !== "none") {
-      if (typeof tiepTucQuetHienTaiQR === "function") tiepTucQuetHienTaiQR();
-    }
-  }
-
-  const isTargetScanning = (id === "btpPage" && window.dangQuetBTP) ||
-                           (id === "chiFor" && window.dangQuetCX1) ||
-                           (id === "quetQR" && window.dangQuetQR);
-  if (!isTargetScanning) {
-    if (typeof khoaCuonTrangQuet === "function") khoaCuonTrangQuet(false);
-    else document.body.classList.remove("cam-active");
+  if (id !== "btpPage") {
+    document.body.classList.remove("cam-active");
+    if (typeof dungBTP === "function") dungBTP();
   }
   const page = document.getElementById(id);
   if (page) page.classList.add("active");
   if (id === "lichSuQuetQR" && typeof renderLichSuQR === "function") renderLichSuQR();
-  if (typeof kiemTraVaDongBoNativeCamera === "function") kiemTraVaDongBoNativeCamera();
 }
 window.chuyenTrangKhongNav = chuyenTrangKhongNav;
 
@@ -451,9 +385,6 @@ window.addEventListener("click", pushChanThoatState, { once: true });
 function handlePopStateThoat(e) {
   if (isExitingApp) return;
 
-  // Luôn ẩn ngay camera native khi bấm phím Back
-  if (typeof setNativeCameraVisible === 'function') setNativeCameraVisible(false);
-
   // 1. Nếu đang mở bàn phím ảo custom -> đóng bàn phím trước
   const openBp = document.querySelector(".cx5-bp-panel.show");
   if (openBp) {
@@ -463,14 +394,12 @@ function handlePopStateThoat(e) {
   }
 
   // 2. Nếu đang mở overlay / modal -> đóng overlay trước
-  const openOverlay = document.querySelector(".overlay.show, .cx5-xoay-overlay.show, .modal-overlay.active");
+  const openOverlay = document.querySelector(".overlay.show, .cx5-xoay-overlay.show");
   if (openOverlay) {
     openOverlay.classList.remove("show");
-    openOverlay.classList.remove("active");
     if (typeof dongSuaLuotCX5 === "function") dongSuaLuotCX5();
     if (typeof dongDcChiTietCX5 === "function") dongDcChiTietCX5();
     if (typeof dongXoayCX5 === "function") dongXoayCX5();
-    if (typeof closeLichSuModal === "function") closeLichSuModal();
     setTimeout(pushChanThoatState, 10);
     return;
   }
@@ -478,111 +407,22 @@ function handlePopStateThoat(e) {
   const activePage = document.querySelector(".page.active");
   const activeId = activePage ? activePage.id : "trangChu";
 
-  // 3. Nếu đang ở màn hình quét BTP, CX1, Quét QR thì đóng camera về form trước
-  if (activeId === "btpPage") {
-    const camEl = document.getElementById("btp-cam");
-    const kqEl = document.getElementById("btp-ketqua");
-    const formEl = document.getElementById("btp-form");
-    const isCamOrKqVisible = (camEl && (camEl.style.display !== "none" || !camEl.classList.contains("hidden"))) ||
-                             (kqEl && (kqEl.style.display !== "none" || !kqEl.classList.contains("hidden")));
-    if (isCamOrKqVisible) {
-      if (typeof dungBTP === "function") dungBTP();
-      if (typeof dungCameraFast === "function") dungCameraFast("btp-reader", typeof zxingReaderBTP !== "undefined" ? zxingReaderBTP : null);
-      if (typeof zxingReaderBTP !== "undefined") zxingReaderBTP = null;
-      if (typeof setNativeCameraVisible === "function") setNativeCameraVisible(false);
-      if (typeof khoaCuonTrangQuet === "function") khoaCuonTrangQuet(false);
-      else document.body.classList.remove("cam-active");
-
-      if (camEl) {
-        camEl.classList.add("hidden");
-        camEl.style.setProperty("display", "none", "important");
-      }
-      if (kqEl) {
-        kqEl.classList.add("hidden");
-        kqEl.style.setProperty("display", "none", "important");
-      }
-      if (formEl) {
-        formEl.classList.remove("hidden");
-        formEl.style.setProperty("display", "block", "important");
-      }
-      setTimeout(pushChanThoatState, 10);
-      return;
-    }
-  } else if (activeId === "chiFor") {
-    const camEl = document.getElementById("cx1-cam");
-    const kqEl = document.getElementById("cx1-ketqua");
-    const formEl = document.getElementById("cx1-form");
-    const isCamOrKqVisible = (camEl && (camEl.style.display !== "none" || !camEl.classList.contains("hidden"))) ||
-                             (kqEl && (kqEl.style.display !== "none" || !kqEl.classList.contains("hidden")));
-    if (isCamOrKqVisible) {
-      if (typeof dungCX1 === "function") dungCX1();
-      if (typeof dungCameraFast === "function") dungCameraFast("cx1-reader", typeof zxingReaderCX1 !== "undefined" ? zxingReaderCX1 : null);
-      if (typeof zxingReaderCX1 !== "undefined") zxingReaderCX1 = null;
-      if (typeof setNativeCameraVisible === "function") setNativeCameraVisible(false);
-      if (typeof khoaCuonTrangQuet === "function") khoaCuonTrangQuet(false);
-      else document.body.classList.remove("cam-active");
-
-      if (camEl) {
-        camEl.classList.add("hidden");
-        camEl.style.setProperty("display", "none", "important");
-      }
-      if (kqEl) {
-        kqEl.classList.add("hidden");
-        kqEl.style.setProperty("display", "none", "important");
-      }
-      if (formEl) {
-        formEl.classList.remove("hidden");
-        formEl.style.setProperty("display", "block", "important");
-      }
-      setTimeout(pushChanThoatState, 10);
-      return;
-    }
-  } else if (activeId === "quetQR") {
-    const camEl = document.getElementById("cam-box");
-    const kqEl = document.getElementById("qr-ketqua");
-    const formEl = document.getElementById("form-chon");
-    const isCamOrKqVisible = (camEl && (camEl.style.display !== "none" || !camEl.classList.contains("hidden"))) ||
-                             (kqEl && (kqEl.style.display !== "none" || !kqEl.classList.contains("hidden")));
-    if (isCamOrKqVisible) {
-      if (typeof dungQuetQR === "function") dungQuetQR();
-      if (typeof dungCameraFast === "function") dungCameraFast("reader", typeof zxingReaderQR !== "undefined" ? zxingReaderQR : null);
-      if (typeof zxingReaderQR !== "undefined") zxingReaderQR = null;
-      if (typeof setNativeCameraVisible === "function") setNativeCameraVisible(false);
-      if (typeof khoaCuonTrangQuet === "function") khoaCuonTrangQuet(false);
-      else document.body.classList.remove("cam-active");
-
-      if (camEl) {
-        camEl.classList.add("hidden");
-        camEl.style.setProperty("display", "none", "important");
-      }
-      if (kqEl) {
-        kqEl.classList.add("hidden");
-        kqEl.style.setProperty("display", "none", "important");
-      }
-      if (formEl) {
-        formEl.classList.remove("hidden");
-        formEl.style.setProperty("display", "block", "important");
-      }
-      setTimeout(pushChanThoatState, 10);
-      return;
-    }
-  }
-
-  // 4. Nếu không ở Trang chủ -> quay về Trang chủ
   if (activeId !== "trangChu") {
-    chuyenTrang("trangChu", document.querySelector('.nav-item[data-page="trangChu"]'));
+    if (typeof diToiTab === "function") {
+      diToiTab("trangChu");
+    } else if (typeof chuyenTrangKhongNav === "function") {
+      chuyenTrangKhongNav("trangChu");
+    }
     setTimeout(pushChanThoatState, 10);
     return;
   }
 
-  // 5. Nếu đã ở Trang chủ -> Hiện popup hỏi thoát
   const el = document.getElementById("overlay-thoat");
   if (el) el.classList.add("show");
   setTimeout(pushChanThoatState, 10);
 }
 
 window.addEventListener("popstate", handlePopStateThoat);
-window.handleNativeBackButton = handlePopStateThoat;
 
 function khongThoatApp() {
   const el = document.getElementById("overlay-thoat");
@@ -727,15 +567,7 @@ function anSleepOverlayCamera(videoId) {
 
 function choCameraNgu(videoId) {
   const videoEl = document.getElementById(videoId);
-  if (!videoEl) return;
-
-  // Nếu đang dùng Native CameraX: Tạm ẩn khung quét và tắt giữ sáng màn hình để tiết kiệm pin tối đa
-  if (window.AndroidNative && typeof window.AndroidNative.setNativeCameraVisible === 'function') {
-    setNativeCameraVisible(false);
-    if (typeof window.AndroidNative.setKeepScreenOn === 'function') {
-      try { window.AndroidNative.setKeepScreenOn(false); } catch (e) {}
-    }
-  }
+  if (!videoEl || !videoEl.srcObject) return;
 
   cameraSleepingMap[videoId] = true;
 
@@ -749,13 +581,11 @@ function choCameraNgu(videoId) {
     animFrameMap[videoId] = null;
   }
 
-  // Giải phóng phần cứng camera (cho Web fallback) để máy mát và tiết kiệm pin
-  if (videoEl.srcObject) {
-    try {
-      videoEl.srcObject.getTracks().forEach(t => { try { t.stop(); } catch (e) {} });
-      videoEl.srcObject = null;
-    } catch (e) {}
-  }
+  // Giải phóng phần cứng camera để máy mát và tiết kiệm pin
+  try {
+    videoEl.srcObject.getTracks().forEach(t => { try { t.stop(); } catch (e) {} });
+    videoEl.srcObject = null;
+  } catch (e) {}
 
   hienSleepOverlayCamera(videoId);
 }
@@ -763,19 +593,6 @@ function choCameraNgu(videoId) {
 async function danhThucCamera(videoId) {
   if (cameraWakingUpMap[videoId]) return;
   cameraWakingUpMap[videoId] = true;
-
-  // Nếu là Native CameraX: Đánh thức siêu tốc, bật lại view và màn hình sáng ngay
-  if (window.AndroidNative && typeof window.AndroidNative.setNativeCameraVisible === 'function') {
-    setNativeCameraVisible(true);
-    if (typeof window.AndroidNative.setKeepScreenOn === 'function') {
-      try { window.AndroidNative.setKeepScreenOn(true); } catch (e) {}
-    }
-    cameraSleepingMap[videoId] = false;
-    anSleepOverlayCamera(videoId);
-    resetSleepTimerCamera(videoId);
-    cameraWakingUpMap[videoId] = false;
-    return;
-  }
 
   // Hiển thị trạng thái đang kết nối trên overlay để người dùng có phản hồi trực quan
   const overlay = document.getElementById(videoId + "-sleep-overlay");
@@ -1084,72 +901,6 @@ async function khoiTaoCameraFast(videoId, onDecodedCallback) {
     animFrameMap[videoId] = null;
   }
 
-  // ── ƯU TIÊN SỐ 1: Native CameraX + Google ML Kit (Khi chạy trên Android APK) ──
-  if (window.AndroidNative && typeof window.AndroidNative.startNativeScanner === 'function') {
-    try {
-      const layToaDoBox = () => {
-        const box = videoEl.closest('.video-container') || videoEl.parentElement || videoEl;
-        if (!box) return null;
-        const r = box.getBoundingClientRect();
-        return (r && r.width > 0 && r.height > 0) ? r : null;
-      };
-
-      let rBox = layToaDoBox();
-      if (!rBox) {
-        const w = window.innerWidth - 24;
-        const h = Math.round(w * 0.6); // Chuẩn tỉ lệ 60% của video-container
-        rBox = { left: 12, top: 76, width: w, height: h };
-      }
-
-      window.onNativeBarcodeDecoded = (code) => {
-        try {
-          resetSleepTimerCamera(videoId);
-          if (typeof onDecodedCallback === 'function') {
-            onDecodedCallback(code);
-          }
-        } catch (eCb) {
-          console.warn("Native scan callback error:", eCb);
-        }
-      };
-
-      window.AndroidNative.startNativeScanner(rBox.left, rBox.top, rBox.width, rBox.height);
-      if (typeof window.AndroidNative.setKeepScreenOn === 'function') {
-        window.AndroidNative.setKeepScreenOn(true);
-      }
-      resetSleepTimerCamera(videoId);
-      capNhatNutDoiCamera(videoEl);
-
-      // Cập nhật lại bounds thật chính xác ngay khi DOM hoàn tất reflow
-      const capNhatLai = () => {
-        const r = layToaDoBox();
-        if (r && window.AndroidNative && typeof window.AndroidNative.updateNativeScannerBounds === 'function') {
-          window.AndroidNative.updateNativeScannerBounds(r.left, r.top, r.width, r.height);
-        }
-      };
-      requestAnimationFrame(() => {
-        capNhatLai();
-        setTimeout(capNhatLai, 120);
-      });
-
-      return {
-        reset: () => {
-          if (cameraSleepTimerMap[videoId]) {
-            clearTimeout(cameraSleepTimerMap[videoId]);
-            cameraSleepTimerMap[videoId] = null;
-          }
-          anSleepOverlayCamera(videoId);
-          if (typeof setNativeCameraVisible === 'function') setNativeCameraVisible(false);
-          if (window.AndroidNative && typeof window.AndroidNative.stopNativeScanner === 'function') {
-            window.AndroidNative.stopNativeScanner();
-          }
-        }
-      };
-    } catch (eNative) {
-      console.warn("Lỗi khởi tạo Native Scanner, chuyển sang Web fallback:", eNative);
-    }
-  }
-
-  // ── ƯU TIÊN SỐ 2: Web Fallback (HTML5 getUserMedia + ZXing) cho trình duyệt PC ──
   let stream = null;
   try {
     stream = await moLuongCameraDungHuong();
@@ -1333,10 +1084,6 @@ async function khoiTaoCameraFast(videoId, onDecodedCallback) {
 }
 
 function dungCameraFast(videoId, zxingReaderObj) {
-  if (typeof setNativeCameraVisible === 'function') setNativeCameraVisible(false);
-  if (window.AndroidNative && typeof window.AndroidNative.stopNativeScanner === 'function') {
-    try { window.AndroidNative.stopNativeScanner(); } catch (e) {}
-  }
   cameraSleepingMap[videoId] = false;
   cameraWakingUpMap[videoId] = false;
   if (cameraSleepTimerMap[videoId]) {
@@ -1785,85 +1532,23 @@ function moXacNhanApp(noiDung, callbackOk, nhanNutOk, callbackHuy, nhanNutHuy, t
 
   const overlay = document.getElementById("app-overlay-xacnhan");
   if (overlay) overlay.classList.add("show");
-  setNativeCameraVisible(false);
 }
 window.moXacNhanApp = moXacNhanApp;
 
 function dongXacNhanApp(dongY) {
   const overlay = document.getElementById("app-overlay-xacnhan");
   if (overlay) overlay.classList.remove("show");
-  setNativeCameraVisible(true);
   const cbOk = _appXacNhanCallbackOk;
   const cbHuy = _appXacNhanCallbackHuy;
   _appXacNhanCallbackOk = null;
   _appXacNhanCallbackHuy = null;
 
-  if (dongY && typeof cbOk === 'function') cbOk();
-  else if (!dongY && typeof cbHuy === 'function') cbHuy();
+  if (dongY && cbOk) cbOk();
+  else if (!dongY && cbHuy) cbHuy();
 }
 window.dongXacNhanApp = dongXacNhanApp;
 
 // ── Modal Nhập Liệu App (thay thế window.prompt 100%) ───────────────
-function setNativeCameraVisible(visible) {
-  if (window.AndroidNative && typeof window.AndroidNative.setNativeCameraVisible === 'function') {
-    try { window.AndroidNative.setNativeCameraVisible(visible); } catch (e) {}
-  }
-}
-window.setNativeCameraVisible = setNativeCameraVisible;
-
-function kiemTraVaDongBoNativeCamera() {
-  if (!window.AndroidNative || typeof window.AndroidNative.setNativeCameraVisible !== 'function') return;
-  setTimeout(() => {
-    const activePage = document.querySelector(".page.active");
-    if (!activePage) {
-      setNativeCameraVisible(false);
-      return;
-    }
-
-    // Nếu trang hiện tại không phải trang hỗ trợ camera -> TẮT CAMERA NATIVE NGAY
-    const trangKhongCam = ["trangChu", "chiX5", "lichSuQuetQR", "lichSuBTP", "lichSuBTPChiTiet", "lichSuCX1"];
-    if (trangKhongCam.includes(activePage.id)) {
-      setNativeCameraVisible(false);
-      return;
-    }
-
-    // Kiểm tra xem trang active có đang thực sự quét không
-    let shouldShow = false;
-    if (activePage.id === "btpPage" && window.dangQuetBTP) {
-      const box = document.getElementById("btp-cam");
-      if (box && box.style.display !== "none" && box.offsetParent !== null) shouldShow = true;
-    } else if (activePage.id === "chiFor" && window.dangQuetCX1) {
-      const box = document.getElementById("cx1-cam");
-      if (box && box.style.display !== "none" && box.offsetParent !== null) shouldShow = true;
-    } else if (activePage.id === "quetQR" && window.dangQuetQR) {
-      const box = document.getElementById("cam-box");
-      if (box && box.style.display !== "none" && box.offsetParent !== null) shouldShow = true;
-    } else if (activePage.id === "kiemKe" && window.dangQuetKK) {
-      const box = document.getElementById("kk-box") || document.getElementById("kk-cam");
-      if (box && box.style.display !== "none" && box.offsetParent !== null) shouldShow = true;
-    }
-
-    setNativeCameraVisible(shouldShow);
-
-    // Đồng bộ lại kích thước khung quét nếu đang hiển thị
-    if (shouldShow && typeof window.AndroidNative.updateNativeScannerBounds === "function") {
-      let activeBoxEl = null;
-      if (activePage.id === "btpPage") activeBoxEl = document.querySelector("#btp-cam .video-container");
-      else if (activePage.id === "chiFor") activeBoxEl = document.querySelector("#cx1-cam .video-container");
-      else if (activePage.id === "quetQR") activeBoxEl = document.querySelector("#cam-box .video-container");
-      else if (activePage.id === "kiemKe") activeBoxEl = document.querySelector("#kk-box .video-container, #kk-cam .video-container");
-
-      if (activeBoxEl) {
-        const r = activeBoxEl.getBoundingClientRect();
-        if (r.width > 0 && r.height > 0) {
-          window.AndroidNative.updateNativeScannerBounds(r.left, r.top, r.width, r.height);
-        }
-      }
-    }
-  }, 40);
-}
-window.kiemTraVaDongBoNativeCamera = kiemTraVaDongBoNativeCamera;
-
 let _appPromptCallbackOk = null;
 function moPromptApp(tieuDe, noiDung, giaTriMacDinh, callbackOk, placeholder) {
   const overlay = document.getElementById("app-overlay-prompt");
@@ -1880,7 +1565,6 @@ function moPromptApp(tieuDe, noiDung, giaTriMacDinh, callbackOk, placeholder) {
   }
   _appPromptCallbackOk = callbackOk || null;
   overlay.classList.add("show");
-  setNativeCameraVisible(false);
   setTimeout(() => { if (elInput) elInput.focus(); }, 120);
 }
 window.moPromptApp = moPromptApp;
@@ -1888,7 +1572,6 @@ window.moPromptApp = moPromptApp;
 function dongPromptApp(dongY) {
   const overlay = document.getElementById("app-overlay-prompt");
   if (overlay) overlay.classList.remove("show");
-  setNativeCameraVisible(true);
   const elInput = document.getElementById("app-prompt-input");
   const cb = _appPromptCallbackOk;
   _appPromptCallbackOk = null;
@@ -1962,9 +1645,6 @@ function triggerResumeCamera() {
 }
 
 function ngatTatCaCamera() {
-  if (window.AndroidNative && typeof window.AndroidNative.stopNativeScanner === 'function') {
-    try { window.AndroidNative.stopNativeScanner(); } catch (e) {}
-  }
   const vids = ['reader', 'kk-reader', 'cx1-reader', 'btp-reader'];
   for (const id of vids) {
     if (cameraSleepTimerMap[id]) {
@@ -2503,7 +2183,6 @@ window.showCanhBao = showCanhBao;
     const modal = document.getElementById("modal-hop-den");
     if (!modal) return;
     modal.style.display = "flex";
-    setNativeCameraVisible(false);
 
     // Cập nhật thông số hệ thống
     const statEl = document.getElementById("hopden-system-stats");
@@ -2524,7 +2203,6 @@ window.showCanhBao = showCanhBao;
   function dongModalHopDen() {
     const modal = document.getElementById("modal-hop-den");
     if (modal) modal.style.display = "none";
-    setNativeCameraVisible(true);
   }
   window.dongModalHopDen = dongModalHopDen;
 
