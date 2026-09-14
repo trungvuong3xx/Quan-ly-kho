@@ -333,6 +333,7 @@ async function batDauPhienMoiBTP() {
   phienBTP = [];
   demSoDotBTP = 1;
   dangQuetBTP = true;
+  window.dangQuetBTP = true;
   denPinBatBTP = false;
   idPhienHienTaiBTP = Date.now() + "-" + Math.random().toString(36).slice(2);
   soLuongDaGuiHienTaiBTP = 0;
@@ -375,6 +376,7 @@ async function batDauPhienMoiBTP() {
 function dungBTP() {
   // document.body.classList.remove("cam-active");
   dangQuetBTP = false;
+  window.dangQuetBTP = false;
   if (typeof setNativeCameraVisible === 'function') setNativeCameraVisible(false);
   const statusEl = document.getElementById("btp-status");
   if (statusEl) statusEl.innerHTML = '<i class="ti ti-player-pause" style="color:var(--red)"></i> Đã dừng quét (Đợt ' + (demSoDotBTP || 1) + ')';
@@ -384,6 +386,7 @@ async function tiepTucBTP() {
   if (typeof khoaCuonTrangQuet === "function") khoaCuonTrangQuet(true); else document.body.classList.add("cam-active");
   const daQuetTrongDotNay = phienBTP.some(function(item) { return item.dotQuet === demSoDotBTP; }); if (daQuetTrongDotNay || (demSoDotBTP || 0) === 0) { demSoDotBTP = (demSoDotBTP || 0) + 1; }
   dangQuetBTP = true;
+  window.dangQuetBTP = true;
   if (typeof setNativeCameraVisible === 'function') setNativeCameraVisible(true);
   document.getElementById("btp-status").innerHTML = '<i class="ti ti-radar" style="color:var(--success)"></i> Đang quét Đợt ' + demSoDotBTP + '...';
   try {
@@ -621,6 +624,8 @@ function taoHangKetQuaBTP(danhSach) {
 }
 
 function hienKetQuaBTP() {
+  dangQuetBTP = false;
+  window.dangQuetBTP = false;
   if (typeof khoaCuonTrangQuet === "function") khoaCuonTrangQuet(false); else document.body.classList.remove("cam-active");
   if (typeof setNativeCameraVisible === 'function') setNativeCameraVisible(false);
   const { hangDot, footDot, hangGom, footGom } = taoHangKetQuaBTP(phienBTP);
@@ -651,6 +656,7 @@ async function quetTiepBTP() {
   if (typeof khoaCuonTrangQuet === "function") khoaCuonTrangQuet(true); else document.body.classList.add("cam-active");
   const daQuetTrongDotNay = phienBTP.some(function(item) { return item.dotQuet === demSoDotBTP; }); if (daQuetTrongDotNay || (demSoDotBTP || 0) === 0) { demSoDotBTP = (demSoDotBTP || 0) + 1; }
   dangQuetBTP = true;
+  window.dangQuetBTP = true;
   denPinBatBTP = false;
 
   document.getElementById("btp-ketqua").style.display = "none";
@@ -688,6 +694,8 @@ function quetMoiBTP() {
   demSoDotBTP = 0;
   idPhienHienTaiBTP = null;
   soLuongDaGuiHienTaiBTP = 0;
+  dangQuetBTP = false;
+  window.dangQuetBTP = false;
   xoaPhienDoDangBTP();
   if (typeof setNativeCameraVisible === 'function') setNativeCameraVisible(false);
   document.getElementById("btp-ketqua").style.display = "none";

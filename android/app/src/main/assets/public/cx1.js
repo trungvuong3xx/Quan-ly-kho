@@ -189,6 +189,7 @@ async function tiepTucKhoiTaoCX1() {
   phienCX1 = [];
   demSoDot = 1; 
   dangQuetCX1 = true;
+  window.dangQuetCX1 = true;
   denPinBat = false;
   idPhienHienTai = Date.now() + "-" + Math.random().toString(36).slice(2);
   soLuongDaGuiHienTai = 0;
@@ -233,6 +234,7 @@ async function tiepTucKhoiTaoCX1() {
 
 function dungCX1() {
   dangQuetCX1 = false;
+  window.dangQuetCX1 = false;
   if (typeof setNativeCameraVisible === 'function') setNativeCameraVisible(false);
   // Giữ nguyên phần cứng camera chạy ngầm để bật lại tức thì
   // dungCameraFast("cx1-reader", zxingReaderCX1);
@@ -246,6 +248,7 @@ async function tiepTucCX1() {
     demSoDot += 1; 
   }
   dangQuetCX1 = true;
+  window.dangQuetCX1 = true;
   denPinBat = false;
   if (typeof setNativeCameraVisible === 'function') setNativeCameraVisible(true);
   document.getElementById("cx1-status").textContent = "Đang quét Đợt " + demSoDot + "...";
@@ -694,6 +697,8 @@ function taoHangKetQuaCX1(danhSach) {
 }
 
 function hienKetQuaCX1() {
+  dangQuetCX1 = false;
+  window.dangQuetCX1 = false;
   if (typeof khoaCuonTrangQuet === "function") khoaCuonTrangQuet(false); else document.body.classList.remove("cam-active");
   if (typeof setNativeCameraVisible === 'function') setNativeCameraVisible(false);
   const { hangDot, hangGom } = taoHangKetQuaCX1(phienCX1);
@@ -711,6 +716,7 @@ async function quetTiepCX1() {
     demSoDot += 1;
   }
   dangQuetCX1 = true;
+  window.dangQuetCX1 = true;
   denPinBat = false;
 
   document.getElementById("cx1-ketqua").style.display = "none";
@@ -751,6 +757,8 @@ function quetMoiCX1() {
   demSoDot = 0;
   idPhienHienTai = null;
   soLuongDaGuiHienTai = 0;
+  dangQuetCX1 = false;
+  window.dangQuetCX1 = false;
   xoaPhienDoDangCX1();
   if (typeof setNativeCameraVisible === 'function') setNativeCameraVisible(false);
   document.getElementById("cx1-ketqua").style.display = "none";

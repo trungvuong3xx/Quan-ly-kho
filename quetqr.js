@@ -405,6 +405,8 @@ function xemKetQuaQuetQR() {
 window.xemKetQuaQuetQR = xemKetQuaQuetQR;
 
 function hienKetQuaQuetQR() {
+  dangQuetQR = false;
+  window.dangQuetQR = false;
   if (typeof setNativeCameraVisible === 'function') setNativeCameraVisible(false);
   const { hangDot, hangGom } = taoHangKetQuaQuetQR(phienQuetQR);
   const tbodyDot = document.getElementById("qr-tbody-dot");
@@ -512,6 +514,8 @@ function quetMoiQuetQR() {
   demSoDotQR = 1;
   idPhienHienTaiQR = null;
   soLuongDaGuiHienTaiQR = 0;
+  dangQuetQR = false;
+  window.dangQuetQR = false;
   xoaPhienDoDangQR();
   if (typeof setNativeCameraVisible === 'function') setNativeCameraVisible(false);
   document.getElementById("qr-ketqua").style.display = "none";

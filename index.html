@@ -1335,7 +1335,8 @@
       
       // Fix active state of bottom nav items
       document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
-      if(btn) btn.classList.add('active');
+      const activeBtn = btn || document.querySelector('.nav-item[data-page="' + idTab + '"]');
+      if(activeBtn) activeBtn.classList.add('active');
     };
     
     const oldChuyenTrangKhongNav = window.chuyenTrangKhongNav;
@@ -1346,6 +1347,9 @@
         else header.style.display = 'none';
       }
       if(oldChuyenTrangKhongNav) oldChuyenTrangKhongNav(idTab);
+      document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+      const activeBtn = document.querySelector('.nav-item[data-page="' + idTab + '"]');
+      if(activeBtn) activeBtn.classList.add('active');
     };
   });
 </script>
