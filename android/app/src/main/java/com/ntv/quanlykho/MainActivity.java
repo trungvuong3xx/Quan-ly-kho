@@ -43,13 +43,23 @@ public class MainActivity extends BridgeActivity {
         if (getBridge() != null && getBridge().getWebView() != null) {
             WebView webView = getBridge().getWebView();
             webView.setLayerType(View.LAYER_TYPE_HARDWARE, null);
+            webView.setOverScrollMode(View.OVER_SCROLL_NEVER);
             webView.getSettings().setMediaPlaybackRequiresUserGesture(false);
-            webView.getSettings().setCacheMode(WebSettings.LOAD_NO_CACHE);
+            webView.getSettings().setCacheMode(WebSettings.LOAD_DEFAULT);
+            webView.getSettings().setDomStorageEnabled(true);
+            webView.getSettings().setDatabaseEnabled(true);
             webView.addJavascriptInterface(new Object() {
                 @JavascriptInterface
                 public void exitApp() {
                     runOnUiThread(() -> {
-                        finishAffinity();
+                        if (getBridge() != null && getBridge().getWebView() != null) {
+                            getBridge().getWebView().evaluateJavascript(
+                                "if (window.thucHienAutoBackup) { window.thucHienAutoBackup('app_exit'); }",
+                                value -> finishAffinity()
+                            );
+                        } else {
+                            finishAffinity();
+                        }
                     });
                 }
 
@@ -172,7 +182,7 @@ public class MainActivity extends BridgeActivity {
         if (getBridge() != null && getBridge().getWebView() != null) {
             WebView webView = getBridge().getWebView();
             webView.getSettings().setMediaPlaybackRequiresUserGesture(false);
-            webView.getSettings().setCacheMode(WebSettings.LOAD_NO_CACHE);
+            webView.getSettings().setCacheMode(WebSettings.LOAD_DEFAULT);
         }
     }
 
@@ -184,7 +194,7 @@ public class MainActivity extends BridgeActivity {
         });
         if (getBridge() != null && getBridge().getWebView() != null) {
             getBridge().getWebView().evaluateJavascript(
-                "if (window.ngatTatCaCamera) { window.ngatTatCaCamera(); }",
+                "if (window.thucHienAutoBackup) { window.thucHienAutoBackup('app_pause'); } if (window.ngatTatCaCamera) { window.ngatTatCaCamera(); }",
                 null
             );
         }
@@ -194,7 +204,7 @@ public class MainActivity extends BridgeActivity {
     public void onDestroy() {
         if (getBridge() != null && getBridge().getWebView() != null) {
             getBridge().getWebView().evaluateJavascript(
-                "if (window.ngatTatCaCamera) { window.ngatTatCaCamera(); }",
+                "if (window.thucHienAutoBackup) { window.thucHienAutoBackup('app_destroy'); } if (window.ngatTatCaCamera) { window.ngatTatCaCamera(); }",
                 null
             );
         }

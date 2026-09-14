@@ -785,6 +785,10 @@ async function moLuongCameraDungHuong() {
 
   // 2. Tìm Camera 0 chính xác (Sony IMX586 48MP AF)
   const cam0 = timCamera0(videoInputs);
+  if (cam0 && cam0.deviceId) {
+    idCameraUuTien = cam0.deviceId;
+    try { localStorage.setItem('camera_uu_tien', cam0.deviceId); } catch (e) {}
+  }
 
   // Nếu luồng activeStream ở trên đã mở thành công và là camera sau -> DÙNG LUÔN, TUYỆT ĐỐI KHÔNG STOP!
   // Việc stop stream vừa mở sẽ khóa cảm biến trong HAL 300ms, dẫn đến mở nhầm sang camera trước gây lỗi calibrate motor
@@ -792,6 +796,10 @@ async function moLuongCameraDungHuong() {
     const track = activeStream.getVideoTracks()[0];
     const trackLbl = (track && track.label) ? track.label.toLowerCase() : '';
     if (!laCameraTruoc(trackLbl)) {
+      if (cam0 && cam0.deviceId) {
+        idCameraUuTien = cam0.deviceId;
+        try { localStorage.setItem('camera_uu_tien', cam0.deviceId); } catch (e) {}
+      }
       return activeStream;
     }
     // Chỉ stop nếu lỡ là camera trước
@@ -822,7 +830,11 @@ async function moLuongCameraDungHuong() {
         }
       });
       const track = stream.getVideoTracks()[0];
-      if (!laCameraTruoc(track && track.label)) return stream;
+      if (!laCameraTruoc(track && track.label)) {
+        idCameraUuTien = id;
+        try { localStorage.setItem('camera_uu_tien', id); } catch (e) {}
+        return stream;
+      }
       stream.getTracks().forEach(t => { try { t.stop(); } catch (e) {} });
     } catch (e) {
       try {
@@ -915,6 +927,7 @@ async function khoiTaoCameraFast(videoId, onDecodedCallback) {
       const exactCam0 = timCamera0(devList);
       if (exactCam0 && exactCam0.deviceId) {
         idCameraUuTien = exactCam0.deviceId;
+        try { localStorage.setItem('camera_uu_tien', exactCam0.deviceId); } catch (e) {}
       }
     }).catch(() => {});
 
