@@ -27,12 +27,57 @@ import com.getcapacitor.BridgeActivity;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.OutputStream;
+import android.media.Image;
+import android.util.DisplayMetrics;
+import android.util.Size;
+import android.widget.FrameLayout;
+import androidx.annotation.OptIn;
+import androidx.camera.core.Camera;
+import androidx.camera.core.CameraSelector;
+import androidx.camera.core.ExperimentalGetImage;
+import androidx.camera.core.FocusMeteringAction;
+import androidx.camera.core.ImageAnalysis;
+import androidx.camera.core.ImageProxy;
+import androidx.camera.core.MeteringPoint;
+import androidx.camera.core.MeteringPointFactory;
+import androidx.camera.core.Preview;
+import androidx.camera.lifecycle.ProcessCameraProvider;
+import androidx.camera.view.PreviewView;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.mlkit.vision.barcode.BarcodeScanner;
+import com.google.mlkit.vision.barcode.BarcodeScannerOptions;
+import com.google.mlkit.vision.barcode.BarcodeScanning;
+import com.google.mlkit.vision.barcode.common.Barcode;
+import com.google.mlkit.vision.common.InputImage;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import org.json.JSONObject;
 
 public class MainActivity extends BridgeActivity {
+    private PreviewView nativePreviewView;
+    private ProcessCameraProvider cameraProvider;
+    private ExecutorService cameraExecutor;
+    private BarcodeScanner barcodeScanner;
+    private Camera activeCamera;
+    private long lastScannedTimestamp = 0;
+    private String lastScannedCode = "";
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
+
+        cameraExecutor = Executors.newSingleThreadExecutor();
+        BarcodeScannerOptions options = new BarcodeScannerOptions.Builder()
+            .setBarcodeFormats(
+                Barcode.FORMAT_QR_CODE,
+                Barcode.FORMAT_CODE_128,
+                Barcode.FORMAT_CODE_39,
+                Barcode.FORMAT_EAN_13,
+                Barcode.FORMAT_EAN_8
+            )
+            .build();
+        barcodeScanner = BarcodeScanning.getClient(options);
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             getWindow().setNavigationBarColor(Color.parseColor("#141b17"));
@@ -159,6 +204,34 @@ public class MainActivity extends BridgeActivity {
                         }
                     } catch (Exception ignore) {}
                 }
+
+                @JavascriptInterface
+                public boolean isNativeScannerSupported() {
+                    return true;
+                }
+
+                @JavascriptInterface
+                public void startNativeScanner(final float x, final float y, final float width, final float height) {
+                    runOnUiThread(() -> {
+                        startCameraXScanner(x, y, width, height);
+                    });
+                }
+
+                @JavascriptInterface
+                public void stopNativeScanner() {
+                    runOnUiThread(() -> {
+                        stopCameraXScanner();
+                    });
+                }
+
+                @JavascriptInterface
+                public void setNativeCameraVisible(final boolean visible) {
+                    runOnUiThread(() -> {
+                        if (nativePreviewView != null) {
+                            nativePreviewView.setVisibility(visible ? View.VISIBLE : View.GONE);
+                        }
+                    });
+                }
             }, "AndroidNative");
         }
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
@@ -179,6 +252,7 @@ public class MainActivity extends BridgeActivity {
     @Override
     public void onPause() {
         super.onPause();
+        stopCameraXScanner();
         runOnUiThread(() -> {
             getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         });
@@ -192,6 +266,13 @@ public class MainActivity extends BridgeActivity {
 
     @Override
     public void onDestroy() {
+        stopCameraXScanner();
+        if (cameraExecutor != null) {
+            cameraExecutor.shutdown();
+        }
+        if (barcodeScanner != null) {
+            barcodeScanner.close();
+        }
         if (getBridge() != null && getBridge().getWebView() != null) {
             getBridge().getWebView().evaluateJavascript(
                 "if (window.ngatTatCaCamera) { window.ngatTatCaCamera(); }",
@@ -210,6 +291,134 @@ public class MainActivity extends BridgeActivity {
             );
         } else {
             super.onBackPressed();
+        }
+    }
+
+    private void startCameraXScanner(float x, float y, float width, float height) {
+        try {
+            DisplayMetrics dm = getResources().getDisplayMetrics();
+            int pxX = Math.round(x * dm.density);
+            int pxY = Math.round(y * dm.density);
+            int pxW = Math.round(width * dm.density);
+            int pxH = Math.round(height * dm.density);
+
+            FrameLayout rootLayout = findViewById(android.R.id.content);
+            if (nativePreviewView == null) {
+                nativePreviewView = new PreviewView(this);
+                nativePreviewView.setScaleType(PreviewView.ScaleType.FILL_CENTER);
+                FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(pxW, pxH);
+                lp.leftMargin = pxX;
+                lp.topMargin = pxY;
+                rootLayout.addView(nativePreviewView, lp);
+            } else {
+                FrameLayout.LayoutParams lp = (FrameLayout.LayoutParams) nativePreviewView.getLayoutParams();
+                lp.width = pxW;
+                lp.height = pxH;
+                lp.leftMargin = pxX;
+                lp.topMargin = pxY;
+                nativePreviewView.setLayoutParams(lp);
+                nativePreviewView.setVisibility(View.VISIBLE);
+            }
+
+            ListenableFuture<ProcessCameraProvider> cameraProviderFuture = ProcessCameraProvider.getInstance(this);
+            cameraProviderFuture.addListener(() -> {
+                try {
+                    cameraProvider = cameraProviderFuture.get();
+                    cameraProvider.unbindAll();
+
+                    // BẮT BUỘC: Luôn khóa chặt Camera Sau (Sony 48MP AF), TUYỆT ĐỐI không mở camera trước trên Redmi K20 Pro
+                    CameraSelector cameraSelector = new CameraSelector.Builder()
+                        .requireLensFacing(CameraSelector.LENS_FACING_BACK)
+                        .build();
+
+                    Preview preview = new Preview.Builder().build();
+                    if (nativePreviewView != null) {
+                        preview.setSurfaceProvider(nativePreviewView.getSurfaceProvider());
+                    }
+
+                    ImageAnalysis imageAnalysis = new ImageAnalysis.Builder()
+                        .setTargetResolution(new Size(1280, 720))
+                        .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
+                        .build();
+
+                    imageAnalysis.setAnalyzer(cameraExecutor, this::processImageProxy);
+
+                    activeCamera = cameraProvider.bindToLifecycle(this, cameraSelector, preview, imageAnalysis);
+
+                    // Chạm vào khung quét để lấy nét (Tap to focus) phần cứng
+                    nativePreviewView.setOnTouchListener((v, event) -> {
+                        if (event.getAction() == android.view.MotionEvent.ACTION_UP && activeCamera != null) {
+                            try {
+                                MeteringPointFactory factory = nativePreviewView.getMeteringPointFactory();
+                                MeteringPoint point = factory.createPoint(event.getX(), event.getY());
+                                FocusMeteringAction action = new FocusMeteringAction.Builder(point).build();
+                                activeCamera.getCameraControl().startFocusAndMetering(action);
+                            } catch (Exception ignore) {}
+                        }
+                        return true;
+                    });
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }, ContextCompat.getMainExecutor(this));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    @OptIn(markerClass = ExperimentalGetImage.class)
+    private void processImageProxy(ImageProxy imageProxy) {
+        Image mediaImage = imageProxy.getImage();
+        if (mediaImage != null && barcodeScanner != null) {
+            InputImage image = InputImage.fromMediaImage(mediaImage, imageProxy.getImageInfo().getRotationDegrees());
+            barcodeScanner.process(image)
+                .addOnSuccessListener(barcodes -> {
+                    for (Barcode barcode : barcodes) {
+                        String rawValue = barcode.getRawValue();
+                        if (rawValue != null && !rawValue.trim().isEmpty()) {
+                            long now = System.currentTimeMillis();
+                            // Chống quét dồn dập cùng 1 mã trong 600ms
+                            if (!rawValue.equals(lastScannedCode) || (now - lastScannedTimestamp > 600)) {
+                                lastScannedCode = rawValue;
+                                lastScannedTimestamp = now;
+                                notifyWebBarcodeScanned(rawValue);
+                                break;
+                            }
+                        }
+                    }
+                })
+                .addOnFailureListener(e -> {})
+                .addOnCompleteListener(task -> {
+                    imageProxy.close();
+                });
+        } else {
+            imageProxy.close();
+        }
+    }
+
+    private void notifyWebBarcodeScanned(String rawValue) {
+        runOnUiThread(() -> {
+            if (getBridge() != null && getBridge().getWebView() != null) {
+                JSONObject obj = new JSONObject();
+                try {
+                    obj.put("text", rawValue);
+                } catch (Exception ignore) {}
+                String script = "if (typeof window.onNativeBarcodeDecoded === 'function') { " +
+                                "  window.onNativeBarcodeDecoded(" + obj.toString() + ".text); " +
+                                "}";
+                getBridge().getWebView().evaluateJavascript(script, null);
+            }
+        });
+    }
+
+    private void stopCameraXScanner() {
+        if (cameraProvider != null) {
+            try {
+                cameraProvider.unbindAll();
+            } catch (Exception ignore) {}
+        }
+        if (nativePreviewView != null) {
+            nativePreviewView.setVisibility(View.GONE);
         }
     }
 }

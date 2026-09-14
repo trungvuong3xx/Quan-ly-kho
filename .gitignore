@@ -7,3 +7,4 @@ android/.idea/
 .gradle/
 *.log
 www/
+.playwright-mcp/

@@ -1401,7 +1401,7 @@ function renderTongKgCX5() {
             '<span>' + escHtmlCX5(d.ten) + '</span>' +
             tagHtml +
           '</div>' +
-          (bagInfoText ? '<div style="font-size:12px;color:var(--accent-2);margin-top:2px;">Cân từng bao: ' + bagInfoText + '</div>' : '') +
+          (bagInfoText ? '<div style="font-size:12px;color:var(--accent-2);margin-top:2px;">Bao: ' + bagInfoText + '</div>' : '') +
         '</div>' +
         '<div style="text-align:right;">' +
           '<div style="font-weight:700;color:var(--brass);font-size:15px;">' + d.homNay.kg.toFixed(1) + ' kg</div>' +
@@ -1410,10 +1410,10 @@ function renderTongKgCX5() {
       '</div>' +
       (dsCu ? (
         '<div style="border-top:1px dashed var(--line-soft);padding-top:8px;margin-top:6px;">' +
-          '<div style="font-size:12px;color:var(--cream-soft);margin-bottom:4px;font-weight:600;"><i class="ti ti-history"></i> Ứng viên ghép ngày cũ:</div>' +
+          '<div style="font-size:12px;color:var(--cream-soft);margin-bottom:4px;font-weight:600;"><i class="ti ti-history"></i> Chờ ghép:</div>' +
           dsCu +
           '<div style="margin-top:8px;text-align:right;font-size:14px;border-top:1px solid var(--line-soft);padding-top:6px;">' +
-            'Tổng sau ghép: <b style="color:var(--brass);font-size:15px;">' + tongKg.toFixed(1) + ' kg (' + tongBao + ' bao)</b>' +
+            'Tổng: <b style="color:var(--brass);font-size:15px;">' + tongKg.toFixed(1) + '(' + tongBao + ')</b>' +
           '</div>' +
         '</div>'
       ) : (
@@ -1423,7 +1423,7 @@ function renderTongKgCX5() {
           '</div>'
         ) : (
           '<div style="border-top:1px dashed var(--line-soft);padding-top:6px;margin-top:6px;font-size:12px;color:var(--cream-soft);font-style:italic;">' +
-            (isDuPallet ? '✓ Pallet này đã đủ ≥ 10 bao' : 'Không có ứng viên ngày cũ dư trên Sheet để ghép') +
+            (isDuPallet ? '✓ OK' : 'Hết') +
           '</div>'
         )
       )) +
@@ -1591,7 +1591,7 @@ function xoaUngVienGhepCX5(key, idx) {
   const candidate = d && d.cu[idx];
   if (!candidate) return;
 
-  moXacNhanCX5("Ẩn ứng viên ghép pallet này khỏi danh sách? Muốn khôi phục phải sửa lại từ sheet gốc.", () => {
+  moXacNhanCX5("Xác nhận ẩn", () => {
     // Optimistic UI update: Ẩn ngay lập tức trên UI
     Object.keys(tongKgDataCX5).forEach(function (keyKhoi) {
       tongKgDataCX5[keyKhoi].cu = tongKgDataCX5[keyKhoi].cu.filter(function (c) { return c.row !== candidate.row; });
@@ -1657,7 +1657,7 @@ async function dongBoGhepCX5() {
   }));
 
   if (groups.length === 0 && sessionEntries.length === 0) {
-    showCanhBaoCX5("Dữ liệu phiên và các chọn ghép đã được đồng bộ trước đó!");
+    showCanhBaoCX5("Đã được đồng bộ");
     return;
   }
 

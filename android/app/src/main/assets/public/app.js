@@ -901,6 +901,50 @@ async function khoiTaoCameraFast(videoId, onDecodedCallback) {
     animFrameMap[videoId] = null;
   }
 
+  // ── ƯU TIÊN SỐ 1: Native CameraX + Google ML Kit (Khi chạy trên Android APK) ──
+  if (window.AndroidNative && typeof window.AndroidNative.startNativeScanner === 'function') {
+    try {
+      let rect = videoEl.getBoundingClientRect();
+      if (!rect || rect.width === 0 || rect.height === 0) {
+        const parent = videoEl.parentElement;
+        const pRect = parent ? parent.getBoundingClientRect() : null;
+        rect = {
+          left: (pRect && pRect.left) || 16,
+          top: (pRect && pRect.top) || 60,
+          width: (pRect && pRect.width) || (window.innerWidth - 32),
+          height: (pRect && pRect.height) || 220
+        };
+      }
+
+      window.onNativeBarcodeDecoded = (code) => {
+        try {
+          if (typeof onDecodedCallback === 'function') {
+            onDecodedCallback(code);
+          }
+        } catch (eCb) {
+          console.warn("Native scan callback error:", eCb);
+        }
+      };
+
+      window.AndroidNative.startNativeScanner(rect.left, rect.top, rect.width, rect.height);
+      if (typeof window.AndroidNative.setKeepScreenOn === 'function') {
+        window.AndroidNative.setKeepScreenOn(true);
+      }
+      capNhatNutDoiCamera(videoEl);
+
+      return {
+        reset: () => {
+          if (window.AndroidNative && typeof window.AndroidNative.stopNativeScanner === 'function') {
+            window.AndroidNative.stopNativeScanner();
+          }
+        }
+      };
+    } catch (eNative) {
+      console.warn("Lỗi khởi tạo Native Scanner, chuyển sang Web fallback:", eNative);
+    }
+  }
+
+  // ── ƯU TIÊN SỐ 2: Web Fallback (HTML5 getUserMedia + ZXing) cho trình duyệt PC ──
   let stream = null;
   try {
     stream = await moLuongCameraDungHuong();
@@ -1084,6 +1128,9 @@ async function khoiTaoCameraFast(videoId, onDecodedCallback) {
 }
 
 function dungCameraFast(videoId, zxingReaderObj) {
+  if (window.AndroidNative && typeof window.AndroidNative.stopNativeScanner === 'function') {
+    try { window.AndroidNative.stopNativeScanner(); } catch (e) {}
+  }
   cameraSleepingMap[videoId] = false;
   cameraWakingUpMap[videoId] = false;
   if (cameraSleepTimerMap[videoId]) {
@@ -1532,23 +1579,32 @@ function moXacNhanApp(noiDung, callbackOk, nhanNutOk, callbackHuy, nhanNutHuy, t
 
   const overlay = document.getElementById("app-overlay-xacnhan");
   if (overlay) overlay.classList.add("show");
+  setNativeCameraVisible(false);
 }
 window.moXacNhanApp = moXacNhanApp;
 
 function dongXacNhanApp(dongY) {
   const overlay = document.getElementById("app-overlay-xacnhan");
   if (overlay) overlay.classList.remove("show");
+  setNativeCameraVisible(true);
   const cbOk = _appXacNhanCallbackOk;
   const cbHuy = _appXacNhanCallbackHuy;
   _appXacNhanCallbackOk = null;
   _appXacNhanCallbackHuy = null;
 
-  if (dongY && cbOk) cbOk();
-  else if (!dongY && cbHuy) cbHuy();
+  if (dongY && typeof cbOk === 'function') cbOk();
+  else if (!dongY && typeof cbHuy === 'function') cbHuy();
 }
 window.dongXacNhanApp = dongXacNhanApp;
 
 // ── Modal Nhập Liệu App (thay thế window.prompt 100%) ───────────────
+function setNativeCameraVisible(visible) {
+  if (window.AndroidNative && typeof window.AndroidNative.setNativeCameraVisible === 'function') {
+    try { window.AndroidNative.setNativeCameraVisible(visible); } catch (e) {}
+  }
+}
+window.setNativeCameraVisible = setNativeCameraVisible;
+
 let _appPromptCallbackOk = null;
 function moPromptApp(tieuDe, noiDung, giaTriMacDinh, callbackOk, placeholder) {
   const overlay = document.getElementById("app-overlay-prompt");
@@ -1565,6 +1621,7 @@ function moPromptApp(tieuDe, noiDung, giaTriMacDinh, callbackOk, placeholder) {
   }
   _appPromptCallbackOk = callbackOk || null;
   overlay.classList.add("show");
+  setNativeCameraVisible(false);
   setTimeout(() => { if (elInput) elInput.focus(); }, 120);
 }
 window.moPromptApp = moPromptApp;
@@ -1572,6 +1629,7 @@ window.moPromptApp = moPromptApp;
 function dongPromptApp(dongY) {
   const overlay = document.getElementById("app-overlay-prompt");
   if (overlay) overlay.classList.remove("show");
+  setNativeCameraVisible(true);
   const elInput = document.getElementById("app-prompt-input");
   const cb = _appPromptCallbackOk;
   _appPromptCallbackOk = null;
@@ -1645,6 +1703,9 @@ function triggerResumeCamera() {
 }
 
 function ngatTatCaCamera() {
+  if (window.AndroidNative && typeof window.AndroidNative.stopNativeScanner === 'function') {
+    try { window.AndroidNative.stopNativeScanner(); } catch (e) {}
+  }
   const vids = ['reader', 'kk-reader', 'cx1-reader', 'btp-reader'];
   for (const id of vids) {
     if (cameraSleepTimerMap[id]) {
@@ -2183,6 +2244,7 @@ window.showCanhBao = showCanhBao;
     const modal = document.getElementById("modal-hop-den");
     if (!modal) return;
     modal.style.display = "flex";
+    setNativeCameraVisible(false);
 
     // Cập nhật thông số hệ thống
     const statEl = document.getElementById("hopden-system-stats");
@@ -2203,6 +2265,7 @@ window.showCanhBao = showCanhBao;
   function dongModalHopDen() {
     const modal = document.getElementById("modal-hop-den");
     if (modal) modal.style.display = "none";
+    setNativeCameraVisible(true);
   }
   window.dongModalHopDen = dongModalHopDen;
 
