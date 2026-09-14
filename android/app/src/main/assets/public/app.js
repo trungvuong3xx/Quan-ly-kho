@@ -727,7 +727,15 @@ function anSleepOverlayCamera(videoId) {
 
 function choCameraNgu(videoId) {
   const videoEl = document.getElementById(videoId);
-  if (!videoEl || !videoEl.srcObject) return;
+  if (!videoEl) return;
+
+  // Nếu đang dùng Native CameraX: Tạm ẩn khung quét và tắt giữ sáng màn hình để tiết kiệm pin tối đa
+  if (window.AndroidNative && typeof window.AndroidNative.setNativeCameraVisible === 'function') {
+    setNativeCameraVisible(false);
+    if (typeof window.AndroidNative.setKeepScreenOn === 'function') {
+      try { window.AndroidNative.setKeepScreenOn(false); } catch (e) {}
+    }
+  }
 
   cameraSleepingMap[videoId] = true;
 
@@ -741,11 +749,13 @@ function choCameraNgu(videoId) {
     animFrameMap[videoId] = null;
   }
 
-  // Giải phóng phần cứng camera để máy mát và tiết kiệm pin
-  try {
-    videoEl.srcObject.getTracks().forEach(t => { try { t.stop(); } catch (e) {} });
-    videoEl.srcObject = null;
-  } catch (e) {}
+  // Giải phóng phần cứng camera (cho Web fallback) để máy mát và tiết kiệm pin
+  if (videoEl.srcObject) {
+    try {
+      videoEl.srcObject.getTracks().forEach(t => { try { t.stop(); } catch (e) {} });
+      videoEl.srcObject = null;
+    } catch (e) {}
+  }
 
   hienSleepOverlayCamera(videoId);
 }
@@ -753,6 +763,19 @@ function choCameraNgu(videoId) {
 async function danhThucCamera(videoId) {
   if (cameraWakingUpMap[videoId]) return;
   cameraWakingUpMap[videoId] = true;
+
+  // Nếu là Native CameraX: Đánh thức siêu tốc, bật lại view và màn hình sáng ngay
+  if (window.AndroidNative && typeof window.AndroidNative.setNativeCameraVisible === 'function') {
+    setNativeCameraVisible(true);
+    if (typeof window.AndroidNative.setKeepScreenOn === 'function') {
+      try { window.AndroidNative.setKeepScreenOn(true); } catch (e) {}
+    }
+    cameraSleepingMap[videoId] = false;
+    anSleepOverlayCamera(videoId);
+    resetSleepTimerCamera(videoId);
+    cameraWakingUpMap[videoId] = false;
+    return;
+  }
 
   // Hiển thị trạng thái đang kết nối trên overlay để người dùng có phản hồi trực quan
   const overlay = document.getElementById(videoId + "-sleep-overlay");
@@ -1080,6 +1103,7 @@ async function khoiTaoCameraFast(videoId, onDecodedCallback) {
 
       window.onNativeBarcodeDecoded = (code) => {
         try {
+          resetSleepTimerCamera(videoId);
           if (typeof onDecodedCallback === 'function') {
             onDecodedCallback(code);
           }
@@ -1092,6 +1116,7 @@ async function khoiTaoCameraFast(videoId, onDecodedCallback) {
       if (typeof window.AndroidNative.setKeepScreenOn === 'function') {
         window.AndroidNative.setKeepScreenOn(true);
       }
+      resetSleepTimerCamera(videoId);
       capNhatNutDoiCamera(videoEl);
 
       // Cập nhật lại bounds thật chính xác ngay khi DOM hoàn tất reflow
@@ -1108,6 +1133,11 @@ async function khoiTaoCameraFast(videoId, onDecodedCallback) {
 
       return {
         reset: () => {
+          if (cameraSleepTimerMap[videoId]) {
+            clearTimeout(cameraSleepTimerMap[videoId]);
+            cameraSleepTimerMap[videoId] = null;
+          }
+          anSleepOverlayCamera(videoId);
           if (typeof setNativeCameraVisible === 'function') setNativeCameraVisible(false);
           if (window.AndroidNative && typeof window.AndroidNative.stopNativeScanner === 'function') {
             window.AndroidNative.stopNativeScanner();
