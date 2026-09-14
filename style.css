@@ -1744,8 +1744,18 @@ body.cam-active #chiFor.active {
   overflow: hidden !important;
 }
 
-body.cam-active #btp-cam,
-body.cam-active #cx1-cam {
+.hidden {
+  display: none !important;
+}
+
+body.cam-active #btp-form,
+body.cam-active #cx1-form,
+body.cam-active #form-chon {
+  display: none !important;
+}
+
+body.cam-active #btp-cam:not(.hidden),
+body.cam-active #cx1-cam:not(.hidden) {
   display: flex !important;
   flex-direction: column !important;
   flex: 1 1 auto !important;

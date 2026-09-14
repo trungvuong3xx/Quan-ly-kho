@@ -339,9 +339,13 @@ function chuyenTrang(id, el) {
   if (id !== "quetQR" && typeof dungQuet === "function") dungQuet();
   if (id !== "chiFor" && typeof dungCX1 === "function") dungCX1();
   if (id !== "kiemKe" && typeof dungKiemKe === "function") dungKiemKe();
-  if (id !== "btpPage") {
-    document.body.classList.remove("cam-active");
-    if (typeof dungBTP === "function") dungBTP();
+  if (id !== "btpPage" && typeof dungBTP === "function") dungBTP();
+  const isTargetScanning = (id === "btpPage" && window.dangQuetBTP) ||
+                           (id === "chiFor" && window.dangQuetCX1) ||
+                           (id === "quetQR" && window.dangQuetQR);
+  if (!isTargetScanning) {
+    if (typeof khoaCuonTrangQuet === "function") khoaCuonTrangQuet(false);
+    else document.body.classList.remove("cam-active");
   }
   if (id === "trangChu" && typeof capNhatTrangChu === "function") capNhatTrangChu();
   if (typeof kiemTraVaDongBoNativeCamera === "function") kiemTraVaDongBoNativeCamera();
@@ -375,9 +379,13 @@ function chuyenTrangKhongNav(id) {
   if (id !== "quetQR" && typeof dungQuet === "function") dungQuet();
   if (id !== "chiFor" && typeof dungCX1 === "function") dungCX1();
   if (id !== "kiemKe" && typeof dungKiemKe === "function") dungKiemKe();
-  if (id !== "btpPage") {
-    document.body.classList.remove("cam-active");
-    if (typeof dungBTP === "function") dungBTP();
+  if (id !== "btpPage" && typeof dungBTP === "function") dungBTP();
+  const isTargetScanning = (id === "btpPage" && window.dangQuetBTP) ||
+                           (id === "chiFor" && window.dangQuetCX1) ||
+                           (id === "quetQR" && window.dangQuetQR);
+  if (!isTargetScanning) {
+    if (typeof khoaCuonTrangQuet === "function") khoaCuonTrangQuet(false);
+    else document.body.classList.remove("cam-active");
   }
   const page = document.getElementById(id);
   if (page) page.classList.add("active");
@@ -436,36 +444,87 @@ function handlePopStateThoat(e) {
   if (activeId === "btpPage") {
     const camEl = document.getElementById("btp-cam");
     const kqEl = document.getElementById("btp-ketqua");
-    if ((camEl && camEl.style.display !== "none") || (kqEl && kqEl.style.display !== "none")) {
+    const formEl = document.getElementById("btp-form");
+    const isCamOrKqVisible = (camEl && (camEl.style.display !== "none" || !camEl.classList.contains("hidden"))) ||
+                             (kqEl && (kqEl.style.display !== "none" || !kqEl.classList.contains("hidden")));
+    if (isCamOrKqVisible) {
       if (typeof dungBTP === "function") dungBTP();
-      if (camEl) camEl.style.display = "none";
-      if (kqEl) kqEl.style.display = "none";
-      const formEl = document.getElementById("btp-form");
-      if (formEl) formEl.style.display = "block";
+      if (typeof dungCameraFast === "function") dungCameraFast("btp-reader", typeof zxingReaderBTP !== "undefined" ? zxingReaderBTP : null);
+      if (typeof zxingReaderBTP !== "undefined") zxingReaderBTP = null;
+      if (typeof setNativeCameraVisible === "function") setNativeCameraVisible(false);
+      if (typeof khoaCuonTrangQuet === "function") khoaCuonTrangQuet(false);
+      else document.body.classList.remove("cam-active");
+
+      if (camEl) {
+        camEl.classList.add("hidden");
+        camEl.style.setProperty("display", "none", "important");
+      }
+      if (kqEl) {
+        kqEl.classList.add("hidden");
+        kqEl.style.setProperty("display", "none", "important");
+      }
+      if (formEl) {
+        formEl.classList.remove("hidden");
+        formEl.style.setProperty("display", "block", "important");
+      }
       setTimeout(pushChanThoatState, 10);
       return;
     }
   } else if (activeId === "chiFor") {
     const camEl = document.getElementById("cx1-cam");
     const kqEl = document.getElementById("cx1-ketqua");
-    if ((camEl && camEl.style.display !== "none") || (kqEl && kqEl.style.display !== "none")) {
+    const formEl = document.getElementById("cx1-form");
+    const isCamOrKqVisible = (camEl && (camEl.style.display !== "none" || !camEl.classList.contains("hidden"))) ||
+                             (kqEl && (kqEl.style.display !== "none" || !kqEl.classList.contains("hidden")));
+    if (isCamOrKqVisible) {
       if (typeof dungCX1 === "function") dungCX1();
-      if (camEl) camEl.style.display = "none";
-      if (kqEl) kqEl.style.display = "none";
-      const formEl = document.getElementById("cx1-form");
-      if (formEl) formEl.style.display = "block";
+      if (typeof dungCameraFast === "function") dungCameraFast("cx1-reader", typeof zxingReaderCX1 !== "undefined" ? zxingReaderCX1 : null);
+      if (typeof zxingReaderCX1 !== "undefined") zxingReaderCX1 = null;
+      if (typeof setNativeCameraVisible === "function") setNativeCameraVisible(false);
+      if (typeof khoaCuonTrangQuet === "function") khoaCuonTrangQuet(false);
+      else document.body.classList.remove("cam-active");
+
+      if (camEl) {
+        camEl.classList.add("hidden");
+        camEl.style.setProperty("display", "none", "important");
+      }
+      if (kqEl) {
+        kqEl.classList.add("hidden");
+        kqEl.style.setProperty("display", "none", "important");
+      }
+      if (formEl) {
+        formEl.classList.remove("hidden");
+        formEl.style.setProperty("display", "block", "important");
+      }
       setTimeout(pushChanThoatState, 10);
       return;
     }
   } else if (activeId === "quetQR") {
     const camEl = document.getElementById("cam-box");
     const kqEl = document.getElementById("qr-ketqua");
-    if ((camEl && camEl.style.display !== "none") || (kqEl && kqEl.style.display !== "none")) {
+    const formEl = document.getElementById("form-chon");
+    const isCamOrKqVisible = (camEl && (camEl.style.display !== "none" || !camEl.classList.contains("hidden"))) ||
+                             (kqEl && (kqEl.style.display !== "none" || !kqEl.classList.contains("hidden")));
+    if (isCamOrKqVisible) {
       if (typeof dungQuetQR === "function") dungQuetQR();
-      if (camEl) camEl.style.display = "none";
-      if (kqEl) kqEl.style.display = "none";
-      const formEl = document.getElementById("form-chon");
-      if (formEl) formEl.style.display = "block";
+      if (typeof dungCameraFast === "function") dungCameraFast("reader", typeof zxingReaderQR !== "undefined" ? zxingReaderQR : null);
+      if (typeof zxingReaderQR !== "undefined") zxingReaderQR = null;
+      if (typeof setNativeCameraVisible === "function") setNativeCameraVisible(false);
+      if (typeof khoaCuonTrangQuet === "function") khoaCuonTrangQuet(false);
+      else document.body.classList.remove("cam-active");
+
+      if (camEl) {
+        camEl.classList.add("hidden");
+        camEl.style.setProperty("display", "none", "important");
+      }
+      if (kqEl) {
+        kqEl.classList.add("hidden");
+        kqEl.style.setProperty("display", "none", "important");
+      }
+      if (formEl) {
+        formEl.classList.remove("hidden");
+        formEl.style.setProperty("display", "block", "important");
+      }
       setTimeout(pushChanThoatState, 10);
       return;
     }

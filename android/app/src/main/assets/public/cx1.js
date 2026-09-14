@@ -195,9 +195,12 @@ async function tiepTucKhoiTaoCX1() {
   soLuongDaGuiHienTai = 0;
 
   if (typeof khoaCuonTrangQuet === "function") khoaCuonTrangQuet(true); else document.body.classList.add("cam-active");
-  document.getElementById("cx1-form").style.display = "none";
-  document.getElementById("cx1-cam").style.display = "block";
-  document.getElementById("cx1-ketqua").style.display = "none";
+  const formElCX1 = document.getElementById("cx1-form");
+  const camElCX1 = document.getElementById("cx1-cam");
+  const kqElCX1 = document.getElementById("cx1-ketqua");
+  if (formElCX1) { formElCX1.classList.add("hidden"); formElCX1.style.setProperty("display", "none", "important"); }
+  if (camElCX1) { camElCX1.classList.remove("hidden"); camElCX1.style.removeProperty("display"); }
+  if (kqElCX1) { kqElCX1.classList.add("hidden"); kqElCX1.style.setProperty("display", "none", "important"); }
   document.getElementById("cx1-dem").textContent = "Đã quét: 0 mã";
   document.getElementById("cx1-status").textContent = "Đang quét Đợt 1...";
   document.getElementById("btn-flash-cx1").style.background = "var(--neutral)";
@@ -705,8 +708,12 @@ function hienKetQuaCX1() {
   document.getElementById("cx1-tbody-dot").innerHTML = hangDot;
   document.getElementById("cx1-tbody-gom").innerHTML = hangGom;
 
-  document.getElementById("cx1-cam").style.display = "none";
-  document.getElementById("cx1-ketqua").style.display = "block";
+  const formElCX1 = document.getElementById("cx1-form");
+  const camElCX1 = document.getElementById("cx1-cam");
+  const kqElCX1 = document.getElementById("cx1-ketqua");
+  if (camElCX1) { camElCX1.classList.add("hidden"); camElCX1.style.setProperty("display", "none", "important"); }
+  if (formElCX1) { formElCX1.classList.add("hidden"); formElCX1.style.setProperty("display", "none", "important"); }
+  if (kqElCX1) { kqElCX1.classList.remove("hidden"); kqElCX1.style.removeProperty("display"); kqElCX1.style.display = "block"; }
 }
 
 async function quetTiepCX1() {
@@ -719,8 +726,12 @@ async function quetTiepCX1() {
   window.dangQuetCX1 = true;
   denPinBat = false;
 
-  document.getElementById("cx1-ketqua").style.display = "none";
-  document.getElementById("cx1-cam").style.display = "block";
+  const formElCX1 = document.getElementById("cx1-form");
+  const camElCX1 = document.getElementById("cx1-cam");
+  const kqElCX1 = document.getElementById("cx1-ketqua");
+  if (formElCX1) { formElCX1.classList.add("hidden"); formElCX1.style.setProperty("display", "none", "important"); }
+  if (camElCX1) { camElCX1.classList.remove("hidden"); camElCX1.style.removeProperty("display"); }
+  if (kqElCX1) { kqElCX1.classList.add("hidden"); kqElCX1.style.setProperty("display", "none", "important"); }
   if (typeof setNativeCameraVisible === 'function') setNativeCameraVisible(true);
   if (typeof khoaCuonTrangQuet === "function") khoaCuonTrangQuet(true); else document.body.classList.add("cam-active");
   document.getElementById("cx1-status").textContent = "Đang quét Đợt " + demSoDot + "...";
@@ -761,8 +772,13 @@ function quetMoiCX1() {
   window.dangQuetCX1 = false;
   xoaPhienDoDangCX1();
   if (typeof setNativeCameraVisible === 'function') setNativeCameraVisible(false);
-  document.getElementById("cx1-ketqua").style.display = "none";
-  document.getElementById("cx1-form").style.display = "block";
+  if (typeof khoaCuonTrangQuet === "function") khoaCuonTrangQuet(false); else document.body.classList.remove("cam-active");
+  const formElCX1 = document.getElementById("cx1-form");
+  const camElCX1 = document.getElementById("cx1-cam");
+  const kqElCX1 = document.getElementById("cx1-ketqua");
+  if (camElCX1) { camElCX1.classList.add("hidden"); camElCX1.style.setProperty("display", "none", "important"); }
+  if (kqElCX1) { kqElCX1.classList.add("hidden"); kqElCX1.style.setProperty("display", "none", "important"); }
+  if (formElCX1) { formElCX1.classList.remove("hidden"); formElCX1.style.removeProperty("display"); formElCX1.style.display = "block"; }
   capNhatLogCX1();
 }
 
@@ -822,9 +838,12 @@ async function khoiPhucCX1(state) {
   denPinBat = false;
 
   if (typeof khoaCuonTrangQuet === "function") khoaCuonTrangQuet(true); else document.body.classList.add("cam-active");
-  document.getElementById("cx1-form").style.display = "none";
-  document.getElementById("cx1-cam").style.display = "block";
-  document.getElementById("cx1-ketqua").style.display = "none";
+  const formElCX1 = document.getElementById("cx1-form");
+  const camElCX1 = document.getElementById("cx1-cam");
+  const kqElCX1 = document.getElementById("cx1-ketqua");
+  if (formElCX1) { formElCX1.classList.add("hidden"); formElCX1.style.setProperty("display", "none", "important"); }
+  if (camElCX1) { camElCX1.classList.remove("hidden"); camElCX1.style.removeProperty("display"); }
+  if (kqElCX1) { kqElCX1.classList.add("hidden"); kqElCX1.style.setProperty("display", "none", "important"); }
   document.getElementById("cx1-dem").textContent = "Đã quét: " + phienCX1.length + " mã";
   document.getElementById("cx1-status").textContent = "Đang quét Đợt " + demSoDot + "...";
   document.getElementById("btn-flash-cx1").style.background = "var(--neutral)";

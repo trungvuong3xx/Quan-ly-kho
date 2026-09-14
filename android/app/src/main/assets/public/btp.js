@@ -340,9 +340,12 @@ async function batDauPhienMoiBTP() {
 
   luuPhienDoDangBTP();
 
-  document.getElementById("btp-form").style.display = "none";
-  document.getElementById("btp-cam").style.display = "block";
-  document.getElementById("btp-ketqua").style.display = "none";
+  const formElBTP = document.getElementById("btp-form");
+  const camElBTP = document.getElementById("btp-cam");
+  const kqElBTP = document.getElementById("btp-ketqua");
+  if (formElBTP) { formElBTP.classList.add("hidden"); formElBTP.style.setProperty("display", "none", "important"); }
+  if (camElBTP) { camElBTP.classList.remove("hidden"); camElBTP.style.removeProperty("display"); }
+  if (kqElBTP) { kqElBTP.classList.add("hidden"); kqElBTP.style.setProperty("display", "none", "important"); }
   document.getElementById("btp-dem").textContent = "Đã quét: 0 mã";
   document.getElementById("btp-status").innerHTML = '<i class="ti ti-radar" style="color:var(--success)"></i> Đang quét Đợt 1...';
 
@@ -639,8 +642,12 @@ function hienKetQuaBTP() {
   if (elGom) elGom.innerHTML = hangGom;
   if (elFootGom) elFootGom.innerHTML = footGom;
 
-  document.getElementById("btp-cam").style.display = "none";
-  document.getElementById("btp-ketqua").style.display = "block";
+  const formElBTP = document.getElementById("btp-form");
+  const camElBTP = document.getElementById("btp-cam");
+  const kqElBTP = document.getElementById("btp-ketqua");
+  if (camElBTP) { camElBTP.classList.add("hidden"); camElBTP.style.setProperty("display", "none", "important"); }
+  if (formElBTP) { formElBTP.classList.add("hidden"); formElBTP.style.setProperty("display", "none", "important"); }
+  if (kqElBTP) { kqElBTP.classList.remove("hidden"); kqElBTP.style.removeProperty("display"); kqElBTP.style.display = "block"; }
 
   // Reset nút gửi về trạng thái ban đầu
   const btnGui = document.getElementById("btn-gui-dulieu-btp");
@@ -659,8 +666,12 @@ async function quetTiepBTP() {
   window.dangQuetBTP = true;
   denPinBatBTP = false;
 
-  document.getElementById("btp-ketqua").style.display = "none";
-  document.getElementById("btp-cam").style.display = "block";
+  const formElBTP = document.getElementById("btp-form");
+  const camElBTP = document.getElementById("btp-cam");
+  const kqElBTP = document.getElementById("btp-ketqua");
+  if (formElBTP) { formElBTP.classList.add("hidden"); formElBTP.style.setProperty("display", "none", "important"); }
+  if (camElBTP) { camElBTP.classList.remove("hidden"); camElBTP.style.removeProperty("display"); }
+  if (kqElBTP) { kqElBTP.classList.add("hidden"); kqElBTP.style.setProperty("display", "none", "important"); }
   if (typeof setNativeCameraVisible === 'function') setNativeCameraVisible(true);
   document.getElementById("btp-status").innerHTML = '<i class="ti ti-radar" style="color:var(--success)"></i> Đang quét Đợt ' + demSoDotBTP + '...';
 
@@ -698,8 +709,13 @@ function quetMoiBTP() {
   window.dangQuetBTP = false;
   xoaPhienDoDangBTP();
   if (typeof setNativeCameraVisible === 'function') setNativeCameraVisible(false);
-  document.getElementById("btp-ketqua").style.display = "none";
-  document.getElementById("btp-form").style.display = "block";
+  if (typeof khoaCuonTrangQuet === "function") khoaCuonTrangQuet(false); else document.body.classList.remove("cam-active");
+  const formElBTP = document.getElementById("btp-form");
+  const camElBTP = document.getElementById("btp-cam");
+  const kqElBTP = document.getElementById("btp-ketqua");
+  if (camElBTP) { camElBTP.classList.add("hidden"); camElBTP.style.setProperty("display", "none", "important"); }
+  if (kqElBTP) { kqElBTP.classList.add("hidden"); kqElBTP.style.setProperty("display", "none", "important"); }
+  if (formElBTP) { formElBTP.classList.remove("hidden"); formElBTP.style.removeProperty("display"); formElBTP.style.display = "block"; }
 }
 
 let timerCanhBaoBTP = null;
@@ -757,9 +773,12 @@ async function khoiPhucBTP(state) {
   dangQuetBTP = true;
   denPinBatBTP = false;
 
-  document.getElementById("btp-form").style.display = "none";
-  document.getElementById("btp-cam").style.display = "block";
-  document.getElementById("btp-ketqua").style.display = "none";
+  const formElBTP = document.getElementById("btp-form");
+  const camElBTP = document.getElementById("btp-cam");
+  const kqElBTP = document.getElementById("btp-ketqua");
+  if (formElBTP) { formElBTP.classList.add("hidden"); formElBTP.style.setProperty("display", "none", "important"); }
+  if (camElBTP) { camElBTP.classList.remove("hidden"); camElBTP.style.removeProperty("display"); }
+  if (kqElBTP) { kqElBTP.classList.add("hidden"); kqElBTP.style.setProperty("display", "none", "important"); }
   document.getElementById("btp-dem").textContent = "Đã quét: " + phienBTP.length + " mã";
   document.getElementById("btp-status").innerHTML = '<i class="ti ti-radar" style="color:var(--success)"></i> Đang quét Đợt ' + demSoDotBTP + '...';
 

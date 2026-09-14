@@ -94,10 +94,13 @@ async function batDauQuetQR() {
   dangQuetQR = true;
   window.dangQuetQR = true;
 
-  document.getElementById("form-chon").style.display = "none";
-  document.getElementById("cam-box").style.display = "block";
-  document.getElementById("qr-ketqua").style.display = "none";
-  document.body.classList.add("cam-active");
+  if (typeof khoaCuonTrangQuet === "function") khoaCuonTrangQuet(true); else document.body.classList.add("cam-active");
+  const formElQR = document.getElementById("form-chon");
+  const camElQR = document.getElementById("cam-box");
+  const kqElQR = document.getElementById("qr-ketqua");
+  if (formElQR) { formElQR.classList.add("hidden"); formElQR.style.setProperty("display", "none", "important"); }
+  if (camElQR) { camElQR.classList.remove("hidden"); camElQR.style.removeProperty("display"); }
+  if (kqElQR) { kqElQR.classList.add("hidden"); kqElQR.style.setProperty("display", "none", "important"); }
 
   const statusEl = document.getElementById("qr-status");
   if (statusEl) statusEl.textContent = "🟢 " + loaiQuetQR + " | Đợt " + demSoDotQR;
@@ -418,9 +421,13 @@ function hienKetQuaQuetQR() {
   const tieuDeKetQua = document.getElementById("qr-ketqua-tieude");
   if (tieuDeKetQua) tieuDeKetQua.textContent = "Hoàn tất: " + (loaiQuetQR || "Giao dịch") + " (" + (ngayQuetQR || "") + ")";
 
-  document.getElementById("cam-box").style.display = "none";
-  document.getElementById("form-chon").style.display = "none";
-  document.getElementById("qr-ketqua").style.display = "block";
+  if (typeof khoaCuonTrangQuet === "function") khoaCuonTrangQuet(false); else document.body.classList.remove("cam-active");
+  const formElQR = document.getElementById("form-chon");
+  const camElQR = document.getElementById("cam-box");
+  const kqElQR = document.getElementById("qr-ketqua");
+  if (camElQR) { camElQR.classList.add("hidden"); camElQR.style.setProperty("display", "none", "important"); }
+  if (formElQR) { formElQR.classList.add("hidden"); formElQR.style.setProperty("display", "none", "important"); }
+  if (kqElQR) { kqElQR.classList.remove("hidden"); kqElQR.style.removeProperty("display"); kqElQR.style.display = "block"; }
 
   // Cập nhật trạng thái nút gửi
   const btnGui = document.getElementById("btn-gui-dulieu-qr");
@@ -518,9 +525,13 @@ function quetMoiQuetQR() {
   window.dangQuetQR = false;
   xoaPhienDoDangQR();
   if (typeof setNativeCameraVisible === 'function') setNativeCameraVisible(false);
-  document.getElementById("qr-ketqua").style.display = "none";
-  document.getElementById("cam-box").style.display = "none";
-  document.getElementById("form-chon").style.display = "block";
+  if (typeof khoaCuonTrangQuet === "function") khoaCuonTrangQuet(false); else document.body.classList.remove("cam-active");
+  const formElQR = document.getElementById("form-chon");
+  const camElQR = document.getElementById("cam-box");
+  const kqElQR = document.getElementById("qr-ketqua");
+  if (camElQR) { camElQR.classList.add("hidden"); camElQR.style.setProperty("display", "none", "important"); }
+  if (kqElQR) { kqElQR.classList.add("hidden"); kqElQR.style.setProperty("display", "none", "important"); }
+  if (formElQR) { formElQR.classList.remove("hidden"); formElQR.style.removeProperty("display"); formElQR.style.display = "block"; }
 }
 window.quetMoiQuetQR = quetMoiQuetQR;
 
