@@ -218,26 +218,51 @@ async function toggleFlashQR() {
 }
 window.toggleFlashQR = toggleFlashQR;
 
-// ── Dừng / Tiếp tục Camera ─────────────────────────────────────────
+// ── Dừng / Tiếp tục Camera (Tối ưu giống hệt BTP & CX1 - Giữ luồng để có lại tức thì 0s) ──
 function dungQuetQR() {
   dangQuetQR = false;
   window.dangQuetQR = false;
-  if (zxingReaderQR) {
-    dungCameraFast("reader", zxingReaderQR);
-    zxingReaderQR = null;
-  }
-  document.body.classList.remove("cam-active");
+  // Giữ nguyên phần cứng camera chạy ngầm để bật lại tức thì giống BTP & CX1
+  const statusEl = document.getElementById("qr-status");
+  if (statusEl) statusEl.innerHTML = '<i class="ti ti-player-pause" style="color:var(--red)"></i> Đã dừng quét (Đợt ' + (demSoDotQR || 1) + ')';
   const btnToggle = document.getElementById("btn-dung-tieptuc-qr");
   if (btnToggle) {
-    btnToggle.textContent = "Tiếp tục quét";
-    btnToggle.className = "btn btn-green btn-full";
+    btnToggle.textContent = "Tiếp tục quét (Đợt " + (demSoDotQR || 1) + ")";
+    btnToggle.className = "btn btn-blue btn-full";
   }
 }
 window.dungQuetQR = dungQuetQR;
-window.dungQuet = dungQuetQR;
 
-function tiepTucQuetQR() {
-  batDauQuetQR();
+async function tiepTucQuetQR() {
+  dangQuetQR = true;
+  window.dangQuetQR = true;
+  document.body.classList.add("cam-active");
+  const statusEl = document.getElementById("qr-status");
+  if (statusEl) statusEl.textContent = "🟢 " + (loaiQuetQR || "Đang quét") + " | Đợt " + (demSoDotQR || 1);
+  const btnToggle = document.getElementById("btn-dung-tieptuc-qr");
+  if (btnToggle) {
+    btnToggle.textContent = "Dừng quét";
+    btnToggle.className = "btn btn-red btn-full";
+  }
+
+  try {
+    const videoEl = document.getElementById("reader");
+    const track = videoEl && videoEl.srcObject ? videoEl.srcObject.getVideoTracks()[0] : null;
+    const isCamRunning = track && track.readyState === "live";
+
+    if (!zxingReaderQR || !isCamRunning) {
+      zxingReaderQR = await khoiTaoCameraFast("reader", (txt) => {
+        if (txt && dangQuetQR) {
+          khiQuetDuocMaQR({ getText: () => txt });
+        }
+      });
+    } else if (videoEl && videoEl.paused) {
+      videoEl.play().catch(() => {});
+    }
+  } catch (e) {
+    showCanhBaoQR("Lỗi camera: " + e, "error");
+    dungQuetQR();
+  }
 }
 window.tiepTucQuetQR = tiepTucQuetQR;
 
@@ -246,6 +271,19 @@ function toggleDungTiepTucQR() {
   else tiepTucQuetQR();
 }
 window.toggleDungTiepTucQR = toggleDungTiepTucQR;
+
+// Tắt hẳn phần cứng camera khi kết thúc phiên hoặc chuyển sang tab khác để tiết kiệm pin
+function tatCameraQR() {
+  dangQuetQR = false;
+  window.dangQuetQR = false;
+  if (zxingReaderQR) {
+    dungCameraFast("reader", zxingReaderQR);
+    zxingReaderQR = null;
+  }
+  document.body.classList.remove("cam-active");
+}
+window.tatCameraQR = tatCameraQR;
+window.dungQuet = tatCameraQR;
 
 // ── Cập nhật Bảng Nhật Ký Trực Tiếp (Live Log) ─────────────────────
 function capNhatLogQR() {
@@ -396,7 +434,7 @@ function taoHangKetQuaQuetQR(danhSach) {
 
 // ── Hiển thị Màn hình Kết Quả ──────────────────────────────────────
 function xemKetQuaQuetQR() {
-  dungQuetQR();
+  tatCameraQR();
   hienKetQuaQuetQR();
   luuPhienDoDangQR();
   luuVaoLichSuQR();
@@ -506,6 +544,7 @@ async function quetTiepQuetQR() {
 window.quetTiepQuetQR = quetTiepQuetQR;
 
 function quetMoiQuetQR() {
+  tatCameraQR();
   phienQuetQR = [];
   demSoDotQR = 1;
   idPhienHienTaiQR = null;
