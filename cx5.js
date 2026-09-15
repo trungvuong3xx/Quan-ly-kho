@@ -1653,10 +1653,7 @@ async function dongBoGhepCX5() {
 
     let tongBao = d.homNay ? d.homNay.bao : 0;
     let tongKg = d.homNay ? d.homNay.kg : 0;
-    chosen.forEach(function (c) {
-      tongBao += c.effBao !== undefined ? c.effBao : c.bao;
-      tongKg += c.effKg !== undefined ? c.effKg : c.kg;
-    });
+    chosen.forEach(function (c) { tongBao += c.bao; tongKg += c.kg; });
 
     groups.push({
       key: key,
@@ -1666,13 +1663,7 @@ async function dongBoGhepCX5() {
       kgNeo: d.homNay ? d.homNay.kg : 0,
       tongBao: tongBao,
       tongKg: Math.round(tongKg * 100) / 100,
-      cuList: chosen.map(function (c) {
-        return {
-          row: c.row,
-          bao: c.effBao !== undefined ? c.effBao : c.bao,
-          kg: c.effKg !== undefined ? c.effKg : c.kg
-        };
-      })
+      cuList: chosen.map(function (c) { return { row: c.row, bao: c.bao, kg: c.kg }; })
     });
   });
 
