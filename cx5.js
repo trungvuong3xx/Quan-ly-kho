@@ -1238,15 +1238,17 @@ function moTongKgCX5(dsQC) {
            const cKg = c.effKg !== undefined ? c.effKg : c.kg;
            
            let matchedRows = null;
+           let matchedLotId = null;
            const lIdx = localCandidates.findIndex(lc => !lc.matched && lc.bao === cBao && Math.abs(lc.kg - cKg) <= 0.2);
            if (lIdx >= 0) {
                localCandidates[lIdx].matched = true;
+               matchedLotId = localCandidates[lIdx].lotId;
                matchedRows = localCandidates[lIdx].rows;
            }
 
            anchorCandidates.push({
              row: c.row,
-             lotId: null,
+             lotId: matchedLotId,
              bao: cBao,
              kg: cKg,
              rows: matchedRows
@@ -1259,6 +1261,7 @@ function moTongKgCX5(dsQC) {
                const lIdx = localCandidates.findIndex(lc => !lc.matched);
                if (lIdx >= 0) {
                    localCandidates[lIdx].matched = true;
+                   anchor.lotId = localCandidates[lIdx].lotId;
                    anchor.rows = localCandidates[lIdx].rows;
                }
            }
@@ -1401,7 +1404,7 @@ function renderTongKgCX5() {
             '<span>' + escHtmlCX5(d.ten) + '</span>' +
             tagHtml +
           '</div>' +
-          (bagInfoText ? '<div style="font-size:12px;color:var(--accent-2);margin-top:2px;">Cân từng bao: ' + bagInfoText + '</div>' : '') +
+          (bagInfoText ? '<div style="font-size:12px;color:var(--accent-2);margin-top:2px;">KG: ' + bagInfoText + '</div>' : '') +
         '</div>' +
         '<div style="text-align:right;">' +
           '<div style="font-weight:700;color:var(--brass);font-size:15px;">' + d.homNay.kg.toFixed(1) + ' kg</div>' +
@@ -1410,20 +1413,20 @@ function renderTongKgCX5() {
       '</div>' +
       (dsCu ? (
         '<div style="border-top:1px dashed var(--line-soft);padding-top:8px;margin-top:6px;">' +
-          '<div style="font-size:12px;color:var(--cream-soft);margin-bottom:4px;font-weight:600;"><i class="ti ti-history"></i> Ứng viên ghép ngày cũ:</div>' +
+          '<div style="font-size:12px;color:var(--cream-soft);margin-bottom:4px;font-weight:600;"><i class="ti ti-history"></i> Ghép với:</div>' +
           dsCu +
           '<div style="margin-top:8px;text-align:right;font-size:14px;border-top:1px solid var(--line-soft);padding-top:6px;">' +
-            'Tổng sau ghép: <b style="color:var(--brass);font-size:15px;">' + tongKg.toFixed(1) + ' kg (' + tongBao + ' bao)</b>' +
+            'Tổng: <b style="color:var(--brass);font-size:15px;">' + tongKg.toFixed(1) + ' (' + tongBao + ')</b>' +
           '</div>' +
         '</div>'
       ) : (
         dangTaiUngVienCX5 ? (
           '<div style="border-top:1px dashed var(--line-soft);padding-top:6px;margin-top:6px;font-size:12px;color:var(--cream-soft);font-style:italic;">' +
-            '<i class="ti ti-loader spin"></i> Đang tìm ứng viên ngày cũ từ Sheet...' +
+            '<i class="ti ti-loader spin"></i> Đang tìm ngày cũ từ Sheet...' +
           '</div>'
         ) : (
           '<div style="border-top:1px dashed var(--line-soft);padding-top:6px;margin-top:6px;font-size:12px;color:var(--cream-soft);font-style:italic;">' +
-            (isDuPallet ? '✓ Pallet này đã đủ ≥ 10 bao' : 'Không có ứng viên ngày cũ dư trên Sheet để ghép') +
+            (isDuPallet ? '✓ Đủ 10 bao' : 'Không có ngày cũ') +
           '</div>'
         )
       )) +
@@ -1455,48 +1458,64 @@ function renderTongKetPhienTongKgCX5() {
     luotMap.get(r.luot).push(r);
   });
 
-  const appliedCards = new Set(); // Lưu vết để không cộng dồn dư vào nhiều lượt
+  const appliedCards = new Set(); // Lưu vết để mỗi thẻ chỉ gắn 1 lượt
 
   thuTuLuot.slice().reverse().forEach(function (lid) {
     const rows = luotMap.get(lid);
     const first = rows[0];
-    const key = keyQCX5(first.msp, first.ten);
 
     let bao = rows.length;
     let kg = rows.reduce((s, r) => s + r.kg, 0);
     let trangThaiHtml = '<i class="ti ti-minus" style="color:var(--cream-soft);font-size:18px" title="Chưa ghép"></i>';
 
+    const expectedLotId = (typeof idPhienHienTaiC5 !== 'undefined' && idPhienHienTaiC5 ? idPhienHienTaiC5 : '') + '_' + lid;
+
+    // Ưu tiên 1: Khớp chính xác theo lotId của lượt
     let cardKey = Object.keys(tongKgDataCX5).find(function (k) {
-      const kBao = tongKgDataCX5[k].homNay.bao - (tongKgDataCX5[k].daGhepBao || 0);
-      const kKg = tongKgDataCX5[k].homNay.kg - (tongKgDataCX5[k].daGhepKg || 0);
-      return k.indexOf(first.msp) !== -1 && kBao === bao && Math.abs(kKg - kg) < 0.2 && !appliedCards.has(k);
+      const c = tongKgDataCX5[k];
+      return c && c.homNay && c.homNay.lotId === expectedLotId && !appliedCards.has(k);
     });
+
+    // Ưu tiên 2: Khớp theo tên quy cách, số bao và số kg gốc (trước ghép)
     if (!cardKey) {
       cardKey = Object.keys(tongKgDataCX5).find(function (k) {
-        return k.indexOf(first.msp) !== -1 && !appliedCards.has(k);
+        const c = tongKgDataCX5[k];
+        if (!c || !c.homNay || appliedCards.has(k)) return false;
+        const kBao = c.homNay.bao - (c.daGhepBao || 0);
+        const kKg = c.homNay.kg - (c.daGhepKg || 0);
+        return c.ten === first.ten && kBao === bao && Math.abs(kKg - kg) < 0.2;
+      });
+    }
+
+    // Ưu tiên 3: Khớp theo tên quy cách chưa được gán
+    if (!cardKey) {
+      cardKey = Object.keys(tongKgDataCX5).find(function (k) {
+        const c = tongKgDataCX5[k];
+        return c && c.ten === first.ten && !appliedCards.has(k);
       });
     }
 
     if (cardKey && tongKgDataCX5[cardKey]) {
+      appliedCards.add(cardKey); // Luôn đánh dấu thẻ này đã gán cho lượt này
       const card = tongKgDataCX5[cardKey];
-      const chosen = card.cu.filter(function (c) { return c.checked; });
+      const chosen = (card.cu || []).filter(function (c) { return c.checked; });
       let extraBao = 0, extraKg = 0;
       if (chosen.length > 0) {
-        extraBao = chosen.reduce(function (s, c) { return s + c.bao; }, 0);
-        extraKg = chosen.reduce(function (s, c) { return s + c.kg; }, 0);
+        extraBao = chosen.reduce(function (s, c) { return s + (c.effBao !== undefined ? c.effBao : c.bao); }, 0);
+        extraKg = chosen.reduce(function (s, c) { return s + (c.effKg !== undefined ? c.effKg : c.kg); }, 0);
       } else if (card.daGhepBao) {
         extraBao = card.daGhepBao;
         extraKg = card.daGhepKg;
       }
 
-      if ((extraBao > 0 || extraKg > 0) && bao < 10 && !appliedCards.has(cardKey)) {
-        // Chỉ cộng vào lượt đầu tiên đủ điều kiện (bao < 10)
-        appliedCards.add(cardKey);
+      if (extraBao > 0 || extraKg > 0) {
         bao += extraBao;
         kg += extraKg;
         trangThaiHtml = '<i class="ti ti-layers-intersect" style="color:var(--accent-2);font-size:18px" title="Đã chọn ghép"></i>';
       } else if (bao >= 10) {
         trangThaiHtml = '<i class="ti ti-check" style="color:var(--success);font-size:18px" title="OK (≥10 bao)"></i>';
+      } else if (first.daDongBo) {
+        trangThaiHtml = '<i class="ti ti-check" style="color:var(--success);font-size:18px" title="Đã đồng bộ"></i>';
       }
     } else if (bao >= 10) {
       trangThaiHtml = '<i class="ti ti-check" style="color:var(--success);font-size:18px" title="OK (≥10 bao)"></i>';
@@ -1521,41 +1540,51 @@ function renderTongKetPhienTongKgCX5() {
     });
   });
 
-  // 2) Quy cách dư từ server chưa có lượt nào trong phiên hiện tại
-  tongKetPhienCX5.forEach(function (item) {
-    const daduocHien = danhSach.some(function (d) { 
-      return d.ten === item.ten && d.bao === item.bao && Math.abs(d.kg - item.kg) < 0.2; 
-    });
-    if (!daduocHien) {
-      let bao = item.bao;
-      let kg = item.kg;
-      let trangThaiHtml = '<i class="ti ti-minus" style="color:var(--cream-soft);font-size:18px"></i>';
+  // 2) Các thẻ pallet còn lại trong tongKgDataCX5 chưa được gán vào lượt nào (ví dụ tải từ Google Sheet hoặc pallet dư)
+  Object.keys(tongKgDataCX5).forEach(function (cardKey) {
+    if (appliedCards.has(cardKey)) return;
+    appliedCards.add(cardKey);
+    const card = tongKgDataCX5[cardKey];
+    if (!card) return;
+    const homNay = card.homNay || { bao: 0, kg: 0 };
+    let bao = homNay.bao || 0;
+    let kg = homNay.kg || 0;
+    if (bao === 0 && (!card.cu || card.cu.length === 0)) return;
 
-      const cardKey = Object.keys(tongKgDataCX5).find(function(k) {
-         return tongKgDataCX5[k].ten === item.ten && tongKgDataCX5[k].homNay.bao === item.bao && Math.abs(tongKgDataCX5[k].homNay.kg - item.kg) < 0.2 && !appliedCards.has(k);
-      });
-
-      if (cardKey) {
-        const card = tongKgDataCX5[cardKey];
-        const chosen = card.cu.filter(function (c) { return c.checked; });
-        if (chosen.length > 0 && bao < 10 && !appliedCards.has(cardKey)) {
-          appliedCards.add(cardKey);
-          bao += chosen.reduce(function (s, c) { return s + c.bao; }, 0);
-          kg += chosen.reduce(function (s, c) { return s + c.kg; }, 0);
-          trangThaiHtml = '<i class="ti ti-layers-intersect" style="color:var(--accent-2);font-size:18px" title="Đã chọn ghép"></i>';
-        } else if (bao >= 10) {
-          trangThaiHtml = '<i class="ti ti-check" style="color:var(--success);font-size:18px" title="OK (≥10 bao)"></i>';
-        }
-      }
-
-      danhSach.push({
-        ten: item.ten,
-        bao: bao,
-        kg: Math.round(kg * 10) / 10,
-        trangThaiHtml: trangThaiHtml,
-        bagInfo: ""
-      });
+    let trangThaiHtml = '<i class="ti ti-minus" style="color:var(--cream-soft);font-size:18px" title="Chưa ghép"></i>';
+    const chosen = (card.cu || []).filter(function (c) { return c.checked; });
+    let extraBao = 0, extraKg = 0;
+    if (chosen.length > 0) {
+      extraBao = chosen.reduce(function (s, c) { return s + (c.effBao !== undefined ? c.effBao : c.bao); }, 0);
+      extraKg = chosen.reduce(function (s, c) { return s + (c.effKg !== undefined ? c.effKg : c.kg); }, 0);
+    } else if (card.daGhepBao) {
+      extraBao = card.daGhepBao;
+      extraKg = card.daGhepKg;
     }
+
+    if (extraBao > 0 || extraKg > 0) {
+      bao += extraBao;
+      kg += extraKg;
+      trangThaiHtml = '<i class="ti ti-layers-intersect" style="color:var(--accent-2);font-size:18px" title="Đã chọn ghép"></i>';
+    } else if (bao >= 10) {
+      trangThaiHtml = '<i class="ti ti-check" style="color:var(--success);font-size:18px" title="OK (≥10 bao)"></i>';
+    }
+
+    let bagInfo = "";
+    if (homNay.rows && homNay.rows.length >= 1) {
+      bagInfo = homNay.rows[0].kg.toFixed(1);
+      if (homNay.rows.length >= 6) {
+        bagInfo += "-" + homNay.rows[5].kg.toFixed(1);
+      }
+    }
+
+    danhSach.push({
+      ten: card.ten,
+      bao: bao,
+      kg: Math.round(kg * 10) / 10,
+      trangThaiHtml: trangThaiHtml,
+      bagInfo: bagInfo
+    });
   });
 
   if (danhSach.length === 0) {
@@ -1975,36 +2004,54 @@ function xemChiTietLichSuCX5(idPhien) {
     let kg = rows.reduce((s, r) => s + r.kg, 0);
     let trangThaiHtml = '<i class="ti ti-minus" style="color:var(--cream-soft);font-size:18px" title="Chưa ghép"></i>';
 
+    const expectedLotId = (idPhien || '') + '_' + lid;
+
+    // Ưu tiên 1: Khớp chính xác theo lotId của lượt
     let cardKey = Object.keys(tkData).find(function (k) {
-      const kBao = tkData[k].homNay.bao - (tkData[k].daGhepBao || 0);
-      const kKg = tkData[k].homNay.kg - (tkData[k].daGhepKg || 0);
-      return k.indexOf(first.msp) !== -1 && kBao === bao && Math.abs(kKg - kg) < 0.2 && !appliedCards.has(k);
+      const c = tkData[k];
+      return c && c.homNay && c.homNay.lotId === expectedLotId && !appliedCards.has(k);
     });
+
+    // Ưu tiên 2: Khớp theo tên quy cách, số bao và số kg gốc (trước ghép)
     if (!cardKey) {
       cardKey = Object.keys(tkData).find(function (k) {
-        return k.indexOf(first.msp) !== -1 && !appliedCards.has(k);
+        const c = tkData[k];
+        if (!c || !c.homNay || appliedCards.has(k)) return false;
+        const kBao = c.homNay.bao - (c.daGhepBao || 0);
+        const kKg = c.homNay.kg - (c.daGhepKg || 0);
+        return c.ten === first.ten && kBao === bao && Math.abs(kKg - kg) < 0.2;
+      });
+    }
+
+    // Ưu tiên 3: Khớp theo tên quy cách chưa được gán
+    if (!cardKey) {
+      cardKey = Object.keys(tkData).find(function (k) {
+        const c = tkData[k];
+        return c && c.ten === first.ten && !appliedCards.has(k);
       });
     }
 
     if (cardKey && tkData[cardKey]) {
+      appliedCards.add(cardKey);
       const card = tkData[cardKey];
       const chosen = (card.cu || []).filter(function (c) { return c.checked; });
       let extraBao = 0, extraKg = 0;
       if (chosen.length > 0) {
-        extraBao = chosen.reduce(function (s, c) { return s + c.bao; }, 0);
-        extraKg = chosen.reduce(function (s, c) { return s + c.kg; }, 0);
+        extraBao = chosen.reduce(function (s, c) { return s + (c.effBao !== undefined ? c.effBao : c.bao); }, 0);
+        extraKg = chosen.reduce(function (s, c) { return s + (c.effKg !== undefined ? c.effKg : c.kg); }, 0);
       } else if (card.daGhepBao) {
         extraBao = card.daGhepBao;
         extraKg = card.daGhepKg;
       }
 
-      if ((extraBao > 0 || extraKg > 0) && bao < 10 && !appliedCards.has(cardKey)) {
-        appliedCards.add(cardKey);
+      if (extraBao > 0 || extraKg > 0) {
         bao += extraBao;
         kg += extraKg;
         trangThaiHtml = '<i class="ti ti-layers-intersect" style="color:var(--brass);font-size:18px" title="Đã chọn ghép"></i>';
       } else if (bao >= 10) {
         trangThaiHtml = '<i class="ti ti-check" style="color:var(--success);font-size:18px" title="OK (≥10 bao)"></i>';
+      } else if (first.daDongBo) {
+        trangThaiHtml = '<i class="ti ti-check" style="color:var(--success);font-size:18px" title="Đã đồng bộ"></i>';
       }
     } else if (bao >= 10) {
       trangThaiHtml = '<i class="ti ti-check" style="color:var(--success);font-size:18px" title="OK (≥10 bao)"></i>';
@@ -2029,36 +2076,51 @@ function xemChiTietLichSuCX5(idPhien) {
     });
   });
 
-  // 2) Quy cách dư từ server
-  tkPhien.forEach(function (item) {
-    const daduocHien = danhSach.some(function (d) {
-      return d.ten === item.ten && d.bao === item.bao && Math.abs(d.kg - item.kg) < 0.2;
-    });
-    if (!daduocHien) {
-      let bao = item.bao;
-      let kg = item.kg;
-      let trangThaiHtml = '<i class="ti ti-minus" style="color:var(--cream-soft);font-size:18px"></i>';
-      const cardKey = Object.keys(tkData).find(function(k) {
-        return tkData[k].ten === item.ten && tkData[k].homNay.bao === item.bao && Math.abs(tkData[k].homNay.kg - item.kg) < 0.2 && !appliedCards.has(k);
-      });
-      if (cardKey) {
-        const card = tkData[cardKey];
-        const chosen = (card.cu || []).filter(function (c) { return c.checked; });
-        if (chosen.length > 0 && bao < 10 && !appliedCards.has(cardKey)) {
-          appliedCards.add(cardKey);
-          bao += chosen.reduce(function (s, c) { return s + c.bao; }, 0);
-          kg += chosen.reduce(function (s, c) { return s + c.kg; }, 0);
-          trangThaiHtml = '<i class="ti ti-layers-intersect" style="color:var(--brass);font-size:18px"></i>';
-        }
-      }
-      danhSach.push({
-        ten: item.ten,
-        bao: bao,
-        kg: Math.round(kg * 10) / 10,
-        trangThaiHtml: trangThaiHtml,
-        bagInfo: ""
-      });
+  // 2) Các thẻ pallet còn lại trong tkData chưa gán vào lượt
+  Object.keys(tkData).forEach(function (cardKey) {
+    if (appliedCards.has(cardKey)) return;
+    appliedCards.add(cardKey);
+    const card = tkData[cardKey];
+    if (!card) return;
+    const homNay = card.homNay || { bao: 0, kg: 0 };
+    let bao = homNay.bao || 0;
+    let kg = homNay.kg || 0;
+    if (bao === 0 && (!card.cu || card.cu.length === 0)) return;
+
+    let trangThaiHtml = '<i class="ti ti-minus" style="color:var(--cream-soft);font-size:18px"></i>';
+    const chosen = (card.cu || []).filter(function (c) { return c.checked; });
+    let extraBao = 0, extraKg = 0;
+    if (chosen.length > 0) {
+      extraBao = chosen.reduce(function (s, c) { return s + (c.effBao !== undefined ? c.effBao : c.bao); }, 0);
+      extraKg = chosen.reduce(function (s, c) { return s + (c.effKg !== undefined ? c.effKg : c.kg); }, 0);
+    } else if (card.daGhepBao) {
+      extraBao = card.daGhepBao;
+      extraKg = card.daGhepKg;
     }
+
+    if (extraBao > 0 || extraKg > 0) {
+      bao += extraBao;
+      kg += extraKg;
+      trangThaiHtml = '<i class="ti ti-layers-intersect" style="color:var(--brass);font-size:18px"></i>';
+    } else if (bao >= 10) {
+      trangThaiHtml = '<i class="ti ti-check" style="color:var(--success);font-size:18px" title="OK (≥10 bao)"></i>';
+    }
+
+    let bagInfo = "";
+    if (homNay.rows && homNay.rows.length >= 1) {
+      bagInfo = homNay.rows[0].kg.toFixed(1);
+      if (homNay.rows.length >= 6) {
+        bagInfo += "-" + homNay.rows[5].kg.toFixed(1);
+      }
+    }
+
+    danhSach.push({
+      ten: card.ten,
+      bao: bao,
+      kg: Math.round(kg * 10) / 10,
+      trangThaiHtml: trangThaiHtml,
+      bagInfo: bagInfo
+    });
   });
 
   let html = '';

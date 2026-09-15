@@ -8,3 +8,4 @@ android/.idea/
 *.log
 www/
 .playwright-mcp/
+*.xapk
