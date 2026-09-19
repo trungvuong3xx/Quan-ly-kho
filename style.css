@@ -2049,3 +2049,7 @@ body { padding: 0 !important; background: var(--bg-body) !important; color: var(
   justify-content: center;
   pointer-events: none;
 }
+
+/* Swipe to Delete */
+.swipe-delete-cell { width: 0; max-width: 0; padding: 0 !important; overflow: hidden; transition: max-width 0.3s ease, width 0.3s ease, padding 0.3s ease; background: var(--red); color: white; text-align: center; cursor: pointer; white-space: nowrap; border-bottom: 1px solid var(--line-soft); }
+.swipe-delete-cell.open { width: 65px; max-width: 65px; padding: 12px 10px !important; }
