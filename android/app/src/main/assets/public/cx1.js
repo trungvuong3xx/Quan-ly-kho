@@ -1,8 +1,8 @@
 // ── Chỉ FOR ─────────────────────────────────────────────
 let zxingReaderCX1 = null;
 let dangQuetCX1 = false;
-let phienCX1 = []; 
-let demSoDot = 0;   
+let phienCX1 = [];
+let demSoDot = 0;
 let denPinBat = false;
 let ngayCX1 = null;
 
@@ -15,7 +15,7 @@ const CX1_LICHSU_SO_NGAY_GIU = 30;
 
 // Bộ máy âm thanh phát tiếng bíp quét QR dùng trung tâm từ app.js
 if (typeof phatTiengBip !== "function") {
-  var phatTiengBip = function() {
+  var phatTiengBip = function () {
     if (typeof window.phatTiengBip === "function") window.phatTiengBip();
   };
 }
@@ -132,13 +132,13 @@ function khiQuetDuocMa(result) {
   phatTiengBip();
   if (typeof phatVibrateSuccess === "function") phatVibrateSuccess();
   hienVienFeedbackCX1("success");
-    
+
   const lockStatusEl = document.getElementById("cx1-lock-status");
   if (lockStatusEl) lockStatusEl.innerHTML = '<i class="ti ti-check-double" style="color:var(--success)"></i> ' + data.id;
 
-  phienCX1.push({ 
-    id: data.id, msp: data.msp, qc: data.qc, 
-    kg: data.kg, thoiGian: new Date(), dotQuet: demSoDot 
+  phienCX1.push({
+    id: data.id, msp: data.msp, qc: data.qc,
+    kg: data.kg, thoiGian: new Date(), dotQuet: demSoDot
   });
   document.getElementById("cx1-dem").textContent = "Đã quét: " + phienCX1.length + " mã";
   luuPhienDoDangCX1();
@@ -152,11 +152,11 @@ function luuPhienDoDangCX1() {
       idPhienHienTai, soLuongDaGuiHienTai
     }));
     if (typeof kichHoatKiemTraAutoBackup === "function") kichHoatKiemTraAutoBackup(4000);
-  } catch (e) {}
+  } catch (e) { }
 }
 
 function xoaPhienDoDangCX1() {
-  try { localStorage.removeItem("cx1_phien_dodang"); } catch (e) {}
+  try { localStorage.removeItem("cx1_phien_dodang"); } catch (e) { }
 }
 
 async function batDauCX1() {
@@ -167,7 +167,7 @@ async function batDauCX1() {
   ngayCX1 = inputEl ? inputEl.value : ((typeof layNgayHomNayLocal === "function") ? layNgayHomNayLocal() : new Date().toISOString().split("T")[0]);
 
   let phienCu = null;
-  try { phienCu = JSON.parse(localStorage.getItem("cx1_phien_dodang")); } catch (e) {}
+  try { phienCu = JSON.parse(localStorage.getItem("cx1_phien_dodang")); } catch (e) { }
   if (phienCu && Array.isArray(phienCu.phienCX1) && phienCu.phienCX1.length > 0) {
     if (typeof moXacNhanApp === "function") {
       moXacNhanApp(
@@ -187,7 +187,7 @@ async function batDauCX1() {
 
 async function tiepTucKhoiTaoCX1() {
   phienCX1 = [];
-  demSoDot = 1; 
+  demSoDot = 1;
   dangQuetCX1 = true;
   denPinBat = false;
   idPhienHienTai = Date.now() + "-" + Math.random().toString(36).slice(2);
@@ -223,9 +223,9 @@ async function tiepTucKhoiTaoCX1() {
         }
       });
     } else if (cx1Vid && cx1Vid.paused) {
-      cx1Vid.play().catch(() => {});
+      cx1Vid.play().catch(() => { });
     }
-  } catch(e) {
+  } catch (e) {
     showCanhBaoCX1("Lỗi camera: " + e);
     dungCX1();
   }
@@ -242,7 +242,7 @@ function dungCX1() {
 async function tiepTucCX1() {
   const coDuLieu = phienCX1.some(r => r.dotQuet === demSoDot);
   if (coDuLieu) {
-    demSoDot += 1; 
+    demSoDot += 1;
   }
   dangQuetCX1 = true;
   denPinBat = false;
@@ -265,9 +265,9 @@ async function tiepTucCX1() {
         }
       });
     } else if (cx1Vid && cx1Vid.paused) {
-      cx1Vid.play().catch(() => {});
+      cx1Vid.play().catch(() => { });
     }
-  } catch(e) {
+  } catch (e) {
     showCanhBaoCX1("Lỗi camera: " + e);
     dungCX1();
   }
@@ -294,7 +294,7 @@ function docPendingCX1() {
 }
 
 function luuPendingCX1(list) {
-  try { localStorage.setItem("cx1_pending_saves", JSON.stringify(list)); } catch (e) {}
+  try { localStorage.setItem("cx1_pending_saves", JSON.stringify(list)); } catch (e) { }
 }
 
 async function guiLenSheetCX1(rows) {
@@ -317,7 +317,7 @@ async function guiLenSheetCX1(rows) {
 
 function ketThucCX1() {
   dungCX1();
-  
+
   // Lưu lịch sử và lưu dở dang để người dùng xem và kiểm tra
   luuVaoLichSuCX1();
   luuPhienDoDangCX1();
@@ -433,7 +433,7 @@ function renderSuaChiTietCX1() {
   const container = document.getElementById("cx1-sua-chitiet-container");
   if (!container) return;
   const rows = phienCX1.filter(r => r.dotQuet === cx1DangSuaDot && r.msp === cx1DangSuaMsp);
-  
+
   let listHtml = "";
   if (rows.length === 0) {
     listHtml = '<div style="color:var(--cream-soft);font-size:13px;text-align:center;padding:10px 0;">Chưa có dữ liệu.</div>';
@@ -457,21 +457,21 @@ function themKgVaoDotCX1() {
     showCanhBaoCX1("Số KG không hợp lệ!");
     return;
   }
-  
+
   const id = "MANUAL_" + Date.now();
   phienCX1.push({
     id: id, msp: cx1DangSuaMsp, qc: cx1DangSuaQc,
     kg: kg, thoiGian: new Date(), dotQuet: cx1DangSuaDot
   });
-  
+
   inputEl.value = "";
   luuPhienDoDangCX1();
   hienKetQuaCX1();
   renderSuaChiTietCX1();
   capNhatLogCX1();
-  
+
   const demEl = document.getElementById("cx1-dem");
-  if(demEl) demEl.textContent = "Đã quét: " + phienCX1.length + " mã";
+  if (demEl) demEl.textContent = "Đã quét: " + phienCX1.length + " mã";
   inputEl.focus();
 }
 
@@ -500,7 +500,7 @@ function xoaTongCX1() {
   }
 }
 
-window.dongNhapTayCX1 = function() {
+window.dongNhapTayCX1 = function () {
   const modal = document.getElementById("cx1-nhap-tay-modal");
   if (modal) modal.classList.remove("show");
   cx1DangSuaDot = null;
@@ -520,7 +520,7 @@ function xoaMaCX1(index, ev) {
   const tenMa = item ? (item.msp || item.id) : "mã này";
   const dot = item.dotQuet;
   const msp = item.msp;
-  
+
   const doXoa = () => {
     phienCX1 = phienCX1.filter(r => !(r.dotQuet === dot && r.msp === msp));
     luuPhienDoDangCX1();
@@ -532,7 +532,7 @@ function xoaMaCX1(index, ev) {
     }
     showCanhBaoCX1("Đã xóa " + tenMa);
   };
-  
+
   if (typeof moXacNhanApp === "function") {
     moXacNhanApp("Xóa mã " + tenMa + " khỏi phiên quét?", doXoa, "Xóa", null, "Hủy", "Xác nhận xóa");
   } else {
@@ -734,9 +734,9 @@ async function quetTiepCX1() {
         }
       });
     } else if (cx1Vid && cx1Vid.paused) {
-      cx1Vid.play().catch(() => {});
+      cx1Vid.play().catch(() => { });
     }
-  } catch(e) {
+  } catch (e) {
     if (typeof showCanhBaoCX1 === "function") showCanhBaoCX1("Lỗi camera: " + e, "error");
     dungCX1();
   }
@@ -763,7 +763,7 @@ function showCanhBaoCX1(text, type = "error") {
   if (!el) return;
   text = typeof rutGonThongBaoLoi === "function" ? rutGonThongBaoLoi(text) : text;
   el.textContent = text;
-  
+
   if (type === "success") {
     el.style.background = "linear-gradient(135deg, #10b981, #059669)";
     el.style.boxShadow = "0 8px 24px rgba(16, 185, 129, .4)";
@@ -774,7 +774,7 @@ function showCanhBaoCX1(text, type = "error") {
     el.style.boxShadow = "0 8px 24px rgba(220, 38, 38, .5)";
     el.style.border = "1px solid #f87171";
   }
-  
+
   el.style.color = "#ffffff";
   el.style.fontSize = "14px";
   el.style.fontWeight = "700";
@@ -789,10 +789,10 @@ function showCanhBaoCX1(text, type = "error") {
   el.style.maxWidth = "90vw";
   el.style.textAlign = "center";
   el.style.display = "block";
-  
+
   if (timerCanhBaoCX1) clearTimeout(timerCanhBaoCX1);
-  timerCanhBaoCX1 = setTimeout(() => { 
-    if (el) el.style.display = "none"; 
+  timerCanhBaoCX1 = setTimeout(() => {
+    if (el) el.style.display = "none";
   }, 2000);
 }
 
@@ -838,7 +838,7 @@ async function khoiPhucCX1(state) {
         }
       });
     } else if (cx1Vid && cx1Vid.paused) {
-      cx1Vid.play().catch(() => {});
+      cx1Vid.play().catch(() => { });
     }
   } catch (e) {
     if (typeof showCanhBaoCX1 === "function") showCanhBaoCX1("Lỗi camera: " + e, "error");
@@ -848,7 +848,7 @@ async function khoiPhucCX1(state) {
 
 function tiepTucPhienChiFor() {
   let state = null;
-  try { state = JSON.parse(localStorage.getItem("cx1_phien_dodang")); } catch (e) {}
+  try { state = JSON.parse(localStorage.getItem("cx1_phien_dodang")); } catch (e) { }
   if (!state) return;
   if (typeof diToiTab === "function") diToiTab("chiFor");
   khoiPhucCX1(state);
@@ -859,13 +859,13 @@ function huyPhienChiFor() {
   if (typeof capNhatTrangChu === "function") capNhatTrangChu();
 }
 
-window.addEventListener("load", function() {
+window.addEventListener("load", function () {
   const today = new Date().toISOString().split("T")[0];
   const ngayInput = document.getElementById("cx1-ngay");
   if (ngayInput) ngayInput.value = today;
 });
 
-window.addEventListener("load", async function() {
+window.addEventListener("load", async function () {
   const pending = docPendingCX1();
   if (pending.length === 0) return;
   try {
@@ -877,13 +877,13 @@ window.addEventListener("load", async function() {
   if (typeof capNhatTrangThaiMang === "function") capNhatTrangThaiMang();
 });
 
-window.addEventListener("online", async function() {
+window.addEventListener("online", async function () {
   const pending = docPendingCX1();
   if (pending.length === 0) return;
   try {
     await guiLenSheetCX1(pending);
     luuPendingCX1([]);
-  } catch (e) {}
+  } catch (e) { }
   if (typeof capNhatTrangThaiMang === "function") capNhatTrangThaiMang();
 });
 
@@ -923,7 +923,7 @@ function docLichSuCX1() {
 }
 
 function luuLichSuCX1(list) {
-  try { localStorage.setItem(CX1_LICHSU_KEY, JSON.stringify(list)); } catch (e) {}
+  try { localStorage.setItem(CX1_LICHSU_KEY, JSON.stringify(list)); } catch (e) { }
 }
 
 function donDepLichSuCX1() {
@@ -1076,10 +1076,10 @@ window.xoaTatCaLichSuCX1 = xoaTatCaLichSuCX1;
 function xuatExcelLichSuCX1(idPhien) {
   const targetId = idPhien || dangXemLichSuId;
   const list = docLichSuCX1();
-  
+
   let exportData = [];
   let fileTitle = "LichSu_ChiX1";
-  
+
   if (targetId) {
     const entry = list.find(s => s.idPhien === targetId);
     if (!entry || !entry.phienCX1 || entry.phienCX1.length === 0) {

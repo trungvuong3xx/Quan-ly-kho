@@ -54,25 +54,25 @@ window.__speechUtterances = window.__speechUtterances || [];
 
 function docGiongNoiBTP(msp, kg) {
   if (!('speechSynthesis' in window)) return;
-  
+
   let docMsp = String(msp || '').trim();
   if (docMsp.length >= 3) {
     docMsp = docMsp.slice(-3);
   }
   let arrMsp = docMsp.split('').join(' ');
-  
+
   let strKg = String(kg || 0).trim();
   let arrKg = strKg.split('').map(char => char === '.' ? 'phẩy' : char).join(' ');
 
   const text = arrMsp + " " + arrKg;
-  
+
   const msg = new SpeechSynthesisUtterance(text);
   msg.lang = 'vi-VN';
   msg.rate = 1.5;
   msg.volume = 1.0;
-  
+
   window.__speechUtterances.push(msg);
-  msg.onend = function() {
+  msg.onend = function () {
     const idx = window.__speechUtterances.indexOf(msg);
     if (idx > -1) window.__speechUtterances.splice(idx, 1);
   };
@@ -121,7 +121,7 @@ function nhapThuCongBTP(src) {
   if (typeof window.phatTiengBip === "function") {
     window.phatTiengBip();
   } else if (navigator.vibrate) {
-    try { navigator.vibrate(70); } catch (e) {}
+    try { navigator.vibrate(70); } catch (e) { }
   }
 
   // Đọc TTS nếu thiết bị hỗ trợ
@@ -245,20 +245,20 @@ function khiQuetDuocMaBTP(result) {
     if (typeof window.phatVibrateError === "function") window.phatVibrateError();
     const gioQuet = typeof dinhDangGioQuetTrung === "function" ? dinhDangGioQuetTrung(trung.thoiGian) : "";
     showCanhBaoBTP("Đã quét " + gioQuet, "error");
-    
+
     // Nếu quét trùng, phạt khóa mã này lâu hơn (2 giây) để tránh chớp đỏ liên tục nếu lỡ để quên camera
-    mapKhoaBTP.set(data.rawQR, Date.now() + 1500); 
-    
+    mapKhoaBTP.set(data.rawQR, Date.now() + 1500);
+
     return;
   }
 
   hienVienFeedbackBTP("success");
-  
+
   // Phát tiếng bíp giòn giã và rung phản hồi tức thì
   if (typeof window.phatTiengBip === "function") {
     window.phatTiengBip();
   } else if (navigator.vibrate) {
-    try { navigator.vibrate(70); } catch (e) {}
+    try { navigator.vibrate(70); } catch (e) { }
   }
 
   // Đọc TTS nếu thiết bị hỗ trợ
@@ -364,7 +364,7 @@ async function batDauPhienMoiBTP() {
         }
       });
     } else if (btpVid && btpVid.paused) {
-      btpVid.play().catch(() => {});
+      btpVid.play().catch(() => { });
     }
   } catch (e) {
     showCanhBaoBTP("Lỗi camera: " + e);
@@ -386,7 +386,7 @@ function dungBTP() {
 
 async function tiepTucBTP() {
   if (typeof khoaCuonTrangQuet === "function") khoaCuonTrangQuet(true); else document.body.classList.add("cam-active");
-  const daQuetTrongDotNay = phienBTP.some(function(item) { return item.dotQuet === demSoDotBTP; }); if (daQuetTrongDotNay || (demSoDotBTP || 0) === 0) { demSoDotBTP = (demSoDotBTP || 0) + 1; }
+  const daQuetTrongDotNay = phienBTP.some(function (item) { return item.dotQuet === demSoDotBTP; }); if (daQuetTrongDotNay || (demSoDotBTP || 0) === 0) { demSoDotBTP = (demSoDotBTP || 0) + 1; }
   dangQuetBTP = true;
   document.getElementById("btp-status").innerHTML = '<i class="ti ti-radar" style="color:var(--success)"></i> Đang quét Đợt ' + demSoDotBTP + '...';
   try {
@@ -400,7 +400,7 @@ async function tiepTucBTP() {
         }
       });
     } else if (btpVid && btpVid.paused) {
-      btpVid.play().catch(() => {});
+      btpVid.play().catch(() => { });
     }
   } catch (e) {
     if (typeof showCanhBaoBTP === "function") showCanhBaoBTP("Lỗi camera: " + e, "error");
@@ -636,8 +636,17 @@ function hienKetQuaBTP() {
   if (elGom) elGom.innerHTML = hangGom;
   if (elFootGom) elFootGom.innerHTML = footGom;
 
+  // Cập nhật Khung Tóm Tắt (Đợt / Tổng)
+  const elTongDot = document.getElementById("btp-tong-cuon");
+  const elTongSL = document.getElementById("btp-tong-kg");
+  if (elTongDot) elTongDot.textContent = demSoDotBTP || 1;
+  if (elTongSL) elTongSL.textContent = phienBTP.length;
+
   document.getElementById("btp-cam").style.display = "none";
   document.getElementById("btp-ketqua").style.display = "block";
+
+  // Mặc định hiển thị Bảng Chi tiết
+  if (typeof toggleBTPView === 'function') toggleBTPView('chitiet');
 
   // Reset nút gửi về trạng thái ban đầu
   const btnGui = document.getElementById("btn-gui-dulieu-btp");
@@ -651,7 +660,7 @@ function hienKetQuaBTP() {
 
 async function quetTiepBTP() {
   if (typeof khoaCuonTrangQuet === "function") khoaCuonTrangQuet(true); else document.body.classList.add("cam-active");
-  const daQuetTrongDotNay = phienBTP.some(function(item) { return item.dotQuet === demSoDotBTP; }); if (daQuetTrongDotNay || (demSoDotBTP || 0) === 0) { demSoDotBTP = (demSoDotBTP || 0) + 1; }
+  const daQuetTrongDotNay = phienBTP.some(function (item) { return item.dotQuet === demSoDotBTP; }); if (daQuetTrongDotNay || (demSoDotBTP || 0) === 0) { demSoDotBTP = (demSoDotBTP || 0) + 1; }
   dangQuetBTP = true;
   denPinBatBTP = false;
 
@@ -676,7 +685,7 @@ async function quetTiepBTP() {
         }
       });
     } else if (btpVid && btpVid.paused) {
-      btpVid.play().catch(() => {});
+      btpVid.play().catch(() => { });
     }
   } catch (e) {
     if (typeof showCanhBaoBTP === "function") showCanhBaoBTP("Lỗi camera: " + e, "error");
@@ -704,7 +713,7 @@ function showCanhBaoBTP(text, type = "error") {
   if (!el) return;
   text = typeof rutGonThongBaoLoi === "function" ? rutGonThongBaoLoi(text) : text;
   el.textContent = text;
-  
+
   if (type === "success") {
     el.style.background = "linear-gradient(135deg, #10b981, #059669)";
     el.style.boxShadow = "0 8px 24px rgba(16, 185, 129, .4)";
@@ -715,7 +724,7 @@ function showCanhBaoBTP(text, type = "error") {
     el.style.boxShadow = "0 8px 24px rgba(220, 38, 38, .5)";
     el.style.border = "1px solid #f87171";
   }
-  
+
   el.style.color = "#ffffff";
   el.style.fontSize = "14px";
   el.style.fontWeight = "700";
@@ -730,10 +739,10 @@ function showCanhBaoBTP(text, type = "error") {
   el.style.maxWidth = "90vw";
   el.style.textAlign = "center";
   el.style.display = "block";
-  
+
   if (timerCanhBaoBTP) clearTimeout(timerCanhBaoBTP);
-  timerCanhBaoBTP = setTimeout(() => { 
-    if (el) el.style.display = "none"; 
+  timerCanhBaoBTP = setTimeout(() => {
+    if (el) el.style.display = "none";
   }, 2000);
 }
 
@@ -774,7 +783,7 @@ async function khoiPhucBTP(state) {
         }
       });
     } else if (btpVid && btpVid.paused) {
-      btpVid.play().catch(() => {});
+      btpVid.play().catch(() => { });
     }
   } catch (e) {
     if (typeof showCanhBaoBTP === "function") showCanhBaoBTP("Lỗi camera: " + e, "error");

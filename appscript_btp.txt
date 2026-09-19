@@ -1,0 +1,220 @@
+function chayTongHopBTP() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sheetTH = ss.getSheetByName("Tổng Hợp");
+
+  var ngayLoc = null;   // null = lấy tất cả ngày
+  var phienLoc = null;  // null = lấy tất cả phiên
+
+  if (sheetTH) {
+    var valC2 = sheetTH.getRange("C2").getValue();
+    var valC3 = sheetTH.getRange("C3").getValue();
+
+    // Ô C2: Ngày cần tổng hợp (dạng Date hoặc text)
+    if (valC2 instanceof Date) {
+      ngayLoc = valC2;
+    } else if (valC2 && !isNaN(new Date(valC2).getTime())) {
+      ngayLoc = new Date(valC2);
+    }
+
+    // Ô C3: Phiên quét (1, 2, 3, 4, 5...). Để trống = lấy tất cả phiên
+    if (valC3 && !isNaN(valC3)) {
+      phienLoc = parseInt(valC3, 10);
+    }
+  }
+
+  tongHopBTPSheet(ngayLoc, phienLoc);
+}
+
+function chayTongHopBTPTatCa() {
+  chayTongHopBTP();
+}
+
+function chayTongHopBTPKhoang() {
+  chayTongHopBTP();
+}
+
+function tongHopBTP() {
+  chayTongHopBTP();
+}
+
+function tongHopBTPSheet(ngayLoc, phienLoc) {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sheetQC = ss.getSheetByName("QC");
+  var sheetQR = ss.getSheetByName("QRBTP") || ss.getActiveSheet();
+  var sheetTH = ss.getSheetByName("Tổng Hợp");
+
+  if (!sheetTH) {
+    sheetTH = ss.insertSheet("Tổng Hợp");
+  }
+  
+  if (!sheetQR) return;
+  var fromRow = 5;
+  var toRow = sheetQR.getLastRow();
+  if (toRow < 5) return;
+
+  var mapQC = {};
+  if (sheetQC) {
+    var lastRowQC = sheetQC.getLastRow();
+    if (lastRowQC >= 2) {
+      var qcVals = sheetQC.getRange(2, 1, lastRowQC - 1, 30).getValues();
+      for (var i = 0; i < qcVals.length; i++) {
+        var row = qcVals[i];
+        var maEM = String(row[0] || "").trim().toUpperCase();
+        if (!maEM) continue;
+
+        var mspJ = String(row[9] || "").trim();
+        var mspFinal = mspJ;
+        var qcV = String(row[21] || "").trim();
+        var kgAA = parseFloat(row[26]) || 0;
+
+        var matMaxVal = 0;
+        if (qcV) {
+          var partsQC = qcV.split(/\s+[xX]\s+/);
+          if (partsQC.length >= 3) {
+            var valStr = partsQC[2].replace(/[^0-9\.]/g, "");
+            matMaxVal = parseFloat(valStr) || 0;
+          } else {
+            var nums = qcV.match(/\d+/g);
+            if (nums && nums.length >= 2) {
+              matMaxVal = parseFloat(nums[nums.length - 2]) || 0;
+            }
+          }
+        }
+
+        if (!mapQC[maEM]) {
+          mapQC[maEM] = { maEM: maEM, mspERP: mspFinal, qcV: qcV, kgAA: kgAA, matMax: matMaxVal };
+        } else {
+          if (matMaxVal > mapQC[maEM].matMax) {
+            mapQC[maEM].matMax = matMaxVal;
+            if (qcV) mapQC[maEM].qcV = qcV;
+            if (kgAA > 0) mapQC[maEM].kgAA = kgAA;
+          } else if (matMaxVal === mapQC[maEM].matMax && kgAA > 0 && mapQC[maEM].kgAA === 0) {
+            mapQC[maEM].kgAA = kgAA;
+          }
+          if (mspFinal && !mapQC[maEM].mspERP) mapQC[maEM].mspERP = mspFinal;
+        }
+      }
+    }
+  }
+
+  var numRows = toRow - fromRow + 1;
+  if (numRows <= 0) return;
+
+  // Đọc 6 cột (A đến F) để lấy Cột D (Ngày) và Cột F (Phiên)
+  var qrVals = sheetQR.getRange(fromRow, 1, numRows, 6).getValues();
+  var gomData = {};
+
+  for (var j = 0; j < qrVals.length; j++) {
+    var qrRow = qrVals[j];
+
+    // 1. Lọc theo Ngày (Cột D - index 3) nếu ô C2 có chọn ngày
+    if (ngayLoc) {
+      var ngayCell = qrRow[3];
+      if (!(ngayCell instanceof Date)) continue;
+      var ngayCellNorm = new Date(ngayCell.getFullYear(), ngayCell.getMonth(), ngayCell.getDate());
+      var ngayLocNorm = new Date(ngayLoc.getFullYear(), ngayLoc.getMonth(), ngayLoc.getDate());
+      if (ngayCellNorm.getTime() !== ngayLocNorm.getTime()) continue;
+    }
+
+    // 2. Lọc theo Phiên (Cột F - index 5) nếu ô C3 có chọn phiên
+    if (phienLoc) {
+      var phienRow = parseInt(qrRow[5], 10) || 1;
+      if (phienRow !== phienLoc) continue;
+    }
+
+    var maEM = String(qrRow[1] || "").trim().toUpperCase();
+    var soKeo = parseFloat(qrRow[2]) || 0;
+    if (!maEM || soKeo <= 0) continue;
+
+    var infoQC = mapQC[maEM] || mapQC[maEM.trim().toUpperCase()] || {};
+    var matTam = infoQC.matMax || 960;
+    var isNguyenTam = (soKeo >= matTam && matTam > 0) || (soKeo === 960);
+
+    if (!gomData[maEM]) {
+      gomData[maEM] = {
+        maEM: maEM,
+        nguyenTamCount: 0,
+        nguyenTamSize: matTam,
+        kienMap: {},
+        tongKienEyes: 0
+      };
+    }
+
+    if (isNguyenTam) {
+      gomData[maEM].nguyenTamCount += 1;
+      gomData[maEM].nguyenTamSize = soKeo;
+    } else {
+      if (!gomData[maEM].kienMap[soKeo]) {
+        gomData[maEM].kienMap[soKeo] = 0;
+      }
+      gomData[maEM].kienMap[soKeo] += 1;
+      gomData[maEM].tongKienEyes += soKeo;
+    }
+  }
+
+  var rowsTongHop = [];
+  var emKeys = Object.keys(gomData);
+
+  for (var k = 0; k < emKeys.length; k++) {
+    var maEM = emKeys[k];
+    var item = gomData[maEM];
+    var infoQC = mapQC[maEM] || mapQC[maEM.trim().toUpperCase()] || {};
+
+    var mspERP = infoQC.mspERP || maEM;
+    var qcV = infoQC.qcV || "";
+    var kgAA = infoQC.kgAA || 0;
+    var matTam = infoQC.matMax || item.nguyenTamSize || 960;
+    var maSoDonOnly = maEM.replace(/^EM/i, "");
+
+    // Kiểm tra đơn này có CẢ tấm hoàn chỉnh VÀ kiện lẻ không
+    var coNguyenTam = item.nguyenTamCount > 0;
+    var soKeoKeys = Object.keys(item.kienMap);
+    var coKienLe = soKeoKeys.length > 0;
+
+    if (coNguyenTam) {
+      var soTamNguyen = item.nguyenTamCount;
+      var soKgNguyen = Math.round((soTamNguyen * kgAA) * 10) / 10;
+
+      // Chỉ ghi "lưới dài" khi cùng đơn có cả kiện lẻ
+      var colJTextNguyen;
+      if (coKienLe) {
+        colJTextNguyen = maSoDonOnly + " chưa vá lưới dài";
+      } else {
+        colJTextNguyen = maSoDonOnly + " chưa vá";
+      }
+
+      rowsTongHop.push([
+        mspERP, "", qcV, "", "", soTamNguyen, soKgNguyen, "", "", colJTextNguyen, maEM
+      ]);
+    }
+
+    if (coKienLe) {
+      var tongEyes = item.tongKienEyes;
+      var kienNotes = [];
+      for (var s = 0; s < soKeoKeys.length; s++) {
+        var sk = soKeoKeys[s];
+        var countSk = item.kienMap[sk];
+        kienNotes.push(countSk + "k " + sk + "md");
+      }
+      var noteText = kienNotes.join(" + ");
+
+      var ratioTam = (matTam > 0) ? (tongEyes / matTam) : 0;
+      var soTamLe = Math.round(ratioTam * 10) / 10;
+      var soKgLe = Math.round((ratioTam * kgAA) * 10) / 10;
+      var colJTextLe = maSoDonOnly + " chưa vá " + noteText;
+
+      rowsTongHop.push([
+        mspERP, "", qcV, "", "", soTamLe, soKgLe, "", "", colJTextLe, maEM
+      ]);
+    }
+  }
+
+  var lastRowTH = sheetTH.getLastRow();
+  if (lastRowTH >= 6) {
+    sheetTH.getRange(6, 1, lastRowTH - 5, 11).clearContent();
+  }
+
+  if (rowsTongHop.length > 0) {
+    sheetTH.getRange(6, 1, rowsTongHop.length, 11).setValues(rowsTongHop);
+  }
+}

@@ -843,42 +843,95 @@
   <div id="btp-ketqua" class="card" style="display:none">
     <h3 style="color:var(--success); text-align:center; margin-bottom:20px;">Hoàn tất Quét BTP</h3>
 
-    <div style="margin-bottom: 30px;">
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-        <h4 style="color:var(--brass); margin:0;">CHI TIẾT</h4>
-        <input type="text" id="btp-ketqua-search" placeholder="🔍 Tìm kiếm mã..." oninput="hienKetQuaBTP()" style="padding:4px 8px; font-size:12px; width:150px; margin:0; height:30px;">
-      </div>
-      <div style="max-height: 280px; overflow-y: auto; overflow-x: auto; border-radius: 8px; border: 1px solid var(--line-soft);">
-        <table style="width:100%; border-collapse:collapse; background:var(--card-raised); font-size:14px;">
-          <thead style="position: sticky; top: 0; background: var(--card-raised); z-index: 2;">
-            <tr style="background:var(--line-soft)">
-              <th style="padding:10px; border-bottom:2px solid var(--line); text-align:left">STT</th>
-              <th style="padding:10px; border-bottom:2px solid var(--line); text-align:left">Mã BTP</th>
-              <th style="padding:10px; border-bottom:2px solid var(--line); text-align:right">Loại</th>
-              <th style="padding:10px; border-bottom:2px solid var(--line); text-align:center; width:45px">Xóa</th>
-            </tr>
-          </thead>
-          <tbody id="btp-tbody-dot"></tbody>
-          <tfoot id="btp-tfoot-dot" style="position: sticky; bottom: 0; background: var(--card-raised); z-index: 2; border-top: 2px solid var(--line);"></tfoot>
-        </table>
-      </div>
-    </div>
-
     <div style="margin-bottom: 20px;">
-      <h4 style="color:var(--steel); margin-bottom:10px;">TỔNG HỢP</h4>
-      <div style="max-height: 280px; overflow-y: auto; overflow-x: auto; border-radius: 8px; border: 1px solid var(--line-soft);">
-        <table style="width:100%; border-collapse:collapse; background:var(--card-raised); font-size:14px;">
-          <thead style="position: sticky; top: 0; background: var(--card-raised); z-index: 2;">
-            <tr style="background:var(--line-soft)">
-              <th style="padding:10px; border-bottom:2px solid var(--line); text-align:left">Đơn</th>
-              <th style="padding:10px; border-bottom:2px solid var(--line); text-align:center">Loại</th>
-              <th style="padding:10px; border-bottom:2px solid var(--line); text-align:right">SL</th>
-            </tr>
-          </thead>
-          <tbody id="btp-tbody-gom"></tbody>
-          <tfoot id="btp-tfoot-gom" style="position: sticky; bottom: 0; background: var(--card-raised); z-index: 2; border-top: 2px solid var(--line);"></tfoot>
-        </table>
+      <!-- Khung Tóm Tắt (Summary Box) -->
+      <div style="display:flex; justify-content:space-around; align-items:center; background:var(--card-raised); border:1px solid var(--line); border-radius:12px; padding:12px; margin-bottom:12px;">
+        <div style="text-align:center;">
+          <div style="font-size:12px; color:var(--steel); margin-bottom:4px;">Đợt</div>
+          <div id="btp-tong-cuon" style="font-size:22px; font-weight:700; color:var(--primary);">0</div>
+        </div>
+        <div style="text-align:center;">
+          <div style="font-size:12px; color:var(--steel); margin-bottom:4px;">Tổng</div>
+          <div id="btp-tong-kg" style="font-size:22px; font-weight:700; color:var(--brass);">0</div>
+        </div>
       </div>
+
+      <!-- 2 Nút chuyển đổi & Tìm kiếm -->
+      <div style="display:flex; gap:8px; margin-bottom:8px;">
+        <button id="btn-btp-view-chitiet" class="btn btn-blue" style="flex:1; margin:0; padding:6px; font-size:13px;" onclick="toggleBTPView('chitiet')">Chi Tiết</button>
+        <button id="btn-btp-view-gom" class="btn" style="flex:1; margin:0; padding:6px; font-size:13px; background:transparent; border:1px solid var(--primary); color:var(--primary);" onclick="toggleBTPView('gom')">Tổng Hợp</button>
+      </div>
+      <input type="text" id="btp-ketqua-search" placeholder="🔍 Tìm kiếm mã..." oninput="hienKetQuaBTP()" style="width:100%; padding:8px 12px; font-size:13px; border-radius:8px; border:1px solid var(--line); margin-bottom:12px; background:var(--bg); box-sizing: border-box;">
+
+      <!-- Khung Bảng Chi Tiết -->
+      <div id="btp-wrap-chitiet" style="border-radius:12px; border:1px solid var(--line); overflow:hidden; box-shadow:0 2px 8px rgba(0,0,0,0.05); max-height:280px; display:flex; flex-direction:column;">
+        <div style="overflow-y:auto; overflow-x:auto;">
+          <table style="width:100%; border-collapse:collapse; background:var(--card-raised); font-size:14px;">
+            <thead style="position: sticky; top: 0; background: var(--card-raised); z-index: 2;">
+              <tr>
+                <th style="padding:12px 10px; border-bottom:1px solid var(--line-soft); text-align:left; font-weight:700;">STT</th>
+                <th style="padding:12px 10px; border-bottom:1px solid var(--line-soft); text-align:left; font-weight:700;">Đơn</th>
+                <th style="padding:12px 10px; border-bottom:1px solid var(--line-soft); text-align:right; font-weight:700;">Loại</th>
+                <th style="padding:12px 10px; border-bottom:1px solid var(--line-soft); text-align:center; width:45px; font-weight:700;">Xóa</th>
+              </tr>
+            </thead>
+            <tbody id="btp-tbody-dot"></tbody>
+            <tfoot id="btp-tfoot-dot" style="position: sticky; bottom: 0; background: var(--card-raised); z-index: 2; border-top: 2px solid var(--line);"></tfoot>
+          </table>
+        </div>
+      </div>
+
+      <!-- Khung Bảng Tổng Hợp -->
+      <div id="btp-wrap-gom" style="display:none; border-radius:12px; border:1px solid var(--line); overflow:hidden; box-shadow:0 2px 8px rgba(0,0,0,0.05); max-height:280px; flex-direction:column;">
+        <div style="overflow-y:auto; overflow-x:auto;">
+          <table style="width:100%; border-collapse:collapse; background:var(--card-raised); font-size:14px;">
+            <thead style="position: sticky; top: 0; background: var(--card-raised); z-index: 2;">
+              <tr>
+                <th style="padding:12px 10px; border-bottom:1px solid var(--line-soft); text-align:left; font-weight:700;">Đợt</th>
+                <th style="padding:12px 10px; border-bottom:1px solid var(--line-soft); text-align:center; font-weight:700;">Loại</th>
+                <th style="padding:12px 10px; border-bottom:1px solid var(--line-soft); text-align:right; font-weight:700;">SL</th>
+              </tr>
+            </thead>
+            <tbody id="btp-tbody-gom"></tbody>
+            <tfoot id="btp-tfoot-gom" style="position: sticky; bottom: 0; background: var(--card-raised); z-index: 2; border-top: 2px solid var(--line);"></tfoot>
+          </table>
+        </div>
+      </div>
+      
+      <script>
+        function toggleBTPView(mode) {
+          const btnChitiet = document.getElementById('btn-btp-view-chitiet');
+          const btnGom = document.getElementById('btn-btp-view-gom');
+          const wrapChitiet = document.getElementById('btp-wrap-chitiet');
+          const wrapGom = document.getElementById('btp-wrap-gom');
+          
+          if (mode === 'chitiet') {
+            wrapChitiet.style.display = 'flex';
+            wrapGom.style.display = 'none';
+            btnChitiet.className = 'btn btn-blue';
+            btnChitiet.style.background = '';
+            btnChitiet.style.color = '';
+            btnChitiet.style.border = 'none';
+            
+            btnGom.className = 'btn';
+            btnGom.style.background = 'transparent';
+            btnGom.style.color = 'var(--primary)';
+            btnGom.style.border = '1px solid var(--primary)';
+          } else {
+            wrapChitiet.style.display = 'none';
+            wrapGom.style.display = 'flex';
+            btnGom.className = 'btn btn-blue';
+            btnGom.style.background = '';
+            btnGom.style.color = '';
+            btnGom.style.border = 'none';
+            
+            btnChitiet.className = 'btn';
+            btnChitiet.style.background = 'transparent';
+            btnChitiet.style.color = 'var(--primary)';
+            btnChitiet.style.border = '1px solid var(--primary)';
+          }
+        }
+      </script>
     </div>
 
     <button id="btn-gui-dulieu-btp" class="btn" style="width:100%; height:42px; font-size:14px; font-weight:700; margin:0; background:linear-gradient(135deg, #f59e0b, #d97706); color:#1a1a2e; border:none; box-shadow:0 4px 12px rgba(245,158,11,0.4);" onclick="guiDuLieuBTP()"><i class="ti ti-cloud-upload"></i> Gửi dữ liệu lên Sheet</button>

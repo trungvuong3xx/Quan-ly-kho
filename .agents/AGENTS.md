@@ -20,6 +20,7 @@ Project-level behavioral and tooling guidelines.
 **Before any task:**
 
 1. Invoke `brainstorming` skill — no exceptions
+2. **[REAL ENGINEERING]** Consider invoking Matt Pocock skills like `grill-with-docs` for clarifying requirements, `to-spec` for creating specifications, or `wayfinder` for huge chunks of work.
 
 **Before editing code:**
 

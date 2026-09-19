@@ -774,6 +774,24 @@ function layUngVienGhepCX5(payload) {
 
     const blocks = docCacKhoiLSC5_();
 
+    const parseDateToNum = function(dStr) {
+      if (!dStr) return 0;
+      const s = String(dStr).trim();
+      let p = s.split('-');
+      if (p.length === 3) {
+        if (p[0].length === 4) return parseInt(p[0] + p[1].padStart(2, '0') + p[2].padStart(2, '0'), 10);
+        return parseInt(p[2] + p[1].padStart(2, '0') + p[0].padStart(2, '0'), 10);
+      }
+      p = s.split('/');
+      if (p.length === 3) {
+        if (p[0].length === 4) return parseInt(p[0] + p[1].padStart(2, '0') + p[2].padStart(2, '0'), 10);
+        return parseInt(p[2] + p[1].padStart(2, '0') + p[0].padStart(2, '0'), 10);
+      }
+      return 0;
+    };
+
+    const dateNum = parseDateToNum(dateStr);
+
     blocks.forEach(function (b) {
       const key = b.msp + "|" + b.ten;
       if (!(key in result)) return;
@@ -786,10 +804,15 @@ function layUngVienGhepCX5(payload) {
         effKg: Math.round(b.kgHieuLuc * 100) / 100,
         v: b.daAn ? "X" : ""
       };
-      if (b.ngay === dateStr) {
+      
+      const bDateNum = parseDateToNum(b.ngay);
+      
+      if ((bDateNum > 0 && bDateNum === dateNum) || b.ngay === dateStr) {
         result[key].homNay.push(item);
       } else if (!b.daAn && b.baoHieuLuc > 0 && b.baoHieuLuc < 10) {
-        result[key].cu.push(item);
+        if (bDateNum > 0 && dateNum > 0 && bDateNum < dateNum) {
+          result[key].cu.push(item);
+        }
       }
     });
 
