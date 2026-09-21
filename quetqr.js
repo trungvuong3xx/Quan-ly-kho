@@ -321,7 +321,7 @@ function capNhatLogQR() {
     return `
       <div class="${flashClass}" style="display:flex; justify-content:space-between; align-items:center; padding:4px 2px; border-bottom:1px solid var(--line-soft); font-size:12px; border-radius:6px;">
         <span style="color:var(--steel); font-weight:700; width:24px; text-align:center;">${dot}</span>
-        <span style="color:var(--cream); font-weight:700; width:75px; text-align:left; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${item.id || ''}">${item.id || '—'}</span>
+        <span style="color:var(--cream); font-weight:700; width:75px; text-align:left; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">1 Bao</span>
         <span style="color:var(--brass); font-weight:700; flex:1; min-width:60px; text-align:left; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${item.qc || item.msp || ''}">${item.qc || item.msp || '—'}</span>
         <span style="color:var(--success); font-weight:700; width:42px; text-align:right;">${kgStr}</span>
         <span style="color:var(--blue); font-weight:700; width:26px; text-align:center;">${item.seqTrongDot}</span>
@@ -389,7 +389,7 @@ function taoHangKetQuaQuetQR(danhSach) {
         <td style="padding:10px; border-bottom:1px solid var(--line-soft); font-weight:600" onclick="nhapTayKGQR(${item.dot}, '${item.qc}')">${item.qc}</td>
         <td style="padding:10px; border-bottom:1px solid var(--line-soft); text-align:center; font-weight:700" onclick="nhapTayKGQR(${item.dot}, '${item.qc}')">${item.soLuong}</td>
         <td style="padding:10px; border-bottom:1px solid var(--line-soft); text-align:right; font-weight:700; color:var(--success)" onclick="nhapTayKGQR(${item.dot}, '${item.qc}')">${item.tongKG.toFixed(1)}</td>
-        <td class="swipe-delete-cell" onclick="xoaNhomDotQR(${item.dot}, '${item.qc}')"><i class="ti ti-trash"></i> Xóa</td>
+        <td class="swipe-delete-cell"><div class="swipe-delete-btn" onclick="xoaNhomDotQR(${item.dot}, '${item.qc}')"><i class="ti ti-trash"></i> Xóa</div></td>
       </tr>
     `;
   });
@@ -435,12 +435,28 @@ function toggleQRView(mode) {
   if (mode === "chitiet") {
     wrapChitiet.style.display = "block";
     wrapGom.style.display = "none";
-    tabChitiet.classList.add("active");
+    tabChitiet.className = "btn btn-blue";
     tabChitiet.style.background = "";
     tabChitiet.style.color = "";
-    tabTonghop.classList.remove("active");
-    tabTonghop.style.background = "var(--neutral-solid)";
-    tabTonghop.style.color = "var(--cream)";
+    tabChitiet.style.border = "none";
+    
+    tabTonghop.className = "btn";
+    tabTonghop.style.background = "transparent";
+    tabTonghop.style.color = "var(--primary)";
+    tabTonghop.style.border = "1px solid var(--primary)";
+  } else {
+    wrapChitiet.style.display = "none";
+    wrapGom.style.display = "block";
+    
+    tabTonghop.className = "btn btn-blue";
+    tabTonghop.style.background = "";
+    tabTonghop.style.color = "";
+    tabTonghop.style.border = "none";
+    
+    tabChitiet.className = "btn";
+    tabChitiet.style.background = "transparent";
+    tabChitiet.style.color = "var(--primary)";
+    tabChitiet.style.border = "1px solid var(--primary)";
   } else {
     wrapChitiet.style.display = "none";
     wrapGom.style.display = "block";
@@ -561,7 +577,7 @@ function renderSuaChiTietQR() {
   } else {
     listHtml = rows.map(r => {
       const idx = phienQuetQR.indexOf(r);
-      const hienThi = r.id ? (r.id.length > 10 ? "..." + r.id.slice(-8) : r.id) : r.kg;
+      const hienThi = r.kg !== undefined ? r.kg + " kg" : "0 kg";
       return '<span class="cx5-so-sx">' + hienThi + ' <i class="ti ti-x" onclick="xoaMaQRTrongSua(' + idx + ', event)"></i></span>';
     }).join("");
   }

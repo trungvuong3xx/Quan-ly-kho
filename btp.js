@@ -586,7 +586,7 @@ function taoHangKetQuaBTP(danhSach) {
     <td style="padding:10px;border-bottom:1px solid var(--line-soft);color:var(--steel);font-weight:700">${r.dotQuet || 1}</td>
     <td style="padding:10px;border-bottom:1px solid var(--line-soft);font-weight:600">${r.msp || '—'}</td>
     <td style="padding:10px;border-bottom:1px solid var(--line-soft);text-align:right;font-weight:700;color:var(--success)">${r.kg || 0}</td>
-    <td class="swipe-delete-cell" onclick="xoaMaBTP(${idx}, event)"><i class="ti ti-trash"></i> Xóa</td>
+    <td class="swipe-delete-cell"><div class="swipe-delete-btn" onclick="xoaMaBTP(${idx}, event)"><i class="ti ti-trash"></i> Xóa</div></td>
   </tr>`;
     }
   });

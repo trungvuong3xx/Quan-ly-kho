@@ -652,7 +652,7 @@ function taoHangKetQuaCX1(danhSach) {
     <td style="padding:10px;border-bottom:1px solid var(--line-soft)" onclick="nhapTayCX1(${item.dot}, '${item.msp}', '${item.qc}')">${item.qc}</td>
     <td style="padding:10px;border-bottom:1px solid var(--line-soft);text-align:center" onclick="nhapTayCX1(${item.dot}, '${item.msp}', '${item.qc}')">${item.soLuong}</td>
     <td style="padding:10px;border-bottom:1px solid var(--line-soft);text-align:right;font-weight:700;color:var(--success)" onclick="nhapTayCX1(${item.dot}, '${item.msp}', '${item.qc}')">${item.tongKG.toFixed(1)}</td>
-    <td class="swipe-delete-cell" onclick="xoaNhomDotCX1(${item.dot}, '${item.msp}', '${item.qc}')"><i class="ti ti-trash"></i> Xóa</td>
+    <td class="swipe-delete-cell"><div class="swipe-delete-btn" onclick="xoaNhomDotCX1(${item.dot}, '${item.msp}', '${item.qc}')"><i class="ti ti-trash"></i> Xóa</div></td>
   </tr>`;
   });
   hangDot += `
@@ -693,12 +693,28 @@ function toggleCX1View(mode) {
   if (mode === "chitiet") {
     wrapChitiet.style.display = "block";
     wrapGom.style.display = "none";
-    tabChitiet.classList.add("active");
+    tabChitiet.className = "btn btn-blue";
     tabChitiet.style.background = "";
     tabChitiet.style.color = "";
-    tabTonghop.classList.remove("active");
-    tabTonghop.style.background = "var(--neutral-solid)";
-    tabTonghop.style.color = "var(--cream)";
+    tabChitiet.style.border = "none";
+
+    tabTonghop.className = "btn";
+    tabTonghop.style.background = "transparent";
+    tabTonghop.style.color = "var(--primary)";
+    tabTonghop.style.border = "1px solid var(--primary)";
+  } else {
+    wrapChitiet.style.display = "none";
+    wrapGom.style.display = "block";
+
+    tabTonghop.className = "btn btn-blue";
+    tabTonghop.style.background = "";
+    tabTonghop.style.color = "";
+    tabTonghop.style.border = "none";
+
+    tabChitiet.className = "btn";
+    tabChitiet.style.background = "transparent";
+    tabChitiet.style.color = "var(--primary)";
+    tabChitiet.style.border = "1px solid var(--primary)";
   } else {
     wrapChitiet.style.display = "none";
     wrapGom.style.display = "block";
