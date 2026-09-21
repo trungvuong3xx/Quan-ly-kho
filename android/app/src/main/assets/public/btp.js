@@ -582,15 +582,11 @@ function taoHangKetQuaBTP(danhSach) {
 
     if (!tuKhoa || dotStr.includes(tuKhoa) || mspStr.includes(tuKhoa) || kgStr.includes(tuKhoa) || rawStr.includes(tuKhoa)) {
       hangDot += `
-  <tr>
+  <tr class="swipe-row">
     <td style="padding:10px;border-bottom:1px solid var(--line-soft);color:var(--steel);font-weight:700">${r.dotQuet || 1}</td>
     <td style="padding:10px;border-bottom:1px solid var(--line-soft);font-weight:600">${r.msp || '—'}</td>
     <td style="padding:10px;border-bottom:1px solid var(--line-soft);text-align:right;font-weight:700;color:var(--success)">${r.kg || 0}</td>
-    <td style="padding:10px;border-bottom:1px solid var(--line-soft);text-align:center;">
-      <button class="cx5-del-btn" onclick="xoaMaBTP(${idx}, event)" title="Xóa mã này" style="background:none;border:none;color:var(--red);cursor:pointer;padding:2px 4px;">
-        <i class="ti ti-trash"></i>
-      </button>
-    </td>
+    <td class="swipe-delete-cell" onclick="xoaMaBTP(${idx}, event)"><i class="ti ti-trash"></i> Xóa</td>
   </tr>`;
     }
   });
@@ -600,7 +596,7 @@ function taoHangKetQuaBTP(danhSach) {
     <td style="padding:10px;font-weight:700;color:var(--brass);background:var(--card-raised)">TỔNG</td>
     <td style="padding:10px;background:var(--card-raised)"></td>
     <td style="padding:10px;text-align:right;font-weight:700;color:var(--brass);background:var(--card-raised)">${soDot}</td>
-    <td style="padding:10px;background:var(--card-raised)"></td>
+    <td style="padding:0;border:none;max-width:0;"></td>
   </tr>`;
 
   let hangGom = "";

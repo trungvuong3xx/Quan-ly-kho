@@ -647,19 +647,12 @@ function taoHangKetQuaCX1(danhSach) {
   let hangDot = "";
   Object.values(tongDotCuaPhien).forEach(item => {
     hangDot += `
-  <tr>
-    <td style="padding:10px;border-bottom:1px solid var(--line-soft);color:var(--brass);font-weight:700"> ${item.dot}</td>
-    <td style="padding:10px;border-bottom:1px solid var(--line-soft)">${item.qc}</td>
-    <td style="padding:10px;border-bottom:1px solid var(--line-soft);text-align:center">${item.soLuong}</td>
-    <td style="padding:10px;border-bottom:1px solid var(--line-soft);text-align:right;font-weight:700;color:var(--success)">${item.tongKG.toFixed(1)}</td>
-    <td style="padding:10px;border-bottom:1px solid var(--line-soft);text-align:center;white-space:nowrap;">
-      <button onclick="nhapTayCX1(${item.dot}, '${item.msp}', '${item.qc}')" style="background:none;border:none;color:var(--blue);cursor:pointer;padding:2px 4px;margin:0;" title="Sửa KG">
-        <i class="ti ti-pencil" style="font-size:16px;"></i>
-      </button>
-      <button onclick="xoaNhomDotCX1(${item.dot}, '${item.msp}', '${item.qc}')" style="background:none;border:none;color:var(--red);cursor:pointer;padding:2px 4px;margin:0;" title="Xóa đợt này">
-        <i class="ti ti-trash" style="font-size:16px;"></i>
-      </button>
-    </td>
+  <tr class="swipe-row">
+    <td style="padding:10px;border-bottom:1px solid var(--line-soft);color:var(--brass);font-weight:700" onclick="nhapTayCX1(${item.dot}, '${item.msp}', '${item.qc}')"> Đợt ${item.dot}</td>
+    <td style="padding:10px;border-bottom:1px solid var(--line-soft)" onclick="nhapTayCX1(${item.dot}, '${item.msp}', '${item.qc}')">${item.qc}</td>
+    <td style="padding:10px;border-bottom:1px solid var(--line-soft);text-align:center" onclick="nhapTayCX1(${item.dot}, '${item.msp}', '${item.qc}')">${item.soLuong}</td>
+    <td style="padding:10px;border-bottom:1px solid var(--line-soft);text-align:right;font-weight:700;color:var(--success)" onclick="nhapTayCX1(${item.dot}, '${item.msp}', '${item.qc}')">${item.tongKG.toFixed(1)}</td>
+    <td class="swipe-delete-cell" onclick="xoaNhomDotCX1(${item.dot}, '${item.msp}', '${item.qc}')"><i class="ti ti-trash"></i> Xóa</td>
   </tr>`;
   });
   hangDot += `
@@ -668,14 +661,13 @@ function taoHangKetQuaCX1(danhSach) {
     <td style="padding:10px;background:var(--card-raised)"></td>
     <td style="padding:10px;text-align:center;font-weight:700;color:var(--brass);background:var(--card-raised)">${tongQRAll}</td>
     <td style="padding:10px;text-align:right;font-weight:700;color:var(--brass);background:var(--card-raised)">${tongKGAll.toFixed(1)}</td>
-    <td style="padding:10px;background:var(--card-raised)"></td>
+    <td style="padding:0;border:none;max-width:0;"></td>
   </tr>`;
 
   let hangGom = "";
   Object.values(tongGomLoaiMa).forEach(item => {
     hangGom += `
   <tr>
-
     <td style="padding:10px;border-bottom:1px solid var(--line-soft)">${item.qc}</td>
     <td style="padding:10px;border-bottom:1px solid var(--line-soft);text-align:center;font-weight:700">${item.soLuong}</td>
     <td style="padding:10px;border-bottom:1px solid var(--line-soft);text-align:right;font-weight:700;color:var(--success)">${item.tongKG.toFixed(1)}</td>
@@ -688,17 +680,55 @@ function taoHangKetQuaCX1(danhSach) {
     <td style="padding:10px;text-align:right;font-weight:700;color:var(--steel);background:var(--card-raised)">${tongKGAll.toFixed(1)}</td>
   </tr>`;
 
-  return { hangDot, hangGom };
+  return { hangDot, hangGom, tongQRAll, tongKGAll };
 }
+
+// ── Chuyển Đổi Tab Chi Tiết / Tổng Hợp CX1 ──────────────────────────────
+function toggleCX1View(mode) {
+  const wrapChitiet = document.getElementById("cx1-wrap-chitiet");
+  const wrapGom = document.getElementById("cx1-wrap-gom");
+  const tabChitiet = document.getElementById("cx1-tab-chitiet");
+  const tabTonghop = document.getElementById("cx1-tab-tonghop");
+
+  if (mode === "chitiet") {
+    wrapChitiet.style.display = "block";
+    wrapGom.style.display = "none";
+    tabChitiet.classList.add("active");
+    tabChitiet.style.background = "";
+    tabChitiet.style.color = "";
+    tabTonghop.classList.remove("active");
+    tabTonghop.style.background = "var(--neutral-solid)";
+    tabTonghop.style.color = "var(--cream)";
+  } else {
+    wrapChitiet.style.display = "none";
+    wrapGom.style.display = "block";
+    tabTonghop.classList.add("active");
+    tabTonghop.style.background = "";
+    tabTonghop.style.color = "";
+    tabChitiet.classList.remove("active");
+    tabChitiet.style.background = "var(--neutral-solid)";
+    tabChitiet.style.color = "var(--cream)";
+  }
+}
+window.toggleCX1View = toggleCX1View;
 
 function hienKetQuaCX1() {
   if (typeof khoaCuonTrangQuet === "function") khoaCuonTrangQuet(false); else document.body.classList.remove("cam-active");
-  const { hangDot, hangGom } = taoHangKetQuaCX1(phienCX1);
+  const { hangDot, hangGom, tongQRAll, tongKGAll } = taoHangKetQuaCX1(phienCX1);
   document.getElementById("cx1-tbody-dot").innerHTML = hangDot;
   document.getElementById("cx1-tbody-gom").innerHTML = hangGom;
+  
+  const tongBaoEl = document.getElementById("cx1-tong-bao");
+  if (tongBaoEl) tongBaoEl.textContent = tongQRAll;
+  
+  const tongKgEl = document.getElementById("cx1-tong-kg");
+  if (tongKgEl) tongKgEl.textContent = tongKGAll.toFixed(1);
 
   document.getElementById("cx1-cam").style.display = "none";
   document.getElementById("cx1-ketqua").style.display = "block";
+  
+  // Mặc định hiện Chi Tiết
+  toggleCX1View("chitiet");
 }
 
 async function quetTiepCX1() {

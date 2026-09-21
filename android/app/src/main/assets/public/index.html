@@ -567,17 +567,33 @@
   <div id="qr-ketqua" class="card" style="display:none">
     <h3 id="qr-ketqua-tieude" style="color:var(--success); text-align:center; margin-bottom:20px;">Hoàn tất</h3>
 
-    <div style="margin-bottom: 30px;">
-      <h4 style="color:var(--brass); margin-bottom:10px;">CHI TIẾT</h4>
-      <div style="overflow-x:auto;">
-        <table style="width:100%; border-collapse:collapse; background:var(--card-raised); font-size:14px; border-radius:8px; overflow:hidden;">
-          <thead>
-            <tr style="background:var(--line-soft)">
-              <th style="padding:10px; border-bottom:2px solid var(--line); text-align:left">Đợt</th>
-              <th style="padding:10px; border-bottom:2px solid var(--line); text-align:left">QC</th>
-              <th style="padding:10px; border-bottom:2px solid var(--line); text-align:center">Bao</th>
-              <th style="padding:10px; border-bottom:2px solid var(--line); text-align:right">KG</th>
-              <th style="padding:10px; border-bottom:2px solid var(--line); text-align:center; width:65px">Thao tác</th>
+    <div style="display:flex; justify-content:space-between; gap:10px; margin-bottom:16px;">
+      <div class="stat-box" style="flex:1; background:var(--card-raised); border:1px solid var(--line-soft); border-radius:12px; padding:12px; text-align:center;">
+        <div style="font-size:12px; color:var(--cream-soft); font-weight:600; text-transform:uppercase; margin-bottom:4px;">Bao</div>
+        <div id="qr-tong-bao" style="font-size:24px; font-weight:800; color:var(--brass);">0</div>
+      </div>
+      <div class="stat-box" style="flex:1; background:var(--card-raised); border:1px solid var(--line-soft); border-radius:12px; padding:12px; text-align:center;">
+        <div style="font-size:12px; color:var(--cream-soft); font-weight:600; text-transform:uppercase; margin-bottom:4px;">KG</div>
+        <div id="qr-tong-kg" style="font-size:24px; font-weight:800; color:var(--green);">0</div>
+      </div>
+    </div>
+
+    <div class="btp-tabs" style="display:flex; gap:8px; margin-bottom:12px;">
+      <button id="qr-tab-chitiet" class="btn active" style="flex:1; border-radius:8px; margin:0; padding:8px; font-size:13px; font-weight:700;" onclick="toggleQRView('chitiet')">Chi Tiết</button>
+      <button id="qr-tab-tonghop" class="btn" style="flex:1; border-radius:8px; margin:0; padding:8px; font-size:13px; font-weight:700; background:var(--neutral-solid); color:var(--cream);" onclick="toggleQRView('tonghop')">Tổng Hợp</button>
+    </div>
+
+    <div id="qr-wrap-chitiet" style="border-radius:12px; border:1px solid var(--steel); overflow-x:hidden; overflow-y:auto; box-shadow:0 2px 8px rgba(0,0,0,0.05); max-height:280px; display:flex; flex-direction:column; margin-bottom: 20px;">
+      <div>
+        <table style="width:100%; border-collapse:collapse; background:var(--card-raised); font-size:14px; border-radius:8px;">
+          <thead style="position: sticky; top: 0; background: var(--card-raised); z-index: 2;">
+            <tr>
+              <th style="padding:10px; box-shadow: inset 0 -2px 0 var(--steel); text-align:left">Đợt</th>
+              <th style="padding:10px; box-shadow: inset 0 -2px 0 var(--steel); text-align:left">QC</th>
+              <th style="padding:10px; box-shadow: inset 0 -2px 0 var(--steel); text-align:center">Bao</th>
+              <th style="padding:10px; box-shadow: inset 0 -2px 0 var(--steel); text-align:right">KG</th>
+              <!-- Hidden col for swipe -->
+              <th style="padding:0; width:0; max-width:0; border:none; box-shadow: inset 0 -2px 0 var(--steel);"></th>
             </tr>
           </thead>
           <tbody id="qr-tbody-dot"></tbody>
@@ -585,15 +601,14 @@
       </div>
     </div>
 
-    <div style="margin-bottom: 20px;">
-      <h4 style="color:var(--steel); margin-bottom:10px;">TỔNG HỢP</h4>
-      <div style="overflow-x:auto;">
-        <table style="width:100%; border-collapse:collapse; background:var(--card-raised); font-size:14px; border-radius:8px; overflow:hidden;">
-          <thead>
-            <tr style="background:var(--line-soft)">
-              <th style="padding:10px; border-bottom:2px solid var(--line); text-align:left">QC</th>
-              <th style="padding:10px; border-bottom:2px solid var(--line); text-align:center">Bao</th>
-              <th style="padding:10px; border-bottom:2px solid var(--line); text-align:right">KG</th>
+    <div id="qr-wrap-gom" style="display:none; border-radius:12px; border:1px solid var(--steel); overflow:hidden; overflow-y:auto; box-shadow:0 2px 8px rgba(0,0,0,0.05); max-height:280px; flex-direction:column; margin-bottom: 20px;">
+      <div>
+        <table style="width:100%; border-collapse:collapse; background:var(--card-raised); font-size:14px; border-radius:8px;">
+          <thead style="position: sticky; top: 0; background: var(--card-raised); z-index: 2;">
+            <tr>
+              <th style="padding:10px; box-shadow: inset 0 -2px 0 var(--steel); text-align:left">QC</th>
+              <th style="padding:10px; box-shadow: inset 0 -2px 0 var(--steel); text-align:center">Bao</th>
+              <th style="padding:10px; box-shadow: inset 0 -2px 0 var(--steel); text-align:right">KG</th>
             </tr>
           </thead>
           <tbody id="qr-tbody-gom"></tbody>
@@ -706,18 +721,33 @@
   <div id="cx1-ketqua" class="card" style="display:none">
     <h3 style="color:var(--success); text-align:center; margin-bottom:20px;">Hoàn tất</h3>
 
-    <div style="margin-bottom: 30px;">
-      <h4 style="color:var(--brass); margin-bottom:10px;">CHI TIẾT</h4>
-      <div style="overflow-x:auto;">
-        <table style="width:100%; border-collapse:collapse; background:var(--card-raised); font-size:14px; border-radius:8px; overflow:hidden;">
-          <thead>
-            <tr style="background:var(--line-soft)">
-              <th style="padding:10px; border-bottom:2px solid var(--line); text-align:left">Đợt</th>
+    <div style="display:flex; justify-content:space-between; gap:10px; margin-bottom:16px;">
+      <div class="stat-box" style="flex:1; background:var(--card-raised); border:1px solid var(--line-soft); border-radius:12px; padding:12px; text-align:center;">
+        <div style="font-size:12px; color:var(--cream-soft); font-weight:600; text-transform:uppercase; margin-bottom:4px;">Bao</div>
+        <div id="cx1-tong-bao" style="font-size:24px; font-weight:800; color:var(--brass);">0</div>
+      </div>
+      <div class="stat-box" style="flex:1; background:var(--card-raised); border:1px solid var(--line-soft); border-radius:12px; padding:12px; text-align:center;">
+        <div style="font-size:12px; color:var(--cream-soft); font-weight:600; text-transform:uppercase; margin-bottom:4px;">KG</div>
+        <div id="cx1-tong-kg" style="font-size:24px; font-weight:800; color:var(--green);">0</div>
+      </div>
+    </div>
 
-              <th style="padding:10px; border-bottom:2px solid var(--line); text-align:left">QC</th>
-              <th style="padding:10px; border-bottom:2px solid var(--line); text-align:center">Bao</th>
-              <th style="padding:10px; border-bottom:2px solid var(--line); text-align:right">KG</th>
-              <th style="padding:10px; border-bottom:2px solid var(--line); text-align:center; width:65px">Thao tác</th>
+    <div class="btp-tabs" style="display:flex; gap:8px; margin-bottom:12px;">
+      <button id="cx1-tab-chitiet" class="btn active" style="flex:1; border-radius:8px; margin:0; padding:8px; font-size:13px; font-weight:700;" onclick="toggleCX1View('chitiet')">Chi Tiết</button>
+      <button id="cx1-tab-tonghop" class="btn" style="flex:1; border-radius:8px; margin:0; padding:8px; font-size:13px; font-weight:700; background:var(--neutral-solid); color:var(--cream);" onclick="toggleCX1View('tonghop')">Tổng Hợp</button>
+    </div>
+
+    <div id="cx1-wrap-chitiet" style="border-radius:12px; border:1px solid var(--steel); overflow-x:hidden; overflow-y:auto; box-shadow:0 2px 8px rgba(0,0,0,0.05); max-height:280px; display:flex; flex-direction:column; margin-bottom: 20px;">
+      <div>
+        <table style="width:100%; border-collapse:collapse; background:var(--card-raised); font-size:14px; border-radius:8px;">
+          <thead style="position: sticky; top: 0; background: var(--card-raised); z-index: 2;">
+            <tr>
+              <th style="padding:10px; box-shadow: inset 0 -2px 0 var(--steel); text-align:left">Đợt</th>
+              <th style="padding:10px; box-shadow: inset 0 -2px 0 var(--steel); text-align:left">QC</th>
+              <th style="padding:10px; box-shadow: inset 0 -2px 0 var(--steel); text-align:center">Bao</th>
+              <th style="padding:10px; box-shadow: inset 0 -2px 0 var(--steel); text-align:right">KG</th>
+              <!-- Hidden col for swipe -->
+              <th style="padding:0; width:0; max-width:0; border:none; box-shadow: inset 0 -2px 0 var(--steel);"></th>
             </tr>
           </thead>
           <tbody id="cx1-tbody-dot"></tbody>
@@ -725,16 +755,14 @@
       </div>
     </div>
 
-    <div style="margin-bottom: 20px;">
-      <h4 style="color:var(--steel); margin-bottom:10px;">TỔNG HỢP</h4>
-      <div style="overflow-x:auto;">
-        <table style="width:100%; border-collapse:collapse; background:var(--card-raised); font-size:14px; border-radius:8px; overflow:hidden;">
-          <thead>
-            <tr style="background:var(--line-soft)">
-
-              <th style="padding:10px; border-bottom:2px solid var(--line); text-align:left">QC</th>
-              <th style="padding:10px; border-bottom:2px solid var(--line); text-align:center">Bao</th>
-              <th style="padding:10px; border-bottom:2px solid var(--line); text-align:right">KG</th>
+    <div id="cx1-wrap-gom" style="display:none; border-radius:12px; border:1px solid var(--steel); overflow:hidden; overflow-y:auto; box-shadow:0 2px 8px rgba(0,0,0,0.05); max-height:280px; flex-direction:column; margin-bottom: 20px;">
+      <div>
+        <table style="width:100%; border-collapse:collapse; background:var(--card-raised); font-size:14px; border-radius:8px;">
+          <thead style="position: sticky; top: 0; background: var(--card-raised); z-index: 2;">
+            <tr>
+              <th style="padding:10px; box-shadow: inset 0 -2px 0 var(--steel); text-align:left">QC</th>
+              <th style="padding:10px; box-shadow: inset 0 -2px 0 var(--steel); text-align:center">Bao</th>
+              <th style="padding:10px; box-shadow: inset 0 -2px 0 var(--steel); text-align:right">KG</th>
             </tr>
           </thead>
           <tbody id="cx1-tbody-gom"></tbody>
@@ -864,15 +892,15 @@
       <input type="text" id="btp-ketqua-search" placeholder="🔍 Tìm kiếm mã..." oninput="hienKetQuaBTP()" style="width:100%; padding:8px 12px; font-size:13px; border-radius:8px; border:1px solid var(--line); margin-bottom:12px; background:var(--bg); box-sizing: border-box;">
 
       <!-- Khung Bảng Chi Tiết -->
-      <div id="btp-wrap-chitiet" style="border-radius:12px; border:1px solid var(--line); overflow:hidden; box-shadow:0 2px 8px rgba(0,0,0,0.05); max-height:280px; display:flex; flex-direction:column;">
-        <div style="overflow-y:auto; overflow-x:auto;">
+      <div id="btp-wrap-chitiet" style="border-radius:12px; border:1px solid var(--line); overflow-x:hidden; overflow-y:auto; box-shadow:0 2px 8px rgba(0,0,0,0.05); max-height:280px; display:flex; flex-direction:column;">
+        <div>
           <table style="width:100%; border-collapse:collapse; background:var(--card-raised); font-size:14px;">
             <thead style="position: sticky; top: 0; background: var(--card-raised); z-index: 2;">
               <tr>
                 <th style="padding:12px 10px; box-shadow:inset 0 -2px 0 var(--steel); border-bottom:none; text-align:left; font-weight:700;">STT</th>
                 <th style="padding:12px 10px; box-shadow:inset 0 -2px 0 var(--steel); border-bottom:none; text-align:left; font-weight:700;">Đơn</th>
                 <th style="padding:12px 10px; box-shadow:inset 0 -2px 0 var(--steel); border-bottom:none; text-align:right; font-weight:700;">Loại</th>
-                <th style="padding:12px 10px; box-shadow:inset 0 -2px 0 var(--steel); border-bottom:none; text-align:center; width:45px; font-weight:700;">Xóa</th>
+                <th style="padding:0; width:0; max-width:0; box-shadow:inset 0 -2px 0 var(--steel); border-bottom:none; border:none;"></th>
               </tr>
             </thead>
             <tbody id="btp-tbody-dot"></tbody>

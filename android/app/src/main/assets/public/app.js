@@ -2471,3 +2471,46 @@ window.khoaCuonTrangQuet = function (isLock) {
 };
 
 
+
+// -- Hi?u ?ng Swipe-to-Delete toàn c?c -----------------
+let swipeStartX = 0;
+let swipeCurrentX = 0;
+let swipingRow = null;
+let isSwiping = false;
+
+document.addEventListener('touchstart', (e) => {
+  const row = e.target.closest('tr.swipe-row');
+  if (!row) {
+    const openCell = document.querySelector('.swipe-delete-cell.open');
+    if (openCell && !e.target.closest('.swipe-delete-cell')) {
+      openCell.classList.remove('open');
+    }
+    return;
+  }
+  document.querySelectorAll('.swipe-delete-cell.open').forEach(c => {
+    if (c !== row.querySelector('.swipe-delete-cell')) c.classList.remove('open');
+  });
+  swipeStartX = e.touches[0].clientX;
+  swipeCurrentX = swipeStartX;
+  swipingRow = row;
+  isSwiping = true;
+}, {passive: true});
+
+document.addEventListener('touchmove', (e) => {
+  if (!isSwiping || !swipingRow) return;
+  swipeCurrentX = e.touches[0].clientX;
+}, {passive: true});
+
+document.addEventListener('touchend', (e) => {
+  if (!isSwiping || !swipingRow) return;
+  const deltaX = swipeCurrentX - swipeStartX;
+  if (Math.abs(deltaX) > 30) {
+    const deleteBtn = swipingRow.querySelector('.swipe-delete-cell');
+    if (deleteBtn) {
+      if (deltaX < -30) deleteBtn.classList.add('open');
+      else if (deltaX > 30) deleteBtn.classList.remove('open');
+    }
+  }
+  isSwiping = false;
+  swipingRow = null;
+});

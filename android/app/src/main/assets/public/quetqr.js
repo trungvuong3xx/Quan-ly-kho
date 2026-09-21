@@ -384,19 +384,12 @@ function taoHangKetQuaQuetQR(danhSach) {
   let hangDot = "";
   Object.values(tongDotCuaPhien).forEach(item => {
     hangDot += `
-      <tr>
-        <td style="padding:10px; border-bottom:1px solid var(--line-soft); color:var(--brass); font-weight:700">Đợt ${item.dot}</td>
-        <td style="padding:10px; border-bottom:1px solid var(--line-soft); font-weight:600">${item.qc}</td>
-        <td style="padding:10px; border-bottom:1px solid var(--line-soft); text-align:center; font-weight:700">${item.soLuong}</td>
-        <td style="padding:10px; border-bottom:1px solid var(--line-soft); text-align:right; font-weight:700; color:var(--success)">${item.tongKG.toFixed(1)}</td>
-        <td style="padding:10px; border-bottom:1px solid var(--line-soft); text-align:center; white-space:nowrap;">
-          <button onclick="nhapTayKGQR(${item.dot}, '${item.qc}')" style="background:none; border:none; color:var(--blue); cursor:pointer; padding:2px 4px; margin:0;" title="Sửa KG">
-            <i class="ti ti-pencil" style="font-size:16px;"></i>
-          </button>
-          <button onclick="xoaNhomDotQR(${item.dot}, '${item.qc}')" style="background:none; border:none; color:var(--red); cursor:pointer; padding:2px 4px; margin:0;" title="Xóa đợt này">
-            <i class="ti ti-trash" style="font-size:16px;"></i>
-          </button>
-        </td>
+      <tr class="swipe-row">
+        <td style="padding:10px; border-bottom:1px solid var(--line-soft); color:var(--brass); font-weight:700" onclick="nhapTayKGQR(${item.dot}, '${item.qc}')">Đợt ${item.dot}</td>
+        <td style="padding:10px; border-bottom:1px solid var(--line-soft); font-weight:600" onclick="nhapTayKGQR(${item.dot}, '${item.qc}')">${item.qc}</td>
+        <td style="padding:10px; border-bottom:1px solid var(--line-soft); text-align:center; font-weight:700" onclick="nhapTayKGQR(${item.dot}, '${item.qc}')">${item.soLuong}</td>
+        <td style="padding:10px; border-bottom:1px solid var(--line-soft); text-align:right; font-weight:700; color:var(--success)" onclick="nhapTayKGQR(${item.dot}, '${item.qc}')">${item.tongKG.toFixed(1)}</td>
+        <td class="swipe-delete-cell" onclick="xoaNhomDotQR(${item.dot}, '${item.qc}')"><i class="ti ti-trash"></i> Xóa</td>
       </tr>
     `;
   });
@@ -406,7 +399,7 @@ function taoHangKetQuaQuetQR(danhSach) {
       <td style="padding:10px;"></td>
       <td style="padding:10px; text-align:center; font-weight:700; color:var(--brass);">${tongBaoAll}</td>
       <td style="padding:10px; text-align:right; font-weight:700; color:var(--brass);">${tongKGAll.toFixed(1)}</td>
-      <td style="padding:10px; background:var(--card-raised);"></td>
+      <td style="padding:0; border:none; max-width:0;"></td>
     </tr>
   `;
 
@@ -432,6 +425,35 @@ function taoHangKetQuaQuetQR(danhSach) {
   return { hangDot, hangGom, tongBaoAll, tongKGAll };
 }
 
+// ── Chuyển Đổi Tab Chi Tiết / Tổng Hợp ──────────────────────────────
+function toggleQRView(mode) {
+  const wrapChitiet = document.getElementById("qr-wrap-chitiet");
+  const wrapGom = document.getElementById("qr-wrap-gom");
+  const tabChitiet = document.getElementById("qr-tab-chitiet");
+  const tabTonghop = document.getElementById("qr-tab-tonghop");
+
+  if (mode === "chitiet") {
+    wrapChitiet.style.display = "block";
+    wrapGom.style.display = "none";
+    tabChitiet.classList.add("active");
+    tabChitiet.style.background = "";
+    tabChitiet.style.color = "";
+    tabTonghop.classList.remove("active");
+    tabTonghop.style.background = "var(--neutral-solid)";
+    tabTonghop.style.color = "var(--cream)";
+  } else {
+    wrapChitiet.style.display = "none";
+    wrapGom.style.display = "block";
+    tabTonghop.classList.add("active");
+    tabTonghop.style.background = "";
+    tabTonghop.style.color = "";
+    tabChitiet.classList.remove("active");
+    tabChitiet.style.background = "var(--neutral-solid)";
+    tabChitiet.style.color = "var(--cream)";
+  }
+}
+window.toggleQRView = toggleQRView;
+
 // ── Hiển thị Màn hình Kết Quả ──────────────────────────────────────
 function xemKetQuaQuetQR() {
   tatCameraQR();
@@ -442,12 +464,18 @@ function xemKetQuaQuetQR() {
 window.xemKetQuaQuetQR = xemKetQuaQuetQR;
 
 function hienKetQuaQuetQR() {
-  const { hangDot, hangGom } = taoHangKetQuaQuetQR(phienQuetQR);
+  const { hangDot, hangGom, tongBaoAll, tongKGAll } = taoHangKetQuaQuetQR(phienQuetQR);
   const tbodyDot = document.getElementById("qr-tbody-dot");
   const tbodyGom = document.getElementById("qr-tbody-gom");
 
   if (tbodyDot) tbodyDot.innerHTML = hangDot;
   if (tbodyGom) tbodyGom.innerHTML = hangGom;
+
+  const tongBaoEl = document.getElementById("qr-tong-bao");
+  if (tongBaoEl) tongBaoEl.textContent = tongBaoAll;
+  
+  const tongKgEl = document.getElementById("qr-tong-kg");
+  if (tongKgEl) tongKgEl.textContent = tongKGAll.toFixed(1);
 
   const tieuDeKetQua = document.getElementById("qr-ketqua-tieude");
   if (tieuDeKetQua) tieuDeKetQua.textContent = "Hoàn tất: " + (loaiQuetQR || "Giao dịch") + " (" + (ngayQuetQR || "") + ")";
@@ -455,6 +483,9 @@ function hienKetQuaQuetQR() {
   document.getElementById("cam-box").style.display = "none";
   document.getElementById("form-chon").style.display = "none";
   document.getElementById("qr-ketqua").style.display = "block";
+
+  // Mặc định hiện Chi Tiết
+  toggleQRView("chitiet");
 
   // Cập nhật trạng thái nút gửi
   const btnGui = document.getElementById("btn-gui-dulieu-qr");
