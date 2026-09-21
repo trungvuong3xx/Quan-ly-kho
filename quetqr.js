@@ -506,40 +506,119 @@ function hienKetQuaQuetQR() {
 window.hienKetQuaQuetQR = hienKetQuaQuetQR;
 
 // ── Sửa KG theo đợt & QC (dùng moPromptApp thay thế prompt) ─────────
+let qrDangSuaDot = null;
+let qrDangSuaQc = null;
+
 function nhapTayKGQR(dot, qc) {
-  const cacMa = phienQuetQR.filter(r => r.dotQuet === dot && r.qc === qc);
-  if (cacMa.length === 0) return;
-
-  const kgHienTai = cacMa.reduce((s, r) => s + (r.kg || 0), 0);
-  if (typeof moPromptApp === "function") {
-    moPromptApp(
-      "Sửa KG Đợt " + dot,
-      `Nhập tổng số KG cho Đợt ${dot} - QC ${qc} (${cacMa.length} bao):`,
-      kgHienTai.toFixed(1),
-      (moiStr) => {
-        if (!moiStr) return;
-        const tongKGMoi = parseFloat(String(moiStr).replace(",", "."));
-        if (isNaN(tongKGMoi) || tongKGMoi < 0) {
-          showCanhBaoQR("⚠️ Số KG không hợp lệ!", "error");
-          return;
-        }
-
-        // Chia đều số KG mới cho từng bao trong nhóm
-        const kgMoiTungBao = Number((tongKGMoi / cacMa.length).toFixed(3));
-        cacMa.forEach((r, idx) => {
-          if (idx === cacMa.length - 1) {
-            r.kg = Number((tongKGMoi - kgMoiTungBao * (cacMa.length - 1)).toFixed(2));
-          } else {
-            r.kg = kgMoiTungBao;
-          }
-        });
-
-        luuPhienDoDangQR();
-        hienKetQuaQuetQR();
-      },
-      "Nhập số kg..."
-    );
+  qrDangSuaDot = dot;
+  qrDangSuaQc = qc;
+  let modal = document.getElementById("qr-nhap-tay-modal");
+  if (!modal) {
+    modal = document.createElement("div");
+    modal.id = "qr-nhap-tay-modal";
+    modal.className = "overlay";
+    modal.innerHTML = `
+      <div class="overlay-card">
+        <div class="overlay-title" style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+          <span id="qr-sua-chitiet-title"></span>
+          <button type="button" class="btn btn-sm btn-red" style="padding:4px 8px;font-size:12px;" onclick="xoaTongQR()">Xóa tổng</button>
+        </div>
+        <div class="cx5-chitiet-kg" id="qr-sua-chitiet-container" style="margin-top:10px">
+        </div>
+        <div style="display:flex;gap:8px;margin-top:14px">
+          <input type="text" id="qr-them-kg" inputmode="none" placeholder="Nhập tổng số kg..." onkeydown="if(event.key==='Enter'){event.preventDefault();themKgVaoDotQR()}">
+          <button class="btn btn-green" style="width:56px;flex-shrink:0" onclick="themKgVaoDotQR()"><i class="ti ti-check"></i></button>
+        </div>
+        <button class="btn btn-full" style="background:var(--neutral-solid);color:var(--cream);margin-top:12px" onclick="dongNhapTayQR()">Đóng</button>
+      </div>
+    `;
+    document.body.appendChild(modal);
   }
+
+  const titleEl = document.getElementById("qr-sua-chitiet-title");
+  if (titleEl) {
+    titleEl.textContent = "Đợt " + qrDangSuaDot + " - QC " + qrDangSuaQc;
+  }
+
+  renderSuaChiTietQR();
+  modal.classList.add("show");
+}
+
+function dongNhapTayQR() {
+  const modal = document.getElementById("qr-nhap-tay-modal");
+  if (modal) modal.classList.remove("show");
+  if (typeof dongBanPhimCX5 === "function") dongBanPhimCX5();
+}
+
+function renderSuaChiTietQR() {
+  const container = document.getElementById("qr-sua-chitiet-container");
+  if (!container) return;
+  const rows = phienQuetQR.filter(r => r.dotQuet === qrDangSuaDot && r.qc === qrDangSuaQc);
+
+  let listHtml = "";
+  if (rows.length === 0) {
+    listHtml = '<div style="color:var(--cream-soft);font-size:13px;text-align:center;padding:10px 0;">Chưa có dữ liệu.</div>';
+  } else {
+    listHtml = rows.map(r => {
+      const idx = phienQuetQR.indexOf(r);
+      const hienThi = r.id ? (r.id.length > 10 ? "..." + r.id.slice(-8) : r.id) : r.kg;
+      return '<span class="cx5-so-sx">' + hienThi + ' <i class="ti ti-x" onclick="xoaMaQRTrongSua(' + idx + ', event)"></i></span>';
+    }).join("");
+  }
+
+  container.innerHTML = listHtml;
+}
+
+function themKgVaoDotQR() {
+  const inputEl = document.getElementById("qr-them-kg");
+  if (!inputEl) return;
+  const kgStr = inputEl.value;
+  if (!kgStr) return;
+  const tongKGMoi = parseFloat(kgStr.replace(",", "."));
+  if (isNaN(tongKGMoi) || tongKGMoi < 0) {
+    showCanhBaoQR("Số KG không hợp lệ!", "error");
+    return;
+  }
+
+  const cacMa = phienQuetQR.filter(r => r.dotQuet === qrDangSuaDot && r.qc === qrDangSuaQc);
+  if (cacMa.length === 0) {
+    showCanhBaoQR("Không có mã quét nào để thêm KG!", "error");
+    return;
+  }
+
+  const kgMoiTungBao = Number((tongKGMoi / cacMa.length).toFixed(3));
+  cacMa.forEach((r, idx) => {
+    if (idx === cacMa.length - 1) {
+      r.kg = Number((tongKGMoi - kgMoiTungBao * (cacMa.length - 1)).toFixed(2));
+    } else {
+      r.kg = kgMoiTungBao;
+    }
+  });
+
+  inputEl.value = "";
+  luuPhienDoDangQR();
+  hienKetQuaQuetQR();
+  renderSuaChiTietQR();
+  capNhatLogQR();
+  dongNhapTayQR();
+}
+
+function xoaMaQRTrongSua(index, ev) {
+  if (ev) ev.stopPropagation();
+  phienQuetQR.splice(index, 1);
+  luuPhienDoDangQR();
+  hienKetQuaQuetQR();
+  renderSuaChiTietQR();
+  capNhatLogQR();
+  const cacMa = phienQuetQR.filter(r => r.dotQuet === qrDangSuaDot && r.qc === qrDangSuaQc);
+  if (cacMa.length === 0) {
+    dongNhapTayQR();
+  }
+}
+
+function xoaTongQR() {
+  xoaNhomDotQR(qrDangSuaDot, qrDangSuaQc);
+  dongNhapTayQR();
 }
 window.nhapTayKGQR = nhapTayKGQR;
 

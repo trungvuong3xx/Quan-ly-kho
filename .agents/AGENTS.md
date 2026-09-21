@@ -54,6 +54,9 @@ Project-level behavioral and tooling guidelines.
 - **KHÔNG chạy kép decoder**: Khi có phần cứng `BarcodeDetector`, cấm khởi tạo hoặc chạy song song `ZXing`.
 - **KHÔNG render lại toàn bộ DOM live log**: Live log tối đa 30 mã mới nhất để chống giật lag khi quét hàng trăm bao.
 
-### 3. Deploy Web PWA & APK (BẮT BUỘC ĐỒNG BỘ):
+### 3. Deploy Web PWA & APK (BẮT BUỘC ĐỒNG BỘ VÀ NÂNG VERSION):
+- **BẮT BUỘC NÂNG VERSION TRƯỚC KHI DEPLOY**: Mỗi lần có thay đổi code, BẮT BUỘC phải thực hiện 2 việc này trước khi đẩy lên Git:
+  1. Tăng `CACHE_NAME` (ví dụ từ `v64` lên `v65`) trong file `sw.js` để trình duyệt người dùng tự động cập nhật code mới (tránh bị kẹt ở cache cũ).
+  2. Tăng `versionCode` (+1) và `versionName` trong file `android/app/build.gradle` để Android cho phép cài đè bản APK mới lên bản cũ.
 - **CHẠY SCRIPT BUILD TRƯỚC KHI PUSH**: Luôn luôn chạy lệnh `node build-web.js` để cập nhật các file tĩnh sang thư mục `www/` (Web) và `android/app/src/main/assets/public/` (APK) trước khi commit.
 - **PUSH ĐỒNG THỜI 2 NHÁNH (`main` & `gh-pages`)**: Bản APK được build từ nhánh `main`, còn Web PWA được GitHub Pages deploy từ nhánh `gh-pages`. Do đó, sau khi push lên `main`, BẮT BUỘC phải checkout sang `gh-pages`, merge `main` vào và push lên `gh-pages` (`git checkout gh-pages; git merge main; git push origin gh-pages; git checkout main`) để Web và App luôn đồng bộ với nhau.

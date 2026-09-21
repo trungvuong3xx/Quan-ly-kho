@@ -593,10 +593,10 @@ function taoHangKetQuaBTP(danhSach) {
 
   let footDot = `
   <tr>
-    <td style="padding:10px;font-weight:700;color:var(--brass);background:var(--card-raised)">TỔNG</td>
-    <td style="padding:10px;background:var(--card-raised)"></td>
-    <td style="padding:10px;text-align:right;font-weight:700;color:var(--brass);background:var(--card-raised)">${soDot}</td>
-    <td style="padding:0;border:none;max-width:0;"></td>
+    <td style="box-shadow:inset 0 2px 0 var(--steel);padding:10px;font-weight:700;color:var(--brass);background:var(--card-raised)">TỔNG</td>
+    <td style="box-shadow:inset 0 2px 0 var(--steel);padding:10px;background:var(--card-raised)"></td>
+    <td style="box-shadow:inset 0 2px 0 var(--steel);padding:10px;text-align:right;font-weight:700;color:var(--brass);background:var(--card-raised)">${soDot}</td>
+    <td style="box-shadow:inset 0 2px 0 var(--steel);padding:0;border:none;max-width:0;"></td>
   </tr>`;
 
   let hangGom = "";
@@ -611,9 +611,9 @@ function taoHangKetQuaBTP(danhSach) {
 
   let footGom = `
   <tr>
-    <td style="padding:10px;font-weight:700;color:var(--steel);background:var(--card-raised)">TỔNG</td>
-    <td style="padding:10px;background:var(--card-raised)"></td>
-    <td style="padding:10px;text-align:right;font-weight:700;color:var(--steel);background:var(--card-raised)">${tongQRAll}</td>
+    <td style="box-shadow:inset 0 2px 0 var(--steel);padding:10px;font-weight:700;color:var(--steel);background:var(--card-raised)">TỔNG</td>
+    <td style="box-shadow:inset 0 2px 0 var(--steel);padding:10px;background:var(--card-raised)"></td>
+    <td style="box-shadow:inset 0 2px 0 var(--steel);padding:10px;text-align:right;font-weight:700;color:var(--steel);background:var(--card-raised)">${tongQRAll}</td>
   </tr>`;
 
   return { hangDot, footDot, hangGom, footGom };
