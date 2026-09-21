@@ -53,3 +53,7 @@ Project-level behavioral and tooling guidelines.
 - **KHÔNG addEventListener lặp lại trong `khoiTaoCameraFast`**: Lắng nghe tương tác chạm ở cấp `document` 1 lần duy nhất, tránh rò rỉ listener khi camera ngủ/thức.
 - **KHÔNG chạy kép decoder**: Khi có phần cứng `BarcodeDetector`, cấm khởi tạo hoặc chạy song song `ZXing`.
 - **KHÔNG render lại toàn bộ DOM live log**: Live log tối đa 30 mã mới nhất để chống giật lag khi quét hàng trăm bao.
+
+### 3. Deploy Web PWA & APK (BẮT BUỘC ĐỒNG BỘ):
+- **CHẠY SCRIPT BUILD TRƯỚC KHI PUSH**: Luôn luôn chạy lệnh `node build-web.js` để cập nhật các file tĩnh sang thư mục `www/` (Web) và `android/app/src/main/assets/public/` (APK) trước khi commit.
+- **PUSH ĐỒNG THỜI 2 NHÁNH (`main` & `gh-pages`)**: Bản APK được build từ nhánh `main`, còn Web PWA được GitHub Pages deploy từ nhánh `gh-pages`. Do đó, sau khi push lên `main`, BẮT BUỘC phải checkout sang `gh-pages`, merge `main` vào và push lên `gh-pages` (`git checkout gh-pages; git merge main; git push origin gh-pages; git checkout main`) để Web và App luôn đồng bộ với nhau.

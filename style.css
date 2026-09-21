@@ -17,6 +17,7 @@
   --primary: #3b82f6;
   --success: #10b981;
   --danger: #ef4444;
+  --red: var(--danger);
   --warning: #f59e0b;
   --border: rgba(0, 0, 0, 0.25);
   --border-card: rgba(0, 0, 0, 0.15);
