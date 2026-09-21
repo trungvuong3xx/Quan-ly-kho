@@ -318,19 +318,16 @@ function capNhatLogQR() {
     const flashClass = revIdx === 0 ? ' scan-flash-new' : '';
     const kgStr = item.kg ? Number(item.kg).toFixed(1) : "0";
 
-    return `
-      <div class="${flashClass}" style="display:flex; justify-content:space-between; align-items:center; padding:4px 2px; border-bottom:1px solid var(--line-soft); font-size:12px; border-radius:6px;">
-        <span style="color:var(--steel); font-weight:700; width:24px; text-align:center;">${dot}</span>
-        <span style="color:var(--cream); font-weight:700; width:75px; text-align:left; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">1 Bao</span>
-        <span style="color:var(--brass); font-weight:700; flex:1; min-width:60px; text-align:left; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${item.qc || item.msp || ''}">${item.qc || item.msp || '—'}</span>
-        <span style="color:var(--success); font-weight:700; width:42px; text-align:right;">${kgStr}</span>
-        <span style="color:var(--blue); font-weight:700; width:26px; text-align:center;">${item.seqTrongDot}</span>
-        <span style="color:var(--cream-soft); font-size:11px; width:52px; text-align:right;">${gio}</span>
-        <button onclick="xoaMaTrongLiveLogQR(${origIdx})" style="background:none; border:none; color:var(--red); cursor:pointer; width:26px; padding:2px 0; display:inline-flex; align-items:center; justify-content:center;" title="Xóa mã này">
-          <i class="ti ti-trash"></i>
-        </button>
-      </div>
-    `;
+    return `<div class="${flashClass}" style="display:flex; justify-content:space-between; align-items:center; padding:4px 0; border-bottom:1px solid var(--line-soft); font-size:12px; border-radius:6px;">
+      <span style="color:var(--steel); font-weight:700; width:26px;">${dot}</span>
+      <span style="color:var(--brass); font-weight:800; flex:1; text-align:left; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${item.qc || item.msp || '—'}</span>
+      <span style="color:var(--cream-soft); font-size:11px; width:20px; text-align:center;">${item.seqTrongDot}</span>
+      <span style="color:var(--success); font-weight:700; width:45px; text-align:center;">${kgStr}</span>
+      <span style="color:var(--cream-soft); font-size:11px; width:50px; text-align:right;">${gio}</span>
+      <button class="cx5-del-btn" onclick="xoaMaTrongLiveLogQR(${origIdx})" title="Xóa mã này" style="margin-left:4px; background:none; border:none; color:var(--red); cursor:pointer; padding:2px 4px;">
+        <i class="ti ti-trash"></i>
+      </button>
+    </div>`;
   }).join("");
 
   if (phienQuetQR.length > MAX_LIVE_LOG) {
