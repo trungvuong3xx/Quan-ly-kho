@@ -35,8 +35,12 @@ subprojects {
             }
         }
         project.tasks.matching { it.name.contains("Kotlin") || it.name.contains("kotlin") }.configureEach { task ->
-            if (task.hasProperty("kotlinOptions")) {
-                task.kotlinOptions.jvmTarget = "17"
+            try {
+                if (task.hasProperty("kotlinOptions")) {
+                    task.kotlinOptions.jvmTarget = "17"
+                }
+            } catch (Throwable e) {
+                // Ignore missing property errors like 'org'
             }
         }
     }
