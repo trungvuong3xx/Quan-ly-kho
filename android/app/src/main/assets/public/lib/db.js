@@ -72,9 +72,6 @@
       return true;
     } catch (err) {
       console.error("[IndexedDB] Lỗi lưu snapshot:", err);
-      if (typeof hopDenGhiLog === "function") {
-        hopDenGhiLog("IDB_SAVE_ERR", "Lỗi ghi snapshot IndexedDB: " + err.message);
-      }
       return false;
     }
   }

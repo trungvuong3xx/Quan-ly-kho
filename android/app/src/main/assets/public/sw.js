@@ -11,7 +11,7 @@ if (self.location.hostname === 'localhost' || self.location.protocol === 'capaci
   });
 } else {
   // Logic Service Worker dành riêng cho Web PWA (GitHub Pages)
-  const CACHE_NAME = 'kho-cache-v71';
+  const CACHE_NAME = 'kho-cache-v72';
   const urlsToCache = [
   './',
   './index.html',

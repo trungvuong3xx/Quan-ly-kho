@@ -709,9 +709,6 @@ async function guiDuLieuQuetQR() {
       btnGui.style.color = "#fff";
     }
   } catch (err) {
-    if (typeof hopDenGhiLog === "function") {
-      hopDenGhiLog("SYNC_ERR", "Lỗi gửi Google Sheet QR: " + (err.message || String(err)));
-    }
     const pending = docPendingQuetQR();
     rows.forEach(r => {
       if (!pending.some(p => p.id === r.id && p.thoiGian === r.thoiGian)) {
