@@ -1073,7 +1073,11 @@ async function dongBoTatCaCX5() {
       thatBai = itemsToSubmit.length;
     }
   } catch (e) {
-    showCanhBaoCX5("Lỗi kết nối đồng bộ: " + e.message);
+      if (e.message.toLowerCase().includes("timeout") || e.message.toLowerCase().includes("mạng") || e.message.toLowerCase().includes("chậm")) {
+        showCanhBaoCX5("Mạng chậm! Có thể dữ liệu đã lên server, hãy tải lại trang để kiểm tra.");
+      } else {
+        showCanhBaoCX5("Lỗi kết nối đồng bộ: " + e.message);
+      }
   } finally {
     dangDongBoCX5Lock = false;
     showLoading(false);
@@ -1736,7 +1740,12 @@ async function dongBoGhepCX5() {
   } catch (e) {
     showLoading(false);
     if (btn) { btn.disabled = false; btn.innerHTML = '<i class="ti ti-refresh"></i> Đồng bộ Bảng Tổng kết'; }
-    showCanhBaoCX5("Mất mạng — thử lại: " + e.message);
+      if (e.message.toLowerCase().includes("timeout") || e.message.toLowerCase().includes("mạng") || e.message.toLowerCase().includes("chậm")) {
+        showCanhBaoCX5("Mạng chậm, máy chủ có thể đã ghi nhận. Đang kiểm tra lại...");
+        setTimeout(() => { if (typeof dongBoTatCaCX5 === "function") dongBoTatCaCX5(); }, 1500);
+      } else {
+        showCanhBaoCX5("Lỗi mạng khi ghép: " + e.message);
+      }
   } finally {
     dangDongBoGhepCX5Lock = false;
   }
