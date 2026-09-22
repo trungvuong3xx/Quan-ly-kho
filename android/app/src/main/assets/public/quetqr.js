@@ -454,16 +454,7 @@ function toggleQRView(mode) {
     tabChitiet.style.background = "transparent";
     tabChitiet.style.color = "var(--primary)";
     tabChitiet.style.border = "1px solid var(--primary)";
-  } else {
-    wrapChitiet.style.display = "none";
-    wrapGom.style.display = "block";
-    tabTonghop.classList.add("active");
-    tabTonghop.style.background = "";
-    tabTonghop.style.color = "";
-    tabChitiet.classList.remove("active");
-    tabChitiet.style.background = "var(--neutral-solid)";
-    tabChitiet.style.color = "var(--cream)";
-  }
+
 }
 window.toggleQRView = toggleQRView;
 
