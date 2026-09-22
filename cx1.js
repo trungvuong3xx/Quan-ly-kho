@@ -715,7 +715,7 @@ function toggleCX1View(mode) {
     tabChitiet.style.background = "transparent";
     tabChitiet.style.color = "var(--primary)";
     tabChitiet.style.border = "1px solid var(--primary)";
-
+  }
 }
 window.toggleCX1View = toggleCX1View;
 

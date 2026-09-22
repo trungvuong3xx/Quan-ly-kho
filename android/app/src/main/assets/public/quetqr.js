@@ -454,7 +454,7 @@ function toggleQRView(mode) {
     tabChitiet.style.background = "transparent";
     tabChitiet.style.color = "var(--primary)";
     tabChitiet.style.border = "1px solid var(--primary)";
-
+  }
 }
 window.toggleQRView = toggleQRView;
 
