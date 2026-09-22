@@ -95,7 +95,8 @@ async function batDauQuetQR() {
   window.dangQuetQR = true;
 
   document.getElementById("form-chon").style.display = "none";
-  document.getElementById("cam-box").style.display = "block";
+  document.getElementById("qr-cam").style.display = "block";
+  if (typeof khoaCuonTrangQuet === "function") khoaCuonTrangQuet(true); else document.body.classList.add("cam-active");
   document.getElementById("qr-ketqua").style.display = "none";
   document.body.classList.add("cam-active");
 
@@ -173,7 +174,7 @@ function khiQuetDuocMaQR(result) {
     const gioQuet = typeof dinhDangGioQuetTrung === "function" ? dinhDangGioQuetTrung(trung.thoiGian) : "";
     showCanhBaoQR("Đã quét " + gioQuet, "error");
 
-    const vc = document.querySelector("#cam-box .video-container");
+    const vc = document.querySelector("#qr-cam .video-container");
     if (vc) {
       vc.classList.add("canh-bao-trung");
       setTimeout(() => vc.classList.remove("canh-bao-trung"), 500);
@@ -484,7 +485,8 @@ function hienKetQuaQuetQR() {
   const tieuDeKetQua = document.getElementById("qr-ketqua-tieude");
   if (tieuDeKetQua) tieuDeKetQua.textContent = "Hoàn tất: " + (loaiQuetQR || "Giao dịch") + " (" + (ngayQuetQR || "") + ")";
 
-  document.getElementById("cam-box").style.display = "none";
+  document.getElementById("qr-cam").style.display = "none";
+  if (typeof khoaCuonTrangQuet === "function") khoaCuonTrangQuet(false); else document.body.classList.remove("cam-active");
   document.getElementById("form-chon").style.display = "none";
   document.getElementById("qr-ketqua").style.display = "block";
 
@@ -565,7 +567,7 @@ function renderSuaChiTietQR() {
   } else {
     listHtml = rows.map(r => {
       const idx = phienQuetQR.indexOf(r);
-      const hienThi = r.kg !== undefined ? r.kg + " kg" : "0 kg";
+      const hienThi = r.kg !== undefined ? r.kg : "0";
       return '<span class="cx5-so-sx">' + hienThi + ' <i class="ti ti-x" onclick="xoaMaQRTrongSua(' + idx + ', event)"></i></span>';
     }).join("");
   }
@@ -665,7 +667,8 @@ function quetMoiQuetQR() {
   soLuongDaGuiHienTaiQR = 0;
   xoaPhienDoDangQR();
   document.getElementById("qr-ketqua").style.display = "none";
-  document.getElementById("cam-box").style.display = "none";
+  document.getElementById("qr-cam").style.display = "none";
+  if (typeof khoaCuonTrangQuet === "function") khoaCuonTrangQuet(false); else document.body.classList.remove("cam-active");
   document.getElementById("form-chon").style.display = "block";
 }
 window.quetMoiQuetQR = quetMoiQuetQR;

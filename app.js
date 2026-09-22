@@ -2185,14 +2185,14 @@ let isSwiping = false;
 document.addEventListener('touchstart', (e) => {
   const row = e.target.closest('tr.swipe-row');
   if (!row) {
-    const openCell = document.querySelector('.swipe-delete-cell.open');
-    if (openCell && !e.target.closest('.swipe-delete-cell')) {
-      openCell.classList.remove('open');
+    const openRow = document.querySelector('tr.swipe-row.open');
+    if (openRow && !e.target.closest('.swipe-delete-btn')) {
+      openRow.classList.remove('open');
     }
     return;
   }
-  document.querySelectorAll('.swipe-delete-cell.open').forEach(c => {
-    if (c !== row.querySelector('.swipe-delete-cell')) c.classList.remove('open');
+  document.querySelectorAll('tr.swipe-row.open').forEach(r => {
+    if (r !== row) r.classList.remove('open');
   });
   swipeStartX = e.touches[0].clientX;
   swipeCurrentX = swipeStartX;
@@ -2209,11 +2209,8 @@ document.addEventListener('touchend', (e) => {
   if (!isSwiping || !swipingRow) return;
   const deltaX = swipeCurrentX - swipeStartX;
   if (Math.abs(deltaX) > 30) {
-    const deleteBtn = swipingRow.querySelector('.swipe-delete-cell');
-    if (deleteBtn) {
-      if (deltaX < -30) deleteBtn.classList.add('open');
-      else if (deltaX > 30) deleteBtn.classList.remove('open');
-    }
+    if (deltaX < -30) swipingRow.classList.add('open');
+    else if (deltaX > 30) swipingRow.classList.remove('open');
   }
   isSwiping = false;
   swipingRow = null;
