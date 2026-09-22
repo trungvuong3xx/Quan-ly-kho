@@ -1073,10 +1073,12 @@ async function dongBoTatCaCX5() {
       thatBai = itemsToSubmit.length;
     }
   } catch (e) {
-      if (e.message.toLowerCase().includes("timeout") || e.message.toLowerCase().includes("mạng") || e.message.toLowerCase().includes("chậm")) {
-        showCanhBaoCX5("Mạng chậm! Có thể dữ liệu đã lên server, hãy tải lại trang để kiểm tra.");
+      if (e.message.includes("TIMEOUT_ERR")) {
+        showCanhBaoCX5("Máy chủ quá tải! Có thể dữ liệu đã lên server, hãy tải lại trang (F5) để kiểm tra.");
+      } else if (e.message.includes("NETWORK_ERR")) {
+        showCanhBaoCX5("Lỗi mạng! Đang ngoại tuyến hoặc mạng 4G bị chặn. Thử tắt app mở lại.");
       } else {
-        showCanhBaoCX5("Lỗi kết nối đồng bộ: " + e.message);
+        showCanhBaoCX5("Lỗi đồng bộ: " + e.message);
       }
   } finally {
     dangDongBoCX5Lock = false;
@@ -1352,7 +1354,7 @@ function renderTongKgCX5() {
   if (dangTaiUngVienCX5) {
     bannerHtml = '<div style="display:flex;align-items:center;gap:8px;padding:8px 12px;background:rgba(59,130,246,0.12);border-radius:8px;color:#60a5fa;font-size:13px;margin-bottom:12px;"><i class="ti ti-loader spin"></i> Đang tìm ứng viên ngày cũ từ Sheet...</div>';
   } else if (loiTaiUngVienCX5) {
-    bannerHtml = '<div style="display:flex;align-items:center;gap:8px;padding:8px 12px;background:rgba(239,68,68,0.12);border-radius:8px;color:#f87171;font-size:13px;margin-bottom:12px;"><i class="ti ti-cloud-off"></i> Không thể kết nối máy chủ để tìm ngày cũ (Chế độ ngoại tuyến)</div>';
+    bannerHtml = '<div style="display:flex;align-items:center;gap:8px;padding:8px 12px;background:rgba(239,68,68,0.12);border-radius:8px;color:#f87171;font-size:13px;margin-bottom:12px;line-height:1.4;"><i class="ti ti-cloud-off" style="font-size:18px"></i> Lỗi kết nối máy chủ: 4G bị chặn hoặc đang ngoại tuyến. (Vuốt tắt app mở lại hoặc dùng Wi-Fi)</div>';
   }
 
   const html = keys.map(function (key) {
