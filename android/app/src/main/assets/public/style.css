@@ -2055,23 +2055,56 @@ body { padding: 0 !important; background: var(--bg-body) !important; color: var(
   pointer-events: none;
 }
 
-/* Swipe to Delete (Row Transform Based) */
-tr.swipe-row {
-  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+/* Removed old swipe-row */
+
+/* ============================================================
+   TABLE FLEXBOX LAYOUT & SWIPE-TO-DELETE (CX1, QR, BTP, CX5)
+   ============================================================ */
+.cx5-list-container {
+  display: flex;
+  flex-direction: column;
+  background: var(--card-raised);
+  border-radius: 8px;
+  overflow: hidden;
 }
-tr.swipe-row.open {
+
+.cx5-list-header {
+  border-bottom: 2px solid var(--steel) !important;
+  font-size: 13px;
+  text-transform: uppercase;
+}
+
+.cx5-list-header > div {
+  padding-bottom: 6px;
+  box-shadow: inset 0 -2px 0 var(--steel);
+}
+
+.cx5-swipe-row {
+  position: relative;
+  display: flex;
+  overflow: hidden;
+  background: var(--card-raised);
+  border-bottom: 1px solid var(--line-soft); /* Subtle border between rows */
+  transition: background 0.2s;
+  font-size: 14px;
+}
+
+/* Make row content clear with left border for cols if needed (currently using spacing) */
+.cx5-swipe-row > div:first-child {
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  background: var(--card-raised);
+  position: relative;
+  z-index: 2;
+  width: 100%;
+}
+
+.cx5-swipe-row.open > div:first-child {
   transform: translateX(-65px);
 }
-.swipe-delete-cell {
-  width: 0 !important;
-  max-width: 0 !important;
-  padding: 0 !important;
-  border: none !important;
-  position: relative;
-}
-.swipe-delete-btn {
+
+.cx5-del-btn {
   position: absolute;
-  right: -65px;
+  right: 0;
   top: 0;
   bottom: 0;
   width: 65px;
@@ -2080,8 +2113,11 @@ tr.swipe-row.open {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-weight: 600;
-  font-size: 13px;
+  font-size: 20px;
   cursor: pointer;
-  white-space: nowrap;
+  z-index: 1;
+}
+
+.cx5-swipe-row:last-child {
+  border-bottom: none;
 }

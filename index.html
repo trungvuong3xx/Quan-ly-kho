@@ -435,26 +435,42 @@
 </div>
 
 <div id="lichsuChiTiet" class="page">
-  <div class="card">
-    <h3 id="lichsu-chitiet-tieude">Chi tiết phiên</h3>
+    <div class="card">
+      <h3 id="lichsu-chitiet-tieude">Chi tiết phiên</h3>
 
-    <div style="margin-bottom: 30px;">
-      <h4 style="color:var(--brass); margin-bottom:10px;">CHI TIẾT</h4>
-      <div style="overflow-x:auto;">
-        <table style="width:100%; border-collapse:collapse; background:var(--card-raised); font-size:14px; border-radius:8px; overflow:hidden;">
-          <thead>
-            <tr style="background:var(--line-soft)">
-              <th style="padding:10px; border-bottom:2px solid var(--line); text-align:left">Đợt</th>
-
-              <th style="padding:10px; border-bottom:2px solid var(--line); text-align:left">QC</th>
-              <th style="padding:10px; border-bottom:2px solid var(--line); text-align:center">Bao</th>
-              <th style="padding:10px; border-bottom:2px solid var(--line); text-align:right">KG</th>
-            </tr>
-          </thead>
-          <tbody id="lichsu-tbody-dot"></tbody>
-        </table>
+      <div class="btp-tabs" style="display:flex; gap:8px; margin-bottom:12px;">
+        <button id="ls-cx1-tab-chitiet" class="btn btn-blue" style="flex:1; border-radius:8px; margin:0; padding:8px; font-size:13px; font-weight:700;" onclick="toggleLichSuCX1View('chitiet')">Chi Tiết</button>
+        <button id="ls-cx1-tab-tonghop" class="btn" style="flex:1; border-radius:8px; margin:0; padding:8px; font-size:13px; font-weight:700; background:transparent; border:1px solid var(--primary); color:var(--primary);" onclick="toggleLichSuCX1View('tonghop')">Tổng Hợp</button>
       </div>
+
+      <div id="ls-cx1-wrap-chitiet" style="border-radius:12px; border:1px solid var(--steel); overflow-x:hidden; overflow-y:auto; box-shadow:0 2px 8px rgba(0,0,0,0.05); max-height:280px; display:flex; flex-direction:column; margin-bottom: 20px;">
+        <div class="cx5-list-container">
+          <div class="cx5-list-header" style="display:flex; padding:10px; background:var(--card-raised); border-bottom:2px solid var(--steel); position:sticky; top:0; z-index:2;">
+            <div style="flex:0.8; font-weight:700; color:var(--cream);">Đợt</div>
+            <div style="flex:1.5; font-weight:700; color:var(--cream);">QC</div>
+            <div style="flex:0.7; font-weight:700; color:var(--cream); text-align:center;">Bao</div>
+            <div style="flex:1; font-weight:700; color:var(--cream); text-align:right;">KG</div>
+          </div>
+          <div id="lichsu-tbody-dot" style="display:flex; flex-direction:column;"></div>
+        </div>
+      </div>
+
+      <div id="ls-cx1-wrap-gom" style="display:none; border-radius:12px; border:1px solid var(--steel); overflow:hidden; overflow-y:auto; box-shadow:0 2px 8px rgba(0,0,0,0.05); max-height:280px; flex-direction:column; margin-bottom: 20px;">
+        <div class="cx5-list-container">
+          <div class="cx5-list-header" style="display:flex; padding:10px; background:var(--card-raised); border-bottom:2px solid var(--steel); position:sticky; top:0; z-index:2;">
+            <div style="flex:2.3; font-weight:700; color:var(--cream);">QC</div>
+            <div style="flex:0.7; font-weight:700; color:var(--cream); text-align:center;">Bao</div>
+            <div style="flex:1; font-weight:700; color:var(--cream); text-align:right;">KG</div>
+          </div>
+          <div id="lichsu-tbody-gom" style="display:flex; flex-direction:column;"></div>
+        </div>
+      </div>
+
+      <button class="btn btn-green btn-full" onclick="tiepTucTuChiTietLichSu()">Tiếp tục quét / Sửa phiên này</button>
+      <button class="btn btn-excel btn-full" style="margin-top:8px" onclick="xuatExcelLichSuCX1()"><i class="ti ti-file-spreadsheet"></i> Xuất File Excel Phiên Này</button>
+      <button class="btn btn-full bg-neutral-solid text-cream mt-2" onclick="chuyenTrangKhongNav('lichSu')"><i class="ti ti-arrow-left"></i> Lịch sử</button>
     </div>
+  </div>
 
     <div style="margin-bottom: 20px;">
       <h4 style="color:var(--steel); margin-bottom:10px;">TỔNG HỢP</h4>
@@ -581,37 +597,27 @@
     </div>
 
     <div id="qr-wrap-chitiet" style="border-radius:12px; border:1px solid var(--steel); overflow-x:hidden; overflow-y:auto; box-shadow:0 2px 8px rgba(0,0,0,0.05); max-height:280px; display:flex; flex-direction:column; margin-bottom: 20px;">
-      <div>
-        <table style="width:100%; border-collapse:collapse; background:var(--card-raised); font-size:14px; border-radius:8px;">
-          <thead style="position: sticky; top: 0; background: var(--card-raised); z-index: 2;">
-            <tr>
-              <th style="padding:10px; box-shadow: inset 0 -2px 0 var(--steel); text-align:left">Đợt</th>
-              <th style="padding:10px; box-shadow: inset 0 -2px 0 var(--steel); text-align:left">QC</th>
-              <th style="padding:10px; box-shadow: inset 0 -2px 0 var(--steel); text-align:center">Bao</th>
-              <th style="padding:10px; box-shadow: inset 0 -2px 0 var(--steel); text-align:right">KG</th>
-              <!-- Hidden col for swipe -->
-              <th style="padding:0; width:0; max-width:0; border:none; box-shadow: inset 0 -2px 0 var(--steel);"></th>
-            </tr>
-          </thead>
-          <tbody id="qr-tbody-dot"></tbody>
-        </table>
+        <div class="cx5-list-container">
+          <div class="cx5-list-header" style="display:flex; padding:10px; background:var(--card-raised); border-bottom:2px solid var(--steel); position:sticky; top:0; z-index:2;">
+            <div style="flex:0.8; font-weight:700; color:var(--cream);">Đợt</div>
+            <div style="flex:1.5; font-weight:700; color:var(--cream);">QC</div>
+            <div style="flex:0.7; font-weight:700; color:var(--cream); text-align:center;">Bao</div>
+            <div style="flex:1; font-weight:700; color:var(--cream); text-align:right;">KG</div>
+          </div>
+          <div id="qr-tbody-dot" style="display:flex; flex-direction:column;"></div>
+        </div>
       </div>
-    </div>
 
     <div id="qr-wrap-gom" style="display:none; border-radius:12px; border:1px solid var(--steel); overflow:hidden; overflow-y:auto; box-shadow:0 2px 8px rgba(0,0,0,0.05); max-height:280px; flex-direction:column; margin-bottom: 20px;">
-      <div>
-        <table style="width:100%; border-collapse:collapse; background:var(--card-raised); font-size:14px; border-radius:8px;">
-          <thead style="position: sticky; top: 0; background: var(--card-raised); z-index: 2;">
-            <tr>
-              <th style="padding:10px; box-shadow: inset 0 -2px 0 var(--steel); text-align:left">QC</th>
-              <th style="padding:10px; box-shadow: inset 0 -2px 0 var(--steel); text-align:center">Bao</th>
-              <th style="padding:10px; box-shadow: inset 0 -2px 0 var(--steel); text-align:right">KG</th>
-            </tr>
-          </thead>
-          <tbody id="qr-tbody-gom"></tbody>
-        </table>
+        <div class="cx5-list-container">
+          <div class="cx5-list-header" style="display:flex; padding:10px; background:var(--card-raised); border-bottom:2px solid var(--steel); position:sticky; top:0; z-index:2;">
+            <div style="flex:2.3; font-weight:700; color:var(--cream);">QC</div>
+            <div style="flex:0.7; font-weight:700; color:var(--cream); text-align:center;">Bao</div>
+            <div style="flex:1; font-weight:700; color:var(--cream); text-align:right;">KG</div>
+          </div>
+          <div id="qr-tbody-gom" style="display:flex; flex-direction:column;"></div>
+        </div>
       </div>
-    </div>
 
     <button id="btn-gui-dulieu-qr" class="btn" style="width:100%; height:42px; font-size:14px; font-weight:700; margin:0 0 8px 0; background:linear-gradient(135deg, #f59e0b, #d97706); color:#1a1a2e; border:none; box-shadow:0 4px 12px rgba(245,158,11,0.4);" onclick="guiDuLieuQuetQR()"><i class="ti ti-cloud-upload"></i> Gửi dữ liệu lên Sheet</button>
     <div style="display:flex; gap:8px; margin-bottom:8px;">
@@ -735,37 +741,27 @@
     </div>
 
     <div id="cx1-wrap-chitiet" style="border-radius:12px; border:1px solid var(--steel); overflow-x:hidden; overflow-y:auto; box-shadow:0 2px 8px rgba(0,0,0,0.05); max-height:280px; display:flex; flex-direction:column; margin-bottom: 20px;">
-      <div>
-        <table style="width:100%; border-collapse:collapse; background:var(--card-raised); font-size:14px; border-radius:8px;">
-          <thead style="position: sticky; top: 0; background: var(--card-raised); z-index: 2;">
-            <tr>
-              <th style="padding:10px; box-shadow: inset 0 -2px 0 var(--steel); text-align:left">Đợt</th>
-              <th style="padding:10px; box-shadow: inset 0 -2px 0 var(--steel); text-align:left">QC</th>
-              <th style="padding:10px; box-shadow: inset 0 -2px 0 var(--steel); text-align:center">Bao</th>
-              <th style="padding:10px; box-shadow: inset 0 -2px 0 var(--steel); text-align:right">KG</th>
-              <!-- Hidden col for swipe -->
-              <th style="padding:0; width:0; max-width:0; border:none; box-shadow: inset 0 -2px 0 var(--steel);"></th>
-            </tr>
-          </thead>
-          <tbody id="cx1-tbody-dot"></tbody>
-        </table>
+        <div class="cx5-list-container">
+          <div class="cx5-list-header" style="display:flex; padding:10px; background:var(--card-raised); border-bottom:2px solid var(--steel); position:sticky; top:0; z-index:2;">
+            <div style="flex:0.8; font-weight:700; color:var(--cream);">Đợt</div>
+            <div style="flex:1.5; font-weight:700; color:var(--cream);">QC</div>
+            <div style="flex:0.7; font-weight:700; color:var(--cream); text-align:center;">Bao</div>
+            <div style="flex:1; font-weight:700; color:var(--cream); text-align:right;">KG</div>
+          </div>
+          <div id="cx1-tbody-dot" style="display:flex; flex-direction:column;"></div>
+        </div>
       </div>
-    </div>
 
     <div id="cx1-wrap-gom" style="display:none; border-radius:12px; border:1px solid var(--steel); overflow:hidden; overflow-y:auto; box-shadow:0 2px 8px rgba(0,0,0,0.05); max-height:280px; flex-direction:column; margin-bottom: 20px;">
-      <div>
-        <table style="width:100%; border-collapse:collapse; background:var(--card-raised); font-size:14px; border-radius:8px;">
-          <thead style="position: sticky; top: 0; background: var(--card-raised); z-index: 2;">
-            <tr>
-              <th style="padding:10px; box-shadow: inset 0 -2px 0 var(--steel); text-align:left">QC</th>
-              <th style="padding:10px; box-shadow: inset 0 -2px 0 var(--steel); text-align:center">Bao</th>
-              <th style="padding:10px; box-shadow: inset 0 -2px 0 var(--steel); text-align:right">KG</th>
-            </tr>
-          </thead>
-          <tbody id="cx1-tbody-gom"></tbody>
-        </table>
+        <div class="cx5-list-container">
+          <div class="cx5-list-header" style="display:flex; padding:10px; background:var(--card-raised); border-bottom:2px solid var(--steel); position:sticky; top:0; z-index:2;">
+            <div style="flex:2.3; font-weight:700; color:var(--cream);">QC</div>
+            <div style="flex:0.7; font-weight:700; color:var(--cream); text-align:center;">Bao</div>
+            <div style="flex:1; font-weight:700; color:var(--cream); text-align:right;">KG</div>
+          </div>
+          <div id="cx1-tbody-gom" style="display:flex; flex-direction:column;"></div>
+        </div>
       </div>
-    </div>
 
     <button id="btn-gui-dulieu-cx1" class="btn" style="width:100%; height:42px; font-size:14px; font-weight:700; margin:0 0 8px 0; background:linear-gradient(135deg, #f59e0b, #d97706); color:#1a1a2e; border:none; box-shadow:0 4px 12px rgba(245,158,11,0.4);" onclick="guiDuLieuCX1()"><i class="ti ti-cloud-upload"></i> Gửi dữ liệu lên Sheet</button>
     <div style="display:flex; gap:8px; margin-bottom:8px;">
@@ -889,87 +885,17 @@
       <input type="text" id="btp-ketqua-search" placeholder="🔍 Tìm kiếm mã..." oninput="hienKetQuaBTP()" style="width:100%; padding:8px 12px; font-size:13px; border-radius:8px; border:1px solid var(--line); margin-bottom:12px; background:var(--bg); box-sizing: border-box;">
 
       <!-- Khung Bảng Chi Tiết -->
-      <div id="btp-wrap-chitiet" style="border-radius:12px; border:1px solid var(--line); overflow-x:hidden; overflow-y:auto; box-shadow:0 2px 8px rgba(0,0,0,0.05); max-height:280px; display:flex; flex-direction:column;">
-        <div>
-          <table style="width:100%; border-collapse:collapse; background:var(--card-raised); font-size:14px;">
-            <thead style="position: sticky; top: 0; background: var(--card-raised); z-index: 2;">
-              <tr>
-                <th style="padding:12px 10px; box-shadow:inset 0 -2px 0 var(--steel); border-bottom:none; text-align:left; font-weight:700;">Đợt</th>
-                <th style="padding:12px 10px; box-shadow:inset 0 -2px 0 var(--steel); border-bottom:none; text-align:left; font-weight:700;">Đơn</th>
-                <th style="padding:12px 10px; box-shadow:inset 0 -2px 0 var(--steel); border-bottom:none; text-align:right; font-weight:700;">Loại</th>
-                <th style="padding:0; width:0; max-width:0; box-shadow:inset 0 -2px 0 var(--steel); border-bottom:none; border:none;"></th>
-              </tr>
-            </thead>
-            <tbody id="btp-tbody-dot"></tbody>
-            <tfoot id="btp-tfoot-dot" style="position: sticky; bottom: 0; background: var(--card-raised); z-index: 2; box-shadow:inset 0 2px 0 var(--steel); border-top:none;"></tfoot>
-          </table>
+      <div id="btp-wrap-chitiet" style="border-radius:12px; border:1px solid var(--steel); overflow-x:hidden; overflow-y:auto; box-shadow:0 2px 8px rgba(0,0,0,0.05); max-height:280px; display:flex; flex-direction:column; margin-bottom: 20px;">
+        <div class="cx5-list-container">
+          <div class="cx5-list-header" style="display:flex; padding:10px; background:var(--card-raised); border-bottom:2px solid var(--steel); position:sticky; top:0; z-index:2;">
+            <div style="flex:1; font-weight:700; color:var(--cream);">STT</div>
+            <div style="flex:2; font-weight:700; color:var(--cream);">Mã BTP</div>
+            <div style="flex:1; font-weight:700; color:var(--cream); text-align:right;">Loại</div>
+          </div>
+          <div id="btp-tbody-dot" style="display:flex; flex-direction:column;"></div>
+          <div id="btp-tfoot-dot" style="display:flex; flex-direction:column; position: sticky; bottom: 0; background: var(--card-raised); z-index: 2;"></div>
         </div>
       </div>
-
-      <!-- Khung Bảng Tổng Hợp -->
-      <div id="btp-wrap-gom" style="display:none; border-radius:12px; border:1px solid var(--line); overflow:hidden; box-shadow:0 2px 8px rgba(0,0,0,0.05); max-height:280px; flex-direction:column;">
-        <div style="overflow-y:auto; overflow-x:auto;">
-          <table style="width:100%; border-collapse:collapse; background:var(--card-raised); font-size:14px;">
-            <thead style="position: sticky; top: 0; background: var(--card-raised); z-index: 2;">
-              <tr>
-                <th style="padding:12px 10px; box-shadow:inset 0 -2px 0 var(--steel); border-bottom:none; text-align:left; font-weight:700;">Đơn</th>
-                <th style="padding:12px 10px; box-shadow:inset 0 -2px 0 var(--steel); border-bottom:none; text-align:center; font-weight:700;">Loại</th>
-                <th style="padding:12px 10px; box-shadow:inset 0 -2px 0 var(--steel); border-bottom:none; text-align:right; font-weight:700;">SL</th>
-              </tr>
-            </thead>
-            <tbody id="btp-tbody-gom"></tbody>
-            <tfoot id="btp-tfoot-gom" style="position: sticky; bottom: 0; background: var(--card-raised); z-index: 2; box-shadow:inset 0 2px 0 var(--steel); border-top:none;"></tfoot>
-          </table>
-        </div>
-      </div>
-      
-      <script>
-        function toggleBTPView(mode) {
-          const btnChitiet = document.getElementById('btn-btp-view-chitiet');
-          const btnGom = document.getElementById('btn-btp-view-gom');
-          const wrapChitiet = document.getElementById('btp-wrap-chitiet');
-          const wrapGom = document.getElementById('btp-wrap-gom');
-          
-          if (mode === 'chitiet') {
-            wrapChitiet.style.display = 'flex';
-            wrapGom.style.display = 'none';
-            btnChitiet.className = 'btn btn-blue';
-            btnChitiet.style.background = '';
-            btnChitiet.style.color = '';
-            btnChitiet.style.border = 'none';
-            
-            btnGom.className = 'btn';
-            btnGom.style.background = 'transparent';
-            btnGom.style.color = 'var(--primary)';
-            btnGom.style.border = '1px solid var(--primary)';
-          } else {
-            wrapChitiet.style.display = 'none';
-            wrapGom.style.display = 'flex';
-            btnGom.className = 'btn btn-blue';
-            btnGom.style.background = '';
-            btnGom.style.color = '';
-            btnGom.style.border = 'none';
-            
-            btnChitiet.className = 'btn';
-            btnChitiet.style.background = 'transparent';
-            btnChitiet.style.color = 'var(--primary)';
-            btnChitiet.style.border = '1px solid var(--primary)';
-          }
-        }
-      </script>
-    </div>
-
-    <button id="btn-gui-dulieu-btp" class="btn" style="width:100%; height:42px; font-size:14px; font-weight:700; margin:0; background:linear-gradient(135deg, #f59e0b, #d97706); color:#1a1a2e; border:none; box-shadow:0 4px 12px rgba(245,158,11,0.4);" onclick="guiDuLieuBTP()"><i class="ti ti-cloud-upload"></i> Gửi dữ liệu lên Sheet</button>
-    <div style="display:flex; gap:8px; margin-top:8px;">
-      <button class="btn btn-green" style="flex:1; height:38px; font-size:13px; margin:0;" onclick="quetTiepBTP()">Quét tiếp</button>
-      <button class="btn btn-blue" style="flex:1; height:38px; font-size:13px; margin:0;" onclick="quetMoiBTP()">Quét mới</button>
-    </div>
-    <div style="display:flex; gap:8px; margin-top:8px;">
-      <button class="btn btn-excel" style="flex:1; height:38px; font-size:13px; margin:0;" onclick="xuatExcelBTP()"><i class="ti ti-file-spreadsheet"></i> Xuất Excel</button>
-      
-    </div>
-  </div>
-</div>
 
 <div id="lichSuBTP" class="page">
   <div class="card">
@@ -986,25 +912,45 @@
 </div>
 
 <div id="lichSuBTPChiTiet" class="page">
-  <div class="card">
-    <h3 id="lichsu-btp-chitiet-tieude">Chi tiết Lịch sử BTP</h3>
-    
-    <div style="margin-bottom: 20px;">
-      <h4 style="color:var(--brass); margin-bottom:10px;">DANH SÁCH MÃ QUÉT</h4>
-      <div style="max-height: 280px; overflow-y: auto; overflow-x: auto; border-radius: 8px; border: 1px solid var(--line-soft);">
-        <table style="width:100%; border-collapse:collapse; background:var(--card-raised); font-size:14px;">
-          <thead style="position: sticky; top: 0; background: var(--card-raised); z-index: 2;">
-            <tr style="background:var(--line-soft)">
-              <th style="padding:10px; border-bottom:2px solid var(--line); text-align:left">STT</th>
-              <th style="padding:10px; border-bottom:2px solid var(--line); text-align:left">Mã BTP</th>
-              <th style="padding:10px; border-bottom:2px solid var(--line); text-align:right">Loại</th>
-            </tr>
-          </thead>
-          <tbody id="lichsu-btp-tbody-dot"></tbody>
-          <tfoot id="lichsu-btp-tfoot-dot" style="position: sticky; bottom: 0; background: var(--card-raised); z-index: 2; border-top: 2px solid var(--line);"></tfoot>
-        </table>
+    <div class="card">
+      <h3 id="lichsu-btp-chitiet-tieude">Chi tiết Lịch sử BTP</h3>
+
+      <div class="btp-tabs" style="display:flex; gap:8px; margin-bottom:12px;">
+        <button id="ls-btp-tab-chitiet" class="btn btn-blue" style="flex:1; border-radius:8px; margin:0; padding:8px; font-size:13px; font-weight:700;" onclick="toggleLichSuBTPView('chitiet')">Chi Tiết</button>
+        <button id="ls-btp-tab-tonghop" class="btn" style="flex:1; border-radius:8px; margin:0; padding:8px; font-size:13px; font-weight:700; background:transparent; border:1px solid var(--primary); color:var(--primary);" onclick="toggleLichSuBTPView('tonghop')">Tổng Hợp</button>
+      </div>
+
+      <div id="ls-btp-wrap-chitiet" style="border-radius:12px; border:1px solid var(--steel); overflow-x:hidden; overflow-y:auto; box-shadow:0 2px 8px rgba(0,0,0,0.05); max-height:280px; display:flex; flex-direction:column; margin-bottom: 20px;">
+        <div class="cx5-list-container">
+          <div class="cx5-list-header" style="display:flex; padding:10px; background:var(--card-raised); border-bottom:2px solid var(--steel); position:sticky; top:0; z-index:2;">
+            <div style="flex:1; font-weight:700; color:var(--cream);">STT</div>
+            <div style="flex:2; font-weight:700; color:var(--cream);">Mã BTP</div>
+            <div style="flex:1; font-weight:700; color:var(--cream); text-align:right;">Loại</div>
+          </div>
+          <div id="lichsu-btp-tbody-dot" style="display:flex; flex-direction:column;"></div>
+          <div id="lichsu-btp-tfoot-dot" style="display:flex; flex-direction:column; position: sticky; bottom: 0; background: var(--card-raised); z-index: 2;"></div>
+        </div>
+      </div>
+
+      <div id="ls-btp-wrap-gom" style="display:none; border-radius:12px; border:1px solid var(--steel); overflow:hidden; overflow-y:auto; box-shadow:0 2px 8px rgba(0,0,0,0.05); max-height:280px; flex-direction:column; margin-bottom: 20px;">
+        <div class="cx5-list-container">
+          <div class="cx5-list-header" style="display:flex; padding:10px; background:var(--card-raised); border-bottom:2px solid var(--steel); position:sticky; top:0; z-index:2;">
+            <div style="flex:1; font-weight:700; color:var(--cream);">Đơn</div>
+            <div style="flex:2; font-weight:700; color:var(--cream); text-align:center;">Loại</div>
+            <div style="flex:1; font-weight:700; color:var(--cream); text-align:right;">SL</div>
+          </div>
+          <div id="lichsu-btp-tbody-gom" style="display:flex; flex-direction:column;"></div>
+          <div id="lichsu-btp-tfoot-gom" style="display:flex; flex-direction:column; position: sticky; bottom: 0; background: var(--card-raised); z-index: 2;"></div>
+        </div>
+      </div>
+
+      <div style="display:flex; flex-direction:column; gap:8px;">
+        <button class="btn btn-green btn-full" onclick="tiepTucTuChiTietLichSuBTP()">Quét tiếp / Sửa phiên này</button>
+        <button class="btn btn-excel btn-full" onclick="xuatExcelLichSuBTP()"><i class="ti ti-file-spreadsheet"></i> Xuất Excel Phiên Này</button>
+        <button class="btn btn-full" style="background:var(--card-raised); color:var(--cream); border:1px solid var(--line);" onclick="chuyenTrangKhongNav('lichSuBTP')"><i class="ti ti-arrow-left"></i> Quay lại Lịch sử</button>
       </div>
     </div>
+  </div>
 
     <div style="margin-bottom: 20px;">
       <h4 style="color:var(--steel); margin-bottom:10px;">TỔNG HỢP</h4>

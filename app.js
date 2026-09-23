@@ -2183,15 +2183,15 @@ let swipingRow = null;
 let isSwiping = false;
 
 document.addEventListener('touchstart', (e) => {
-  const row = e.target.closest('tr.swipe-row');
+  const row = e.target.closest('.cx5-swipe-row');
   if (!row) {
-    const openRow = document.querySelector('tr.swipe-row.open');
-    if (openRow && !e.target.closest('.swipe-delete-btn')) {
+    const openRow = document.querySelector('.cx5-swipe-row.open');
+    if (openRow && !e.target.closest('.cx5-del-btn')) {
       openRow.classList.remove('open');
     }
     return;
   }
-  document.querySelectorAll('tr.swipe-row.open').forEach(r => {
+  document.querySelectorAll('.cx5-swipe-row.open').forEach(r => {
     if (r !== row) r.classList.remove('open');
   });
   swipeStartX = e.touches[0].clientX;

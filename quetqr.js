@@ -380,38 +380,36 @@ function taoHangKetQuaQuetQR(danhSach) {
 
   // Render HTML Bảng Chi Tiết (theo Đợt)
   let hangDot = "";
-  Object.values(tongDotCuaPhien).forEach(item => {
+    Object.values(tongDotCuaPhien).forEach(item => {
+      hangDot += `
+    <div class="cx5-swipe-row">
+      <div style="display:flex; padding:12px 10px; border-bottom:1px solid var(--line); align-items:center; flex:1;" onclick="nhapTayKGQR(${item.dot}, '${item.qc}')">
+        <div style="flex:0.8; color:var(--brass); font-weight:700;">Đợt ${item.dot}</div>
+        <div style="flex:1.5;">${item.qc}</div>
+        <div style="flex:0.7; text-align:center;">${item.soLuong}</div>
+        <div style="flex:1; text-align:right; font-weight:700; color:var(--success);">${item.tongKG.toFixed(1)}</div>
+      </div>
+      <div class="cx5-del-btn" onclick="xoaNhomDotQR(${item.dot}, '${item.qc}')"><i class="ti ti-trash"></i></div>
+    </div>`;
+    });
     hangDot += `
-      <tr class="swipe-row">
-        <td style="padding:10px; border-bottom:1px solid var(--line-soft); color:var(--brass); font-weight:700" onclick="nhapTayKGQR(${item.dot}, '${item.qc}')">Đợt ${item.dot}</td>
-        <td style="padding:10px; border-bottom:1px solid var(--line-soft); font-weight:600" onclick="nhapTayKGQR(${item.dot}, '${item.qc}')">${item.qc}</td>
-        <td style="padding:10px; border-bottom:1px solid var(--line-soft); text-align:center; font-weight:700" onclick="nhapTayKGQR(${item.dot}, '${item.qc}')">${item.soLuong}</td>
-        <td style="padding:10px; border-bottom:1px solid var(--line-soft); text-align:right; font-weight:700; color:var(--success)" onclick="nhapTayKGQR(${item.dot}, '${item.qc}')">${item.tongKG.toFixed(1)}</td>
-        <td class="swipe-delete-cell"><div class="swipe-delete-btn" onclick="xoaNhomDotQR(${item.dot}, '${item.qc}')"><i class="ti ti-trash"></i> Xóa</div></td>
-      </tr>
-    `;
-  });
-  hangDot += `
-    <tr style="background:var(--card-raised); border-top:2px solid var(--line);">
-      <td style="padding:10px; font-weight:700; color:var(--brass);">TỔNG</td>
-      <td style="padding:10px;"></td>
-      <td style="padding:10px; text-align:center; font-weight:700; color:var(--brass);">${tongBaoAll}</td>
-      <td style="padding:10px; text-align:right; font-weight:700; color:var(--brass);">${tongKGAll.toFixed(1)}</td>
-      <td style="padding:0; border:none; max-width:0;"></td>
-    </tr>
-  `;
+    <div style="display:flex; padding:12px 10px; background:var(--card-raised); border-bottom:2px solid var(--line); align-items:center;">
+      <div style="flex:0.8; font-weight:700; color:var(--brass);">TỔNG</div>
+      <div style="flex:1.5;"></div>
+      <div style="flex:0.7; text-align:center; font-weight:700; color:var(--brass);">${tongBaoAll}</div>
+      <div style="flex:1; text-align:right; font-weight:700; color:var(--brass);">${tongKGAll.toFixed(1)}</div>
+    </div>`;
 
   // Render HTML Bảng Tổng Hợp (theo QC)
   let hangGom = "";
-  Object.values(tongGomLoaiMa).forEach(item => {
-    hangGom += `
-      <tr>
-        <td style="padding:10px; border-bottom:1px solid var(--line-soft); font-weight:600">${item.qc}</td>
-        <td style="padding:10px; border-bottom:1px solid var(--line-soft); text-align:center; font-weight:700">${item.soLuong}</td>
-        <td style="padding:10px; border-bottom:1px solid var(--line-soft); text-align:right; font-weight:700; color:var(--success)">${item.tongKG.toFixed(1)}</td>
-      </tr>
-    `;
-  });
+    Object.values(tongGomLoaiMa).forEach(item => {
+      hangGom += `
+    <div style="display:flex; padding:12px 10px; border-bottom:1px solid var(--line); align-items:center;">
+      <div style="flex:2.3;">${item.qc}</div>
+      <div style="flex:0.7; text-align:center; font-weight:700;">${item.soLuong}</div>
+      <div style="flex:1; text-align:right; font-weight:700; color:var(--success);">${item.tongKG.toFixed(1)}</div>
+    </div>`;
+    });
   hangGom += `
     <tr style="background:var(--card-raised); border-top:2px solid var(--line);">
       <td style="padding:10px; font-weight:700; color:var(--steel);">TỔNG</td>

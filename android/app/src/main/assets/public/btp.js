@@ -560,7 +560,7 @@ async function ketThucBTP() {
 }
 
 
-function taoHangKetQuaBTP(danhSach) {
+function taoHangKetQuaBTP(danhSach, isReadonly = false) {
   let tongGomLoaiMa = {};
   let tongQRAll = danhSach.length;
   let soDot = new Set(danhSach.map(r => r.dotQuet || 1)).size;
@@ -581,14 +581,16 @@ function taoHangKetQuaBTP(danhSach) {
     const rawStr = (r.rawQR || "").toLowerCase();
 
     if (!tuKhoa || dotStr.includes(tuKhoa) || mspStr.includes(tuKhoa) || kgStr.includes(tuKhoa) || rawStr.includes(tuKhoa)) {
-      hangDot += `
-  <tr class="swipe-row">
-    <td style="padding:10px;border-bottom:1px solid var(--line-soft);color:var(--steel);font-weight:700">${r.dotQuet || 1}</td>
-    <td style="padding:10px;border-bottom:1px solid var(--line-soft);font-weight:600">${r.msp || '—'}</td>
-    <td style="padding:10px;border-bottom:1px solid var(--line-soft);text-align:right;font-weight:700;color:var(--success)">${r.kg || 0}</td>
-    <td class="swipe-delete-cell"><div class="swipe-delete-btn" onclick="xoaMaBTP(${idx}, event)"><i class="ti ti-trash"></i> Xóa</div></td>
-  </tr>`;
-    }
+        hangDot += `
+    <div class="cx5-swipe-row">
+      <div style="display:flex; padding:12px 10px; border-bottom:1px solid var(--line); align-items:center; flex:1;">
+        <div style="flex:1; color:var(--steel); font-weight:700;">${r.dotQuet || 1}</div>
+        <div style="flex:2; font-weight:600;">${r.msp || '?'}</div>
+        <div style="flex:1; text-align:right; font-weight:700; color:var(--success);">${r.kg || 0}</div>
+      </div>
+      ${!isReadonly ? `<div class="cx5-del-btn" onclick="xoaMaBTP(${idx}, event)"><i class="ti ti-trash"></i></div>` : ""}
+    </div>`;
+      }
   });
 
   let footDot = `
@@ -929,7 +931,7 @@ function xemChiTietLichSuBTP(idPhien) {
   if (!entry) return;
 
   dangXemLichSuBTPId = idPhien;
-  const { hangDot, footDot, hangGom, footGom } = taoHangKetQuaBTP(entry.phienBTP);
+  const { hangDot, footDot, hangGom, footGom } = taoHangKetQuaBTP(entry.phienBTP, true);
 
   const elDot = document.getElementById("lichsu-btp-tbody-dot");
   const elFootDot = document.getElementById("lichsu-btp-tfoot-dot");
@@ -1152,3 +1154,46 @@ window.addEventListener("online", tuDongDongBoPendingBTP);
 
 
 
+
+
+function toggleLichSuBTPView(mode) {
+    const wrapChitiet = document.getElementById("ls-btp-wrap-chitiet");
+    const wrapGom = document.getElementById("ls-btp-wrap-gom");
+    const tabChitiet = document.getElementById("ls-btp-tab-chitiet");
+    const tabTonghop = document.getElementById("ls-btp-tab-tonghop");
+  
+    if (!wrapChitiet || !wrapGom) return;
+  
+    if (mode === "chitiet") {
+      wrapChitiet.style.display = "flex";
+      wrapGom.style.display = "none";
+      if (tabChitiet) {
+        tabChitiet.className = "btn btn-blue";
+        tabChitiet.style.background = "";
+        tabChitiet.style.color = "";
+        tabChitiet.style.border = "none";
+      }
+      if (tabTonghop) {
+        tabTonghop.className = "btn";
+        tabTonghop.style.background = "transparent";
+        tabTonghop.style.color = "var(--primary)";
+        tabTonghop.style.border = "1px solid var(--primary)";
+      }
+    } else {
+      wrapChitiet.style.display = "none";
+      wrapGom.style.display = "flex";
+      if (tabTonghop) {
+        tabTonghop.className = "btn btn-blue";
+        tabTonghop.style.background = "";
+        tabTonghop.style.color = "";
+        tabTonghop.style.border = "none";
+      }
+      if (tabChitiet) {
+        tabChitiet.className = "btn";
+        tabChitiet.style.background = "transparent";
+        tabChitiet.style.color = "var(--primary)";
+        tabChitiet.style.border = "1px solid var(--primary)";
+      }
+    }
+}
+window.toggleLichSuBTPView = toggleLichSuBTPView;

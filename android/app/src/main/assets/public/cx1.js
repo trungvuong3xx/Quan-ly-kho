@@ -611,7 +611,7 @@ function capNhatLogCX1() {
   container.innerHTML = html;
 }
 
-function taoHangKetQuaCX1(danhSach) {
+function taoHangKetQuaCX1(danhSach, isReadonly = false) {
   let tongDotCuaPhien = {};
   let tongGomLoaiMa = {};
   let tongQRAll = 0;
@@ -644,25 +644,26 @@ function taoHangKetQuaCX1(danhSach) {
     tongGomLoaiMa[keyGom].tongKG += r.kg;
   });
 
-  let hangDot = "";
-  Object.values(tongDotCuaPhien).forEach(item => {
+      let hangDot = "";
+    Object.values(tongDotCuaPhien).forEach(item => {
+      hangDot += `
+    <div class="cx5-swipe-row">
+      <div style="display:flex; padding:12px 10px; border-bottom:1px solid var(--line); align-items:center; flex:1;" onclick="nhapTayCX1(${item.dot}, '${item.msp}', '${item.qc}')">
+        <div style="flex:0.8; color:var(--brass); font-weight:700;">Đợt ${item.dot}</div>
+        <div style="flex:1.5;">${item.qc}</div>
+        <div style="flex:0.7; text-align:center;">${item.soLuong}</div>
+        <div style="flex:1; text-align:right; font-weight:700; color:var(--success);">${item.tongKG.toFixed(1)}</div>
+      </div>
+      ${!isReadonly ? `<div class="cx5-del-btn" onclick="xoaNhomDotCX1(${item.dot}, '${item.msp}', '${item.qc}')"><i class="ti ti-trash"></i></div>` : ""}
+    </div>`;
+    });
     hangDot += `
-  <tr class="swipe-row">
-    <td style="padding:10px;border-bottom:1px solid var(--line-soft);color:var(--brass);font-weight:700" onclick="nhapTayCX1(${item.dot}, '${item.msp}', '${item.qc}')"> Đợt ${item.dot}</td>
-    <td style="padding:10px;border-bottom:1px solid var(--line-soft)" onclick="nhapTayCX1(${item.dot}, '${item.msp}', '${item.qc}')">${item.qc}</td>
-    <td style="padding:10px;border-bottom:1px solid var(--line-soft);text-align:center" onclick="nhapTayCX1(${item.dot}, '${item.msp}', '${item.qc}')">${item.soLuong}</td>
-    <td style="padding:10px;border-bottom:1px solid var(--line-soft);text-align:right;font-weight:700;color:var(--success)" onclick="nhapTayCX1(${item.dot}, '${item.msp}', '${item.qc}')">${item.tongKG.toFixed(1)}</td>
-    <td class="swipe-delete-cell"><div class="swipe-delete-btn" onclick="xoaNhomDotCX1(${item.dot}, '${item.msp}', '${item.qc}')"><i class="ti ti-trash"></i> Xóa</div></td>
-  </tr>`;
-  });
-  hangDot += `
-  <tr>
-    <td style="padding:10px;font-weight:700;color:var(--brass);background:var(--card-raised)">TỔNG</td>
-    <td style="padding:10px;background:var(--card-raised)"></td>
-    <td style="padding:10px;text-align:center;font-weight:700;color:var(--brass);background:var(--card-raised)">${tongQRAll}</td>
-    <td style="padding:10px;text-align:right;font-weight:700;color:var(--brass);background:var(--card-raised)">${tongKGAll.toFixed(1)}</td>
-    <td style="padding:0;border:none;max-width:0;"></td>
-  </tr>`;
+    <div style="display:flex; padding:12px 10px; background:var(--card-raised); border-bottom:2px solid var(--line); align-items:center;">
+      <div style="flex:0.8; font-weight:700; color:var(--brass);">TỔNG</div>
+      <div style="flex:1.5;"></div>
+      <div style="flex:0.7; text-align:center; font-weight:700; color:var(--brass);">${tongQRAll}</div>
+      <div style="flex:1; text-align:right; font-weight:700; color:var(--brass);">${tongKGAll.toFixed(1)}</div>
+    </div>`;
 
   let hangGom = "";
   Object.values(tongGomLoaiMa).forEach(item => {
@@ -1041,7 +1042,7 @@ function xemChiTietLichSuCX1(idPhien) {
   if (!entry) return;
 
   dangXemLichSuId = idPhien;
-  const { hangDot, hangGom } = taoHangKetQuaCX1(entry.phienCX1);
+  const { hangDot, hangGom } = taoHangKetQuaCX1(entry.phienCX1, true);
   document.getElementById("lichsu-tbody-dot").innerHTML = hangDot;
   document.getElementById("lichsu-tbody-gom").innerHTML = hangGom;
   document.getElementById("lichsu-chitiet-tieude").textContent = "Chỉ For — " + entry.ngay;
@@ -1186,3 +1187,46 @@ function xuatExcelCX1() {
   }
 }
 window.xuatExcelCX1 = xuatExcelCX1;
+
+
+function toggleLichSuCX1View(mode) {
+    const wrapChitiet = document.getElementById("ls-cx1-wrap-chitiet");
+    const wrapGom = document.getElementById("ls-cx1-wrap-gom");
+    const tabChitiet = document.getElementById("ls-cx1-tab-chitiet");
+    const tabTonghop = document.getElementById("ls-cx1-tab-tonghop");
+  
+    if (!wrapChitiet || !wrapGom) return;
+  
+    if (mode === "chitiet") {
+      wrapChitiet.style.display = "flex";
+      wrapGom.style.display = "none";
+      if (tabChitiet) {
+        tabChitiet.className = "btn btn-blue";
+        tabChitiet.style.background = "";
+        tabChitiet.style.color = "";
+        tabChitiet.style.border = "none";
+      }
+      if (tabTonghop) {
+        tabTonghop.className = "btn";
+        tabTonghop.style.background = "transparent";
+        tabTonghop.style.color = "var(--primary)";
+        tabTonghop.style.border = "1px solid var(--primary)";
+      }
+    } else {
+      wrapChitiet.style.display = "none";
+      wrapGom.style.display = "flex";
+      if (tabTonghop) {
+        tabTonghop.className = "btn btn-blue";
+        tabTonghop.style.background = "";
+        tabTonghop.style.color = "";
+        tabTonghop.style.border = "none";
+      }
+      if (tabChitiet) {
+        tabChitiet.className = "btn";
+        tabChitiet.style.background = "transparent";
+        tabChitiet.style.color = "var(--primary)";
+        tabChitiet.style.border = "1px solid var(--primary)";
+      }
+    }
+}
+window.toggleLichSuCX1View = toggleLichSuCX1View;
