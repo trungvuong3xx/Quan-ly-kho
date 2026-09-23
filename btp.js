@@ -594,14 +594,14 @@ function taoHangKetQuaBTP(danhSach, isReadonly = false) {
   });
 
   let footDot = `
-    <div class="cx5-swipe-row" style="padding:10px; background:var(--card-raised); border-top:1px solid var(--steel);">
+    <div style="display:flex; align-items:center; padding:10px; background:var(--card-raised); border-top:1px solid var(--steel);">
       <div style="flex:1; font-weight:700; color:var(--steel);">TỔNG ${tongQRAll}</div>
     </div>`;
 
   let hangGom = "";
   Object.values(tongGomLoaiMa).forEach(item => {
     hangGom += `
-    <div class="cx5-swipe-row" style="padding:10px; border-bottom:1px solid var(--line-soft);">
+    <div style="display:flex; align-items:center; padding:10px; border-bottom:1px solid var(--line-soft);">
       <div style="flex:1; font-weight:600;">${item.msp}</div>
       <div style="flex:2; text-align:center; font-weight:700;">${item.soMat}</div>
       <div style="flex:1; text-align:right; font-weight:700; color:var(--success);">${item.soLuong}</div>
@@ -609,7 +609,7 @@ function taoHangKetQuaBTP(danhSach, isReadonly = false) {
   });
 
   let footGom = `
-    <div class="cx5-swipe-row" style="padding:10px; background:var(--card-raised); border-top:1px solid var(--steel);">
+    <div style="display:flex; align-items:center; padding:10px; background:var(--card-raised); border-top:1px solid var(--steel);">
       <div style="flex:1; font-weight:700; color:var(--steel);">TỔNG</div>
       <div style="flex:2;"></div>
       <div style="flex:1; text-align:right; font-weight:700; color:var(--steel);">${tongQRAll}</div>

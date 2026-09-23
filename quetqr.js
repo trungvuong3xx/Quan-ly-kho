@@ -404,14 +404,14 @@ function taoHangKetQuaQuetQR(danhSach) {
   let hangGom = "";
   Object.values(tongGomLoaiMa).forEach(item => {
     hangGom += `
-    <div class="cx5-swipe-row" style="padding:10px; border-bottom:1px solid var(--line-soft);">
+    <div style="display:flex; align-items:center; padding:10px; border-bottom:1px solid var(--line-soft);">
       <div style="flex:2.3;">${item.qc}</div>
       <div style="flex:0.7; text-align:center; font-weight:700;">${item.soLuong}</div>
       <div style="flex:1; text-align:right; font-weight:700; color:var(--success);">${item.tongKG.toFixed(1)}</div>
     </div>`;
   });
   hangGom += `
-    <div class="cx5-swipe-row" style="padding:10px; background:var(--card-raised); border-top:1px solid var(--line);">
+    <div style="display:flex; align-items:center; padding:10px; background:var(--card-raised); border-top:1px solid var(--line);">
       <div style="flex:2.3; font-weight:700; color:var(--steel);">TỔNG</div>
       <div style="flex:0.7; text-align:center; font-weight:700; color:var(--steel);">${tongBaoAll}</div>
       <div style="flex:1; text-align:right; font-weight:700; color:var(--steel);">${tongKGAll.toFixed(1)}</div>
