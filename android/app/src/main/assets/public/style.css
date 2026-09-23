@@ -2072,12 +2072,9 @@ body { padding: 0 !important; background: var(--bg-body) !important; color: var(
   border-bottom: 2px solid var(--steel) !important;
   font-size: 13px;
   text-transform: uppercase;
+  padding-bottom: 8px !important;
 }
 
-.cx5-list-header > div {
-  padding-bottom: 6px;
-  box-shadow: inset 0 -2px 0 var(--steel);
-}
 
 .cx5-swipe-row {
   position: relative;

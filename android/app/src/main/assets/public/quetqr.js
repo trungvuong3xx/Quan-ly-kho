@@ -325,7 +325,7 @@ function capNhatLogQR() {
       <span style="color:var(--cream-soft); font-size:11px; width:20px; text-align:center;">${item.seqTrongDot}</span>
       <span style="color:var(--success); font-weight:700; width:45px; text-align:center;">${kgStr}</span>
       <span style="color:var(--cream-soft); font-size:11px; width:50px; text-align:right;">${gio}</span>
-      <button class="cx5-del-btn" onclick="xoaMaTrongLiveLogQR(${origIdx})" title="Xóa mã này" style="margin-left:4px; background:none; border:none; color:var(--red); cursor:pointer; padding:2px 4px;">
+      <button class="" onclick="xoaMaTrongLiveLogQR(${origIdx})" title="Xóa mã này" style="margin-left:4px; background:none; border:none; color:var(--red); cursor:pointer; padding:2px 4px;">
         <i class="ti ti-trash"></i>
       </button>
     </div>`;
@@ -931,7 +931,7 @@ function renderLichSuQR() {
       + '</span>'
       + '<span style="display:inline-flex;align-items:center;gap:8px;padding-left:8px;border-left:1px solid var(--line)">'
       + trangThai
-      + '<button class="cx5-del-btn" aria-label="Xóa phiên này" onclick="xoaMotPhienLichSuQR(\'' + entry.idPhien + '\', event)"><i class="ti ti-trash"></i></button>'
+      + '<button class="btn btn-red" style="padding:6px; margin:0; border-radius:8px; display:flex; align-items:center; justify-content:center;" aria-label="Xóa phiên này" onclick="xoaMotPhienLichSuQR(\'' + entry.idPhien + '\', event)"><i class="ti ti-trash"></i></button>'
       + '</span>'
       + '</div>';
   }).join("");

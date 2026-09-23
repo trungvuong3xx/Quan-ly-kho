@@ -208,7 +208,7 @@ function capNhatLogBTP() {
       <span style="color:var(--blue); font-weight:700; width:35px; text-align:center; margin: 0 4px;">${item.dem || 1}</span>
       <span style="color:var(--success); font-weight:700; width:45px; text-align:center;">${item.kg || 0}</span>
       <span style="color:var(--cream-soft); font-size:11px; width:50px; text-align:right;">${gio}</span>
-      <button class="cx5-del-btn" onclick="xoaMaBTP(${originalIndex}, event)" title="Xóa mã này" style="margin-left:4px; background:none; border:none; color:var(--red); cursor:pointer; padding:2px 4px;">
+      <button class="" onclick="xoaMaBTP(${originalIndex}, event)" title="Xóa mã này" style="margin-left:4px; background:none; border:none; color:var(--red); cursor:pointer; padding:2px 4px;">
         <i class="ti ti-trash"></i>
       </button>
     </div>`;
@@ -588,36 +588,33 @@ function taoHangKetQuaBTP(danhSach, isReadonly = false) {
         <div style="flex:2; font-weight:600;">${r.msp || '?'}</div>
         <div style="flex:1; text-align:right; font-weight:700; color:var(--success);">${r.kg || 0}</div>
       </div>
-      ${!isReadonly ? `<div class="cx5-del-btn" onclick="xoaMaBTP(${idx}, event)"><i class="ti ti-trash"></i></div>` : ""}
+      ${!isReadonly ? `<div class="" onclick="xoaMaBTP(${idx}, event)"><i class="ti ti-trash"></i></div>` : ""}
     </div>`;
       }
   });
 
   let footDot = `
-  <tr>
-    <td style="box-shadow:inset 0 2px 0 var(--steel);padding:10px;font-weight:700;color:var(--brass);background:var(--card-raised)">TỔNG</td>
-    <td style="box-shadow:inset 0 2px 0 var(--steel);padding:10px;background:var(--card-raised)"></td>
-    <td style="box-shadow:inset 0 2px 0 var(--steel);padding:10px;text-align:right;font-weight:700;color:var(--brass);background:var(--card-raised)">${soDot}</td>
-    <td style="box-shadow:inset 0 2px 0 var(--steel);padding:0;border:none;max-width:0;"></td>
-  </tr>`;
+    <div class="cx5-swipe-row" style="padding:10px; background:var(--card-raised); border-top:1px solid var(--steel);">
+      <div style="flex:1; font-weight:700; color:var(--steel);">TỔNG ${tongQRAll}</div>
+    </div>`;
 
   let hangGom = "";
   Object.values(tongGomLoaiMa).forEach(item => {
     hangGom += `
-  <tr>
-    <td style="padding:10px;border-bottom:1px solid var(--line-soft);font-weight:600">${item.msp}</td>
-    <td style="padding:10px;border-bottom:1px solid var(--line-soft);text-align:center;font-weight:700">${item.soMat}</td>
-    <td style="padding:10px;border-bottom:1px solid var(--line-soft);text-align:right;font-weight:700;color:var(--success)">${item.soLuong}</td>
-  </tr>`;
+    <div class="cx5-swipe-row" style="padding:10px; border-bottom:1px solid var(--line-soft);">
+      <div style="flex:1; font-weight:600;">${item.msp}</div>
+      <div style="flex:2; text-align:center; font-weight:700;">${item.soMat}</div>
+      <div style="flex:1; text-align:right; font-weight:700; color:var(--success);">${item.soLuong}</div>
+    </div>`;
   });
 
   let footGom = `
-  <tr>
-    <td style="box-shadow:inset 0 2px 0 var(--steel);padding:10px;font-weight:700;color:var(--steel);background:var(--card-raised)">TỔNG</td>
-    <td style="box-shadow:inset 0 2px 0 var(--steel);padding:10px;background:var(--card-raised)"></td>
-    <td style="box-shadow:inset 0 2px 0 var(--steel);padding:10px;text-align:right;font-weight:700;color:var(--steel);background:var(--card-raised)">${tongQRAll}</td>
-  </tr>`;
-
+    <div class="cx5-swipe-row" style="padding:10px; background:var(--card-raised); border-top:1px solid var(--steel);">
+      <div style="flex:1; font-weight:700; color:var(--steel);">TỔNG</div>
+      <div style="flex:2;"></div>
+      <div style="flex:1; text-align:right; font-weight:700; color:var(--steel);">${tongQRAll}</div>
+    </div>`;
+  
   return { hangDot, footDot, hangGom, footGom };
 }
 
@@ -915,7 +912,7 @@ function renderLichSuBTP() {
       + soDot + ' đợt · ' + s.phienBTP.length + ' mã'
       + '<span style="display:inline-flex;align-items:center;gap:8px;padding-left:8px;border-left:1px solid var(--line)">'
       + trangThai
-      + '<button class="cx5-del-btn" aria-label="Xóa phiên này" onclick="xoaMotPhienLichSuBTP(\'' + s.idPhien + '\', event)"><i class="ti ti-trash"></i></button>'
+      + '<button class="btn btn-red" style="padding:6px; margin:0; border-radius:8px; display:flex; align-items:center; justify-content:center;" aria-label="Xóa phiên này" onclick="xoaMotPhienLichSuBTP(\'' + s.idPhien + '\', event)"><i class="ti ti-trash"></i></button>'
       + '</span>'
       + '</span>'
       + '</div>';

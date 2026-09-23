@@ -597,7 +597,7 @@ function capNhatLogCX1() {
       <span style="color:var(--cream-soft); font-size:11px; width:20px; text-align:center;">${item.seqTrongDot}</span>
       <span style="color:var(--success); font-weight:700; width:45px; text-align:center;">${item.kg || 0}</span>
       <span style="color:var(--cream-soft); font-size:11px; width:50px; text-align:right;">${gio}</span>
-      <button class="cx5-del-btn" onclick="xoaMaCX1(${originalIndex}, event)" title="Xóa mã này" style="margin-left:4px; background:none; border:none; color:var(--red); cursor:pointer; padding:2px 4px;">
+      <button class="" onclick="xoaMaCX1(${originalIndex}, event)" title="Xóa mã này" style="margin-left:4px; background:none; border:none; color:var(--red); cursor:pointer; padding:2px 4px;">
         <i class="ti ti-trash"></i>
       </button>
     </div>`;
@@ -668,19 +668,19 @@ function taoHangKetQuaCX1(danhSach, isReadonly = false) {
   let hangGom = "";
   Object.values(tongGomLoaiMa).forEach(item => {
     hangGom += `
-  <tr>
-    <td style="padding:10px;border-bottom:1px solid var(--line-soft)">${item.qc}</td>
-    <td style="padding:10px;border-bottom:1px solid var(--line-soft);text-align:center;font-weight:700">${item.soLuong}</td>
-    <td style="padding:10px;border-bottom:1px solid var(--line-soft);text-align:right;font-weight:700;color:var(--success)">${item.tongKG.toFixed(1)}</td>
-  </tr>`;
+    <div class="cx5-swipe-row" style="padding:10px; border-bottom:1px solid var(--line-soft);">
+      <div style="flex:2.3;">${item.qc}</div>
+      <div style="flex:0.7; text-align:center; font-weight:700;">${item.soLuong}</div>
+      <div style="flex:1; text-align:right; font-weight:700; color:var(--success);">${item.tongKG.toFixed(1)}</div>
+    </div>`;
   });
   hangGom += `
-  <tr>
-    <td colspan="1" style="padding:10px;font-weight:700;color:var(--steel);background:var(--card-raised)">TỔNG</td>
-    <td style="padding:10px;text-align:center;font-weight:700;color:var(--steel);background:var(--card-raised)">${tongQRAll}</td>
-    <td style="padding:10px;text-align:right;font-weight:700;color:var(--steel);background:var(--card-raised)">${tongKGAll.toFixed(1)}</td>
-  </tr>`;
-
+    <div class="cx5-swipe-row" style="padding:10px; background:var(--card-raised); border-top:1px solid var(--line);">
+      <div style="flex:2.3; font-weight:700; color:var(--steel);">TỔNG</div>
+      <div style="flex:0.7; text-align:center; font-weight:700; color:var(--steel);">${tongQRAll}</div>
+      <div style="flex:1; text-align:right; font-weight:700; color:var(--steel);">${tongKGAll.toFixed(1)}</div>
+    </div>`;
+  
   return { hangDot, hangGom, tongQRAll, tongKGAll };
 }
 
@@ -1029,7 +1029,7 @@ function renderLichSuCX1() {
       + '</span>'
       + '<span style="display:inline-flex;align-items:center;gap:8px;padding-left:8px;border-left:1px solid var(--line)">'
       + trangThai
-      + '<button class="cx5-del-btn" aria-label="Xóa phiên này" onclick="xoaMotPhienLichSuCX1(\'' + s.idPhien + '\', event)"><i class="ti ti-trash"></i></button>'
+      + '<button class="btn btn-red" style="padding:6px; margin:0; border-radius:8px; display:flex; align-items:center; justify-content:center;" aria-label="Xóa phiên này" onclick="xoaMotPhienLichSuCX1(\'' + s.idPhien + '\', event)"><i class="ti ti-trash"></i></button>'
       + '</span>'
       + '</div>';
   }).join("");
