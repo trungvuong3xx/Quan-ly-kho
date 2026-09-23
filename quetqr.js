@@ -402,21 +402,20 @@ function taoHangKetQuaQuetQR(danhSach) {
 
   // Render HTML Bảng Tổng Hợp (theo QC)
   let hangGom = "";
-    Object.values(tongGomLoaiMa).forEach(item => {
-      hangGom += `
-    <div style="display:flex; padding:12px 10px; border-bottom:1px solid var(--line); align-items:center;">
+  Object.values(tongGomLoaiMa).forEach(item => {
+    hangGom += `
+    <div class="cx5-swipe-row" style="padding:10px; border-bottom:1px solid var(--line-soft);">
       <div style="flex:2.3;">${item.qc}</div>
       <div style="flex:0.7; text-align:center; font-weight:700;">${item.soLuong}</div>
       <div style="flex:1; text-align:right; font-weight:700; color:var(--success);">${item.tongKG.toFixed(1)}</div>
     </div>`;
-    });
+  });
   hangGom += `
-    <tr style="background:var(--card-raised); border-top:2px solid var(--line);">
-      <td style="padding:10px; font-weight:700; color:var(--steel);">TỔNG</td>
-      <td style="padding:10px; text-align:center; font-weight:700; color:var(--steel);">${tongBaoAll}</td>
-      <td style="padding:10px; text-align:right; font-weight:700; color:var(--steel);">${tongKGAll.toFixed(1)}</td>
-    </tr>
-  `;
+    <div class="cx5-swipe-row" style="padding:10px; background:var(--card-raised); border-top:1px solid var(--line);">
+      <div style="flex:2.3; font-weight:700; color:var(--steel);">TỔNG</div>
+      <div style="flex:0.7; text-align:center; font-weight:700; color:var(--steel);">${tongBaoAll}</div>
+      <div style="flex:1; text-align:right; font-weight:700; color:var(--steel);">${tongKGAll.toFixed(1)}</div>
+    </div>`;
 
   return { hangDot, hangGom, tongBaoAll, tongKGAll };
 }
