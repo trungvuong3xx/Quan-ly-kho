@@ -383,7 +383,7 @@ function taoHangKetQuaQuetQR(danhSach) {
     Object.values(tongDotCuaPhien).forEach(item => {
       hangDot += `
     <div class="cx5-swipe-row">
-      <div style="display:flex; padding:12px 10px; border-bottom:1px solid var(--line); align-items:center; flex:1;" onclick="nhapTayKGQR(${item.dot}, '${item.qc}')">
+      <div style="display:flex; width: 100%; box-sizing: border-box; padding:12px 10px; border-bottom:1px solid var(--line); align-items:center; flex:1;" onclick="nhapTayKGQR(${item.dot}, '${item.qc}')">
         <div style="flex:0.8; color:var(--brass); font-weight:700;">Đợt ${item.dot}</div>
         <div style="flex:1.5;">${item.qc}</div>
         <div style="flex:0.7; text-align:center;">${item.soLuong}</div>
@@ -393,7 +393,7 @@ function taoHangKetQuaQuetQR(danhSach) {
     </div>`;
     });
     hangDot += `
-    <div style="display:flex; padding:12px 10px; background:var(--card-raised); border-bottom:2px solid var(--line); align-items:center;">
+    <div style="display:flex; width: 100%; box-sizing: border-box; padding:12px 10px; background:var(--card-raised); border-bottom:2px solid var(--line); align-items:center;">
       <div style="flex:0.8; font-weight:700; color:var(--brass);">TỔNG</div>
       <div style="flex:1.5;"></div>
       <div style="flex:0.7; text-align:center; font-weight:700; color:var(--brass);">${tongBaoAll}</div>
@@ -404,14 +404,14 @@ function taoHangKetQuaQuetQR(danhSach) {
   let hangGom = "";
   Object.values(tongGomLoaiMa).forEach(item => {
     hangGom += `
-    <div style="display:flex; align-items:center; padding:10px; border-bottom:1px solid var(--line-soft);">
+    <div style="display:flex; width: 100%; box-sizing: border-box; align-items:center; padding:10px; border-bottom:1px solid var(--line-soft);">
       <div style="flex:2.3;">${item.qc}</div>
       <div style="flex:0.7; text-align:center; font-weight:700;">${item.soLuong}</div>
       <div style="flex:1; text-align:right; font-weight:700; color:var(--success);">${item.tongKG.toFixed(1)}</div>
     </div>`;
   });
   hangGom += `
-    <div style="display:flex; align-items:center; padding:10px; background:var(--card-raised); border-top:1px solid var(--line);">
+    <div style="display:flex; width: 100%; box-sizing: border-box; align-items:center; padding:10px; background:var(--card-raised); border-top:1px solid var(--line);">
       <div style="flex:2.3; font-weight:700; color:var(--steel);">TỔNG</div>
       <div style="flex:0.7; text-align:center; font-weight:700; color:var(--steel);">${tongBaoAll}</div>
       <div style="flex:1; text-align:right; font-weight:700; color:var(--steel);">${tongKGAll.toFixed(1)}</div>
