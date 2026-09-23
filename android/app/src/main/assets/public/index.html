@@ -443,30 +443,30 @@
       <button id="ls-cx1-tab-tonghop" class="btn" style="flex:1; border-radius:8px; margin:0; padding:8px; font-size:13px; font-weight:700; background:transparent; border:1px solid var(--primary); color:var(--primary);" onclick="toggleLichSuCX1View('tonghop')">Tổng Hợp</button>
     </div>
 
-    <div id="ls-cx1-wrap-chitiet" style="border-radius:12px; border:1px solid var(--steel); overflow-x:hidden; overflow-y:auto; box-shadow:0 2px 8px rgba(0,0,0,0.05); max-height:280px; display:flex; flex-direction:column; margin-bottom: 20px;">
+    <div id="ls-cx1-wrap-chitiet" style="border-radius:12px; border:1px solid var(--steel); overflow-x:hidden; overflow-y:auto; box-shadow:0 2px 8px rgba(0,0,0,0.05); max-height:280px; margin-bottom: 20px;">
       <div class="cx5-list-container">
-        <div class="cx5-list-header" style="display:flex; padding:10px; background:var(--card-raised); border-bottom:2px solid var(--steel); position:sticky; top:0; z-index:2;">
+        <div class="cx5-list-header" style="display:flex; width: 100%; box-sizing: border-box; padding:10px; background:var(--card-raised); border-bottom:2px solid var(--steel); position:sticky; top:0; z-index:2;">
           <div style="flex:0.8; font-weight:700; color:var(--cream);">Đợt</div>
           <div style="flex:1.5; font-weight:700; color:var(--cream);">QC</div>
           <div style="flex:0.7; font-weight:700; color:var(--cream); text-align:center;">Bao</div>
           <div style="flex:1; font-weight:700; color:var(--cream); text-align:right;">KG</div>
         </div>
-        <div id="lichsu-tbody-dot" style="display:flex; flex-direction:column;"></div>
+        <div id="lichsu-tbody-dot" style="display:flex; flex-direction:column; width:100%;"></div>
       </div>
     </div>
 
-    <div id="ls-cx1-wrap-gom" style="display:none; border-radius:12px; border:1px solid var(--steel); overflow:hidden; overflow-y:auto; box-shadow:0 2px 8px rgba(0,0,0,0.05); max-height:280px; flex-direction:column; margin-bottom: 20px;">
+    <div id="ls-cx1-wrap-gom" style="display:none; border-radius:12px; border:1px solid var(--steel); overflow:hidden; overflow-y:auto; box-shadow:0 2px 8px rgba(0,0,0,0.05); max-height:280px; margin-bottom: 20px;">
       <div class="cx5-list-container">
-        <div class="cx5-list-header" style="display:flex; padding:10px; background:var(--card-raised); border-bottom:2px solid var(--steel); position:sticky; top:0; z-index:2;">
+        <div class="cx5-list-header" style="display:flex; width: 100%; box-sizing: border-box; padding:10px; background:var(--card-raised); border-bottom:2px solid var(--steel); position:sticky; top:0; z-index:2;">
           <div style="flex:2.3; font-weight:700; color:var(--cream);">QC</div>
           <div style="flex:0.7; font-weight:700; color:var(--cream); text-align:center;">Bao</div>
           <div style="flex:1; font-weight:700; color:var(--cream); text-align:right;">KG</div>
         </div>
-        <div id="lichsu-tbody-gom" style="display:flex; flex-direction:column;"></div>
+        <div id="lichsu-tbody-gom" style="display:flex; flex-direction:column; width:100%;"></div>
       </div>
     </div>
 
-    <div style="display:flex; flex-direction:column; gap:8px;">
+    <div style="display:flex; flex-direction:column; width:100%; gap:8px;">
       <button class="btn btn-green btn-full" onclick="tiepTucTuChiTietLichSu()">Tiếp tục quét / Sửa phiên này</button>
       <button class="btn btn-excel btn-full" onclick="xuatExcelLichSuCX1()"><i class="ti ti-file-spreadsheet"></i> Xuất File Excel Phiên Này</button>
       <button class="btn btn-full" style="background:var(--card-raised); color:var(--cream); border:1px solid var(--line);" onclick="chuyenTrangKhongNav('lichSu')"><i class="ti ti-arrow-left"></i> Quay lại Lịch sử</button>
@@ -524,7 +524,7 @@
       </div>
     </div>
 
-    <div style="margin: 0 12px 8px 12px; padding:8px 10px; background:var(--card-raised); border-radius:10px; border:1px solid var(--line-soft); display:flex; flex-direction:column; gap:8px;">
+    <div style="margin: 0 12px 8px 12px; padding:8px 10px; background:var(--card-raised); border-radius:10px; border:1px solid var(--line-soft); display:flex; flex-direction:column; width:100%; gap:8px;">
       <div style="display:flex; align-items:center; justify-content:space-between;">
         <span style="font-size:13px; font-weight:600; color:var(--cream);">Cho phép quét trùng</span>
         <div style="display:flex; align-items:center; gap:8px;">
@@ -545,7 +545,7 @@
       <button class="btn btn-green" style="width:100%; height:38px; font-size:14px; margin:0;" onclick="xemKetQuaQuetQR()"><i class="ti ti-list-check"></i> Xem kết quả</button>
     </div>
 
-    <div id="qr-log-container" style="margin-top:8px; background:var(--card-raised); border-radius:12px; padding:8px 10px; border:1px solid var(--line-soft); display:flex; flex-direction:column; flex:1 1 auto;">
+    <div id="qr-log-container" style="margin-top:8px; background:var(--card-raised); border-radius:12px; padding:8px 10px; border:1px solid var(--line-soft); display:flex; flex-direction:column; width:100%; flex:1 1 auto;">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px; border-bottom:1px solid var(--line); padding-bottom:4px; gap:8px;">
         <span style="font-size:12px; font-weight:800; color:var(--brass); letter-spacing:0.5px; white-space:nowrap;"><i class="ti ti-clipboard-list"></i> NHẬT KÝ QUÉT</span>
         <span id="qr-log-count" style="font-size:12px; font-weight:700; color:var(--steel); white-space:nowrap;">0 bao</span>
@@ -575,26 +575,26 @@
       <button id="qr-tab-tonghop" class="btn" style="flex:1; border-radius:8px; margin:0; padding:8px; font-size:13px; font-weight:700; background:transparent; border:1px solid var(--primary); color:var(--primary);" onclick="toggleQRView('tonghop')">Tổng Hợp</button>
     </div>
 
-    <div id="qr-wrap-chitiet" style="border-radius:12px; border:1px solid var(--steel); overflow-x:hidden; overflow-y:auto; box-shadow:0 2px 8px rgba(0,0,0,0.05); max-height:280px; display:flex; flex-direction:column; margin-bottom: 20px;">
+    <div id="qr-wrap-chitiet" style="border-radius:12px; border:1px solid var(--steel); overflow-x:hidden; overflow-y:auto; box-shadow:0 2px 8px rgba(0,0,0,0.05); max-height:280px; margin-bottom: 20px;">
         <div class="cx5-list-container">
-          <div class="cx5-list-header" style="display:flex; padding:10px; background:var(--card-raised); border-bottom:2px solid var(--steel); position:sticky; top:0; z-index:2;">
+          <div class="cx5-list-header" style="display:flex; width: 100%; box-sizing: border-box; padding:10px; background:var(--card-raised); border-bottom:2px solid var(--steel); position:sticky; top:0; z-index:2;">
             <div style="flex:0.8; font-weight:700; color:var(--cream);">Đợt</div>
             <div style="flex:1.5; font-weight:700; color:var(--cream);">QC</div>
             <div style="flex:0.7; font-weight:700; color:var(--cream); text-align:center;">Bao</div>
             <div style="flex:1; font-weight:700; color:var(--cream); text-align:right;">KG</div>
           </div>
-          <div id="qr-tbody-dot" style="display:flex; flex-direction:column;"></div>
+          <div id="qr-tbody-dot" style="display:flex; flex-direction:column; width:100%;"></div>
         </div>
       </div>
 
-    <div id="qr-wrap-gom" style="display:none; border-radius:12px; border:1px solid var(--steel); overflow:hidden; overflow-y:auto; box-shadow:0 2px 8px rgba(0,0,0,0.05); max-height:280px; flex-direction:column; margin-bottom: 20px;">
+    <div id="qr-wrap-gom" style="display:none; border-radius:12px; border:1px solid var(--steel); overflow:hidden; overflow-y:auto; box-shadow:0 2px 8px rgba(0,0,0,0.05); max-height:280px; margin-bottom: 20px;">
         <div class="cx5-list-container">
-          <div class="cx5-list-header" style="display:flex; padding:10px; background:var(--card-raised); border-bottom:2px solid var(--steel); position:sticky; top:0; z-index:2;">
+          <div class="cx5-list-header" style="display:flex; width: 100%; box-sizing: border-box; padding:10px; background:var(--card-raised); border-bottom:2px solid var(--steel); position:sticky; top:0; z-index:2;">
             <div style="flex:2.3; font-weight:700; color:var(--cream);">QC</div>
             <div style="flex:0.7; font-weight:700; color:var(--cream); text-align:center;">Bao</div>
             <div style="flex:1; font-weight:700; color:var(--cream); text-align:right;">KG</div>
           </div>
-          <div id="qr-tbody-gom" style="display:flex; flex-direction:column;"></div>
+          <div id="qr-tbody-gom" style="display:flex; flex-direction:column; width:100%;"></div>
         </div>
       </div>
 
@@ -689,7 +689,7 @@
       <button class="btn btn-green" style="width:100%; margin:0; height:38px; font-size:14px;" onclick="ketThucCX1()"><i class="ti ti-list-check"></i> Xem kết quả</button>
     </div>
 
-    <div id="cx1-log-container" style="margin-top:8px; background:var(--card-raised); border-radius:12px; padding:8px 10px; border:1px solid var(--line-soft); display:flex; flex-direction:column; flex:1 1 auto;">
+    <div id="cx1-log-container" style="margin-top:8px; background:var(--card-raised); border-radius:12px; padding:8px 10px; border:1px solid var(--line-soft); display:flex; flex-direction:column; width:100%; flex:1 1 auto;">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px; border-bottom:1px solid var(--line); padding-bottom:4px; gap:8px;">
         <span style="font-size:12px; font-weight:800; color:var(--brass); letter-spacing:0.5px; white-space:nowrap;"><i class="ti ti-clipboard-list"></i> NHẬT KÝ QUÉT CHỈ FOR</span>
         <span id="cx1-log-count" style="font-size:12px; font-weight:700; color:var(--steel); white-space:nowrap;">0 mã</span>
@@ -719,26 +719,26 @@
       <button id="cx1-tab-tonghop" class="btn" style="flex:1; border-radius:8px; margin:0; padding:8px; font-size:13px; font-weight:700; background:transparent; border:1px solid var(--primary); color:var(--primary);" onclick="toggleCX1View('tonghop')">Tổng Hợp</button>
     </div>
 
-    <div id="cx1-wrap-chitiet" style="border-radius:12px; border:1px solid var(--steel); overflow-x:hidden; overflow-y:auto; box-shadow:0 2px 8px rgba(0,0,0,0.05); max-height:280px; display:flex; flex-direction:column; margin-bottom: 20px;">
+    <div id="cx1-wrap-chitiet" style="border-radius:12px; border:1px solid var(--steel); overflow-x:hidden; overflow-y:auto; box-shadow:0 2px 8px rgba(0,0,0,0.05); max-height:280px; margin-bottom: 20px;">
         <div class="cx5-list-container">
-          <div class="cx5-list-header" style="display:flex; padding:10px; background:var(--card-raised); border-bottom:2px solid var(--steel); position:sticky; top:0; z-index:2;">
+          <div class="cx5-list-header" style="display:flex; width: 100%; box-sizing: border-box; padding:10px; background:var(--card-raised); border-bottom:2px solid var(--steel); position:sticky; top:0; z-index:2;">
             <div style="flex:0.8; font-weight:700; color:var(--cream);">Đợt</div>
             <div style="flex:1.5; font-weight:700; color:var(--cream);">QC</div>
             <div style="flex:0.7; font-weight:700; color:var(--cream); text-align:center;">Bao</div>
             <div style="flex:1; font-weight:700; color:var(--cream); text-align:right;">KG</div>
           </div>
-          <div id="cx1-tbody-dot" style="display:flex; flex-direction:column;"></div>
+          <div id="cx1-tbody-dot" style="display:flex; flex-direction:column; width:100%;"></div>
         </div>
       </div>
 
-    <div id="cx1-wrap-gom" style="display:none; border-radius:12px; border:1px solid var(--steel); overflow:hidden; overflow-y:auto; box-shadow:0 2px 8px rgba(0,0,0,0.05); max-height:280px; flex-direction:column; margin-bottom: 20px;">
+    <div id="cx1-wrap-gom" style="display:none; border-radius:12px; border:1px solid var(--steel); overflow:hidden; overflow-y:auto; box-shadow:0 2px 8px rgba(0,0,0,0.05); max-height:280px; margin-bottom: 20px;">
         <div class="cx5-list-container">
-          <div class="cx5-list-header" style="display:flex; padding:10px; background:var(--card-raised); border-bottom:2px solid var(--steel); position:sticky; top:0; z-index:2;">
+          <div class="cx5-list-header" style="display:flex; width: 100%; box-sizing: border-box; padding:10px; background:var(--card-raised); border-bottom:2px solid var(--steel); position:sticky; top:0; z-index:2;">
             <div style="flex:2.3; font-weight:700; color:var(--cream);">QC</div>
             <div style="flex:0.7; font-weight:700; color:var(--cream); text-align:center;">Bao</div>
             <div style="flex:1; font-weight:700; color:var(--cream); text-align:right;">KG</div>
           </div>
-          <div id="cx1-tbody-gom" style="display:flex; flex-direction:column;"></div>
+          <div id="cx1-tbody-gom" style="display:flex; flex-direction:column; width:100%;"></div>
         </div>
       </div>
 
@@ -807,7 +807,7 @@
       </div>
     </div>
 
-    <div style="margin: 0 12px 8px 12px; padding:8px 10px; background:var(--card-raised); border-radius:10px; border:1px solid var(--line-soft); display:flex; flex-direction:column; gap:8px;">
+    <div style="margin: 0 12px 8px 12px; padding:8px 10px; background:var(--card-raised); border-radius:10px; border:1px solid var(--line-soft); display:flex; flex-direction:column; width:100%; gap:8px;">
       <div style="display:flex; align-items:center; justify-content:space-between;">
         <span style="font-size:13px; font-weight:600; color:var(--cream);">Cho phép quét trùng</span>
         <div style="display:flex; align-items:center; gap:8px;">
@@ -829,7 +829,7 @@
       <button class="btn btn-green" style="width:100%; height:38px; font-size:14px; margin:0;" onclick="xemKetQuaBTP()"><i class="ti ti-list-check"></i> Xem kết quả</button>
     </div>
 
-    <div id="btp-log-container" style="margin-top:8px; background:var(--card-raised); border-radius:12px; padding:8px 10px; border:1px solid var(--line-soft); display:flex; flex-direction:column; flex:1 1 auto;">
+    <div id="btp-log-container" style="margin-top:8px; background:var(--card-raised); border-radius:12px; padding:8px 10px; border:1px solid var(--line-soft); display:flex; flex-direction:column; width:100%; flex:1 1 auto;">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px; border-bottom:1px solid var(--line); padding-bottom:4px; gap:8px;">
         <span style="font-size:12px; font-weight:800; color:var(--brass); letter-spacing:0.5px; white-space:nowrap;"><i class="ti ti-clipboard-list"></i> NHẬT KÝ QUÉT BTP</span>
         <span id="btp-log-count" style="font-size:12px; font-weight:700; color:var(--steel); white-space:nowrap;">0 mã</span>
@@ -864,28 +864,28 @@
       <input type="text" id="btp-ketqua-search" placeholder="🔍 Tìm kiếm mã..." oninput="hienKetQuaBTP()" style="width:100%; padding:8px 12px; font-size:13px; border-radius:8px; border:1px solid var(--line); margin-bottom:12px; background:var(--bg); box-sizing: border-box;">
 
       <!-- Khung Bảng Chi Tiết -->
-      <div id="btp-wrap-chitiet" style="border-radius:12px; border:1px solid var(--line); overflow-x:hidden; overflow-y:auto; box-shadow:0 2px 8px rgba(0,0,0,0.05); max-height:280px; display:flex; flex-direction:column; margin-bottom: 20px;">
+      <div id="btp-wrap-chitiet" style="border-radius:12px; border:1px solid var(--line); overflow-x:hidden; overflow-y:auto; box-shadow:0 2px 8px rgba(0,0,0,0.05); max-height:280px; margin-bottom: 20px;">
         <div class="cx5-list-container">
-          <div class="cx5-list-header" style="display:flex; padding:10px; background:var(--card-raised); border-bottom:2px solid var(--steel); position:sticky; top:0; z-index:2;">
+          <div class="cx5-list-header" style="display:flex; width: 100%; box-sizing: border-box; padding:10px; background:var(--card-raised); border-bottom:2px solid var(--steel); position:sticky; top:0; z-index:2;">
             <div style="flex:1; font-weight:700; color:var(--cream);">Đợt</div>
             <div style="flex:2; font-weight:700; color:var(--cream);">Đơn</div>
             <div style="flex:1; font-weight:700; color:var(--cream); text-align:right;">Loại</div>
           </div>
-          <div id="btp-tbody-dot" style="display:flex; flex-direction:column;"></div>
-          <div id="btp-tfoot-dot" style="display:flex; flex-direction:column; position: sticky; bottom: 0; background: var(--card-raised); z-index: 2;"></div>
+          <div id="btp-tbody-dot" style="display:flex; flex-direction:column; width:100%;"></div>
+          <div id="btp-tfoot-dot" style="display:flex; flex-direction:column; width:100%; position: sticky; bottom: 0; background: var(--card-raised); z-index: 2;"></div>
         </div>
       </div>
 
       <!-- Khung Bảng Tổng Hợp -->
-      <div id="btp-wrap-gom" style="display:none; border-radius:12px; border:1px solid var(--line); overflow:hidden; overflow-y:auto; box-shadow:0 2px 8px rgba(0,0,0,0.05); max-height:280px; flex-direction:column; margin-bottom: 20px;">
+      <div id="btp-wrap-gom" style="display:none; border-radius:12px; border:1px solid var(--line); overflow:hidden; overflow-y:auto; box-shadow:0 2px 8px rgba(0,0,0,0.05); max-height:280px; margin-bottom: 20px;">
         <div class="cx5-list-container">
-          <div class="cx5-list-header" style="display:flex; padding:10px; background:var(--card-raised); border-bottom:2px solid var(--steel); position:sticky; top:0; z-index:2;">
+          <div class="cx5-list-header" style="display:flex; width: 100%; box-sizing: border-box; padding:10px; background:var(--card-raised); border-bottom:2px solid var(--steel); position:sticky; top:0; z-index:2;">
             <div style="flex:1; font-weight:700; color:var(--cream);">Đơn</div>
             <div style="flex:2; font-weight:700; color:var(--cream); text-align:center;">Loại</div>
             <div style="flex:1; font-weight:700; color:var(--cream); text-align:right;">SL</div>
           </div>
-          <div id="btp-tbody-gom" style="display:flex; flex-direction:column;"></div>
-          <div id="btp-tfoot-gom" style="display:flex; flex-direction:column; position: sticky; bottom: 0; background: var(--card-raised); z-index: 2;"></div>
+          <div id="btp-tbody-gom" style="display:flex; flex-direction:column; width:100%;"></div>
+          <div id="btp-tfoot-gom" style="display:flex; flex-direction:column; width:100%; position: sticky; bottom: 0; background: var(--card-raised); z-index: 2;"></div>
         </div>
       </div>
       
@@ -897,7 +897,7 @@
           const wrapGom = document.getElementById('btp-wrap-gom');
           
           if (mode === 'chitiet') {
-            wrapChitiet.style.display = 'flex';
+            wrapChitiet.style.display = 'block';
             wrapGom.style.display = 'none';
             btnChitiet.className = 'btn btn-blue';
             btnChitiet.style.background = '';
@@ -910,7 +910,7 @@
             btnGom.style.border = '1px solid var(--primary)';
           } else {
             wrapChitiet.style.display = 'none';
-            wrapGom.style.display = 'flex';
+            wrapGom.style.display = 'block';
             btnGom.className = 'btn btn-blue';
             btnGom.style.background = '';
             btnGom.style.color = '';
@@ -960,31 +960,31 @@
       <button id="ls-btp-tab-tonghop" class="btn" style="flex:1; border-radius:8px; margin:0; padding:8px; font-size:13px; font-weight:700; background:transparent; border:1px solid var(--primary); color:var(--primary);" onclick="toggleLichSuBTPView('tonghop')">Tổng Hợp</button>
     </div>
 
-    <div id="ls-btp-wrap-chitiet" style="border-radius:12px; border:1px solid var(--steel); overflow-x:hidden; overflow-y:auto; box-shadow:0 2px 8px rgba(0,0,0,0.05); max-height:280px; display:flex; flex-direction:column; margin-bottom: 20px;">
+    <div id="ls-btp-wrap-chitiet" style="border-radius:12px; border:1px solid var(--steel); overflow-x:hidden; overflow-y:auto; box-shadow:0 2px 8px rgba(0,0,0,0.05); max-height:280px; margin-bottom: 20px;">
       <div class="cx5-list-container">
-        <div class="cx5-list-header" style="display:flex; padding:10px; background:var(--card-raised); border-bottom:2px solid var(--steel); position:sticky; top:0; z-index:2;">
+        <div class="cx5-list-header" style="display:flex; width: 100%; box-sizing: border-box; padding:10px; background:var(--card-raised); border-bottom:2px solid var(--steel); position:sticky; top:0; z-index:2;">
           <div style="flex:1; font-weight:700; color:var(--cream);">Đợt</div>
           <div style="flex:2; font-weight:700; color:var(--cream);">Đơn</div>
           <div style="flex:1; font-weight:700; color:var(--cream); text-align:right;">Loại</div>
         </div>
-        <div id="lichsu-btp-tbody-dot" style="display:flex; flex-direction:column;"></div>
-        <div id="lichsu-btp-tfoot-dot" style="display:flex; flex-direction:column; position: sticky; bottom: 0; background: var(--card-raised); z-index: 2;"></div>
+        <div id="lichsu-btp-tbody-dot" style="display:flex; flex-direction:column; width:100%;"></div>
+        <div id="lichsu-btp-tfoot-dot" style="display:flex; flex-direction:column; width:100%; position: sticky; bottom: 0; background: var(--card-raised); z-index: 2;"></div>
       </div>
     </div>
 
-    <div id="ls-btp-wrap-gom" style="display:none; border-radius:12px; border:1px solid var(--steel); overflow:hidden; overflow-y:auto; box-shadow:0 2px 8px rgba(0,0,0,0.05); max-height:280px; flex-direction:column; margin-bottom: 20px;">
+    <div id="ls-btp-wrap-gom" style="display:none; border-radius:12px; border:1px solid var(--steel); overflow:hidden; overflow-y:auto; box-shadow:0 2px 8px rgba(0,0,0,0.05); max-height:280px; margin-bottom: 20px;">
       <div class="cx5-list-container">
-        <div class="cx5-list-header" style="display:flex; padding:10px; background:var(--card-raised); border-bottom:2px solid var(--steel); position:sticky; top:0; z-index:2;">
+        <div class="cx5-list-header" style="display:flex; width: 100%; box-sizing: border-box; padding:10px; background:var(--card-raised); border-bottom:2px solid var(--steel); position:sticky; top:0; z-index:2;">
           <div style="flex:1; font-weight:700; color:var(--cream);">Đơn</div>
           <div style="flex:2; font-weight:700; color:var(--cream); text-align:center;">Loại</div>
           <div style="flex:1; font-weight:700; color:var(--cream); text-align:right;">SL</div>
         </div>
-        <div id="lichsu-btp-tbody-gom" style="display:flex; flex-direction:column;"></div>
-        <div id="lichsu-btp-tfoot-gom" style="display:flex; flex-direction:column; position: sticky; bottom: 0; background: var(--card-raised); z-index: 2;"></div>
+        <div id="lichsu-btp-tbody-gom" style="display:flex; flex-direction:column; width:100%;"></div>
+        <div id="lichsu-btp-tfoot-gom" style="display:flex; flex-direction:column; width:100%; position: sticky; bottom: 0; background: var(--card-raised); z-index: 2;"></div>
       </div>
     </div>
 
-    <div style="display:flex; flex-direction:column; gap:8px;">
+    <div style="display:flex; flex-direction:column; width:100%; gap:8px;">
       <button class="btn btn-green btn-full" onclick="tiepTucTuChiTietLichSuBTP()">Quét tiếp / Sửa phiên này</button>
       <button class="btn btn-excel btn-full" onclick="xuatExcelLichSuBTP()"><i class="ti ti-file-spreadsheet"></i> Xuất Excel Phiên Này</button>
       <button class="btn btn-full" style="background:var(--card-raised); color:var(--cream); border:1px solid var(--line);" onclick="chuyenTrangKhongNav('lichSuBTP')"><i class="ti ti-arrow-left"></i> Quay lại Lịch sử</button>
@@ -1258,7 +1258,7 @@
   <div class="modal-sheet" onclick="event.stopPropagation()">
     <div class="modal-close" onclick="closeLichSuModal()"><i class="ti ti-x"></i></div>
     <div class="modal-title">Lịch Sử Quét</div>
-    <div style="display:flex; flex-direction:column; gap:12px;">
+    <div style="display:flex; flex-direction:column; width:100%; gap:12px;">
       <div onclick="closeLichSuModal(); moLichSuChon('quetqr')" style="padding:16px; background:var(--bg-body); border-radius:16px; border:1px solid var(--border); font-weight:700; color:var(--text-main); display:flex; align-items:center; gap:12px; cursor: pointer;">
         <i class="ti ti-scan" style="font-size:24px; color:var(--primary)"></i> Lịch sử Quét QR
       </div>

@@ -1,0 +1,48 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+  .cx5-list-container {
+      display: flex;
+      flex-direction: column;
+      background: #fff;
+      border-radius: 8px;
+      overflow: hidden;
+      flex-shrink: 0;
+  }
+  .cx5-swipe-row {
+      position: relative;
+      display: flex;
+      overflow: hidden;
+      background: #eee;
+      border-bottom: 1px solid #ccc;
+  }
+  .cx5-swipe-row > div:first-child {
+      width: 100%;
+  }
+</style>
+</head>
+<body>
+<div id='cx1-wrap-chitiet' style='border:1px solid red; display:block; width:400px;'>
+  <div class='cx5-list-container'>
+    <div class='cx5-list-header' style='display:flex; padding:10px;'>
+      <div style='flex:0.8; background:lightblue;'>Đợt</div>
+      <div style='flex:1.5; background:lightgreen;'>QC</div>
+      <div style='flex:0.7; background:lightpink;'>Bao</div>
+      <div style='flex:1; background:yellow;'>KG</div>
+    </div>
+    <div id='cx1-tbody-dot' style='display:flex; flex-direction:column;'>
+      <div class='cx5-swipe-row'>
+        <div style='display:flex; padding:12px 10px; flex:1;'>
+          <div style='flex:0.8; background:lightblue;'>Đợt 1</div>
+          <div style='flex:1.5; background:lightgreen;'>700/15B</div>
+          <div style='flex:0.7; background:lightpink;'>9</div>
+          <div style='flex:1; background:yellow;'>583.4</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>
