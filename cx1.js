@@ -1198,7 +1198,7 @@ function toggleLichSuCX1View(mode) {
     if (!wrapChitiet || !wrapGom) return;
   
     if (mode === "chitiet") {
-      wrapChitiet.style.display = "flex";
+      wrapChitiet.style.display = "block";
       wrapGom.style.display = "none";
       if (tabChitiet) {
         tabChitiet.className = "btn btn-blue";
@@ -1214,7 +1214,7 @@ function toggleLichSuCX1View(mode) {
       }
     } else {
       wrapChitiet.style.display = "none";
-      wrapGom.style.display = "flex";
+      wrapGom.style.display = "block";
       if (tabTonghop) {
         tabTonghop.className = "btn btn-blue";
         tabTonghop.style.background = "";
