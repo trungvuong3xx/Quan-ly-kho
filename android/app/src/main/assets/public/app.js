@@ -1724,6 +1724,17 @@ function chuoiSangBase64Utf8(str) {
   }
 }
 
+// Hàm tính mã băm chuỗi đơn giản để làm Delta Check
+function tinhMaBam(str) {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    hash = ((hash << 5) - hash) + str.charCodeAt(i);
+    hash |= 0;
+  }
+  return String(hash);
+}
+window.tinhMaBam = tinhMaBam;
+
 async function saoLuuDuLieuToanBo() {
   try {
     const backupData = {
@@ -2176,7 +2187,7 @@ window.khoaCuonTrangQuet = function (isLock) {
 
 
 
-// -- Hi?u ?ng Swipe-to-Delete to�n c?c -----------------
+// -- Hi?u ?ng Swipe-to-Delete toan c?c -----------------
 let swipeStartX = 0;
 let swipeCurrentX = 0;
 let swipingRow = null;
