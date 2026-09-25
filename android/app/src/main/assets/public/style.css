@@ -1751,45 +1751,69 @@ body.cam-active #quetQR.active {
 
 body.cam-active #btp-cam,
 body.cam-active #cx1-cam,
-body.cam-active #qr-cam {
+body.cam-active #qr-cam,
+#btp-cam,
+#cx1-cam,
+#qr-cam {
   display: flex !important;
   flex-direction: column !important;
   flex: 1 1 auto !important;
   height: 100% !important;
-  padding: 4px 0 0 0 !important;
-  margin: 0 !important;
+  padding: 6px 12px 10px 12px !important;
+  margin: 0 auto !important;
   box-sizing: border-box !important;
   justify-content: flex-start !important;
   gap: 6px !important;
   overflow: hidden !important;
+  width: 100% !important;
+  max-width: 600px !important;
+}
+
+/* Đảm bảo toàn bộ các phần tử con trực tiếp bên trong camera (thanh trạng thái, camera, card tùy chọn, nút bấm, log) có cùng độ rộng và căn lề khớp 100% với khung camera */
+body.cam-active #btp-cam > *,
+body.cam-active #cx1-cam > *,
+body.cam-active #qr-cam > *,
+#btp-cam > *,
+#cx1-cam > *,
+#qr-cam > * {
+  width: 100% !important;
+  max-width: 100% !important;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+  box-sizing: border-box !important;
 }
 
 body.cam-active #btp-video-box,
 body.cam-active .video-container {
   flex: 0 0 auto !important;
   height: 220px !important;
-  width: calc(100% - 24px) !important;
+  width: 100% !important;
+  max-width: 100% !important;
   padding-bottom: 0 !important;
-  margin: 0 12px 8px 12px !important;
+  margin: 0 0 6px 0 !important;
   border-radius: 14px !important;
   border: 2px solid var(--primary) !important;
   position: relative !important;
   overflow: hidden !important;
   box-shadow: 0 4px 12px rgba(34, 197, 94, 0.25) !important;
+  box-sizing: border-box !important;
 }
 
 body.cam-active #btp-log-container,
 body.cam-active #cx1-log-container,
 body.cam-active #qr-log-container {
-    flex: 1 1 auto !important;
-    display: flex !important;
-    flex-direction: column !important;
-    margin: 8px 12px 12px 12px !important;
-    padding: 10px 14px !important;
-    overflow: hidden !important;
-    max-height: none !important;
+  flex: 1 1 auto !important;
+  display: flex !important;
+  flex-direction: column !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  margin: 0 !important;
+  padding: 8px 10px !important;
+  overflow: hidden !important;
+  max-height: none !important;
   min-height: 120px !important;
   border-radius: 12px !important;
+  box-sizing: border-box !important;
 }
 
 body.cam-active #btp-log-list,
@@ -1799,6 +1823,9 @@ body.cam-active #qr-log-list {
   max-height: none !important;
   height: 100% !important;
   overflow-y: auto !important;
+  overflow-x: hidden !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
 }
 
 /* -- BTP Camera Viewfinder Brackets & Laser Scan Line -- */

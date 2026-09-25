@@ -601,13 +601,13 @@ function capNhatLogCX1() {
     const gio = item.thoiGian ? new Date(item.thoiGian).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit", second: "2-digit" }) : "";
     const flashClass = idx === 0 ? ' scan-flash-new' : '';
 
-    return `<div class="${flashClass}" style="display:flex; justify-content:space-between; align-items:center; padding:4px 0; border-bottom:1px solid var(--line-soft); font-size:12px; border-radius:6px;">
-      <span style="color:var(--steel); font-weight:700; width:26px;">${dot}</span>
-      <span style="color:var(--brass); font-weight:800; flex:1; text-align:left; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${item.qc || item.msp || '—'}</span>
-      <span style="color:var(--cream-soft); font-size:11px; width:20px; text-align:center;">${item.seqTrongDot}</span>
-      <span style="color:var(--success); font-weight:700; width:45px; text-align:center;">${item.kg || 0}</span>
-      <span style="color:var(--cream-soft); font-size:11px; width:50px; text-align:right;">${gio}</span>
-      <button class="" onclick="xoaMaCX1(${originalIndex}, event)" title="Xóa mã này" style="margin-left:4px; background:none; border:none; color:var(--red); cursor:pointer; padding:2px 4px;">
+    return `<div class="${flashClass}" style="display:flex; justify-content:space-between; align-items:center; padding:4px 0; border-bottom:1px solid var(--line-soft); font-size:12px; border-radius:6px; width:100%; box-sizing:border-box;">
+      <span style="color:var(--steel); font-weight:700; width:26px; flex-shrink:0;">${dot}</span>
+      <span style="color:var(--brass); font-weight:800; flex:1; min-width:0; text-align:left; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${item.qc || item.msp || '—'}</span>
+      <span style="color:var(--cream-soft); font-size:11px; width:22px; text-align:center; flex-shrink:0;">${item.seqTrongDot}</span>
+      <span style="color:var(--success); font-weight:700; width:40px; text-align:center; flex-shrink:0;">${item.kg || 0}</span>
+      <span style="color:var(--cream-soft); font-size:11px; width:48px; text-align:right; flex-shrink:0;">${gio}</span>
+      <button class="" onclick="xoaMaCX1(${originalIndex}, event)" title="Xóa mã này" style="margin-left:4px; background:none; border:none; color:var(--red); cursor:pointer; padding:2px 4px; flex-shrink:0; display:inline-flex; align-items:center; justify-content:center;">
         <i class="ti ti-trash"></i>
       </button>
     </div>`;

@@ -490,13 +490,13 @@
     <button class="btn btn-blue btn-full" onclick="batDauQuetQR()">Bắt đầu Quét Camera</button>
   </div>
 
-  <div id="qr-cam" style="display:none; width:100%; max-width:100%; box-sizing:border-box; margin:0 auto; padding:0 0 10px 0; overflow:hidden;">
-    <div class="flex justify-between items-center mb-2" style="width:100%; box-sizing:border-box; padding:0;">
+  <div id="qr-cam" style="display:none; width:100%; max-width:600px; box-sizing:border-box; margin:0 auto; padding:6px 12px 10px 12px; overflow:hidden;">
+    <div class="flex justify-between items-center mb-1" style="width:100%; box-sizing:border-box; padding:0; margin:0 0 4px 0;">
       <span id="qr-status" style="font-weight:700">🟢 Đang quét Đợt 1...</span>
       <span id="qr-dem" style="background:var(--brass); color:var(--bg-deep); font-weight:800; font-size:14px; padding:4px 12px; border-radius:20px; box-shadow:0 3px 10px rgba(245,158,11,0.45); letter-spacing:0.3px;">Đã quét: 0 bao</span>
     </div>
 
-    <div class="video-container" style="position:relative; width:100%; padding-bottom:60%; background:#000; border-radius:14px; overflow:hidden; margin-bottom:8px; border: 3px solid transparent; transition: border-color 0.3s ease, box-shadow 0.3s ease; box-sizing:border-box;">
+    <div class="video-container" style="position:relative; width:100%; height:220px; background:#000; border-radius:14px; overflow:hidden; margin:0 0 6px 0; border: 2px solid var(--primary); box-sizing:border-box;">
       <video id="reader" autoplay playsinline muted disablePictureInPicture style="position:absolute; width:100%; height:100%; object-fit:cover; transform:translateZ(0); will-change:transform;"></video>
       <div class="cam-viewfinder">
         <div class="vf-corner vf-top-left"></div>
@@ -506,7 +506,7 @@
       </div>
     </div>
 
-    <div style="margin: 0 0 8px 0; padding:8px 12px; background:var(--card-raised); border-radius:10px; border:1px solid var(--line-soft); display:flex; flex-direction:column; width:100%; box-sizing:border-box; gap:8px;">
+    <div style="margin: 0 0 6px 0; padding:8px 12px; background:var(--card-raised); border-radius:10px; border:1px solid var(--line-soft); display:flex; flex-direction:column; width:100%; box-sizing:border-box; gap:8px;">
       <div style="display:flex; align-items:center; justify-content:space-between;">
         <span style="font-size:13px; font-weight:600; color:var(--cream);">Cho phép quét trùng</span>
         <div style="display:flex; align-items:center; gap:8px;">
@@ -522,12 +522,12 @@
       </div>
     </div>
 
-    <div class="flex flex-col gap-2 w-full" style="padding: 0; box-sizing:border-box; width:100%;">
+    <div class="flex flex-col gap-2 w-full" style="padding: 0; box-sizing:border-box; width:100%; margin:0 0 6px 0;">
       <button id="btn-dung-tieptuc-qr" class="btn btn-red" style="width:100%; height:38px; font-size:14px; margin:0;" onclick="toggleDungTiepTucQR()">Dừng quét</button>
       <button class="btn btn-green" style="width:100%; height:38px; font-size:14px; margin:0;" onclick="xemKetQuaQuetQR()"><i class="ti ti-list-check"></i> Xem kết quả</button>
     </div>
 
-    <div id="qr-log-container" style="margin-top:8px; background:var(--card-raised); border-radius:12px; padding:8px 10px; border:1px solid var(--line-soft); display:flex; flex-direction:column; width:100%; box-sizing:border-box; flex:1 1 auto;">
+    <div id="qr-log-container" style="margin:0; background:var(--card-raised); border-radius:12px; padding:8px 10px; border:1px solid var(--line-soft); display:flex; flex-direction:column; width:100%; box-sizing:border-box; flex:1 1 auto; overflow:hidden;">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px; border-bottom:1px solid var(--line); padding-bottom:4px; gap:8px;">
         <span style="font-size:12px; font-weight:800; color:var(--brass); letter-spacing:0.5px; white-space:nowrap;"><i class="ti ti-clipboard-list"></i> NHẬT KÝ QUÉT</span>
         <span id="qr-log-count" style="font-size:12px; font-weight:700; color:var(--steel); white-space:nowrap;">0 bao</span>
@@ -641,12 +641,12 @@
   <button class="btn btn-blue btn-full" onclick="batDauCX1()">Quét</button>
 </div>
 
-  <div id="cx1-cam" style="display:none; width:100%; max-width:100%; box-sizing:border-box; margin:0 auto; padding:0 0 10px 0; overflow:hidden;">
-    <div class="flex justify-between items-center mb-2" style="width:100%; box-sizing:border-box; padding:0;">
+  <div id="cx1-cam" style="display:none; width:100%; max-width:600px; box-sizing:border-box; margin:0 auto; padding:6px 12px 10px 12px; overflow:hidden;">
+    <div class="flex justify-between items-center mb-1" style="width:100%; box-sizing:border-box; padding:0; margin:0 0 4px 0;">
       <span id="cx1-status" style="font-weight:700">🟢 Đang quét Đợt 1...</span>
       <span id="cx1-dem" class="cx5-badge">Đã quét: 0 mã</span>
     </div>
-    <div class="video-container" style="position:relative; width:100%; padding-bottom:70%; background:#000; border-radius:14px; overflow:hidden; margin-bottom:8px; border: 2px solid var(--steel); transition: border-color 0.3s ease, box-shadow 0.3s ease; box-sizing:border-box;">
+    <div class="video-container" style="position:relative; width:100%; height:220px; background:#000; border-radius:14px; overflow:hidden; margin:0 0 6px 0; border: 2px solid var(--steel); box-sizing:border-box;">
       <video id="cx1-reader" autoplay playsinline muted disablePictureInPicture style="position:absolute; width:100%; height:100%; object-fit:cover; transform:translateZ(0); will-change:transform;"></video>
       <div class="cam-viewfinder">
         <div class="vf-corner vf-top-left" style="border-color:var(--steel);"></div>
@@ -656,7 +656,7 @@
       </div>
     </div>
 
-    <div style="margin: 0 0 8px 0; padding:8px 12px; background:var(--card-raised); border-radius:10px; border:1px solid var(--line-soft); display:flex; align-items:center; justify-content:space-between; width:100%; box-sizing:border-box;">
+    <div style="margin: 0 0 6px 0; padding:8px 12px; background:var(--card-raised); border-radius:10px; border:1px solid var(--line-soft); display:flex; align-items:center; justify-content:space-between; width:100%; box-sizing:border-box;">
       <span style="font-size:13px; font-weight:600; color:var(--cream);">Cho phép quét trùng</span>
       <div style="display:flex; align-items:center; gap:8px;">
         <span id="cx1-lock-status" style="font-size:11px; color:var(--cream-soft);">Chờ quét...</span>
@@ -667,13 +667,13 @@
       </div>
     </div>
 
-    <div class="flex flex-col gap-2 w-full" style="padding:0; box-sizing:border-box; width:100%;">
+    <div class="flex flex-col gap-2 w-full" style="padding:0; box-sizing:border-box; width:100%; margin:0 0 6px 0;">
       <button id="btn-flash-cx1" class="btn" style="width:100%; background:var(--surface-grad); border:1px solid var(--border); color:var(--text-main); margin:0; height:38px; font-size:14px;" onclick="toggleFlashCX1()">Bật/Tắt đèn</button>
       <button id="btn-dung-tieptuc-cx1" class="btn btn-red" style="width:100%; margin:0; height:38px; font-size:14px;" onclick="toggleDungTiepTuc()">Dừng quét</button>
       <button class="btn btn-green" style="width:100%; margin:0; height:38px; font-size:14px;" onclick="ketThucCX1()"><i class="ti ti-list-check"></i> Xem kết quả</button>
     </div>
 
-    <div id="cx1-log-container" style="margin-top:8px; background:var(--card-raised); border-radius:12px; padding:8px 10px; border:1px solid var(--line-soft); display:flex; flex-direction:column; width:100%; box-sizing:border-box; flex:1 1 auto;">
+    <div id="cx1-log-container" style="margin:0; background:var(--card-raised); border-radius:12px; padding:8px 10px; border:1px solid var(--line-soft); display:flex; flex-direction:column; width:100%; box-sizing:border-box; flex:1 1 auto; overflow:hidden;">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px; border-bottom:1px solid var(--line); padding-bottom:4px; gap:8px;">
         <span style="font-size:12px; font-weight:800; color:var(--brass); letter-spacing:0.5px; white-space:nowrap;"><i class="ti ti-clipboard-list"></i> NHẬT KÝ QUÉT CHỈ FOR</span>
         <span id="cx1-log-count" style="font-size:12px; font-weight:700; color:var(--steel); white-space:nowrap;">0 mã</span>
@@ -778,12 +778,12 @@
     
   </div>
 
-  <div id="btp-cam" style="display:none; width:100%; max-width:100%; box-sizing:border-box; margin:0 auto; padding:0 0 10px 0; overflow:hidden;">
-    <div class="flex justify-between items-center mb-2" style="width:100%; box-sizing:border-box; padding:0;">
+  <div id="btp-cam" style="display:none; width:100%; max-width:600px; box-sizing:border-box; margin:0 auto; padding:6px 12px 10px 12px; overflow:hidden;">
+    <div class="flex justify-between items-center mb-1" style="width:100%; box-sizing:border-box; padding:0; margin:0 0 4px 0;">
       <span id="btp-status" style="font-weight:700">🟢 Đang quét...</span>
       <span id="btp-dem" style="background:var(--brass); color:var(--bg-deep); font-weight:800; font-size:14px; padding:4px 12px; border-radius:20px; box-shadow:0 3px 10px rgba(245,158,11,0.45); letter-spacing:0.3px;">Đã quét: 0 mã</span>
     </div>
-    <div id="btp-video-box" class="video-container" style="position:relative; width:100%; padding-bottom:60%; background:#000; border-radius:14px; overflow:hidden; margin-bottom:8px; border: 3px solid transparent; transition: border-color 0.3s ease, box-shadow 0.3s ease; box-sizing:border-box;">
+    <div id="btp-video-box" class="video-container" style="position:relative; width:100%; height:220px; background:#000; border-radius:14px; overflow:hidden; margin:0 0 6px 0; border: 2px solid var(--primary); box-sizing:border-box;">
       <video id="btp-reader" autoplay playsinline muted disablePictureInPicture style="position:absolute; width:100%; height:100%; object-fit:cover; transform:translateZ(0); will-change:transform;"></video>
       <div class="btp-viewfinder">
         <div class="vf-corner vf-top-left"></div>
@@ -793,7 +793,7 @@
       </div>
     </div>
 
-    <div style="margin: 0 0 8px 0; padding:8px 12px; background:var(--card-raised); border-radius:10px; border:1px solid var(--line-soft); display:flex; flex-direction:column; width:100%; box-sizing:border-box; gap:8px;">
+    <div style="margin: 0 0 6px 0; padding:8px 12px; background:var(--card-raised); border-radius:10px; border:1px solid var(--line-soft); display:flex; flex-direction:column; width:100%; box-sizing:border-box; gap:8px;">
       <div style="display:flex; align-items:center; justify-content:space-between;">
         <span style="font-size:13px; font-weight:600; color:var(--cream);">Cho phép quét trùng</span>
         <div style="display:flex; align-items:center; gap:8px;">
@@ -810,12 +810,12 @@
       </div>
     </div>
 
-    <div class="flex flex-col gap-2 w-full" style="padding:0; box-sizing:border-box; width:100%;">
+    <div class="flex flex-col gap-2 w-full" style="padding:0; box-sizing:border-box; width:100%; margin:0 0 6px 0;">
       <button id="btn-dung-tieptuc-btp" class="btn btn-red" style="width:100%; height:38px; font-size:14px; margin:0;" onclick="toggleDungTiepTucBTP()">Dừng quét</button>
       <button class="btn btn-green" style="width:100%; height:38px; font-size:14px; margin:0;" onclick="xemKetQuaBTP()"><i class="ti ti-list-check"></i> Xem kết quả</button>
     </div>
 
-    <div id="btp-log-container" style="margin-top:8px; background:var(--card-raised); border-radius:12px; padding:8px 10px; border:1px solid var(--line-soft); display:flex; flex-direction:column; width:100%; box-sizing:border-box; flex:1 1 auto;">
+    <div id="btp-log-container" style="margin:0; background:var(--card-raised); border-radius:12px; padding:8px 10px; border:1px solid var(--line-soft); display:flex; flex-direction:column; width:100%; box-sizing:border-box; flex:1 1 auto; overflow:hidden;">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px; border-bottom:1px solid var(--line); padding-bottom:4px; gap:8px;">
         <span style="font-size:12px; font-weight:800; color:var(--brass); letter-spacing:0.5px; white-space:nowrap;"><i class="ti ti-clipboard-list"></i> NHẬT KÝ QUÉT BTP</span>
         <span id="btp-log-count" style="font-size:12px; font-weight:700; color:var(--steel); white-space:nowrap;">0 mã</span>
