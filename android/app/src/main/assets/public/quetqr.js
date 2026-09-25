@@ -239,6 +239,7 @@ async function tiepTucQuetQR() {
   demSoDotQR = maxDot > 0 ? maxDot + 1 : 1;
   dangQuetQR = true;
   window.dangQuetQR = true;
+  luuPhienDoDangQR();
   document.body.classList.add("cam-active");
   const statusEl = document.getElementById("qr-status");
   if (statusEl) statusEl.textContent = "🟢 " + (loaiQuetQR || "Đang quét") + " | Đợt " + demSoDotQR;
@@ -810,6 +811,7 @@ function luuPhienDoDangQR() {
     }));
     if (typeof kichHoatKiemTraAutoBackup === "function") kichHoatKiemTraAutoBackup(4000);
   } catch (e) {}
+  luuVaoLichSuQR();
   if (typeof capNhatTrangChu === "function") capNhatTrangChu();
 }
 
@@ -882,8 +884,14 @@ function luuLichSuQR(list) {
 }
 
 function luuVaoLichSuQR() {
+  if (!idPhienHienTaiQR) return;
   try {
     const list = docLichSuQR();
+    if (phienQuetQR.length === 0) {
+      const filtered = list.filter(e => e.idPhien !== idPhienHienTaiQR);
+      luuLichSuQR(filtered);
+      return;
+    }
     const entryIndex = list.findIndex(e => e.idPhien === idPhienHienTaiQR);
 
     const newEntry = {

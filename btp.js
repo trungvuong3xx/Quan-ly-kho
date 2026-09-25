@@ -297,6 +297,7 @@ function luuPhienDoDangBTP() {
     }));
     if (typeof kichHoatKiemTraAutoBackup === "function") kichHoatKiemTraAutoBackup(4000);
   } catch (e) { }
+  luuVaoLichSuBTP();
   if (typeof capNhatTrangChu === "function") capNhatTrangChu();
 }
 
@@ -395,6 +396,7 @@ async function tiepTucBTP() {
   const maxDot = phienBTP.length > 0 ? Math.max(0, ...phienBTP.map(r => r.dotQuet || 1)) : 0;
   demSoDotBTP = maxDot > 0 ? maxDot + 1 : 1;
   dangQuetBTP = true;
+  luuPhienDoDangBTP();
   document.getElementById("btp-status").innerHTML = '<i class="ti ti-radar" style="color:var(--success)"></i> Đang quét Đợt ' + demSoDotBTP + '...';
   try {
     const btpVid = document.getElementById("btp-reader");
@@ -760,6 +762,7 @@ async function khoiPhucBTP(state) {
   soLuongDaGuiHienTaiBTP = state.soLuongDaGuiHienTaiBTP !== undefined ? state.soLuongDaGuiHienTaiBTP : 0;
   dangQuetBTP = true;
   denPinBatBTP = false;
+  luuPhienDoDangBTP();
 
   document.getElementById("btp-form").style.display = "none";
   document.getElementById("btp-cam").style.display = "block";
@@ -863,8 +866,14 @@ function xoaTatCaLichSuBTP() {
 window.xoaTatCaLichSuBTP = xoaTatCaLichSuBTP;
 
 function luuVaoLichSuBTP() {
-  if (phienBTP.length === 0 || !idPhienHienTaiBTP) return;
+  if (!idPhienHienTaiBTP) return;
   const list = docLichSuBTP();
+  if (phienBTP.length === 0) {
+    const filtered = list.filter(s => s.idPhien !== idPhienHienTaiBTP);
+    luuLichSuBTP(filtered);
+    if (typeof renderLichSuBTP === "function") renderLichSuBTP();
+    return;
+  }
   const idx = list.findIndex(s => s.idPhien === idPhienHienTaiBTP);
   const banGhi = {
     idPhien: idPhienHienTaiBTP,

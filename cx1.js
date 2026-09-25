@@ -153,6 +153,8 @@ function luuPhienDoDangCX1() {
     }));
     if (typeof kichHoatKiemTraAutoBackup === "function") kichHoatKiemTraAutoBackup(4000);
   } catch (e) { }
+  luuVaoLichSuCX1();
+  if (typeof capNhatTrangChu === "function") capNhatTrangChu();
 }
 
 function xoaPhienDoDangCX1() {
@@ -524,7 +526,7 @@ function xoaMaCX1(index, ev) {
   const msp = item.msp;
 
   const doXoa = () => {
-    phienCX1 = phienCX1.filter(r => !(r.dotQuet === dot && r.msp === msp));
+    phienCX1.splice(index, 1);
     const maxDot = phienCX1.length > 0 ? Math.max(0, ...phienCX1.map(r => r.dotQuet || 1)) : 0;
     demSoDot = maxDot > 0 ? maxDot : 1;
     luuPhienDoDangCX1();
@@ -658,7 +660,7 @@ function taoHangKetQuaCX1(danhSach, isReadonly = false) {
     Object.values(tongDotCuaPhien).forEach(item => {
       hangDot += `
     <div class="${!isReadonly ? 'cx5-swipe-row' : ''}">
-      <div style="display:flex; width: 100%; box-sizing: border-box; padding:12px 10px; border-bottom:1px solid var(--line); align-items:center; flex:1;" onclick="nhapTayCX1(${item.dot}, '${item.msp}', '${item.qc}')">
+      <div style="display:flex; width: 100%; box-sizing: border-box; padding:12px 10px; border-bottom:1px solid var(--line); align-items:center; flex:1; ${!isReadonly ? 'cursor:pointer;' : ''}" ${!isReadonly ? `onclick="nhapTayCX1(${item.dot}, '${item.msp}', '${item.qc}')"` : ""}>
         <div style="flex:0.8; color:var(--brass); font-weight:700;">Đợt ${item.dot}</div>
         <div style="flex:1.5;">${item.qc}</div>
         <div style="flex:0.7; text-align:center;">${item.soLuong}</div>
@@ -761,6 +763,7 @@ async function quetTiepCX1() {
   demSoDot = maxDot > 0 ? maxDot + 1 : 1;
   dangQuetCX1 = true;
   denPinBat = false;
+  luuPhienDoDangCX1();
 
   document.getElementById("cx1-ketqua").style.display = "none";
   document.getElementById("cx1-cam").style.display = "block";
@@ -861,6 +864,7 @@ async function khoiPhucCX1(state) {
     : (state.soLuongDaGui !== undefined ? state.soLuongDaGui : 0);
   dangQuetCX1 = true;
   denPinBat = false;
+  luuPhienDoDangCX1();
 
   if (typeof khoaCuonTrangQuet === "function") khoaCuonTrangQuet(true); else document.body.classList.add("cam-active");
   document.getElementById("cx1-form").style.display = "none";
@@ -985,8 +989,14 @@ function donDepLichSuCX1() {
 }
 
 function luuVaoLichSuCX1() {
-  if (phienCX1.length === 0 || !idPhienHienTai) return;
+  if (!idPhienHienTai) return;
   const list = docLichSuCX1();
+  if (phienCX1.length === 0) {
+    const filtered = list.filter(s => s.idPhien !== idPhienHienTai);
+    luuLichSuCX1(filtered);
+    if (typeof renderLichSuCX1 === "function") renderLichSuCX1();
+    return;
+  }
   const idx = list.findIndex(s => s.idPhien === idPhienHienTai);
   const banGhi = {
     idPhien: idPhienHienTai,
