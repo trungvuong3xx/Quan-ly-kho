@@ -2226,3 +2226,40 @@ document.addEventListener('touchend', (e) => {
   isSwiping = false;
   swipingRow = null;
 });
+
+// Hỗ trợ kéo chuột trên Desktop/PC
+let isMouseDragging = false;
+document.addEventListener('mousedown', (e) => {
+  if (e.button !== 0) return;
+  const row = e.target.closest('.cx5-swipe-row');
+  if (!row) {
+    const openRow = document.querySelector('.cx5-swipe-row.open');
+    if (openRow && !e.target.closest('.cx5-del-btn')) {
+      openRow.classList.remove('open');
+    }
+    return;
+  }
+  document.querySelectorAll('.cx5-swipe-row.open').forEach(r => {
+    if (r !== row) r.classList.remove('open');
+  });
+  swipeStartX = e.clientX;
+  swipeCurrentX = swipeStartX;
+  swipingRow = row;
+  isMouseDragging = true;
+});
+
+document.addEventListener('mousemove', (e) => {
+  if (!isMouseDragging || !swipingRow) return;
+  swipeCurrentX = e.clientX;
+});
+
+document.addEventListener('mouseup', (e) => {
+  if (!isMouseDragging || !swipingRow) return;
+  const deltaX = swipeCurrentX - swipeStartX;
+  if (Math.abs(deltaX) > 30) {
+    if (deltaX < -30) swipingRow.classList.add('open');
+    else if (deltaX > 30) swipingRow.classList.remove('open');
+  }
+  isMouseDragging = false;
+  swipingRow = null;
+});

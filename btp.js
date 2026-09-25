@@ -582,13 +582,13 @@ function taoHangKetQuaBTP(danhSach, isReadonly = false) {
 
     if (!tuKhoa || dotStr.includes(tuKhoa) || mspStr.includes(tuKhoa) || kgStr.includes(tuKhoa) || rawStr.includes(tuKhoa)) {
         hangDot += `
-    <div class="cx5-swipe-row">
+    <div class="${!isReadonly ? 'cx5-swipe-row' : ''}">
       <div style="display:flex; width: 100%; box-sizing: border-box; padding:12px 10px; border-bottom:1px solid var(--line); align-items:center; flex:1;">
         <div style="flex:1; color:var(--steel); font-weight:700;">${r.dotQuet || 1}</div>
         <div style="flex:2; font-weight:600;">${r.msp || '?'}</div>
         <div style="flex:1; text-align:right; font-weight:700; color:var(--success);">${r.kg || 0}</div>
       </div>
-      ${!isReadonly ? `<div class="" onclick="xoaMaBTP(${idx}, event)"><i class="ti ti-trash"></i></div>` : ""}
+      ${!isReadonly ? `<div class="cx5-del-btn" onclick="xoaMaBTP(${idx}, event)"><i class="ti ti-trash"></i></div>` : ""}
     </div>`;
       }
   });

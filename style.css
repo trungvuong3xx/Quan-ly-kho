@@ -2093,6 +2093,8 @@ body { padding: 0 !important; background: var(--bg-body) !important; color: var(
   position: relative;
   z-index: 2;
   width: 100%;
+  min-width: 100%;
+  flex-shrink: 0;
 }
 
 .cx5-swipe-row.open > div:first-child {

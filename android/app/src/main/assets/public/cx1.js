@@ -647,7 +647,7 @@ function taoHangKetQuaCX1(danhSach, isReadonly = false) {
       let hangDot = "";
     Object.values(tongDotCuaPhien).forEach(item => {
       hangDot += `
-    <div class="cx5-swipe-row">
+    <div class="${!isReadonly ? 'cx5-swipe-row' : ''}">
       <div style="display:flex; width: 100%; box-sizing: border-box; padding:12px 10px; border-bottom:1px solid var(--line); align-items:center; flex:1;" onclick="nhapTayCX1(${item.dot}, '${item.msp}', '${item.qc}')">
         <div style="flex:0.8; color:var(--brass); font-weight:700;">Đợt ${item.dot}</div>
         <div style="flex:1.5;">${item.qc}</div>
