@@ -1749,12 +1749,31 @@ body.cam-active #quetQR.active {
   overflow: hidden !important;
 }
 
-body.cam-active #btp-cam,
-body.cam-active #cx1-cam,
-body.cam-active #qr-cam,
-#btp-cam,
-#cx1-cam,
-#qr-cam {
+/* Khóa chặt: Khi phần tử có inline display:none thì BẮT BUỘC ẩn tuyệt đối */
+#btp-cam[style*="display: none"],
+#btp-cam[style*="display:none"],
+#cx1-cam[style*="display: none"],
+#cx1-cam[style*="display:none"],
+#qr-cam[style*="display: none"],
+#qr-cam[style*="display:none"],
+#btp-form[style*="display: none"],
+#btp-form[style*="display:none"],
+#btp-ketqua[style*="display: none"],
+#btp-ketqua[style*="display:none"],
+#form-chon[style*="display: none"],
+#form-chon[style*="display:none"],
+#qr-ketqua[style*="display: none"],
+#qr-ketqua[style*="display:none"],
+#cx1-form[style*="display: none"],
+#cx1-form[style*="display:none"],
+#cx1-ketqua[style*="display: none"],
+#cx1-ketqua[style*="display:none"] {
+  display: none !important;
+}
+
+body.cam-active #btp-cam:not([style*="display: none"]):not([style*="display:none"]),
+body.cam-active #cx1-cam:not([style*="display: none"]):not([style*="display:none"]),
+body.cam-active #qr-cam:not([style*="display: none"]):not([style*="display:none"]) {
   display: flex !important;
   flex-direction: column !important;
   flex: 1 1 auto !important;
@@ -1772,10 +1791,7 @@ body.cam-active #qr-cam,
 /* Đảm bảo toàn bộ các phần tử con trực tiếp bên trong camera (thanh trạng thái, camera, card tùy chọn, nút bấm, log) có cùng độ rộng và căn lề khớp 100% với khung camera */
 body.cam-active #btp-cam > *,
 body.cam-active #cx1-cam > *,
-body.cam-active #qr-cam > *,
-#btp-cam > *,
-#cx1-cam > *,
-#qr-cam > * {
+body.cam-active #qr-cam > * {
   width: 100% !important;
   max-width: 100% !important;
   margin-left: 0 !important;
