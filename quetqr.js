@@ -228,18 +228,20 @@ function dungQuetQR() {
   if (statusEl) statusEl.innerHTML = '<i class="ti ti-player-pause" style="color:var(--red)"></i> Đã dừng quét (Đợt ' + (demSoDotQR || 1) + ')';
   const btnToggle = document.getElementById("btn-dung-tieptuc-qr");
   if (btnToggle) {
-    btnToggle.textContent = "Tiếp tục quét (Đợt " + (demSoDotQR || 1) + ")";
+    btnToggle.textContent = "Quét tiếp (Đợt mới)";
     btnToggle.className = "btn btn-blue btn-full";
   }
 }
 window.dungQuetQR = dungQuetQR;
 
 async function tiepTucQuetQR() {
+  const maxDot = phienQuetQR.length > 0 ? Math.max(0, ...phienQuetQR.map(r => r.dotQuet || 1)) : 0;
+  demSoDotQR = maxDot > 0 ? maxDot + 1 : 1;
   dangQuetQR = true;
   window.dangQuetQR = true;
   document.body.classList.add("cam-active");
   const statusEl = document.getElementById("qr-status");
-  if (statusEl) statusEl.textContent = "🟢 " + (loaiQuetQR || "Đang quét") + " | Đợt " + (demSoDotQR || 1);
+  if (statusEl) statusEl.textContent = "🟢 " + (loaiQuetQR || "Đang quét") + " | Đợt " + demSoDotQR;
   const btnToggle = document.getElementById("btn-dung-tieptuc-qr");
   if (btnToggle) {
     btnToggle.textContent = "Dừng quét";
@@ -342,8 +344,14 @@ function capNhatLogQR() {
 function xoaMaTrongLiveLogQR(index) {
   if (index >= 0 && index < phienQuetQR.length) {
     phienQuetQR.splice(index, 1);
+    const maxDot = phienQuetQR.length > 0 ? Math.max(0, ...phienQuetQR.map(r => r.dotQuet || 1)) : 0;
+    demSoDotQR = maxDot > 0 ? maxDot : 1;
     const demEl = document.getElementById("qr-dem");
     if (demEl) demEl.textContent = "Đã quét: " + phienQuetQR.length + " bao";
+    const statusEl = document.getElementById("qr-status");
+    if (statusEl && !dangQuetQR) {
+      statusEl.innerHTML = '<i class="ti ti-player-pause" style="color:var(--red)"></i> Đã dừng quét (Đợt ' + demSoDotQR + ')';
+    }
     luuPhienDoDangQR();
     capNhatLogQR();
   }
@@ -392,8 +400,8 @@ function taoHangKetQuaQuetQR(danhSach) {
       <div class="cx5-del-btn" onclick="xoaNhomDotQR(${item.dot}, '${item.qc}')"><i class="ti ti-trash"></i></div>
     </div>`;
     });
-    hangDot += `
-    <div style="display:flex; width: 100%; box-sizing: border-box; padding:12px 10px; background:var(--card-raised); border-bottom:2px solid var(--line); align-items:center;">
+    let footDot = `
+    <div style="display:flex; width: 100%; box-sizing: border-box; padding:10px; background:var(--card-raised); align-items:center;">
       <div style="flex:0.8; font-weight:700; color:var(--brass);">TỔNG</div>
       <div style="flex:1.5;"></div>
       <div style="flex:0.7; text-align:center; font-weight:700; color:var(--brass);">${tongBaoAll}</div>
@@ -410,14 +418,14 @@ function taoHangKetQuaQuetQR(danhSach) {
       <div style="flex:1; text-align:right; font-weight:700; color:var(--success);">${item.tongKG.toFixed(1)}</div>
     </div>`;
   });
-  hangGom += `
-    <div style="display:flex; width: 100%; box-sizing: border-box; align-items:center; padding:10px; background:var(--card-raised); border-top:1px solid var(--line); font-size:14px;">
+  let footGom = `
+    <div style="display:flex; width: 100%; box-sizing: border-box; align-items:center; padding:10px; background:var(--card-raised); font-size:14px;">
       <div style="flex:2.3; font-weight:700; color:var(--steel);">TỔNG</div>
       <div style="flex:0.7; text-align:center; font-weight:700; color:var(--steel);">${tongBaoAll}</div>
       <div style="flex:1; text-align:right; font-weight:700; color:var(--steel);">${tongKGAll.toFixed(1)}</div>
     </div>`;
 
-  return { hangDot, hangGom, tongBaoAll, tongKGAll };
+  return { hangDot, footDot, hangGom, footGom, tongBaoAll, tongKGAll };
 }
 
 // ── Chuyển Đổi Tab Chi Tiết / Tổng Hợp ──────────────────────────────
@@ -466,12 +474,16 @@ function xemKetQuaQuetQR() {
 window.xemKetQuaQuetQR = xemKetQuaQuetQR;
 
 function hienKetQuaQuetQR() {
-  const { hangDot, hangGom, tongBaoAll, tongKGAll } = taoHangKetQuaQuetQR(phienQuetQR);
+  const { hangDot, footDot, hangGom, footGom, tongBaoAll, tongKGAll } = taoHangKetQuaQuetQR(phienQuetQR);
   const tbodyDot = document.getElementById("qr-tbody-dot");
+  const tfootDot = document.getElementById("qr-tfoot-dot");
   const tbodyGom = document.getElementById("qr-tbody-gom");
+  const tfootGom = document.getElementById("qr-tfoot-gom");
 
   if (tbodyDot) tbodyDot.innerHTML = hangDot;
+  if (tfootDot) tfootDot.innerHTML = footDot;
   if (tbodyGom) tbodyGom.innerHTML = hangGom;
+  if (tfootGom) tfootGom.innerHTML = footGom;
 
   const tongBaoEl = document.getElementById("qr-tong-bao");
   if (tongBaoEl) tongBaoEl.textContent = tongBaoAll;
@@ -609,6 +621,8 @@ function themKgVaoDotQR() {
 function xoaMaQRTrongSua(index, ev) {
   if (ev) ev.stopPropagation();
   phienQuetQR.splice(index, 1);
+  const maxDot = phienQuetQR.length > 0 ? Math.max(0, ...phienQuetQR.map(r => r.dotQuet || 1)) : 0;
+  demSoDotQR = maxDot > 0 ? maxDot : 1;
   luuPhienDoDangQR();
   hienKetQuaQuetQR();
   renderSuaChiTietQR();
@@ -631,6 +645,8 @@ function xoaNhomDotQR(dot, qc) {
       `Xóa tất cả bao của QC ${qc} trong Đợt ${dot}?`,
       () => {
         phienQuetQR = phienQuetQR.filter(r => !(r.dotQuet === dot && r.qc === qc));
+        const maxDot = phienQuetQR.length > 0 ? Math.max(0, ...phienQuetQR.map(r => r.dotQuet || 1)) : 0;
+        demSoDotQR = maxDot > 0 ? maxDot : 1;
         luuPhienDoDangQR();
         hienKetQuaQuetQR();
         capNhatLogQR();
@@ -647,10 +663,8 @@ window.xoaNhomDotQR = xoaNhomDotQR;
 
 // ── Quét Tiếp / Quét Mới ───────────────────────────────────────────
 async function quetTiepQuetQR() {
-  const coDuLieu = phienQuetQR.some(r => r.dotQuet === demSoDotQR);
-  if (coDuLieu) {
-    demSoDotQR += 1;
-  }
+  const maxDot = phienQuetQR.length > 0 ? Math.max(0, ...phienQuetQR.map(r => r.dotQuet || 1)) : 0;
+  demSoDotQR = maxDot > 0 ? maxDot + 1 : 1;
   document.getElementById("qr-ketqua").style.display = "none";
   batDauQuetQR();
 }

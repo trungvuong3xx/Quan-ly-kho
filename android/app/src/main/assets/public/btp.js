@@ -155,10 +155,16 @@ function xoaMaBTP(index, ev) {
 
   const doXoa = () => {
     phienBTP.splice(index, 1);
+    const maxDot = phienBTP.length > 0 ? Math.max(0, ...phienBTP.map(r => r.dotQuet || 1)) : 0;
+    demSoDotBTP = maxDot > 0 ? maxDot : 1;
     luuPhienDoDangBTP();
     capNhatLogBTP();
     const demEl = document.getElementById("btp-dem");
     if (demEl) demEl.textContent = "Đã quét: " + phienBTP.length + " mã";
+    const statusEl = document.getElementById("btp-status");
+    if (statusEl && !dangQuetBTP) {
+      statusEl.innerHTML = '<i class="ti ti-player-pause" style="color:var(--red)"></i> Đã dừng quét (Đợt ' + demSoDotBTP + ')';
+    }
     if (document.getElementById("btp-ketqua") && document.getElementById("btp-ketqua").style.display !== "none") {
       hienKetQuaBTP();
     }
@@ -386,7 +392,8 @@ function dungBTP() {
 
 async function tiepTucBTP() {
   if (typeof khoaCuonTrangQuet === "function") khoaCuonTrangQuet(true); else document.body.classList.add("cam-active");
-  const daQuetTrongDotNay = phienBTP.some(function (item) { return item.dotQuet === demSoDotBTP; }); if (daQuetTrongDotNay || (demSoDotBTP || 0) === 0) { demSoDotBTP = (demSoDotBTP || 0) + 1; }
+  const maxDot = phienBTP.length > 0 ? Math.max(0, ...phienBTP.map(r => r.dotQuet || 1)) : 0;
+  demSoDotBTP = maxDot > 0 ? maxDot + 1 : 1;
   dangQuetBTP = true;
   document.getElementById("btp-status").innerHTML = '<i class="ti ti-radar" style="color:var(--success)"></i> Đang quét Đợt ' + demSoDotBTP + '...';
   try {
@@ -655,7 +662,8 @@ function hienKetQuaBTP() {
 
 async function quetTiepBTP() {
   if (typeof khoaCuonTrangQuet === "function") khoaCuonTrangQuet(true); else document.body.classList.add("cam-active");
-  const daQuetTrongDotNay = phienBTP.some(function (item) { return item.dotQuet === demSoDotBTP; }); if (daQuetTrongDotNay || (demSoDotBTP || 0) === 0) { demSoDotBTP = (demSoDotBTP || 0) + 1; }
+  const maxDot = phienBTP.length > 0 ? Math.max(0, ...phienBTP.map(r => r.dotQuet || 1)) : 0;
+  demSoDotBTP = maxDot > 0 ? maxDot + 1 : 1;
   dangQuetBTP = true;
   denPinBatBTP = false;
 

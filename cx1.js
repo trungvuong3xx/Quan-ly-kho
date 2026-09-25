@@ -240,10 +240,8 @@ function dungCX1() {
 }
 
 async function tiepTucCX1() {
-  const coDuLieu = phienCX1.some(r => r.dotQuet === demSoDot);
-  if (coDuLieu) {
-    demSoDot += 1;
-  }
+  const maxDot = phienCX1.length > 0 ? Math.max(0, ...phienCX1.map(r => r.dotQuet || 1)) : 0;
+  demSoDot = maxDot > 0 ? maxDot + 1 : 1;
   dangQuetCX1 = true;
   denPinBat = false;
   document.getElementById("cx1-status").textContent = "Đang quét Đợt " + demSoDot + "...";
@@ -277,7 +275,7 @@ function toggleDungTiepTuc() {
   const btn = document.getElementById("btn-dung-tieptuc-cx1");
   if (dangQuetCX1) {
     dungCX1();
-    btn.textContent = "Tiếp tục Đợt " + (demSoDot + 1);
+    btn.textContent = "Quét tiếp (Đợt mới)";
     btn.className = "btn btn-blue btn-full";
   } else {
     tiepTucCX1();
@@ -478,6 +476,8 @@ function themKgVaoDotCX1() {
 function xoaMaCX1TrongSua(index, ev) {
   if (ev) ev.stopPropagation();
   phienCX1.splice(index, 1);
+  const maxDot = phienCX1.length > 0 ? Math.max(0, ...phienCX1.map(r => r.dotQuet || 1)) : 0;
+  demSoDot = maxDot > 0 ? maxDot : 1;
   luuPhienDoDangCX1();
   hienKetQuaCX1();
   renderSuaChiTietCX1();
@@ -490,6 +490,8 @@ function xoaTongCX1() {
   if (typeof moXacNhanApp === "function") {
     moXacNhanApp("Xóa tất cả mã của quy cách này trong đợt " + cx1DangSuaDot + "?", () => {
       phienCX1 = phienCX1.filter(r => !(r.dotQuet === cx1DangSuaDot && r.msp === cx1DangSuaMsp));
+      const maxDot = phienCX1.length > 0 ? Math.max(0, ...phienCX1.map(r => r.dotQuet || 1)) : 0;
+      demSoDot = maxDot > 0 ? maxDot : 1;
       luuPhienDoDangCX1();
       hienKetQuaCX1();
       renderSuaChiTietCX1();
@@ -523,10 +525,16 @@ function xoaMaCX1(index, ev) {
 
   const doXoa = () => {
     phienCX1 = phienCX1.filter(r => !(r.dotQuet === dot && r.msp === msp));
+    const maxDot = phienCX1.length > 0 ? Math.max(0, ...phienCX1.map(r => r.dotQuet || 1)) : 0;
+    demSoDot = maxDot > 0 ? maxDot : 1;
     luuPhienDoDangCX1();
     capNhatLogCX1();
     const demEl = document.getElementById("cx1-dem");
     if (demEl) demEl.textContent = "Đã quét: " + phienCX1.length + " mã";
+    const statusEl = document.getElementById("cx1-status");
+    if (statusEl && !dangQuetCX1) {
+      statusEl.textContent = "Đã dừng Đợt " + demSoDot;
+    }
     if (document.getElementById("cx1-ketqua") && document.getElementById("cx1-ketqua").style.display !== "none") {
       hienKetQuaCX1();
     }
@@ -548,6 +556,8 @@ function xoaNhomDotCX1(dot, msp, qc) {
       "Xóa tất cả mã của " + tenQC + " trong đợt " + dot + "?",
       () => {
         phienCX1 = phienCX1.filter(r => !(r.dotQuet === dot && r.msp === msp));
+        const maxDot = phienCX1.length > 0 ? Math.max(0, ...phienCX1.map(r => r.dotQuet || 1)) : 0;
+        demSoDot = maxDot > 0 ? maxDot : 1;
         luuPhienDoDangCX1();
         hienKetQuaCX1();
         capNhatLogCX1();
@@ -657,8 +667,8 @@ function taoHangKetQuaCX1(danhSach, isReadonly = false) {
       ${!isReadonly ? `<div class="cx5-del-btn" onclick="xoaNhomDotCX1(${item.dot}, '${item.msp}', '${item.qc}')"><i class="ti ti-trash"></i></div>` : ""}
     </div>`;
     });
-    hangDot += `
-    <div style="display:flex; width: 100%; box-sizing: border-box; padding:12px 10px; background:var(--card-raised); border-bottom:2px solid var(--line); align-items:center;">
+    let footDot = `
+    <div style="display:flex; width: 100%; box-sizing: border-box; padding:10px; background:var(--card-raised); align-items:center;">
       <div style="flex:0.8; font-weight:700; color:var(--brass);">TỔNG</div>
       <div style="flex:1.5;"></div>
       <div style="flex:0.7; text-align:center; font-weight:700; color:var(--brass);">${tongQRAll}</div>
@@ -674,14 +684,14 @@ function taoHangKetQuaCX1(danhSach, isReadonly = false) {
       <div style="flex:1; text-align:right; font-weight:700; color:var(--success);">${item.tongKG.toFixed(1)}</div>
     </div>`;
   });
-  hangGom += `
-    <div style="display:flex; width: 100%; box-sizing: border-box; align-items:center; padding:10px; background:var(--card-raised); border-top:1px solid var(--line); font-size:14px;">
+  let footGom = `
+    <div style="display:flex; width: 100%; box-sizing: border-box; align-items:center; padding:10px; background:var(--card-raised); font-size:14px;">
       <div style="flex:2.3; font-weight:700; color:var(--steel);">TỔNG</div>
       <div style="flex:0.7; text-align:center; font-weight:700; color:var(--steel);">${tongQRAll}</div>
       <div style="flex:1; text-align:right; font-weight:700; color:var(--steel);">${tongKGAll.toFixed(1)}</div>
     </div>`;
   
-  return { hangDot, hangGom, tongQRAll, tongKGAll };
+  return { hangDot, footDot, hangGom, footGom, tongQRAll, tongKGAll };
 }
 
 // ── Chuyển Đổi Tab Chi Tiết / Tổng Hợp CX1 ──────────────────────────────
@@ -722,9 +732,15 @@ window.toggleCX1View = toggleCX1View;
 
 function hienKetQuaCX1() {
   if (typeof khoaCuonTrangQuet === "function") khoaCuonTrangQuet(false); else document.body.classList.remove("cam-active");
-  const { hangDot, hangGom, tongQRAll, tongKGAll } = taoHangKetQuaCX1(phienCX1);
-  document.getElementById("cx1-tbody-dot").innerHTML = hangDot;
-  document.getElementById("cx1-tbody-gom").innerHTML = hangGom;
+  const { hangDot, footDot, hangGom, footGom, tongQRAll, tongKGAll } = taoHangKetQuaCX1(phienCX1);
+  const tbodyDot = document.getElementById("cx1-tbody-dot");
+  const tfootDot = document.getElementById("cx1-tfoot-dot");
+  const tbodyGom = document.getElementById("cx1-tbody-gom");
+  const tfootGom = document.getElementById("cx1-tfoot-gom");
+  if (tbodyDot) tbodyDot.innerHTML = hangDot;
+  if (tfootDot) tfootDot.innerHTML = footDot;
+  if (tbodyGom) tbodyGom.innerHTML = hangGom;
+  if (tfootGom) tfootGom.innerHTML = footGom;
   
   const tongBaoEl = document.getElementById("cx1-tong-bao");
   if (tongBaoEl) tongBaoEl.textContent = tongQRAll;
@@ -741,10 +757,8 @@ function hienKetQuaCX1() {
 
 async function quetTiepCX1() {
   // Giữ nguyên dữ liệu cũ, mở camera quét tiếp
-  const coDuLieu = phienCX1.some(r => r.dotQuet === demSoDot);
-  if (coDuLieu) {
-    demSoDot += 1;
-  }
+  const maxDot = phienCX1.length > 0 ? Math.max(0, ...phienCX1.map(r => r.dotQuet || 1)) : 0;
+  demSoDot = maxDot > 0 ? maxDot + 1 : 1;
   dangQuetCX1 = true;
   denPinBat = false;
 
@@ -754,8 +768,10 @@ async function quetTiepCX1() {
   document.getElementById("cx1-status").textContent = "Đang quét Đợt " + demSoDot + "...";
 
   const btnToggle = document.getElementById("btn-dung-tieptuc-cx1");
-  btnToggle.textContent = "Dừng quét";
-  btnToggle.className = "btn btn-red btn-full";
+  if (btnToggle) {
+    btnToggle.textContent = "Dừng quét";
+    btnToggle.className = "btn btn-red btn-full";
+  }
 
   try {
     const cx1Vid = document.getElementById("cx1-reader");
@@ -1042,9 +1058,15 @@ function xemChiTietLichSuCX1(idPhien) {
   if (!entry) return;
 
   dangXemLichSuId = idPhien;
-  const { hangDot, hangGom } = taoHangKetQuaCX1(entry.phienCX1, true);
-  document.getElementById("lichsu-tbody-dot").innerHTML = hangDot;
-  document.getElementById("lichsu-tbody-gom").innerHTML = hangGom;
+  const { hangDot, footDot, hangGom, footGom } = taoHangKetQuaCX1(entry.phienCX1, true);
+  const tbodyDot = document.getElementById("lichsu-tbody-dot");
+  const tfootDot = document.getElementById("lichsu-tfoot-dot");
+  const tbodyGom = document.getElementById("lichsu-tbody-gom");
+  const tfootGom = document.getElementById("lichsu-tfoot-gom");
+  if (tbodyDot) tbodyDot.innerHTML = hangDot;
+  if (tfootDot) tfootDot.innerHTML = footDot;
+  if (tbodyGom) tbodyGom.innerHTML = hangGom;
+  if (tfootGom) tfootGom.innerHTML = footGom;
   document.getElementById("lichsu-chitiet-tieude").textContent = "Chỉ For — " + entry.ngay;
 
   if (typeof chuyenTrangKhongNav === "function") chuyenTrangKhongNav("lichsuChiTiet");
