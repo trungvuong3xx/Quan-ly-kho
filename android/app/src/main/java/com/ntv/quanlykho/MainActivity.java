@@ -1,8 +1,10 @@
 package com.ntv.quanlykho;
 
 import android.Manifest;
+import android.content.ContentUris;
 import android.content.ContentValues;
 import android.content.Intent;
+import android.database.Cursor;
 import android.content.pm.PackageManager;
 import android.media.MediaScannerConnection;
 import android.net.Uri;
@@ -68,30 +70,65 @@ public class MainActivity extends BridgeActivity {
                     try {
                         byte[] bytes = Base64.decode(base64Data, Base64.DEFAULT);
                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                            // Xóa bản ghi cũ cùng tên trong MediaStore để ép ghi đè sạch sẽ, không sinh file (1), (2)
-                            try {
-                                Uri queryUri = MediaStore.Downloads.EXTERNAL_CONTENT_URI;
-                                String selection = MediaStore.MediaColumns.DISPLAY_NAME + "=?";
-                                String[] selectionArgs = new String[]{fileName};
-                                getContentResolver().delete(queryUri, selection, selectionArgs);
+                            Uri targetUri = null;
+                            String[] projection = new String[]{MediaStore.MediaColumns._ID, MediaStore.MediaColumns.DISPLAY_NAME};
+                            String selection = MediaStore.MediaColumns.DISPLAY_NAME + "=?";
+                            String[] selectionArgs = new String[]{fileName};
+
+                            // 1. Tìm xem file cùng tên chính xác đã có trong MediaStore hay chưa
+                            try (Cursor cursor = getContentResolver().query(
+                                    MediaStore.Downloads.EXTERNAL_CONTENT_URI,
+                                    projection,
+                                    selection,
+                                    selectionArgs,
+                                    MediaStore.MediaColumns._ID + " DESC")) {
+                                if (cursor != null && cursor.moveToFirst()) {
+                                    long id = cursor.getLong(cursor.getColumnIndexOrThrow(MediaStore.MediaColumns._ID));
+                                    targetUri = ContentUris.withAppendedId(MediaStore.Downloads.EXTERNAL_CONTENT_URI, id);
+                                }
                             } catch (Exception ignore) {}
 
-                            ContentValues values = new ContentValues();
-                            values.put(MediaStore.MediaColumns.DISPLAY_NAME, fileName);
-                            values.put(MediaStore.MediaColumns.MIME_TYPE, mimeType != null ? mimeType : "application/octet-stream");
-                            values.put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS);
-                            Uri uri = getContentResolver().insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, values);
-                            if (uri != null) {
-                                try (OutputStream os = getContentResolver().openOutputStream(uri)) {
-                                    if (os != null) {
-                                        os.write(bytes);
-                                        os.flush();
-                                        return "OK:Download/" + fileName;
+                            // 2. Nếu đã tồn tại file cũ, mở trực tiếp với mode "rwt" để ghi đè sạch sẽ (truncate về 0 và ghi mới)
+                            if (targetUri != null) {
+                                try {
+                                    try (OutputStream os = getContentResolver().openOutputStream(targetUri, "rwt")) {
+                                        if (os != null) {
+                                            os.write(bytes);
+                                            os.flush();
+                                            donDepFileBackupTrungLap(fileName);
+                                            return "OK:Download/" + fileName;
+                                        }
+                                    }
+                                } catch (Exception e) {
+                                    // Nếu bản ghi cũ bị hỏng hoặc mất quyền, xóa bản ghi cũ đi để insert lại
+                                    try {
+                                        getContentResolver().delete(targetUri, null, null);
+                                    } catch (Exception ignore) {}
+                                    targetUri = null;
+                                }
+                            }
+
+                            // 3. Nếu chưa có file nào hoặc bản ghi cũ đã xóa, tạo mới đúng 1 lần
+                            if (targetUri == null) {
+                                ContentValues values = new ContentValues();
+                                values.put(MediaStore.MediaColumns.DISPLAY_NAME, fileName);
+                                values.put(MediaStore.MediaColumns.MIME_TYPE, mimeType != null ? mimeType : "application/octet-stream");
+                                values.put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS);
+                                Uri uri = getContentResolver().insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, values);
+                                if (uri != null) {
+                                    try (OutputStream os = getContentResolver().openOutputStream(uri, "rwt")) {
+                                        if (os != null) {
+                                            os.write(bytes);
+                                            os.flush();
+                                            donDepFileBackupTrungLap(fileName);
+                                            return "OK:Download/" + fileName;
+                                        }
                                     }
                                 }
                             }
                         }
 
+                        // Fallback cho Android cũ (< Q)
                         File downloadDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
                         if (!downloadDir.exists()) {
                             downloadDir.mkdirs();
@@ -108,6 +145,34 @@ public class MainActivity extends BridgeActivity {
                         return "OK:" + destFile.getAbsolutePath();
                     } catch (Exception e) {
                         return "ERR:" + e.getMessage();
+                    }
+                }
+
+                private void donDepFileBackupTrungLap(String fileName) {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && fileName != null && fileName.contains("AutoBackup")) {
+                        try {
+                            int dotIndex = fileName.lastIndexOf('.');
+                            if (dotIndex <= 0) return;
+                            String namePrefix = fileName.substring(0, dotIndex);
+                            String ext = fileName.substring(dotIndex);
+                            String pattern = namePrefix + " (%)" + ext;
+                            try (Cursor cursor = getContentResolver().query(
+                                    MediaStore.Downloads.EXTERNAL_CONTENT_URI,
+                                    new String[]{MediaStore.MediaColumns._ID},
+                                    MediaStore.MediaColumns.DISPLAY_NAME + " LIKE ?",
+                                    new String[]{pattern},
+                                    null)) {
+                                if (cursor != null) {
+                                    while (cursor.moveToNext()) {
+                                        long id = cursor.getLong(cursor.getColumnIndexOrThrow(MediaStore.MediaColumns._ID));
+                                        Uri dupUri = ContentUris.withAppendedId(MediaStore.Downloads.EXTERNAL_CONTENT_URI, id);
+                                        try {
+                                            getContentResolver().delete(dupUri, null, null);
+                                        } catch (Exception ignore) {}
+                                    }
+                                }
+                            }
+                        } catch (Exception ignore) {}
                     }
                 }
 
