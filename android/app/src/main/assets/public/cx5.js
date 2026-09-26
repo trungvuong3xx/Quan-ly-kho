@@ -2465,8 +2465,11 @@ function dongBanPhimCX5() {
   closeDropdownCX5();
   closeDropdownSXCX5();
   closeDropdownSLLuotCX5();
-  const dropCX1 = document.getElementById("cx1-dropdown");
-  if (dropCX1) { dropCX1.classList.remove("open"); dropCX1.style.display = "none"; }
+  if (typeof dongDropdownCX1 === "function") dongDropdownCX1();
+  else {
+    const dropCX1 = document.getElementById("cx1-dropdown");
+    if (dropCX1) { dropCX1.classList.remove("open"); dropCX1.style.display = "none"; }
+  }
 }
 window.dongBanPhimCX5 = dongBanPhimCX5;
 

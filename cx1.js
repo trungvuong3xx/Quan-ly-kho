@@ -447,15 +447,26 @@ async function taiDanhSachQCCX1(forceRefresh = false) {
 }
 window.taiDanhSachQCCX1 = taiDanhSachQCCX1;
 
-function onInputCX1() {
-  const input = document.getElementById("cx1-ten");
+function dongDropdownCX1() {
   const dropdown = document.getElementById("cx1-dropdown");
-  if (!input || !dropdown) return;
-  const kw = input.value.trim().toLowerCase();
-  if (!kw) {
+  const kgKhu = document.getElementById("cx1-kg-khu");
+  if (dropdown) {
     dropdown.classList.remove("open");
     dropdown.style.display = "none";
     dropdown.innerHTML = "";
+  }
+  if (kgKhu) kgKhu.style.display = "";
+}
+window.dongDropdownCX1 = dongDropdownCX1;
+
+function onInputCX1() {
+  const input = document.getElementById("cx1-ten");
+  const dropdown = document.getElementById("cx1-dropdown");
+  const kgKhu = document.getElementById("cx1-kg-khu");
+  if (!input || !dropdown) return;
+  const kw = input.value.trim().toLowerCase();
+  if (!kw) {
+    dongDropdownCX1();
     return;
   }
 
@@ -469,11 +480,11 @@ function onInputCX1() {
   }).slice(0, 10);
 
   if (filteredQCCX1.length === 0) {
-    dropdown.classList.remove("open");
-    dropdown.style.display = "none";
-    dropdown.innerHTML = "";
+    dongDropdownCX1();
     return;
   }
+
+  if (kgKhu) kgKhu.style.display = "none";
 
   dropdown.innerHTML = filteredQCCX1.map((item, idx) => {
     const tenEsc = (typeof escHtmlCX5 === "function") ? escHtmlCX5(item.ten) : item.ten;
@@ -503,9 +514,9 @@ window.chonQCCX1ByIndex = chonQCCX1ByIndex;
 document.addEventListener("click", function (e) {
   const wrap = document.getElementById("cx1-qc-tim-wrap");
   const dropdown = document.getElementById("cx1-dropdown");
-  if (dropdown && dropdown.classList.contains("open") && wrap && !wrap.contains(e.target)) {
-    dropdown.classList.remove("open");
-    dropdown.style.display = "none";
+  const trongBanPhim = e.target.closest(".cx5-bp-panel");
+  if (dropdown && dropdown.classList.contains("open") && wrap && !wrap.contains(e.target) && !trongBanPhim) {
+    dongDropdownCX1();
   }
 });
 
@@ -517,15 +528,10 @@ function chonQCCX1(ten, msp) {
   const khoaEl = document.getElementById("cx1-qc-khoa");
   const khoaTen = document.getElementById("cx1-qc-khoa-ten");
   const timWrap = document.getElementById("cx1-qc-tim-wrap");
-  const dropdown = document.getElementById("cx1-dropdown");
 
   if (input) input.value = ten;
   if (mspInput) mspInput.value = msp || "";
-  if (dropdown) {
-    dropdown.classList.remove("open");
-    dropdown.style.display = "none";
-    dropdown.innerHTML = "";
-  }
+  dongDropdownCX1();
   if (timWrap) timWrap.style.display = "none";
   if (khoaEl) {
     khoaEl.style.display = "flex";
@@ -551,6 +557,7 @@ function moKhoaQCCX1() {
   if (khoaEl) khoaEl.style.display = "none";
   if (timWrap) timWrap.style.display = "block";
   if (mspInput) mspInput.value = "";
+  dongDropdownCX1();
   if (input) {
     input.value = "";
     input.focus();

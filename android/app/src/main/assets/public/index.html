@@ -699,7 +699,7 @@
       <div class="cx5-ten-wrap" id="cx1-qc-tim-wrap" style="position:relative; margin-bottom:8px;">
         <input type="text" id="cx1-ten" placeholder="Tìm QC..." autocomplete="off" inputmode="none" oninput="onInputCX1()" style="width:100%; padding-right: 44px; box-sizing:border-box;">
         <i class="ti ti-refresh" onclick="taiDanhSachQCCX1(true)" style="position: absolute; right: 6px; top: 50%; transform: translateY(-50%); color: var(--cream-soft); cursor: pointer; font-size: 20px; padding: 8px; z-index: 2;" title="Tải lại danh sách QC"></i>
-        <div id="cx1-dropdown" class="cx5-dropdown" style="display:none; z-index:999;"></div>
+        <div id="cx1-dropdown" class="cx5-dropdown" style="display:none; position:relative; top:auto; left:auto; right:auto; margin-top:8px; width:100%; box-sizing:border-box; max-height:220px; overflow-y:auto; z-index:999;"></div>
       </div>
       <div id="cx1-qc-khoa" class="cx5-qc-khoa" style="display:none; margin-bottom:8px;" onclick="moKhoaQCCX1()">
         <span id="cx1-qc-khoa-ten"></span>
@@ -707,18 +707,20 @@
       </div>
       <input type="hidden" id="cx1-msp">
 
-      <div style="display: flex; gap: 8px; margin-bottom: 8px;">
-        <div style="flex: 1;">
-          <label style="font-size:12px; font-weight:700; color:var(--cream-soft); margin-bottom:4px; display:block;">Bao</label>
-          <input type="text" id="cx1-bao" value="1" inputmode="none" onkeydown="if(event.key==='Enter'){event.preventDefault();document.getElementById('cx1-kg').focus()}">
+      <div id="cx1-kg-khu">
+        <div style="display: flex; gap: 8px; margin-bottom: 8px;">
+          <div style="flex: 1;">
+            <label style="font-size:12px; font-weight:700; color:var(--cream-soft); margin-bottom:4px; display:block;">Bao</label>
+            <input type="text" id="cx1-bao" value="1" inputmode="none" onkeydown="if(event.key==='Enter'){event.preventDefault();document.getElementById('cx1-kg').focus()}">
+          </div>
+          <div style="flex: 1;">
+            <label style="font-size:12px; font-weight:700; color:var(--cream-soft); margin-bottom:4px; display:block;">Kg</label>
+            <input type="text" id="cx1-kg" placeholder="Nhập kg..." inputmode="none" onkeydown="if(event.key==='Enter'){event.preventDefault();themDongNhapTayCX1()}">
+          </div>
         </div>
-        <div style="flex: 1;">
-          <label style="font-size:12px; font-weight:700; color:var(--cream-soft); margin-bottom:4px; display:block;">Kg</label>
-          <input type="text" id="cx1-kg" placeholder="Nhập kg..." inputmode="none" onkeydown="if(event.key==='Enter'){event.preventDefault();themDongNhapTayCX1()}">
-        </div>
-      </div>
 
-      <button class="btn btn-green btn-full" style="height:38px; font-size:14px; font-weight:700; margin:0;" onclick="themDongNhapTayCX1()"><i class="ti ti-plus"></i> Thêm</button>
+        <button class="btn btn-green btn-full" style="height:38px; font-size:14px; font-weight:700; margin:0;" onclick="themDongNhapTayCX1()"><i class="ti ti-plus"></i> Thêm</button>
+      </div>
     </div>
 
     <!-- Cụm nút điều khiển -->
