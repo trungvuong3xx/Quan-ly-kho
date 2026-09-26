@@ -254,27 +254,23 @@ function luuCX1(data) {
   try {
     const ss = SpreadsheetApp.getActiveSpreadsheet();
     let sh = ss.getSheetByName("CX1");
-    
-    if (!sh) {
-      sh = ss.insertSheet("CX1");
-      // Dựng tiêu đề 5 cột tại hàng 4
-      sh.getRange(4, 1, 1, 5).setValues([["MSP", "QC", "Bao", "KG", "Date"]])
-        .setFontWeight("bold").setBackground("#4f8ef7").setFontColor("white").setHorizontalAlignment("center");
-    }
-    
+    if (!sh) return { error: "Không tìm thấy sheet 'CX1'" };
+
     if (data && Array.isArray(data) && data.length > 0) {
       const lastRow = sh.getLastRow();
       const startRow = Math.max(lastRow + 1, 5); // Đổ dữ liệu từ hàng 5 trở đi
 
       const rowsToInsert = data.map(r => {
-        const msp = String(r.msp || "").trim();
-        const qc = String(r.qc || "").trim();
-        const bao = parseInt(r.bao) || 0;
-        const kg = Math.round((parseFloat(r.kg) || 0) * 10) / 10;
+        const msp = String(r.msp || r.MSP || "").trim();
+        const qc = String(r.qc || r.QC || "").trim();
+        // Lấy số bao an toàn từ bất kỳ biến nào truyền sang
+        const bao = r.bao || r.Bao || r.soLuong || r.SoLuong || r.soBao || r.sl || 1;
+        const kg = Math.round((parseFloat(r.kg || r.KG) || 0) * 10) / 10;
         
         let dNgay = "";
-        if (r.ngay) {
-          const s = String(r.ngay).trim();
+        const rawDate = r.date || r.Date || r.ngay || r.Ngay;
+        if (rawDate) {
+          const s = String(rawDate).trim();
           const parts = s.split("-");
           if (parts.length === 3 && parts[0].length === 4) {
             dNgay = parts[2] + "/" + parts[1] + "/" + parts[0];
@@ -288,7 +284,8 @@ function luuCX1(data) {
         return [msp, qc, bao, kg, dNgay];
       });
 
-      sh.getRange(startRow, 1, rowsToInsert.length, 5).setValues(rowsToInsert);
+      // Đổ đúng từ Cột 2 (Cột B: MSP) đến Cột 6 (Cột F: Date)
+      sh.getRange(startRow, 2, rowsToInsert.length, 5).setValues(rowsToInsert);
     }
     
     return { success: true };
