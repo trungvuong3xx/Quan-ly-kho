@@ -362,16 +362,57 @@ function ketThucCX1() {
 }
 
 // ── Nhập thủ công Chỉ For (CX1) ──────────────────────────
+function napDuLieuQCCX1Local() {
+  const CACHE_KEY = "cx1_danh_sach_qc";
+  const mapQC = {};
+
+  // 1. Nạp từ cache đã lưu
+  try {
+    const cached = JSON.parse(localStorage.getItem(CACHE_KEY));
+    if (Array.isArray(cached)) {
+      cached.forEach(i => {
+        if (i.ten) mapQC[i.ten.trim()] = i.msp || "";
+      });
+    }
+  } catch (e) { }
+
+  // 2. Nạp từ phiên hiện tại
+  if (Array.isArray(phienCX1)) {
+    phienCX1.forEach(i => {
+      if (i.qc) mapQC[i.qc.trim()] = i.msp || "";
+    });
+  }
+
+  // 3. Nạp từ lịch sử quét 30 ngày gần nhất
+  try {
+    const historyList = (typeof docLichSuCX1 === "function") ? docLichSuCX1() : [];
+    historyList.forEach(h => {
+      (h.phienCX1 || []).forEach(item => {
+        if (item.qc) mapQC[item.qc.trim()] = item.msp || "";
+      });
+    });
+  } catch (e) { }
+
+  const list = Object.keys(mapQC).map(k => ({ ten: k, msp: mapQC[k] }));
+  if (list.length > 0) {
+    dsQCCX1 = list;
+  }
+}
+
 async function taiDanhSachQCCX1(forceRefresh = false) {
   const CACHE_KEY = "cx1_danh_sach_qc";
-  if (!forceRefresh) {
-    try {
-      const cached = JSON.parse(localStorage.getItem(CACHE_KEY));
-      if (Array.isArray(cached) && cached.length > 0) {
-        dsQCCX1 = cached;
-        return;
-      }
-    } catch (e) { }
+  const refreshIcon = document.querySelector("#cx1-qc-tim-wrap .ti-refresh");
+
+  // Luôn nạp dữ liệu cục bộ trước (0ms)
+  napDuLieuQCCX1Local();
+
+  if (!forceRefresh && dsQCCX1 && dsQCCX1.length > 0) {
+    return;
+  }
+
+  if (refreshIcon) refreshIcon.classList.add("spin");
+  if (forceRefresh) {
+    showCanhBaoCX1("Đang tải danh mục QC từ Google Sheet...", "warning");
   }
 
   try {
@@ -381,24 +422,27 @@ async function taiDanhSachQCCX1(forceRefresh = false) {
       headers: { "Content-Type": "text/plain;charset=utf-8" },
       body: JSON.stringify({ action: "layDanhSachQC" })
     });
-    if (res.ok) {
-      const json = await res.json();
-      if (json && json.list && Array.isArray(json.list)) {
-        dsQCCX1 = json.list;
-        localStorage.setItem(CACHE_KEY, JSON.stringify(dsQCCX1));
-      }
+    const text = await res.text();
+    let json;
+    try { json = JSON.parse(text); } catch (e) { }
+
+    if (json && json.list && Array.isArray(json.list) && json.list.length > 0) {
+      dsQCCX1 = json.list;
+      localStorage.setItem(CACHE_KEY, JSON.stringify(dsQCCX1));
+      showCanhBaoCX1("✅ Đã nạp " + dsQCCX1.length + " quy cách từ Sheet LIST!", "success");
+      const input = document.getElementById("cx1-ten");
+      if (input && input.value.trim()) onInputCX1();
+    } else if (json && json.error) {
+      showCanhBaoCX1("Apps Script chưa cập nhật action layDanhSachQC. Đang dùng tạm " + (dsQCCX1 ? dsQCCX1.length : 0) + " quy cách từ lịch sử!", "warning");
+    } else {
+      if (forceRefresh) showCanhBaoCX1("Không tìm thấy danh mục trong Sheet LIST", "warning");
     }
   } catch (e) {
-    if (!dsQCCX1 || dsQCCX1.length === 0) {
-      const historyList = docLichSuCX1();
-      const mapQC = {};
-      historyList.forEach(h => {
-        (h.phienCX1 || []).forEach(item => {
-          if (item.qc && item.msp) mapQC[item.qc] = item.msp;
-        });
-      });
-      dsQCCX1 = Object.keys(mapQC).map(k => ({ ten: k, msp: mapQC[k] }));
+    if (forceRefresh) {
+      showCanhBaoCX1("Mất kết nối server, đang dùng danh mục offline (" + (dsQCCX1 ? dsQCCX1.length : 0) + " QC)", "warning");
     }
+  } finally {
+    if (refreshIcon) refreshIcon.classList.remove("spin");
   }
 }
 window.taiDanhSachQCCX1 = taiDanhSachQCCX1;
@@ -415,7 +459,11 @@ function onInputCX1() {
     return;
   }
 
-  filteredQCCX1 = dsQCCX1.filter(item => {
+  if (!dsQCCX1 || dsQCCX1.length === 0) {
+    napDuLieuQCCX1Local();
+  }
+
+  filteredQCCX1 = (dsQCCX1 || []).filter(item => {
     return (item.ten && item.ten.toLowerCase().includes(kw)) ||
            (item.msp && item.msp.toLowerCase().includes(kw));
   }).slice(0, 10);
@@ -428,26 +476,29 @@ function onInputCX1() {
   }
 
   dropdown.innerHTML = filteredQCCX1.map((item, idx) => {
-    return `<div class="cx5-dropdown-item" data-idx="${idx}" style="padding:8px 12px; cursor:pointer; border-bottom:1px solid var(--line-soft); display:flex; justify-content:space-between; align-items:center;">
-      <span style="font-weight:700; color:var(--cream);">${item.ten}</span>
-      <span style="font-size:11px; color:var(--brass);">${item.msp || ''}</span>
+    const tenEsc = (typeof escHtmlCX5 === "function") ? escHtmlCX5(item.ten) : item.ten;
+    const mspEsc = (typeof escHtmlCX5 === "function") ? escHtmlCX5(item.msp || "") : (item.msp || "");
+    return `<div class="cx5-dropdown-item" data-idx="${idx}" onpointerdown="chonQCCX1ByIndex(${idx}, event)" style="padding:10px 14px; cursor:pointer; border-bottom:1px solid var(--line-soft); display:flex; justify-content:space-between; align-items:center;">
+      <span style="font-weight:700; color:var(--cream);">${tenEsc}</span>
+      <span style="font-size:12px; color:var(--brass);">${mspEsc}</span>
     </div>`;
   }).join("");
 
   dropdown.classList.add("open");
   dropdown.style.display = "block";
-
-  Array.from(dropdown.children).forEach(child => {
-    child.addEventListener("mousedown", (e) => {
-      e.preventDefault();
-      const idx = parseInt(child.getAttribute("data-idx"), 10);
-      if (filteredQCCX1[idx]) {
-        chonQCCX1(filteredQCCX1[idx].ten, filteredQCCX1[idx].msp);
-      }
-    });
-  });
 }
 window.onInputCX1 = onInputCX1;
+
+function chonQCCX1ByIndex(idx, ev) {
+  if (ev) {
+    ev.preventDefault();
+    ev.stopPropagation();
+  }
+  if (filteredQCCX1 && filteredQCCX1[idx]) {
+    chonQCCX1(filteredQCCX1[idx].ten, filteredQCCX1[idx].msp);
+  }
+}
+window.chonQCCX1ByIndex = chonQCCX1ByIndex;
 
 document.addEventListener("click", function (e) {
   const wrap = document.getElementById("cx1-qc-tim-wrap");
