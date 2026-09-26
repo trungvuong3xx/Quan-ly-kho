@@ -6,6 +6,14 @@ let demSoDot = 0;
 let denPinBat = false;
 let ngayCX1 = null;
 
+// Quản lý chế độ Nhập thủ công & Danh mục QC
+let cheDoCX1 = "quet"; // "quet" | "nhap"
+let dangNhapCX1 = false;
+let dsQCCX1 = [];
+let filteredQCCX1 = [];
+let qcKhoaCX1 = null;
+let mspKhoaCX1 = null;
+
 // Theo dõi phiên hiện tại để nối vào Lịch sử + tránh gửi trùng khi "tiếp tục" 1 phiên cũ
 let idPhienHienTai = null;
 let soLuongDaGuiHienTai = 0;
@@ -149,7 +157,7 @@ function luuPhienDoDangCX1() {
   try {
     localStorage.setItem("cx1_phien_dodang", JSON.stringify({
       phienCX1, demSoDot, ngayCX1, capNhat: new Date().toISOString(),
-      idPhienHienTai, soLuongDaGuiHienTai
+      idPhienHienTai, soLuongDaGuiHienTai, cheDoCX1
     }));
     if (typeof kichHoatKiemTraAutoBackup === "function") kichHoatKiemTraAutoBackup(4000);
   } catch (e) { }
@@ -161,7 +169,7 @@ function xoaPhienDoDangCX1() {
   try { localStorage.removeItem("cx1_phien_dodang"); } catch (e) { }
 }
 
-async function batDauCX1() {
+async function batDauCX1(cheDo = "quet") {
   const inputEl = document.getElementById("cx1-ngay");
   if (inputEl && !inputEl.value) {
     inputEl.value = (typeof layNgayHomNayLocal === "function") ? layNgayHomNayLocal() : new Date().toISOString().split("T")[0];
@@ -174,9 +182,12 @@ async function batDauCX1() {
     if (typeof moXacNhanApp === "function") {
       moXacNhanApp(
         "Bạn đang có phiên Chỉ X1 dở dang (" + phienCu.phienCX1.length + " mã, ngày " + phienCu.ngayCX1 + ").<br>Bạn muốn tiếp tục phiên đó hay bắt đầu phiên mới?",
-        () => { khoiPhucCX1(phienCu); },
+        () => { 
+          khoiPhucCX1(phienCu); 
+          if (cheDo === "nhap") chuyenSangNhapTayCX1();
+        },
         "Tiếp tục",
-        () => { xoaPhienDoDangCX1(); tiepTucKhoiTaoCX1(); },
+        () => { xoaPhienDoDangCX1(); tiepTucKhoiTaoCX1(cheDo); },
         "Bắt đầu mới",
         "Phiên dở dang"
       );
@@ -184,19 +195,31 @@ async function batDauCX1() {
     }
   }
 
-  tiepTucKhoiTaoCX1();
+  tiepTucKhoiTaoCX1(cheDo);
 }
 
-async function tiepTucKhoiTaoCX1() {
+async function tiepTucKhoiTaoCX1(cheDo = "quet") {
   phienCX1 = [];
   demSoDot = 1;
-  dangQuetCX1 = true;
-  denPinBat = false;
   idPhienHienTai = Date.now() + "-" + Math.random().toString(36).slice(2);
   soLuongDaGuiHienTai = 0;
+  qcKhoaCX1 = null;
+  mspKhoaCX1 = null;
+  moKhoaQCCX1();
+
+  if (cheDo === "nhap") {
+    chuyenSangNhapTayCX1();
+    return;
+  }
+
+  cheDoCX1 = "quet";
+  dangQuetCX1 = true;
+  dangNhapCX1 = false;
+  denPinBat = false;
 
   if (typeof khoaCuonTrangQuet === "function") khoaCuonTrangQuet(true); else document.body.classList.add("cam-active");
   document.getElementById("cx1-form").style.display = "none";
+  if (document.getElementById("cx1-nhap")) document.getElementById("cx1-nhap").style.display = "none";
   document.getElementById("cx1-cam").style.display = "block";
   document.getElementById("cx1-ketqua").style.display = "none";
   document.getElementById("cx1-dem").textContent = "Đã quét: 0 mã";
@@ -317,6 +340,9 @@ async function guiLenSheetCX1(rows) {
 
 function ketThucCX1() {
   dungCX1();
+  dangNhapCX1 = false;
+  if (document.getElementById("cx1-cam")) document.getElementById("cx1-cam").style.display = "none";
+  if (document.getElementById("cx1-nhap")) document.getElementById("cx1-nhap").style.display = "none";
 
   // Lưu lịch sử và lưu dở dang để người dùng xem và kiểm tra
   luuVaoLichSuCX1();
@@ -334,10 +360,276 @@ function ketThucCX1() {
   }
 }
 
+// ── Nhập thủ công Chỉ For (CX1) ──────────────────────────
+async function taiDanhSachQCCX1(forceRefresh = false) {
+  const CACHE_KEY = "cx1_danh_sach_qc";
+  if (!forceRefresh) {
+    try {
+      const cached = JSON.parse(localStorage.getItem(CACHE_KEY));
+      if (Array.isArray(cached) && cached.length > 0) {
+        dsQCCX1 = cached;
+        return;
+      }
+    } catch (e) { }
+  }
+
+  try {
+    const URL_API = "https://script.google.com/macros/s/AKfycbzk7afcuHDOTnL6QSIQ0ZgT-CSiIDNZ8h5S8_IkGXahc7PQRvqZKpLpjkBphioXAyzDKQ/exec";
+    const res = await fetch(URL_API, {
+      method: "POST",
+      headers: { "Content-Type": "text/plain;charset=utf-8" },
+      body: JSON.stringify({ action: "layDanhSachQC" })
+    });
+    if (res.ok) {
+      const json = await res.json();
+      if (json && json.list && Array.isArray(json.list)) {
+        dsQCCX1 = json.list;
+        localStorage.setItem(CACHE_KEY, JSON.stringify(dsQCCX1));
+      }
+    }
+  } catch (e) {
+    if (!dsQCCX1 || dsQCCX1.length === 0) {
+      const historyList = docLichSuCX1();
+      const mapQC = {};
+      historyList.forEach(h => {
+        (h.phienCX1 || []).forEach(item => {
+          if (item.qc && item.msp) mapQC[item.qc] = item.msp;
+        });
+      });
+      dsQCCX1 = Object.keys(mapQC).map(k => ({ ten: k, msp: mapQC[k] }));
+    }
+  }
+}
+window.taiDanhSachQCCX1 = taiDanhSachQCCX1;
+
+function onInputCX1() {
+  const input = document.getElementById("cx1-ten");
+  const dropdown = document.getElementById("cx1-dropdown");
+  if (!input || !dropdown) return;
+  const kw = input.value.trim().toLowerCase();
+  if (!kw) {
+    dropdown.classList.remove("open");
+    dropdown.style.display = "none";
+    dropdown.innerHTML = "";
+    return;
+  }
+
+  filteredQCCX1 = dsQCCX1.filter(item => {
+    return (item.ten && item.ten.toLowerCase().includes(kw)) ||
+           (item.msp && item.msp.toLowerCase().includes(kw));
+  }).slice(0, 10);
+
+  if (filteredQCCX1.length === 0) {
+    dropdown.classList.remove("open");
+    dropdown.style.display = "none";
+    dropdown.innerHTML = "";
+    return;
+  }
+
+  dropdown.innerHTML = filteredQCCX1.map((item, idx) => {
+    return `<div class="cx5-dropdown-item" data-idx="${idx}" style="padding:8px 12px; cursor:pointer; border-bottom:1px solid var(--line-soft); display:flex; justify-content:space-between; align-items:center;">
+      <span style="font-weight:700; color:var(--cream);">${item.ten}</span>
+      <span style="font-size:11px; color:var(--brass);">${item.msp || ''}</span>
+    </div>`;
+  }).join("");
+
+  dropdown.classList.add("open");
+  dropdown.style.display = "block";
+
+  Array.from(dropdown.children).forEach(child => {
+    child.addEventListener("mousedown", (e) => {
+      e.preventDefault();
+      const idx = parseInt(child.getAttribute("data-idx"), 10);
+      if (filteredQCCX1[idx]) {
+        chonQCCX1(filteredQCCX1[idx].ten, filteredQCCX1[idx].msp);
+      }
+    });
+  });
+}
+window.onInputCX1 = onInputCX1;
+
+document.addEventListener("click", function (e) {
+  const wrap = document.getElementById("cx1-qc-tim-wrap");
+  const dropdown = document.getElementById("cx1-dropdown");
+  if (dropdown && dropdown.classList.contains("open") && wrap && !wrap.contains(e.target)) {
+    dropdown.classList.remove("open");
+    dropdown.style.display = "none";
+  }
+});
+
+function chonQCCX1(ten, msp) {
+  qcKhoaCX1 = ten;
+  mspKhoaCX1 = msp;
+  const input = document.getElementById("cx1-ten");
+  const mspInput = document.getElementById("cx1-msp");
+  const khoaEl = document.getElementById("cx1-qc-khoa");
+  const khoaTen = document.getElementById("cx1-qc-khoa-ten");
+  const timWrap = document.getElementById("cx1-qc-tim-wrap");
+  const dropdown = document.getElementById("cx1-dropdown");
+
+  if (input) input.value = ten;
+  if (mspInput) mspInput.value = msp || "";
+  if (dropdown) {
+    dropdown.classList.remove("open");
+    dropdown.style.display = "none";
+    dropdown.innerHTML = "";
+  }
+  if (timWrap) timWrap.style.display = "none";
+  if (khoaEl) {
+    khoaEl.style.display = "flex";
+    if (khoaTen) khoaTen.textContent = ten;
+  }
+
+  const kgInput = document.getElementById("cx1-kg");
+  if (kgInput) kgInput.focus();
+}
+window.chonQCCX1 = chonQCCX1;
+
+function moKhoaQCCX1() {
+  qcKhoaCX1 = null;
+  mspKhoaCX1 = null;
+  const timWrap = document.getElementById("cx1-qc-tim-wrap");
+  const khoaEl = document.getElementById("cx1-qc-khoa");
+  const input = document.getElementById("cx1-ten");
+  const mspInput = document.getElementById("cx1-msp");
+
+  if (khoaEl) khoaEl.style.display = "none";
+  if (timWrap) timWrap.style.display = "block";
+  if (mspInput) mspInput.value = "";
+  if (input) {
+    input.value = "";
+    input.focus();
+  }
+}
+window.moKhoaQCCX1 = moKhoaQCCX1;
+
+function themDongNhapTayCX1() {
+  const qcInput = document.getElementById("cx1-ten");
+  const mspInput = document.getElementById("cx1-msp");
+  const baoInput = document.getElementById("cx1-bao");
+  const kgInput = document.getElementById("cx1-kg");
+
+  const qc = (qcKhoaCX1 || (qcInput ? qcInput.value.trim() : "")).trim();
+  if (!qc) {
+    showCanhBaoCX1("Vui lòng chọn hoặc nhập QC!");
+    if (qcInput) qcInput.focus();
+    return;
+  }
+
+  let msp = (mspKhoaCX1 || (mspInput ? mspInput.value.trim() : "")).trim();
+  if (!msp && dsQCCX1.length > 0) {
+    const match = dsQCCX1.find(i => i.ten && i.ten.toLowerCase() === qc.toLowerCase());
+    if (match) msp = match.msp;
+  }
+  if (!msp) msp = qc;
+
+  const bao = parseInt(baoInput ? baoInput.value : "1") || 1;
+  const kg = parseFloat(kgInput ? kgInput.value : "0") || 0;
+
+  if (kg <= 0) {
+    showCanhBaoCX1("Vui lòng nhập số KG hợp lệ!");
+    if (kgInput) kgInput.focus();
+    return;
+  }
+
+  if (!qcKhoaCX1) {
+    chonQCCX1(qc, msp);
+  }
+
+  const id = "MANUAL_" + Date.now() + "_" + Math.random().toString(36).slice(2, 6);
+  phienCX1.push({
+    id: id,
+    msp: msp,
+    qc: qc,
+    bao: bao,
+    kg: Math.round(kg * 10) / 10,
+    thoiGian: new Date(),
+    dotQuet: demSoDot,
+    isManual: true
+  });
+
+  phatTiengBip();
+  luuPhienDoDangCX1();
+  capNhatLogCX1();
+
+  if (kgInput) {
+    kgInput.value = "";
+    kgInput.focus();
+  }
+  if (baoInput) baoInput.value = "1";
+}
+window.themDongNhapTayCX1 = themDongNhapTayCX1;
+
+function chuyenSangNhapTayCX1() {
+  dungCX1();
+  cheDoCX1 = "nhap";
+  dangNhapCX1 = true;
+
+  document.getElementById("cx1-form").style.display = "none";
+  document.getElementById("cx1-cam").style.display = "none";
+  document.getElementById("cx1-ketqua").style.display = "none";
+  document.getElementById("cx1-nhap").style.display = "block";
+
+  const statusEl = document.getElementById("cx1-nhap-status");
+  if (statusEl) statusEl.textContent = "🟢 Đang nhập Đợt " + demSoDot + "...";
+  const btn = document.getElementById("btn-dung-tieptuc-nhap-cx1");
+  if (btn) {
+    btn.textContent = "Dừng nhập";
+    btn.className = "btn btn-red";
+  }
+
+  taiDanhSachQCCX1();
+  capNhatLogCX1();
+
+  const kgInput = document.getElementById("cx1-kg");
+  const tenInput = document.getElementById("cx1-ten");
+  if (qcKhoaCX1 && kgInput) kgInput.focus();
+  else if (tenInput) tenInput.focus();
+}
+window.chuyenSangNhapTayCX1 = chuyenSangNhapTayCX1;
+
+function chuyenSangQuetCamCX1() {
+  cheDoCX1 = "quet";
+  dangNhapCX1 = false;
+
+  document.getElementById("cx1-nhap").style.display = "none";
+  document.getElementById("cx1-cam").style.display = "block";
+
+  tiepTucCX1();
+  capNhatLogCX1();
+}
+window.chuyenSangQuetCamCX1 = chuyenSangQuetCamCX1;
+
+function toggleDungTiepTucNhapCX1() {
+  const btn = document.getElementById("btn-dung-tieptuc-nhap-cx1");
+  const statusEl = document.getElementById("cx1-nhap-status");
+  if (dangNhapCX1) {
+    dangNhapCX1 = false;
+    if (btn) {
+      btn.textContent = "Nhập tiếp (Đợt mới)";
+      btn.className = "btn btn-blue";
+    }
+    if (statusEl) statusEl.textContent = "Đã dừng Đợt " + demSoDot;
+  } else {
+    const maxDot = phienCX1.length > 0 ? Math.max(0, ...phienCX1.map(r => r.dotQuet || 1)) : 0;
+    demSoDot = maxDot > 0 ? maxDot + 1 : 1;
+    dangNhapCX1 = true;
+    if (btn) {
+      btn.textContent = "Dừng nhập";
+      btn.className = "btn btn-red";
+    }
+    if (statusEl) statusEl.textContent = "🟢 Đang nhập Đợt " + demSoDot + "...";
+    const kgInput = document.getElementById("cx1-kg");
+    if (kgInput) kgInput.focus();
+  }
+}
+window.toggleDungTiepTucNhapCX1 = toggleDungTiepTucNhapCX1;
+
 function layBangChiTietCX1(danhSach) {
   let tongDot = {};
   (danhSach || []).forEach(r => {
     const keyDot = (r.dotQuet || 1) + "|" + (r.msp || "");
+    const baoItem = parseInt(r.bao) || 1;
     if (!tongDot[keyDot]) {
       tongDot[keyDot] = {
         dot: r.dotQuet || 1,
@@ -351,7 +643,7 @@ function layBangChiTietCX1(danhSach) {
         tongDot[keyDot].qc = r.qc;
       }
     }
-    tongDot[keyDot].bao += 1;
+    tongDot[keyDot].bao += baoItem;
     tongDot[keyDot].kg += (r.kg || 0);
   });
   return Object.values(tongDot).map(item => {
@@ -511,7 +803,9 @@ function themKgVaoDotCX1() {
   const id = "MANUAL_" + Date.now();
   phienCX1.push({
     id: id, msp: cx1DangSuaMsp, qc: cx1DangSuaQc,
-    kg: kg, thoiGian: new Date(), dotQuet: cx1DangSuaDot
+    bao: 1,
+    kg: kg, thoiGian: new Date(), dotQuet: cx1DangSuaDot,
+    isManual: true
   });
 
   inputEl.value = "";
@@ -627,13 +921,24 @@ function xoaNhomDotCX1(dot, msp, qc) {
 window.xoaNhomDotCX1 = xoaNhomDotCX1;
 
 function capNhatLogCX1() {
-  const container = document.getElementById("cx1-log-list");
-  const countEl = document.getElementById("cx1-log-count");
+  const containerQuet = document.getElementById("cx1-log-list");
+  const containerNhap = document.getElementById("cx1-nhap-log-list");
+  const countQuet = document.getElementById("cx1-log-count");
+  const countNhap = document.getElementById("cx1-nhap-log-count");
+  const demQuet = document.getElementById("cx1-dem");
+  const demNhap = document.getElementById("cx1-nhap-dem");
 
-  if (countEl) countEl.textContent = phienCX1.length + " mã";
-  if (!container) return;
+  if (demQuet) demQuet.textContent = "Đã quét: " + phienCX1.length + " mã";
+  if (demNhap) demNhap.textContent = "Đã nhập/quét: " + phienCX1.length + " mã";
+  if (countQuet) countQuet.textContent = phienCX1.length + " mã";
+  if (countNhap) countNhap.textContent = phienCX1.length + " mã";
+
+  if (!containerQuet && !containerNhap) return;
+
   if (phienCX1.length === 0) {
-    container.innerHTML = '<div style="color:var(--cream-soft); font-size:12px; text-align:center; padding:8px 0;">Chưa có mã nào được quét</div>';
+    const emptyHtml = '<div style="color:var(--cream-soft); font-size:12px; text-align:center; padding:8px 0;">Chưa có mã nào</div>';
+    if (containerQuet) containerQuet.innerHTML = emptyHtml;
+    if (containerNhap) containerNhap.innerHTML = emptyHtml;
     return;
   }
 
@@ -670,7 +975,8 @@ function capNhatLogCX1() {
     html += `<div style="text-align:center; padding:6px 0; font-size:11px; color:var(--cream-soft); font-style:italic;">... và ${conLai} mã trước đó (xem đầy đủ ở bảng kết quả)</div>`;
   }
 
-  container.innerHTML = html;
+  if (containerQuet) containerQuet.innerHTML = html;
+  if (containerNhap) containerNhap.innerHTML = html;
 }
 
 function taoHangKetQuaCX1(danhSach, isReadonly = false) {
@@ -680,7 +986,8 @@ function taoHangKetQuaCX1(danhSach, isReadonly = false) {
   let tongKGAll = 0;
 
   danhSach.forEach(r => {
-    tongQRAll += 1;
+    const baoItem = parseInt(r.bao) || 1;
+    tongQRAll += baoItem;
     tongKGAll += r.kg;
 
     const keyDot = r.dotQuet + "|" + r.msp;
@@ -691,7 +998,7 @@ function taoHangKetQuaCX1(danhSach, isReadonly = false) {
         tongDotCuaPhien[keyDot].qc = r.qc;
       }
     }
-    tongDotCuaPhien[keyDot].soLuong += 1;
+    tongDotCuaPhien[keyDot].soLuong += baoItem;
     tongDotCuaPhien[keyDot].tongKG += r.kg;
 
     const keyGom = r.msp;
@@ -702,7 +1009,7 @@ function taoHangKetQuaCX1(danhSach, isReadonly = false) {
         tongGomLoaiMa[keyGom].qc = r.qc;
       }
     }
-    tongGomLoaiMa[keyGom].soLuong += 1;
+    tongGomLoaiMa[keyGom].soLuong += baoItem;
     tongGomLoaiMa[keyGom].tongKG += r.kg;
   });
 
@@ -800,7 +1107,8 @@ function hienKetQuaCX1() {
   const tongKgEl = document.getElementById("cx1-tong-kg");
   if (tongKgEl) tongKgEl.textContent = tongKGAll.toFixed(1);
 
-  document.getElementById("cx1-cam").style.display = "none";
+  if (document.getElementById("cx1-cam")) document.getElementById("cx1-cam").style.display = "none";
+  if (document.getElementById("cx1-nhap")) document.getElementById("cx1-nhap").style.display = "none";
   document.getElementById("cx1-ketqua").style.display = "block";
   
   // Mặc định hiện Chi Tiết
@@ -808,14 +1116,20 @@ function hienKetQuaCX1() {
 }
 
 async function quetTiepCX1() {
-  // Giữ nguyên dữ liệu cũ, mở camera quét tiếp
   const maxDot = phienCX1.length > 0 ? Math.max(0, ...phienCX1.map(r => r.dotQuet || 1)) : 0;
   demSoDot = maxDot > 0 ? maxDot + 1 : 1;
-  dangQuetCX1 = true;
-  denPinBat = false;
   luuPhienDoDangCX1();
 
   document.getElementById("cx1-ketqua").style.display = "none";
+
+  if (cheDoCX1 === "nhap") {
+    chuyenSangNhapTayCX1();
+    return;
+  }
+
+  // Quét camera
+  dangQuetCX1 = true;
+  denPinBat = false;
   document.getElementById("cx1-cam").style.display = "block";
   if (typeof khoaCuonTrangQuet === "function") khoaCuonTrangQuet(true); else document.body.classList.add("cam-active");
   document.getElementById("cx1-status").textContent = "Đang quét Đợt " + demSoDot + "...";
@@ -854,8 +1168,13 @@ function quetMoiCX1() {
   demSoDot = 0;
   idPhienHienTai = null;
   soLuongDaGuiHienTai = 0;
+  qcKhoaCX1 = null;
+  mspKhoaCX1 = null;
+  moKhoaQCCX1();
   xoaPhienDoDangCX1();
   document.getElementById("cx1-ketqua").style.display = "none";
+  if (document.getElementById("cx1-nhap")) document.getElementById("cx1-nhap").style.display = "none";
+  if (document.getElementById("cx1-cam")) document.getElementById("cx1-cam").style.display = "none";
   document.getElementById("cx1-form").style.display = "block";
   capNhatLogCX1();
 }
@@ -912,12 +1231,19 @@ async function khoiPhucCX1(state) {
   idPhienHienTai = state.idPhienHienTai || (Date.now() + "-" + Math.random().toString(36).slice(2));
   soLuongDaGuiHienTai = state.soLuongDaGuiHienTai !== undefined ? state.soLuongDaGuiHienTai
     : (state.soLuongDaGui !== undefined ? state.soLuongDaGui : 0);
-  dangQuetCX1 = true;
   denPinBat = false;
+  cheDoCX1 = state.cheDoCX1 || "quet";
   luuPhienDoDangCX1();
 
+  if (cheDoCX1 === "nhap") {
+    chuyenSangNhapTayCX1();
+    return;
+  }
+
+  dangQuetCX1 = true;
   if (typeof khoaCuonTrangQuet === "function") khoaCuonTrangQuet(true); else document.body.classList.add("cam-active");
   document.getElementById("cx1-form").style.display = "none";
+  if (document.getElementById("cx1-nhap")) document.getElementById("cx1-nhap").style.display = "none";
   document.getElementById("cx1-cam").style.display = "block";
   document.getElementById("cx1-ketqua").style.display = "none";
   document.getElementById("cx1-dem").textContent = "Đã quét: " + phienCX1.length + " mã";

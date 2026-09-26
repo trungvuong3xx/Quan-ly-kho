@@ -294,10 +294,36 @@ function luuCX1(data) {
   }
 }
 
+function layDanhSachQC() {
+  try {
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    let sh = ss.getSheetByName("LIST");
+    if (!sh) sh = ss.getSheetByName("DanhMuc");
+    if (!sh) return { error: "Không tìm thấy sheet 'LIST'" };
+
+    const lastRow = sh.getLastRow();
+    if (lastRow < 2) return { success: true, list: [] };
+
+    // Cột 1 (A): Tên/QC, Cột 2 (B): Mã MSP từ hàng 2 trở đi
+    const data = sh.getRange(2, 1, lastRow - 1, 2).getValues();
+    const list = data
+      .filter(r => String(r[0]).trim() !== "" || String(r[1]).trim() !== "")
+      .map(r => ({
+        ten: String(r[0]).trim(),
+        msp: String(r[1]).trim()
+      }));
+
+    return { success: true, list: list };
+  } catch (e) {
+    return { error: e.message };
+  }
+}
+
 function doPost(e) {
   const body = JSON.parse(e.postData.contents);
   const action = body.action;
 
+  if (action === "layDanhSachQC") return reply(layDanhSachQC());
   if (action === "getInfo") return reply(getInfo(body.msp));
   if (action === "taoNhieuID") return reply(taoNhieuID(body.soLuong));
   if (action === "kiemTraQR") return reply(kiemTraQR(body.id, body.msp, body.loai));
