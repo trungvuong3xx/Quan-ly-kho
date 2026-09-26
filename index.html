@@ -697,9 +697,9 @@
     <div style="background:var(--card-raised); border:1px solid var(--line-soft); border-radius:12px; padding:10px 12px; margin-bottom:8px; position:relative;">
       <label style="font-size:12px; font-weight:700; color:var(--cream-soft); margin-bottom:4px; display:block;">QC</label>
       <div class="cx5-ten-wrap" id="cx1-qc-tim-wrap">
-        <input type="text" id="cx1-ten" placeholder="Tìm QC..." autocomplete="off" inputmode="none" style="padding-right: 40px;">
+        <input type="text" id="cx1-ten" placeholder="Tìm QC..." autocomplete="off" inputmode="none" onfocus="hienGoiYQCCX1()" onclick="hienGoiYQCCX1()" oninput="onInputCX1()" style="padding-right: 40px;">
         <i class="ti ti-refresh" onclick="taiDanhSachQCCX1(true)" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); color: var(--cream-soft); cursor: pointer; font-size: 18px; z-index: 2; padding: 6px;" title="Tải lại danh sách QC"></i>
-        <div id="cx1-dropdown" class="cx5-dropdown"></div>
+        <div id="cx1-dropdown" class="cx5-dropdown" style="position:relative; top:auto; left:auto; right:auto; width:100%; margin-top:8px; border:1px solid var(--line-soft); border-radius:10px; background:var(--card); max-height:220px; overflow-y:auto; box-shadow:none;"></div>
       </div>
       <div id="cx1-qc-khoa" class="cx5-qc-khoa" style="display:none; margin-bottom:8px;" onclick="moKhoaQCCX1()">
         <span id="cx1-qc-khoa-ten"></span>

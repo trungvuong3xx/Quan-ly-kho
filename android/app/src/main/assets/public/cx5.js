@@ -2467,11 +2467,13 @@ function dongBanPhimCX5() {
   banPhimQCPendingCX5 = null;
   closeDropdownCX5();
   closeDropdownSXCX5();
-  closeDropdownSLLuotCX5();
-  if (typeof dongDropdownCX1 === "function") dongDropdownCX1();
+  if (typeof closeDropdownCX1 === "function") closeDropdownCX1();
+  else if (typeof dongDropdownCX1 === "function") dongDropdownCX1();
   else {
     const dropCX1 = document.getElementById("cx1-dropdown");
-    if (dropCX1) { dropCX1.classList.remove("open"); dropCX1.style.display = "none"; }
+    if (dropCX1) { dropCX1.classList.remove("open"); dropCX1.style.display = "none"; dropCX1.innerHTML = ""; }
+    const kgKhuCX1 = document.getElementById("cx1-kg-khu");
+    if (kgKhuCX1) kgKhuCX1.style.display = "";
   }
 }
 window.dongBanPhimCX5 = dongBanPhimCX5;

@@ -369,41 +369,69 @@ function napDuLieuQCCX1Local() {
   const CACHE_KEY = "cx1_danh_sach_qc";
   const mapQC = {};
 
-  // 1. Nạp từ cache đã lưu
+  // 1. Nạp từ cache Sheet đã lưu
   try {
     const cached = JSON.parse(localStorage.getItem(CACHE_KEY));
     if (Array.isArray(cached)) {
       cached.forEach(i => {
-        if (i.ten) mapQC[i.ten.trim()] = i.msp || "";
+        if (i && i.ten) {
+          const ten = i.ten.trim();
+          mapQC[ten] = { msp: i.msp || ten, count: Number(i.count) || 1 };
+        }
       });
     }
   } catch (e) { }
 
-  // 2. Nạp từ phiên hiện tại
+  // 2. Nạp từ phiên hiện tại (ưu tiên cao nhất)
   if (Array.isArray(phienCX1)) {
     phienCX1.forEach(i => {
-      if (i.qc) mapQC[i.qc.trim()] = i.msp || "";
+      const ten = (i.qc || "").trim();
+      if (ten) {
+        if (!mapQC[ten]) mapQC[ten] = { msp: i.msp || ten, count: 0 };
+        mapQC[ten].count += 10;
+      }
     });
   }
 
-  // 3. Nạp từ lịch sử quét 30 ngày gần nhất
+  // 3. Nạp từ phiên dở dang lưu trong localStorage
+  try {
+    const doDang = JSON.parse(localStorage.getItem("cx1_phien_dodang"));
+    if (doDang && Array.isArray(doDang.phienCX1)) {
+      doDang.phienCX1.forEach(i => {
+        const ten = (i.qc || "").trim();
+        if (ten) {
+          if (!mapQC[ten]) mapQC[ten] = { msp: i.msp || ten, count: 0 };
+          mapQC[ten].count += 5;
+        }
+      });
+    }
+  } catch (e) { }
+
+  // 4. Nạp từ lịch sử quét 30 ngày gần nhất
   try {
     const historyList = (typeof docLichSuCX1 === "function") ? docLichSuCX1() : [];
     historyList.forEach(h => {
       (h.phienCX1 || []).forEach(item => {
-        if (item.qc) mapQC[item.qc.trim()] = item.msp || "";
+        const ten = (item.qc || "").trim();
+        if (ten) {
+          if (!mapQC[ten]) mapQC[ten] = { msp: item.msp || ten, count: 0 };
+          mapQC[ten].count += 1;
+        }
       });
     });
   } catch (e) { }
 
-  // 4. Nạp từ mspDataCX5 nếu có
+  // 5. Nạp từ mspDataCX5 nếu có
   if (typeof mspDataCX5 !== "undefined" && Array.isArray(mspDataCX5)) {
     mspDataCX5.forEach(i => {
-      if (i.ten && !mapQC[i.ten.trim()]) mapQC[i.ten.trim()] = i.msp || "";
+      const ten = (i.ten || "").trim();
+      if (ten && !mapQC[ten]) {
+        mapQC[ten] = { msp: i.msp || ten, count: 1 };
+      }
     });
   }
 
-  const list = Object.keys(mapQC).map(k => ({ ten: k, msp: mapQC[k], count: 1 }));
+  const list = Object.keys(mapQC).map(k => ({ ten: k, msp: mapQC[k].msp, count: mapQC[k].count }));
   if (list.length > 0) {
     mspDataCX1 = list;
   }
@@ -544,10 +572,11 @@ function onInputCX1() {
 window.onInputCX1 = onInputCX1;
 
 function hienGoiYQCCX1() {
+  napDuLieuQCCX1Local();
   if (!mspDataCX1 || !mspDataCX1.length) {
-    napDuLieuQCCX1Local();
+    taiDanhSachQCCX1();
+    return;
   }
-  if (!mspDataCX1 || !mspDataCX1.length) return;
   dangHienGoiYCX1 = true;
   filteredCX1 = mspDataCX1.slice().sort(sapXepQCCX1).slice(0, 8);
   activeIndexCX1 = -1;
@@ -560,28 +589,34 @@ function renderDropdownCX1() {
   const kgKhu = document.getElementById("cx1-kg-khu");
   if (!el) return;
   if (!filteredCX1 || filteredCX1.length === 0) {
-    el.classList.remove("open"); el.innerHTML = "";
+    el.classList.remove("open");
+    el.style.display = "none";
+    el.innerHTML = "";
     if (kgKhu) kgKhu.style.display = "";
     return;
   }
   if (kgKhu) kgKhu.style.display = "none";
   const tieuDe = dangHienGoiYCX1
-    ? '<div class="cx5-dropdown-title">Gợi ý quy cách thường dùng</div>'
+    ? '<div class="cx5-dropdown-title" style="padding:6px 10px; font-size:11px; font-weight:700; color:var(--cream-soft); border-bottom:1px solid var(--line-soft); text-transform:uppercase;">Gợi ý quy cách thường dùng</div>'
     : "";
   el.innerHTML = tieuDe + filteredCX1.map((item, idx) => {
     const tenEsc = (typeof escHtmlCX5 === "function") ? escHtmlCX5(item.ten) : item.ten;
-    return '<div class="cx5-dropdown-item' + (idx === activeIndexCX1 ? " active" : "") + '" data-idx="' + idx + '">' + tenEsc + '</div>';
+    return '<div class="cx5-dropdown-item' + (idx === activeIndexCX1 ? " active" : "") + '" data-idx="' + idx + '" style="padding:10px 12px; cursor:pointer; border-bottom:1px solid var(--line-soft); font-size:14px; font-weight:600; color:var(--cream);">' + tenEsc + '</div>';
   }).join("");
+  el.style.display = "block";
   el.classList.add("open");
 
-  Array.from(el.children).forEach(child => {
-    child.addEventListener("pointerdown", e => {
+  Array.from(el.querySelectorAll(".cx5-dropdown-item")).forEach(child => {
+    const handleChon = e => {
       e.preventDefault();
+      e.stopPropagation();
       const idx = parseInt(child.getAttribute("data-idx"), 10);
       if (!isNaN(idx) && filteredCX1[idx]) {
         chonQCX1(filteredCX1[idx]);
       }
-    });
+    };
+    child.addEventListener("pointerdown", handleChon);
+    child.addEventListener("click", handleChon);
   });
 }
 window.renderDropdownCX1 = renderDropdownCX1;
@@ -593,12 +628,14 @@ function closeDropdownCX1() {
   const el = document.getElementById("cx1-dropdown");
   if (el) {
     el.classList.remove("open");
+    el.style.display = "none";
     el.innerHTML = "";
   }
   const kgKhu = document.getElementById("cx1-kg-khu");
   if (kgKhu) kgKhu.style.display = "";
 }
 window.closeDropdownCX1 = closeDropdownCX1;
+window.dongDropdownCX1 = closeDropdownCX1;
 
 function chonQCX1(item, mspTruyen) {
   if (!item) return;
@@ -654,6 +691,7 @@ function khoiTaoSuKienCX1Ten() {
     tenInput.addEventListener("input", onInputCX1);
     tenInput.addEventListener("keydown", onKeydownCX1);
     tenInput.addEventListener("focus", hienGoiYQCCX1);
+    tenInput.addEventListener("click", hienGoiYQCCX1);
   }
 }
 window.khoiTaoSuKienCX1Ten = khoiTaoSuKienCX1Ten;
