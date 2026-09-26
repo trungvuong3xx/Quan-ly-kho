@@ -354,14 +354,39 @@ function layBangChiTietCX1(danhSach) {
     tongDot[keyDot].bao += 1;
     tongDot[keyDot].kg += (r.kg || 0);
   });
-  return Object.values(tongDot).map(item => ({
-    msp: item.msp,
-    qc: item.qc,
-    bao: item.bao,
-    kg: Math.round(item.kg * 10) / 10,
-    ngay: ngayCX1 || (typeof layNgayHomNayLocal === "function" ? layNgayHomNayLocal() : new Date().toISOString().split("T")[0]),
-    dot: item.dot
-  }));
+  return Object.values(tongDot).map(item => {
+    const dNgay = ngayCX1 || (typeof layNgayHomNayLocal === "function" ? layNgayHomNayLocal() : new Date().toISOString().split("T")[0]);
+    let ngayVN = dNgay;
+    const parts = dNgay.split("-");
+    if (parts.length === 3 && parts[0].length === 4) {
+      ngayVN = parts[2] + "/" + parts[1] + "/" + parts[0];
+    }
+    return {
+      id: "",
+      ID: "",
+      msp: item.msp,
+      MSP: item.msp,
+      qc: item.qc,
+      QC: item.qc,
+      bao: item.bao,
+      Bao: item.bao,
+      soLuong: item.bao,
+      SoLuong: item.bao,
+      soBao: item.bao,
+      SoBao: item.bao,
+      sl: item.bao,
+      SL: item.bao,
+      soluong: item.bao,
+      kg: Math.round(item.kg * 10) / 10,
+      KG: Math.round(item.kg * 10) / 10,
+      ngay: ngayVN,
+      Ngay: ngayVN,
+      date: ngayVN,
+      Date: ngayVN,
+      thoiGian: ngayVN,
+      dot: item.dot
+    };
+  });
 }
 
 async function guiDuLieuCX1() {
