@@ -71,8 +71,24 @@ document.addEventListener("click", (e) => {
 
 // ── Bắt đầu Quét Camera ────────────────────────────────────────────
 async function batDauQuetQR() {
-  ngayQuetQR = document.getElementById("chon-ngay") ? document.getElementById("chon-ngay").value : "";
-  loaiQuetQR = document.getElementById("chon-loai") ? document.getElementById("chon-loai").value : "";
+  const oNgay = document.getElementById("chon-ngay");
+  const oLoai = document.getElementById("chon-loai");
+
+  if (oNgay && oNgay.value) {
+    ngayQuetQR = oNgay.value;
+  } else if (ngayQuetQR && oNgay) {
+    oNgay.value = ngayQuetQR;
+  } else if (!ngayQuetQR) {
+    ngayQuetQR = (typeof layNgayHomNayLocal === "function") ? layNgayHomNayLocal() : new Date().toISOString().split("T")[0];
+    if (oNgay) oNgay.value = ngayQuetQR;
+  }
+
+  if (oLoai && oLoai.value) {
+    loaiQuetQR = oLoai.value;
+  } else if (loaiQuetQR && oLoai) {
+    if (typeof chonLoaiQR === "function") chonLoaiQR(loaiQuetQR);
+    else oLoai.value = loaiQuetQR;
+  }
 
   if (!ngayQuetQR) {
     showCanhBaoQR("⚠️ Vui lòng chọn ngày!", "warning");
@@ -666,8 +682,55 @@ window.xoaNhomDotQR = xoaNhomDotQR;
 async function quetTiepQuetQR() {
   const maxDot = phienQuetQR.length > 0 ? Math.max(0, ...phienQuetQR.map(r => r.dotQuet || 1)) : 0;
   demSoDotQR = maxDot > 0 ? maxDot + 1 : 1;
+  dangQuetQR = true;
+  window.dangQuetQR = true;
+  luuPhienDoDangQR();
+
+  const ngayInput = document.getElementById("chon-ngay");
+  if (ngayInput && ngayQuetQR && !ngayInput.value) ngayInput.value = ngayQuetQR;
+  if (loaiQuetQR && typeof chonLoaiQR === "function") chonLoaiQR(loaiQuetQR);
+
   document.getElementById("qr-ketqua").style.display = "none";
-  batDauQuetQR();
+  document.getElementById("form-chon").style.display = "none";
+  document.getElementById("qr-cam").style.display = "block";
+  if (typeof khoaCuonTrangQuet === "function") khoaCuonTrangQuet(true); else document.body.classList.add("cam-active");
+
+  const statusEl = document.getElementById("qr-status");
+  if (statusEl) statusEl.textContent = "🟢 " + (loaiQuetQR || "Đang quét") + " | Đợt " + demSoDotQR;
+
+  const demEl = document.getElementById("qr-dem");
+  if (demEl) demEl.textContent = "Đã quét: " + phienQuetQR.length + " bao";
+
+  const btnToggle = document.getElementById("btn-dung-tieptuc-qr");
+  if (btnToggle) {
+    btnToggle.textContent = "Dừng quét";
+    btnToggle.className = "btn btn-red btn-full";
+  }
+
+  capNhatLogQR();
+
+  try {
+    const videoEl = document.getElementById("reader");
+    const track = videoEl && videoEl.srcObject ? videoEl.srcObject.getVideoTracks()[0] : null;
+    const isCamRunning = track && track.readyState === "live";
+
+    if (!zxingReaderQR || !isCamRunning) {
+      if (zxingReaderQR && typeof dungCameraFast === "function") {
+        dungCameraFast("reader", zxingReaderQR);
+        zxingReaderQR = null;
+      }
+      zxingReaderQR = await khoiTaoCameraFast("reader", (txt) => {
+        if (txt && dangQuetQR) {
+          khiQuetDuocMaQR({ getText: () => txt });
+        }
+      });
+    } else if (videoEl && videoEl.paused) {
+      videoEl.play().catch(() => {});
+    }
+  } catch (e) {
+    showCanhBaoQR("Lỗi camera: " + e, "error");
+    dungQuetQR();
+  }
 }
 window.quetTiepQuetQR = quetTiepQuetQR;
 
@@ -971,6 +1034,12 @@ function xemChiTietLichSuQR(idPhien) {
   idPhienHienTaiQR = idPhien;
   const maxDot = Math.max(0, ...phienQuetQR.map(r => r.dotQuet || 1));
   demSoDotQR = maxDot > 0 ? maxDot : 1;
+
+  const ngayInput = document.getElementById("chon-ngay");
+  if (ngayInput && ngayQuetQR) ngayInput.value = ngayQuetQR;
+  if (loaiQuetQR && typeof chonLoaiQR === "function") chonLoaiQR(loaiQuetQR);
+
+  luuPhienDoDangQR();
 
   chuyenTrangKhongNav("quetQR");
   xemKetQuaQuetQR();
