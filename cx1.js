@@ -334,6 +334,36 @@ function ketThucCX1() {
   }
 }
 
+function layBangChiTietCX1(danhSach) {
+  let tongDot = {};
+  (danhSach || []).forEach(r => {
+    const keyDot = (r.dotQuet || 1) + "|" + (r.msp || "");
+    if (!tongDot[keyDot]) {
+      tongDot[keyDot] = {
+        dot: r.dotQuet || 1,
+        msp: r.msp || "",
+        qc: r.qc || "",
+        bao: 0,
+        kg: 0
+      };
+    } else {
+      if (r.qc && (!tongDot[keyDot].qc || r.qc.length < tongDot[keyDot].qc.length)) {
+        tongDot[keyDot].qc = r.qc;
+      }
+    }
+    tongDot[keyDot].bao += 1;
+    tongDot[keyDot].kg += (r.kg || 0);
+  });
+  return Object.values(tongDot).map(item => ({
+    msp: item.msp,
+    qc: item.qc,
+    bao: item.bao,
+    kg: Math.round(item.kg * 10) / 10,
+    ngay: ngayCX1 || (typeof layNgayHomNayLocal === "function" ? layNgayHomNayLocal() : new Date().toISOString().split("T")[0]),
+    dot: item.dot
+  }));
+}
+
 async function guiDuLieuCX1() {
   const moiBoSung = phienCX1.slice(soLuongDaGuiHienTai);
   if (moiBoSung.length === 0) {
@@ -341,27 +371,24 @@ async function guiDuLieuCX1() {
     return;
   }
 
+  const rows = layBangChiTietCX1(moiBoSung);
+  if (rows.length === 0) {
+    showCanhBaoCX1("Không có dữ liệu mới để gửi!", "warning");
+    return;
+  }
+
   const btnGui = document.getElementById("btn-gui-dulieu-cx1");
   if (btnGui) {
     btnGui.disabled = true;
-    btnGui.innerHTML = '<i class="ti ti-loader spin"></i> Đang gửi ' + moiBoSung.length + ' mã...';
+    btnGui.innerHTML = '<i class="ti ti-loader spin"></i> Đang gửi ' + rows.length + ' dòng...';
   }
-
-  const rows = moiBoSung.map(r => ({
-    id: r.id,
-    msp: r.msp,
-    qc: r.qc,
-    kg: r.kg,
-    ngay: ngayCX1,
-    thoiGian: r.thoiGian ? (typeof r.thoiGian.toISOString === "function" ? r.thoiGian.toISOString() : r.thoiGian) : new Date().toISOString()
-  }));
 
   try {
     await guiLenSheetCX1(rows);
     soLuongDaGuiHienTai = phienCX1.length;
     xoaPhienDoDangCX1();
     luuVaoLichSuCX1();
-    showCanhBaoCX1("✅ Đã gửi thành công " + rows.length + " mã lên Sheet!", "success");
+    showCanhBaoCX1("✅ Đã gửi thành công " + rows.length + " dòng lên Sheet!", "success");
     if (btnGui) {
       btnGui.innerHTML = '<i class="ti ti-circle-check"></i> Đã gửi thành công';
       btnGui.style.background = "linear-gradient(135deg, #10b981, #059669)";
@@ -370,9 +397,7 @@ async function guiDuLieuCX1() {
   } catch (err) {
     const pending = docPendingCX1();
     rows.forEach(r => {
-      if (!pending.some(p => p.id === r.id && p.thoiGian === r.thoiGian)) {
-        pending.push(r);
-      }
+      pending.push(r);
     });
     luuPendingCX1(pending);
     showCanhBaoCX1("Mất mạng — đã lưu tạm trên máy, sẽ tự gửi lại sau", "warning");
