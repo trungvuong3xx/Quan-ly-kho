@@ -2252,7 +2252,10 @@ window.addEventListener("load", function () {
   document.addEventListener("click", e => {
     const trongOTimKiem = e.target.closest(".cx5-ten-wrap");
     const trongBanPhim = e.target.closest(".cx5-bp-panel");
-    if (!trongOTimKiem && !trongBanPhim) { closeDropdownCX5(); }
+    if (!trongOTimKiem && !trongBanPhim) {
+      closeDropdownCX5();
+      if (typeof closeDropdownCX1 === "function") closeDropdownCX1();
+    }
     if (banPhimActiveElCX5 && !trongOTimKiem && !trongBanPhim && e.target !== banPhimActiveElCX5) {
       dongBanPhimCX5();
     }
@@ -2823,8 +2826,8 @@ function bpKichHoatLocCX5() {
 function bpQcEnterCX5() {
   if (!banPhimActiveElCX5) return;
   if (banPhimActiveElCX5.id === "cx1-ten") {
-    if (typeof filteredQCCX1 !== "undefined" && filteredQCCX1.length && typeof chonQCCX1 === "function") {
-      chonQCCX1(filteredQCCX1[0].ten, filteredQCCX1[0].msp);
+    if (typeof filteredCX1 !== "undefined" && filteredCX1.length && typeof chonQCX1 === "function") {
+      chonQCX1(filteredCX1[activeIndexCX1 >= 0 ? activeIndexCX1 : 0]);
     }
   } else if (banPhimActiveElCX5.id === "cx5-ten") {
     if (filteredCX5.length) chonQCX5(filteredCX5[activeIndexCX5 >= 0 ? activeIndexCX5 : 0]);

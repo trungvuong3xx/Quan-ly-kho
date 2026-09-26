@@ -696,10 +696,10 @@
     <!-- Khối nhập liệu giống CX5 -->
     <div style="background:var(--card-raised); border:1px solid var(--line-soft); border-radius:12px; padding:10px 12px; margin-bottom:8px; position:relative;">
       <label style="font-size:12px; font-weight:700; color:var(--cream-soft); margin-bottom:4px; display:block;">QC</label>
-      <div class="cx5-ten-wrap" id="cx1-qc-tim-wrap" style="position:relative; margin-bottom:8px;">
-        <input type="text" id="cx1-ten" placeholder="Tìm QC..." autocomplete="off" inputmode="none" oninput="onInputCX1()" style="width:100%; padding-right: 44px; box-sizing:border-box;">
-        <i class="ti ti-refresh" onclick="taiDanhSachQCCX1(true)" style="position: absolute; right: 6px; top: 50%; transform: translateY(-50%); color: var(--cream-soft); cursor: pointer; font-size: 20px; padding: 8px; z-index: 2;" title="Tải lại danh sách QC"></i>
-        <div id="cx1-dropdown" class="cx5-dropdown" style="display:none; position:relative; top:auto; left:auto; right:auto; margin-top:8px; width:100%; box-sizing:border-box; max-height:220px; overflow-y:auto; z-index:999;"></div>
+      <div class="cx5-ten-wrap" id="cx1-qc-tim-wrap">
+        <input type="text" id="cx1-ten" placeholder="Tìm QC..." autocomplete="off" inputmode="none" style="padding-right: 40px;">
+        <i class="ti ti-refresh" onclick="taiDanhSachQCCX1(true)" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); color: var(--cream-soft); cursor: pointer; font-size: 18px; z-index: 2; padding: 6px;" title="Tải lại danh sách QC"></i>
+        <div id="cx1-dropdown" class="cx5-dropdown"></div>
       </div>
       <div id="cx1-qc-khoa" class="cx5-qc-khoa" style="display:none; margin-bottom:8px;" onclick="moKhoaQCCX1()">
         <span id="cx1-qc-khoa-ten"></span>

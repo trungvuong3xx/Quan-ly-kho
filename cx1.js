@@ -9,8 +9,10 @@ let ngayCX1 = null;
 // Quản lý chế độ Nhập thủ công & Danh mục QC
 let cheDoCX1 = "quet"; // "quet" | "nhap"
 let dangNhapCX1 = false;
-let dsQCCX1 = [];
-let filteredQCCX1 = [];
+let mspDataCX1 = [];
+let filteredCX1 = [];
+let activeIndexCX1 = -1;
+let dangHienGoiYCX1 = false;
 let qcKhoaCX1 = null;
 let mspKhoaCX1 = null;
 
@@ -361,7 +363,8 @@ function ketThucCX1() {
   }
 }
 
-// ── Nhập thủ công Chỉ For (CX1) ──────────────────────────
+// ── Nhập thủ công Chỉ For (CX1) ── Bê nguyên bản cơ chế CX5 ──
+
 function napDuLieuQCCX1Local() {
   const CACHE_KEY = "cx1_danh_sach_qc";
   const mapQC = {};
@@ -393,9 +396,16 @@ function napDuLieuQCCX1Local() {
     });
   } catch (e) { }
 
-  const list = Object.keys(mapQC).map(k => ({ ten: k, msp: mapQC[k] }));
+  // 4. Nạp từ mspDataCX5 nếu có
+  if (typeof mspDataCX5 !== "undefined" && Array.isArray(mspDataCX5)) {
+    mspDataCX5.forEach(i => {
+      if (i.ten && !mapQC[i.ten.trim()]) mapQC[i.ten.trim()] = i.msp || "";
+    });
+  }
+
+  const list = Object.keys(mapQC).map(k => ({ ten: k, msp: mapQC[k], count: 1 }));
   if (list.length > 0) {
-    dsQCCX1 = list;
+    mspDataCX1 = list;
   }
 }
 
@@ -406,12 +416,12 @@ async function taiDanhSachQCCX1(forceRefresh = false) {
   // Luôn nạp dữ liệu cục bộ trước (0ms)
   napDuLieuQCCX1Local();
 
-  if (!forceRefresh && dsQCCX1 && dsQCCX1.length > 0) {
+  if (!forceRefresh && mspDataCX1 && mspDataCX1.length > 0) {
     return;
   }
 
   if (refreshIcon) refreshIcon.classList.add("spin");
-  if (forceRefresh) {
+  if (forceRefresh && typeof showCanhBaoCX1 === "function") {
     showCanhBaoCX1("Đang tải danh mục QC từ Google Sheet...", "warning");
   }
 
@@ -427,19 +437,26 @@ async function taiDanhSachQCCX1(forceRefresh = false) {
     try { json = JSON.parse(text); } catch (e) { }
 
     if (json && json.list && Array.isArray(json.list) && json.list.length > 0) {
-      dsQCCX1 = json.list;
-      localStorage.setItem(CACHE_KEY, JSON.stringify(dsQCCX1));
-      showCanhBaoCX1("✅ Đã nạp " + dsQCCX1.length + " quy cách từ Sheet LIST!", "success");
+      mspDataCX1 = json.list;
+      localStorage.setItem(CACHE_KEY, JSON.stringify(mspDataCX1));
+      if (typeof showCanhBaoCX1 === "function") {
+        showCanhBaoCX1("✅ Đã nạp " + mspDataCX1.length + " quy cách từ Sheet LIST!", "success");
+      }
       const input = document.getElementById("cx1-ten");
       if (input && input.value.trim()) onInputCX1();
+      else hienGoiYQCCX1();
     } else if (json && json.error) {
-      showCanhBaoCX1("Apps Script chưa cập nhật action layDanhSachQC. Đang dùng tạm " + (dsQCCX1 ? dsQCCX1.length : 0) + " quy cách từ lịch sử!", "warning");
+      if (typeof showCanhBaoCX1 === "function") {
+        showCanhBaoCX1("Apps Script chưa cập nhật action layDanhSachQC. Đang dùng tạm " + (mspDataCX1 ? mspDataCX1.length : 0) + " quy cách từ lịch sử!", "warning");
+      }
     } else {
-      if (forceRefresh) showCanhBaoCX1("Không tìm thấy danh mục trong Sheet LIST", "warning");
+      if (forceRefresh && typeof showCanhBaoCX1 === "function") {
+        showCanhBaoCX1("Không tìm thấy danh mục trong Sheet LIST", "warning");
+      }
     }
   } catch (e) {
-    if (forceRefresh) {
-      showCanhBaoCX1("Mất kết nối server, đang dùng danh mục offline (" + (dsQCCX1 ? dsQCCX1.length : 0) + " QC)", "warning");
+    if (forceRefresh && typeof showCanhBaoCX1 === "function") {
+      showCanhBaoCX1("Mất kết nối server, đang dùng danh mục offline (" + (mspDataCX1 ? mspDataCX1.length : 0) + " QC)", "warning");
     }
   } finally {
     if (refreshIcon) refreshIcon.classList.remove("spin");
@@ -447,96 +464,158 @@ async function taiDanhSachQCCX1(forceRefresh = false) {
 }
 window.taiDanhSachQCCX1 = taiDanhSachQCCX1;
 
-function dongDropdownCX1() {
-  const dropdown = document.getElementById("cx1-dropdown");
-  const kgKhu = document.getElementById("cx1-kg-khu");
-  if (dropdown) {
-    dropdown.classList.remove("open");
-    dropdown.style.display = "none";
-    dropdown.innerHTML = "";
-  }
-  if (kgKhu) kgKhu.style.display = "";
+// ── Khoá/mở ô Quy cách CX1 ──
+function khoaQCCX1(msp, ten) {
+  qcKhoaCX1 = ten;
+  mspKhoaCX1 = msp;
+  document.getElementById("cx1-qc-tim-wrap").style.display = "none";
+  const khoa = document.getElementById("cx1-qc-khoa");
+  khoa.style.display = "flex";
+  document.getElementById("cx1-qc-khoa-ten").textContent = ten;
 }
-window.dongDropdownCX1 = dongDropdownCX1;
+window.khoaQCCX1 = khoaQCCX1;
+
+function moKhoaQCCX1() {
+  qcKhoaCX1 = null;
+  mspKhoaCX1 = null;
+  document.getElementById("cx1-qc-khoa").style.display = "none";
+  document.getElementById("cx1-qc-tim-wrap").style.display = "block";
+  const ten = document.getElementById("cx1-ten");
+  if (ten) ten.value = "";
+  const mspInput = document.getElementById("cx1-msp");
+  if (mspInput) mspInput.value = "";
+  closeDropdownCX1();
+  setTimeout(function () {
+    if (ten) {
+      ten.focus();
+      if (typeof moBanPhimCX5 === "function") moBanPhimCX5(ten, "qc");
+      hienGoiYQCCX1();
+    }
+  }, 0);
+}
+window.moKhoaQCCX1 = moKhoaQCCX1;
+
+function resetKhoaQCCX1() {
+  qcKhoaCX1 = null;
+  mspKhoaCX1 = null;
+  const khoa = document.getElementById("cx1-qc-khoa");
+  if (khoa) khoa.style.display = "none";
+  const timWrap = document.getElementById("cx1-qc-tim-wrap");
+  if (timWrap) timWrap.style.display = "block";
+  const ten = document.getElementById("cx1-ten");
+  if (ten) ten.value = "";
+  const msp = document.getElementById("cx1-msp");
+  if (msp) msp.value = "";
+}
+window.resetKhoaQCCX1 = resetKhoaQCCX1;
+
+function sapXepQCCX1(a, b) {
+  return (Number(b.count) || 0) - (Number(a.count) || 0) || String(a.ten).localeCompare(String(b.ten), "vi");
+}
 
 function onInputCX1() {
+  const mspInput = document.getElementById("cx1-msp");
+  if (mspInput) mspInput.value = "";
   const input = document.getElementById("cx1-ten");
-  const dropdown = document.getElementById("cx1-dropdown");
-  const kgKhu = document.getElementById("cx1-kg-khu");
-  if (!input || !dropdown) return;
-  const kw = input.value.trim().toLowerCase();
-  if (!kw) {
-    dongDropdownCX1();
-    return;
-  }
+  const query = input ? input.value.trim() : "";
+  if (!query) { hienGoiYQCCX1(); return; }
+  dangHienGoiYCX1 = false;
 
-  if (!dsQCCX1 || dsQCCX1.length === 0) {
+  if (!mspDataCX1 || !mspDataCX1.length) {
     napDuLieuQCCX1Local();
   }
 
-  filteredQCCX1 = (dsQCCX1 || []).filter(item => {
-    return (item.ten && item.ten.toLowerCase().includes(kw)) ||
-           (item.msp && item.msp.toLowerCase().includes(kw));
-  }).slice(0, 10);
-
-  if (filteredQCCX1.length === 0) {
-    dongDropdownCX1();
-    return;
+  if (typeof tkLocDanhSach === "function") {
+    filteredCX1 = tkLocDanhSach(mspDataCX1, query, 50);
+  } else {
+    const q = (typeof boDauCX5 === "function" ? boDauCX5(query) : query).toUpperCase();
+    filteredCX1 = (mspDataCX1 || [])
+      .filter(item => {
+        const t = (typeof boDauCX5 === "function" ? boDauCX5(item.ten) : item.ten).toUpperCase();
+        const m = item.msp ? (typeof boDauCX5 === "function" ? boDauCX5(item.msp) : item.msp).toUpperCase() : "";
+        return t.includes(q) || m.includes(q);
+      })
+      .sort(sapXepQCCX1)
+      .slice(0, 50);
   }
-
-  if (kgKhu) kgKhu.style.display = "none";
-
-  dropdown.innerHTML = filteredQCCX1.map((item, idx) => {
-    const tenEsc = (typeof escHtmlCX5 === "function") ? escHtmlCX5(item.ten) : item.ten;
-    const mspEsc = (typeof escHtmlCX5 === "function") ? escHtmlCX5(item.msp || "") : (item.msp || "");
-    return `<div class="cx5-dropdown-item" data-idx="${idx}" onpointerdown="chonQCCX1ByIndex(${idx}, event)" style="padding:10px 14px; cursor:pointer; border-bottom:1px solid var(--line-soft); display:flex; justify-content:space-between; align-items:center;">
-      <span style="font-weight:700; color:var(--cream);">${tenEsc}</span>
-      <span style="font-size:12px; color:var(--brass);">${mspEsc}</span>
-    </div>`;
-  }).join("");
-
-  dropdown.classList.add("open");
-  dropdown.style.display = "block";
+  activeIndexCX1 = -1;
+  renderDropdownCX1();
 }
 window.onInputCX1 = onInputCX1;
 
-function chonQCCX1ByIndex(idx, ev) {
-  if (ev) {
-    ev.preventDefault();
-    ev.stopPropagation();
+function hienGoiYQCCX1() {
+  if (!mspDataCX1 || !mspDataCX1.length) {
+    napDuLieuQCCX1Local();
   }
-  if (filteredQCCX1 && filteredQCCX1[idx]) {
-    chonQCCX1(filteredQCCX1[idx].ten, filteredQCCX1[idx].msp);
-  }
+  if (!mspDataCX1 || !mspDataCX1.length) return;
+  dangHienGoiYCX1 = true;
+  filteredCX1 = mspDataCX1.slice().sort(sapXepQCCX1).slice(0, 8);
+  activeIndexCX1 = -1;
+  renderDropdownCX1();
 }
-window.chonQCCX1ByIndex = chonQCCX1ByIndex;
+window.hienGoiYQCCX1 = hienGoiYQCCX1;
 
-document.addEventListener("click", function (e) {
-  const wrap = document.getElementById("cx1-qc-tim-wrap");
-  const dropdown = document.getElementById("cx1-dropdown");
-  const trongBanPhim = e.target.closest(".cx5-bp-panel");
-  if (dropdown && dropdown.classList.contains("open") && wrap && !wrap.contains(e.target) && !trongBanPhim) {
-    dongDropdownCX1();
+function renderDropdownCX1() {
+  const el = document.getElementById("cx1-dropdown");
+  const kgKhu = document.getElementById("cx1-kg-khu");
+  if (!el) return;
+  if (!filteredCX1 || filteredCX1.length === 0) {
+    el.classList.remove("open"); el.innerHTML = "";
+    if (kgKhu) kgKhu.style.display = "";
+    return;
   }
-});
+  if (kgKhu) kgKhu.style.display = "none";
+  const tieuDe = dangHienGoiYCX1
+    ? '<div class="cx5-dropdown-title">Gợi ý quy cách thường dùng</div>'
+    : "";
+  el.innerHTML = tieuDe + filteredCX1.map((item, idx) => {
+    const tenEsc = (typeof escHtmlCX5 === "function") ? escHtmlCX5(item.ten) : item.ten;
+    return '<div class="cx5-dropdown-item' + (idx === activeIndexCX1 ? " active" : "") + '" data-idx="' + idx + '">' + tenEsc + '</div>';
+  }).join("");
+  el.classList.add("open");
 
-function chonQCCX1(ten, msp) {
-  qcKhoaCX1 = ten;
-  mspKhoaCX1 = msp;
-  const input = document.getElementById("cx1-ten");
-  const mspInput = document.getElementById("cx1-msp");
-  const khoaEl = document.getElementById("cx1-qc-khoa");
-  const khoaTen = document.getElementById("cx1-qc-khoa-ten");
-  const timWrap = document.getElementById("cx1-qc-tim-wrap");
+  Array.from(el.children).forEach(child => {
+    child.addEventListener("pointerdown", e => {
+      e.preventDefault();
+      const idx = parseInt(child.getAttribute("data-idx"), 10);
+      if (!isNaN(idx) && filteredCX1[idx]) {
+        chonQCX1(filteredCX1[idx]);
+      }
+    });
+  });
+}
+window.renderDropdownCX1 = renderDropdownCX1;
 
-  if (input) input.value = ten;
-  if (mspInput) mspInput.value = msp || "";
-  dongDropdownCX1();
-  if (timWrap) timWrap.style.display = "none";
-  if (khoaEl) {
-    khoaEl.style.display = "flex";
-    if (khoaTen) khoaTen.textContent = ten;
+function closeDropdownCX1() {
+  filteredCX1 = [];
+  activeIndexCX1 = -1;
+  dangHienGoiYCX1 = false;
+  const el = document.getElementById("cx1-dropdown");
+  if (el) {
+    el.classList.remove("open");
+    el.innerHTML = "";
   }
+  const kgKhu = document.getElementById("cx1-kg-khu");
+  if (kgKhu) kgKhu.style.display = "";
+}
+window.closeDropdownCX1 = closeDropdownCX1;
+
+function chonQCX1(item, mspTruyen) {
+  if (!item) return;
+  const tenVal = (typeof item === "object") ? item.ten : item;
+  const mspVal = (typeof item === "object") ? (item.msp || item.ten) : (mspTruyen || item);
+  const tenEl = document.getElementById("cx1-ten");
+  const mspEl = document.getElementById("cx1-msp");
+  if (tenEl) tenEl.value = tenVal;
+  if (mspEl) mspEl.value = mspVal;
+  if (typeof tkGhiNhanTanSuat === "function") {
+    tkGhiNhanTanSuat(tenVal);
+  }
+  if (typeof item === "object") {
+    item.count = (Number(item.count) || 0) + 1;
+  }
+  closeDropdownCX1();
+  khoaQCCX1(mspVal, tenVal);
 
   const kgInput = document.getElementById("cx1-kg");
   if (kgInput) {
@@ -544,27 +623,40 @@ function chonQCCX1(ten, msp) {
     if (typeof moBanPhimCX5 === "function") moBanPhimCX5(kgInput, "kg");
   }
 }
-window.chonQCCX1 = chonQCCX1;
+window.chonQCX1 = chonQCX1;
 
-function moKhoaQCCX1() {
-  qcKhoaCX1 = null;
-  mspKhoaCX1 = null;
-  const timWrap = document.getElementById("cx1-qc-tim-wrap");
-  const khoaEl = document.getElementById("cx1-qc-khoa");
-  const input = document.getElementById("cx1-ten");
-  const mspInput = document.getElementById("cx1-msp");
-
-  if (khoaEl) khoaEl.style.display = "none";
-  if (timWrap) timWrap.style.display = "block";
-  if (mspInput) mspInput.value = "";
-  dongDropdownCX1();
-  if (input) {
-    input.value = "";
-    input.focus();
-    if (typeof moBanPhimCX5 === "function") moBanPhimCX5(input, "qc");
+function onKeydownCX1(e) {
+  if (e.key === "ArrowDown") {
+    if (!filteredCX1.length) return;
+    e.preventDefault();
+    activeIndexCX1 = Math.min(activeIndexCX1 + 1, filteredCX1.length - 1);
+    renderDropdownCX1();
+  } else if (e.key === "ArrowUp") {
+    if (!filteredCX1.length) return;
+    e.preventDefault();
+    activeIndexCX1 = Math.max(activeIndexCX1 - 1, 0);
+    renderDropdownCX1();
+  } else if (e.key === "Enter" || (e.key === "Tab" && !e.shiftKey)) {
+    if (filteredCX1.length) {
+      e.preventDefault();
+      chonQCX1(filteredCX1[activeIndexCX1 >= 0 ? activeIndexCX1 : 0]);
+    }
+  } else if (e.key === "Escape") {
+    closeDropdownCX1();
   }
 }
-window.moKhoaQCCX1 = moKhoaQCCX1;
+window.onKeydownCX1 = onKeydownCX1;
+
+function khoiTaoSuKienCX1Ten() {
+  const tenInput = document.getElementById("cx1-ten");
+  if (tenInput && !tenInput._cx1Init) {
+    tenInput._cx1Init = true;
+    tenInput.addEventListener("input", onInputCX1);
+    tenInput.addEventListener("keydown", onKeydownCX1);
+    tenInput.addEventListener("focus", hienGoiYQCCX1);
+  }
+}
+window.khoiTaoSuKienCX1Ten = khoiTaoSuKienCX1Ten;
 
 function themDongNhapTayCX1() {
   const qcInput = document.getElementById("cx1-ten");
@@ -580,8 +672,8 @@ function themDongNhapTayCX1() {
   }
 
   let msp = (mspKhoaCX1 || (mspInput ? mspInput.value.trim() : "")).trim();
-  if (!msp && dsQCCX1.length > 0) {
-    const match = dsQCCX1.find(i => i.ten && i.ten.toLowerCase() === qc.toLowerCase());
+  if (!msp && mspDataCX1 && mspDataCX1.length > 0) {
+    const match = mspDataCX1.find(i => i.ten && i.ten.toLowerCase() === qc.toLowerCase());
     if (match) msp = match.msp;
   }
   if (!msp) msp = qc;
@@ -596,7 +688,7 @@ function themDongNhapTayCX1() {
   }
 
   if (!qcKhoaCX1) {
-    chonQCCX1(qc, msp);
+    khoaQCCX1(msp, qc);
   }
 
   const id = "MANUAL_" + Date.now() + "_" + Math.random().toString(36).slice(2, 6);
@@ -642,6 +734,7 @@ function chuyenSangNhapTayCX1() {
     btn.className = "btn btn-red";
   }
 
+  khoiTaoSuKienCX1Ten();
   taiDanhSachQCCX1();
   capNhatLogCX1();
 
