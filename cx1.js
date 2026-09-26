@@ -339,6 +339,7 @@ async function guiLenSheetCX1(rows) {
 }
 
 function ketThucCX1() {
+  if (typeof dongBanPhimCX5 === "function") dongBanPhimCX5();
   dungCX1();
   dangNhapCX1 = false;
   if (document.getElementById("cx1-cam")) document.getElementById("cx1-cam").style.display = "none";
@@ -481,7 +482,10 @@ function chonQCCX1(ten, msp) {
   }
 
   const kgInput = document.getElementById("cx1-kg");
-  if (kgInput) kgInput.focus();
+  if (kgInput) {
+    kgInput.focus();
+    if (typeof moBanPhimCX5 === "function") moBanPhimCX5(kgInput, "kg");
+  }
 }
 window.chonQCCX1 = chonQCCX1;
 
@@ -499,6 +503,7 @@ function moKhoaQCCX1() {
   if (input) {
     input.value = "";
     input.focus();
+    if (typeof moBanPhimCX5 === "function") moBanPhimCX5(input, "qc");
   }
 }
 window.moKhoaQCCX1 = moKhoaQCCX1;
@@ -555,6 +560,7 @@ function themDongNhapTayCX1() {
   if (kgInput) {
     kgInput.value = "";
     kgInput.focus();
+    if (typeof moBanPhimCX5 === "function") moBanPhimCX5(kgInput, "kg");
   }
   if (baoInput) baoInput.value = "1";
 }
@@ -583,12 +589,18 @@ function chuyenSangNhapTayCX1() {
 
   const kgInput = document.getElementById("cx1-kg");
   const tenInput = document.getElementById("cx1-ten");
-  if (qcKhoaCX1 && kgInput) kgInput.focus();
-  else if (tenInput) tenInput.focus();
+  if (qcKhoaCX1 && kgInput) {
+    kgInput.focus();
+    if (typeof moBanPhimCX5 === "function") moBanPhimCX5(kgInput, "kg");
+  } else if (tenInput) {
+    tenInput.focus();
+    if (typeof moBanPhimCX5 === "function") moBanPhimCX5(tenInput, "qc");
+  }
 }
 window.chuyenSangNhapTayCX1 = chuyenSangNhapTayCX1;
 
 function chuyenSangQuetCamCX1() {
+  if (typeof dongBanPhimCX5 === "function") dongBanPhimCX5();
   cheDoCX1 = "quet";
   dangNhapCX1 = false;
 
@@ -1164,6 +1176,7 @@ async function quetTiepCX1() {
 }
 
 function quetMoiCX1() {
+  if (typeof dongBanPhimCX5 === "function") dongBanPhimCX5();
   phienCX1 = [];
   demSoDot = 0;
   idPhienHienTai = null;
