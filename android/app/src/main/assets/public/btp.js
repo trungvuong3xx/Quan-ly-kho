@@ -592,7 +592,7 @@ function taoHangKetQuaBTP(danhSach, isReadonly = false) {
     if (!tuKhoa || dotStr.includes(tuKhoa) || mspStr.includes(tuKhoa) || kgStr.includes(tuKhoa) || rawStr.includes(tuKhoa)) {
         hangDot += `
     <div class="${!isReadonly ? 'cx5-swipe-row' : ''}">
-      <div style="display:flex; width: 100%; box-sizing: border-box; padding:12px 10px; border-bottom:1px solid var(--line); align-items:center; flex:1;">
+      <div style="display:flex; width: 100%; box-sizing: border-box; padding:12px 10px; border-bottom:1px solid var(--line); align-items:center; flex:1; font-size:14px;">
         <div style="flex:1; color:var(--steel); font-weight:700;">${r.dotQuet || 1}</div>
         <div style="flex:2; font-weight:600;">${r.msp || '?'}</div>
         <div style="flex:1; text-align:right; font-weight:700; color:var(--success);">${r.kg || 0}</div>
@@ -603,8 +603,10 @@ function taoHangKetQuaBTP(danhSach, isReadonly = false) {
   });
 
   let footDot = `
-    <div style="display:flex; width: 100%; box-sizing: border-box; align-items:center; padding:10px; background:var(--card-raised); border-top:1px solid var(--steel);">
-      <div style="flex:1; font-weight:700; color:var(--steel);">TỔNG ${tongQRAll}</div>
+    <div style="display:flex; width: 100%; box-sizing: border-box; align-items:center; padding:10px; background:var(--card-raised); border-top:1px solid var(--steel); font-size:14px;">
+      <div style="flex:1; font-weight:700; color:var(--steel);">TỔNG</div>
+      <div style="flex:2;">&nbsp;</div>
+      <div style="flex:1; text-align:right; font-weight:700; color:var(--steel);">${tongQRAll}</div>
     </div>`;
 
   let hangGom = "";
@@ -618,9 +620,9 @@ function taoHangKetQuaBTP(danhSach, isReadonly = false) {
   });
 
   let footGom = `
-    <div style="display:flex; width: 100%; box-sizing: border-box; align-items:center; padding:10px; background:var(--card-raised); border-top:1px solid var(--steel);">
+    <div style="display:flex; width: 100%; box-sizing: border-box; align-items:center; padding:10px; background:var(--card-raised); border-top:1px solid var(--steel); font-size:14px;">
       <div style="flex:1; font-weight:700; color:var(--steel);">TỔNG</div>
-      <div style="flex:2;"></div>
+      <div style="flex:2;">&nbsp;</div>
       <div style="flex:1; text-align:right; font-weight:700; color:var(--steel);">${tongQRAll}</div>
     </div>`;
   

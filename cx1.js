@@ -660,7 +660,7 @@ function taoHangKetQuaCX1(danhSach, isReadonly = false) {
     Object.values(tongDotCuaPhien).forEach(item => {
       hangDot += `
     <div class="${!isReadonly ? 'cx5-swipe-row' : ''}">
-      <div style="display:flex; width: 100%; box-sizing: border-box; padding:12px 10px; border-bottom:1px solid var(--line); align-items:center; flex:1; ${!isReadonly ? 'cursor:pointer;' : ''}" ${!isReadonly ? `onclick="nhapTayCX1(${item.dot}, '${item.msp}', '${item.qc}')"` : ""}>
+      <div style="display:flex; width: 100%; box-sizing: border-box; padding:12px 10px; border-bottom:1px solid var(--line); align-items:center; flex:1; font-size:14px; ${!isReadonly ? 'cursor:pointer;' : ''}" ${!isReadonly ? `onclick="nhapTayCX1(${item.dot}, '${item.msp}', '${item.qc}')"` : ""}>
         <div style="flex:0.8; color:var(--brass); font-weight:700;">Đợt ${item.dot}</div>
         <div style="flex:1.5;">${item.qc}</div>
         <div style="flex:0.7; text-align:center;">${item.soLuong}</div>
@@ -670,9 +670,9 @@ function taoHangKetQuaCX1(danhSach, isReadonly = false) {
     </div>`;
     });
     let footDot = `
-    <div style="display:flex; width: 100%; box-sizing: border-box; padding:10px; background:var(--card-raised); align-items:center;">
+    <div style="display:flex; width: 100%; box-sizing: border-box; padding:10px; background:var(--card-raised); align-items:center; font-size:14px;">
       <div style="flex:0.8; font-weight:700; color:var(--brass);">TỔNG</div>
-      <div style="flex:1.5;"></div>
+      <div style="flex:1.5;">&nbsp;</div>
       <div style="flex:0.7; text-align:center; font-weight:700; color:var(--brass);">${tongQRAll}</div>
       <div style="flex:1; text-align:right; font-weight:700; color:var(--brass);">${tongKGAll.toFixed(1)}</div>
     </div>`;

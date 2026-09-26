@@ -2112,6 +2112,7 @@ body { padding: 0 !important; background: var(--bg-body) !important; color: var(
   background: var(--card-raised);
   border-radius: 8px;
   overflow: visible !important;
+  font-size: 14px;
 }
 
 .table-sticky-wrap {
@@ -2150,6 +2151,7 @@ body { padding: 0 !important; background: var(--bg-body) !important; color: var(
   z-index: 10 !important;
   background: var(--card-raised) !important;
   border-top: 2px solid var(--steel) !important;
+  font-size: 14px;
 }
 
 
