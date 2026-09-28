@@ -8,12 +8,12 @@
     // Khôi phục theme người dùng đã chọn trước khi render CSS để không bao giờ bị lóe sáng
     (function() {
       try {
-        var t = localStorage.getItem('user_theme');
-        if (t === 'dark') {
-          document.documentElement.setAttribute('data-theme', 'dark');
-        } else {
-          document.documentElement.setAttribute('data-theme', 'light');
+        var t = localStorage.getItem('user_theme') || 'dark';
+        var validThemes = ['dark', 'light', 'cyberpunk', 'matrix', 'ocean', 'volcano', 'tokyo'];
+        if (validThemes.indexOf(t) === -1) {
+          t = (t === 'light' ? 'light' : 'dark');
         }
+        document.documentElement.setAttribute('data-theme', t);
       } catch (e) {}
     })();
   </script>
@@ -191,7 +191,7 @@
     <div class="title" id="header-title">Trung Vương</div>
   </div>
   <div class="header-right" style="display:flex; gap:8px; align-items:center;">
-    <button class="theme-toggle" id="btn-theme" title="Chuyển Sáng/Tối">
+    <button class="theme-toggle" id="btn-theme" title="Chọn Giao Diện (Theme)" onclick="moModalTheme()">
       <i class="ti ti-moon"></i>
     </button>
   </div>
@@ -1346,31 +1346,106 @@
 
     const btnTheme = document.getElementById('btn-theme');
     const htmlEl = document.documentElement;
+
+    const danhSachThemes = [
+      { id: 'dark', ten: 'Obsidian Amber (Tối)', moTa: 'Nền than chì, viền & nút Vàng Hổ Phách', bg: '#0f172a', accent: '#f59e0b', icon: 'ti-moon', metaColor: '#0f172a' },
+      { id: 'light', ten: 'Sáng Chuẩn Mực (Light)', moTa: 'Nền ngà sáng, chữ đậm rõ ngoài trời', bg: '#f9f7f1', accent: '#3b82f6', icon: 'ti-sun', metaColor: '#f9f7f1' },
+      { id: 'cyberpunk', ten: 'Cyberpunk 2077', moTa: 'Nền OLED, viền LED Cyan & Hồng Neon', bg: '#08080c', accent: '#00f3ff', icon: 'ti-bolt', metaColor: '#08080c' },
+      { id: 'matrix', ten: 'Matrix Terminal', moTa: 'Hacker vi mạch, Xanh Lục huỳnh quang', bg: '#040805', accent: '#00ff66', icon: 'ti-terminal-2', metaColor: '#040805' },
+      { id: 'ocean', ten: 'Deep Arctic Ocean', moTa: 'Biển sâu đêm, Xanh Băng Tuyết mát mắt', bg: '#080f1e', accent: '#38bdf8', icon: 'ti-droplet', metaColor: '#080f1e' },
+      { id: 'volcano', ten: 'Volcano Magma', moTa: 'Xám carbon, Cam Lửa Dung Nham', bg: '#110d0e', accent: '#f97316', icon: 'ti-flame', metaColor: '#110d0e' },
+      { id: 'tokyo', ten: 'Tokyo Night', moTa: 'Tím đêm huyền ảo & Xanh Bạc Hà Pastel', bg: '#0d0a1a', accent: '#a855f7', icon: 'ti-sparkles', metaColor: '#0d0a1a' }
+    ];
+
+    function layThemeHienTai() {
+      const cur = htmlEl.getAttribute('data-theme') || 'dark';
+      const tim = danhSachThemes.find(t => t.id === cur);
+      return tim || danhSachThemes[0];
+    }
     
     function capNhatIconTheme() {
-      const isDark = htmlEl.getAttribute('data-theme') === 'dark';
+      const cur = layThemeHienTai();
       if (btnTheme) {
-        btnTheme.innerHTML = isDark ? '<i class="ti ti-sun"></i>' : '<i class="ti ti-moon"></i>';
-        btnTheme.title = isDark ? 'Đang bật Tối - Bấm chuyển sang Sáng' : 'Đang bật Sáng - Bấm chuyển sang Tối';
+        btnTheme.innerHTML = `<i class="ti ${cur.icon}"></i>`;
+        btnTheme.title = `Giao diện: ${cur.ten} - Bấm để đổi`;
       }
       const metaTheme = document.querySelector('meta[name="theme-color"]');
       if (metaTheme) {
-        metaTheme.setAttribute('content', isDark ? '#0f172a' : '#f9f7f1');
+        metaTheme.setAttribute('content', cur.metaColor);
       }
     }
     capNhatIconTheme();
 
-    if (btnTheme) {
-      btnTheme.addEventListener('click', () => {
-        const isDark = htmlEl.getAttribute('data-theme') === 'dark';
-        const newTheme = isDark ? 'light' : 'dark';
-        htmlEl.setAttribute('data-theme', newTheme);
-        try {
-          localStorage.setItem('user_theme', newTheme);
-        } catch (e) {}
-        capNhatIconTheme();
-        if (navigator.vibrate) navigator.vibrate(50);
+    function renderDanhSachTheme() {
+      const listEl = document.getElementById('theme-options-list');
+      if (!listEl) return;
+      const curTheme = layThemeHienTai();
+      let html = '';
+      danhSachThemes.forEach(t => {
+        const isActive = t.id === curTheme.id;
+        html += `
+          <div class="theme-item-card ${isActive ? 'active' : ''}" data-theme-id="${t.id}" onclick="chonTheme('${t.id}')">
+            <div class="theme-preview-dot" style="background:${t.bg};">
+              <div class="theme-preview-accent" style="background:${t.accent};"></div>
+            </div>
+            <div class="theme-item-info">
+              <div class="theme-item-name"><i class="ti ${t.icon}" style="font-size:15px;"></i> ${t.ten}</div>
+              <div class="theme-item-desc">${t.moTa}</div>
+            </div>
+            <div class="theme-item-check"><i class="ti ti-check"></i></div>
+          </div>
+        `;
       });
+      listEl.innerHTML = html;
+    }
+
+    window.moModalTheme = function() {
+      renderDanhSachTheme();
+      const modal = document.getElementById('modal-theme');
+      if (modal) {
+        modal.style.display = 'flex';
+        requestAnimationFrame(() => {
+          modal.classList.add('active');
+        });
+      }
+      if (navigator.vibrate) navigator.vibrate(12);
+    };
+
+    window.dongModalTheme = function(e) {
+      if (e && e.target && e.target.id !== 'modal-theme' && !e.target.closest('.modal-theme-close')) return;
+      const modal = document.getElementById('modal-theme');
+      if (modal) {
+        modal.classList.remove('active');
+        setTimeout(() => {
+          modal.style.display = 'none';
+        }, 220);
+      }
+    };
+
+    window.chonTheme = function(themeId) {
+      htmlEl.setAttribute('data-theme', themeId);
+      try {
+        localStorage.setItem('user_theme', themeId);
+      } catch (e) {}
+      capNhatIconTheme();
+      if (navigator.vibrate) navigator.vibrate(15);
+      
+      document.querySelectorAll('.theme-item-card').forEach(el => {
+        if (el.getAttribute('data-theme-id') === themeId) el.classList.add('active');
+        else el.classList.remove('active');
+      });
+
+      setTimeout(() => {
+        const modal = document.getElementById('modal-theme');
+        if (modal) {
+          modal.classList.remove('active');
+          setTimeout(() => { modal.style.display = 'none'; }, 220);
+        }
+      }, 180);
+    };
+
+    if (btnTheme) {
+      btnTheme.addEventListener('click', window.moModalTheme);
     }
 
     let startY = 0;
@@ -1436,5 +1511,19 @@
 </script>
 <div id="pwa-update-toast" style="display:none; position:fixed; bottom:80px; left:50%; transform:translateX(-50%); background:var(--brass); color:var(--bg-deep); padding:10px 20px; border-radius:20px; font-weight:700; box-shadow:0 4px 12px rgba(245,158,11,0.5); z-index:9999; cursor:pointer;" onclick="window.location.reload(true);">
   🔄 Có bản cập nhật mới! Bấm để tải lại
+</div>
+
+<!-- Modal Chọn Giao Diện (Theme Picker) -->
+<div id="modal-theme" class="modal-theme-backdrop" style="display:none;" onclick="dongModalTheme(event)">
+  <div class="modal-theme-sheet" onclick="event.stopPropagation()">
+    <div class="modal-theme-header">
+      <div class="modal-theme-title-wrap">
+        <div class="modal-theme-title"><i class="ti ti-palette" style="color:var(--primary);"></i> Giao Diện & Màu Sắc</div>
+        <div class="modal-theme-subtitle">Tùy biến phong cách hiển thị theo sở thích</div>
+      </div>
+      <button class="modal-theme-close" onclick="dongModalTheme()" title="Đóng"><i class="ti ti-x"></i></button>
+    </div>
+    <div class="modal-theme-list" id="theme-options-list"></div>
+  </div>
 </div>
 
