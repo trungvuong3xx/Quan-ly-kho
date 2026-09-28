@@ -302,7 +302,7 @@ function toggleDungTiepTuc() {
   const btn = document.getElementById("btn-dung-tieptuc-cx1");
   if (dangQuetCX1) {
     dungCX1();
-    btn.textContent = "Quét tiếp (Đợt mới)";
+    btn.textContent = "Quét tiếp";
     btn.className = "btn btn-blue btn-full";
   } else {
     tiepTucCX1();
@@ -807,7 +807,7 @@ function toggleDungTiepTucNhapCX1() {
   if (dangNhapCX1) {
     dangNhapCX1 = false;
     if (btn) {
-      btn.textContent = "Nhập tiếp (Đợt mới)";
+      btn.textContent = "Nhập tiếp";
       btn.className = "btn btn-blue";
     }
     if (statusEl) statusEl.textContent = "Đã dừng Đợt " + demSoDot;

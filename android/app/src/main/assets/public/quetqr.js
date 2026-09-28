@@ -244,7 +244,7 @@ function dungQuetQR() {
   if (statusEl) statusEl.innerHTML = '<i class="ti ti-player-pause" style="color:var(--red)"></i> Đã dừng quét (Đợt ' + (demSoDotQR || 1) + ')';
   const btnToggle = document.getElementById("btn-dung-tieptuc-qr");
   if (btnToggle) {
-    btnToggle.textContent = "Quét tiếp (Đợt mới)";
+    btnToggle.textContent = "Quét tiếp";
     btnToggle.className = "btn btn-blue btn-full";
   }
 }

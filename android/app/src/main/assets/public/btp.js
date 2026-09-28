@@ -142,6 +142,8 @@ function nhapThuCongBTP(src) {
   if (demEl) demEl.textContent = "Đã quét: " + phienBTP.length + " mã";
   luuPhienDoDangBTP();
   capNhatLogBTP();
+  const lockStatusEl = document.getElementById("btp-lock-status");
+  if (lockStatusEl) lockStatusEl.innerHTML = '<i class="ti ti-check-double" style="color:var(--success)"></i> ' + (typeof escapeHtml === "function" ? escapeHtml(data.rawQR || data.msp) : (data.rawQR || data.msp));
   showCanhBaoBTP("Đã thêm: " + (data.msp || data.rawQR));
 }
 window.nhapThuCongBTP = nhapThuCongBTP;
@@ -286,7 +288,7 @@ function khiQuetDuocMaBTP(result) {
   capNhatLogBTP();
 
   const lockStatusEl = document.getElementById("btp-lock-status");
-  if (lockStatusEl) lockStatusEl.innerHTML = '<i class="ti ti-check-double" style="color:var(--success)"></i> ' + data.msp;
+  if (lockStatusEl) lockStatusEl.innerHTML = '<i class="ti ti-check-double" style="color:var(--success)"></i> ' + (typeof escapeHtml === "function" ? escapeHtml(data.rawQR || data.msp) : (data.rawQR || data.msp));
 }
 
 function luuPhienDoDangBTP() {
@@ -351,6 +353,8 @@ async function batDauPhienMoiBTP() {
   document.getElementById("btp-ketqua").style.display = "none";
   document.getElementById("btp-dem").textContent = "Đã quét: 0 mã";
   document.getElementById("btp-status").innerHTML = '<i class="ti ti-radar" style="color:var(--success)"></i> Đang quét Đợt 1...';
+  const lockStatusEl = document.getElementById("btp-lock-status");
+  if (lockStatusEl) lockStatusEl.textContent = "Chờ quét...";
 
   capNhatLogBTP();
 
@@ -422,7 +426,7 @@ function toggleDungTiepTucBTP() {
   if (!btn) return;
   if (dangQuetBTP) {
     dungBTP();
-    btn.textContent = "Quét tiếp (Đợt mới)";
+    btn.textContent = "Quét tiếp";
     btn.className = "btn btn-blue btn-full";
   } else {
     tiepTucBTP();

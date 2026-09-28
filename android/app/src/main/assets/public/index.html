@@ -488,7 +488,7 @@
         <div class="custom-option" data-value="Xuất SX">Xuất SX</div>
         <div class="custom-option" data-value="Xuất Trả">Xuất Trả</div>
         <div class="custom-option" data-value="Xuất Gia Công">Xuất Gia Công</div>
-        <div class="custom-option" data-value="Xuất Phế">Xuất Phế</div>
+        <div class="custom-option" data-value="Xuất Phế">Xuất Vá</div>
         <div class="custom-option" data-value="Xuất Bán">Xuất Bán</div>
         <div class="custom-option" data-value="Bình Thuận">Bình Thuận</div>
         <div class="custom-option" data-value="Xuất For">Xuất For</div>
@@ -517,7 +517,7 @@
 
     <div style="margin: 0 0 6px 0; padding:8px 12px; background:var(--card-raised); border-radius:10px; border:1px solid var(--line-soft); display:flex; flex-direction:column; width:100%; box-sizing:border-box; gap:8px;">
       <div style="display:flex; align-items:center; justify-content:space-between;">
-        <span style="font-size:13px; font-weight:600; color:var(--cream);">Cho phép quét trùng</span>
+        <span style="font-size:13px; font-weight:600; color:var(--cream);">Quét trùng</span>
         <div style="display:flex; align-items:center; gap:8px;">
           <span id="qr-lock-status" style="font-size:11px; color:var(--cream-soft);">Chờ quét...</span>
           <label class="toggle-switch">
@@ -666,7 +666,7 @@
     </div>
 
     <div style="margin: 0 0 6px 0; padding:8px 12px; background:var(--card-raised); border-radius:10px; border:1px solid var(--line-soft); display:flex; align-items:center; justify-content:space-between; width:100%; box-sizing:border-box;">
-      <span style="font-size:13px; font-weight:600; color:var(--cream);">Cho phép quét trùng</span>
+      <span style="font-size:13px; font-weight:600; color:var(--cream);">Quét trùng</span>
       <div style="display:flex; align-items:center; gap:8px;">
         <span id="cx1-lock-status" style="font-size:11px; color:var(--cream-soft);">Chờ quét...</span>
         <label class="toggle-switch">
@@ -679,7 +679,7 @@
     <div class="flex flex-col gap-2 w-full" style="padding:0; box-sizing:border-box; width:100%; margin:0 0 6px 0;">
       <div style="display:flex; gap:8px;">
         <button id="btn-flash-cx1" class="btn" style="flex:1; background:var(--surface-grad); border:1px solid var(--border); color:var(--text-main); margin:0; height:38px; font-size:14px;" onclick="toggleFlashCX1()">Bật/Tắt đèn</button>
-        <button class="btn btn-blue" style="flex:1; margin:0; height:38px; font-size:14px;" onclick="chuyenSangNhapTayCX1()"><i class="ti ti-keyboard"></i> Nhập tay</button>
+        <button class="btn btn-blue" style="flex:1; margin:0; height:38px; font-size:14px;" onclick="chuyenSangNhapTayCX1()"><i class="ti ti-keyboard"></i></button>
       </div>
       <button id="btn-dung-tieptuc-cx1" class="btn btn-red" style="width:100%; margin:0; height:38px; font-size:14px;" onclick="toggleDungTiepTuc()">Dừng quét</button>
       <button class="btn btn-green" style="width:100%; margin:0; height:38px; font-size:14px;" onclick="ketThucCX1()"><i class="ti ti-list-check"></i> Xem kết quả</button>
@@ -863,10 +863,10 @@
     </div>
 
     <div style="margin: 0 0 6px 0; padding:8px 12px; background:var(--card-raised); border-radius:10px; border:1px solid var(--line-soft); display:flex; flex-direction:column; width:100%; box-sizing:border-box; gap:8px;">
-      <div style="display:flex; align-items:center; justify-content:space-between;">
-        <span style="font-size:13px; font-weight:600; color:var(--cream);">Cho phép quét trùng</span>
-        <div style="display:flex; align-items:center; gap:8px;">
-          <span id="btp-lock-status" style="font-size:11px; color:var(--cream-soft);">Chờ quét...</span>
+      <div style="display:flex; align-items:center; justify-content:space-between; gap:10px;">
+        <span id="btp-lock-status" style="font-size:13px; font-weight:700; color:var(--brass); flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="Mã QR vừa quét">Chờ quét...</span>
+        <div style="display:flex; align-items:center; gap:6px; flex-shrink:0;">
+          <span style="font-size:13px; font-weight:600; color:var(--cream); white-space:nowrap;">Quét trùng</span>
           <label class="toggle-switch">
             <input type="checkbox" id="btp-cho-phep-trung-cam">
             <span class="toggle-slider"></span>
