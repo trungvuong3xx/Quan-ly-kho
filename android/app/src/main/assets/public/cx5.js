@@ -1122,30 +1122,46 @@ function buildLocalTongKgDataCX5(dsQC) {
     for (let i = 0; i < thuTuLocal.length; i++) {
       const rows = luotMapLocal.get(thuTuLocal[i]);
       if (rows.length > 0) {
+        const rowDaGhepBao = (rows[0] && rows[0].daGhepBao) || 0;
+        const rowDaGhepKg = (rows[0] && rows[0].daGhepKg) || 0;
         localCandidates.push({
           lotId: idPhienHienTaiC5 + "_" + thuTuLocal[i],
           bao: rows.length,
           kg: Math.round(rows.reduce(function (s, r) { return s + r.kg; }, 0) * 10) / 10,
+          daGhepBao: rowDaGhepBao,
+          daGhepKg: rowDaGhepKg,
           rows: rows
         });
       }
     }
 
     if (localCandidates.length === 0) {
-      localCandidates.push({ lotId: null, bao: 0, kg: 0, rows: null });
+      localCandidates.push({ lotId: null, bao: 0, kg: 0, daGhepBao: 0, daGhepKg: 0, rows: null });
     }
 
     localCandidates.forEach((lc, idx) => {
       if (lc.bao > 0) {
         const cardKey = key + "|" + idx;
-        const existingCard = oldState[cardKey];
+        const existingCard = oldState[cardKey] || Object.values(oldState).find(c => c && c.homNay && c.homNay.lotId === lc.lotId);
+        const daGhepBao = (existingCard && existingCard.daGhepBao) ? existingCard.daGhepBao : (lc.daGhepBao || 0);
+        const daGhepKg = (existingCard && existingCard.daGhepKg) ? existingCard.daGhepKg : (lc.daGhepKg || 0);
+        const tongBao = lc.bao + daGhepBao;
+        const tongKg = Math.round((lc.kg + daGhepKg) * 10) / 10;
         tongKgDataCX5[cardKey] = {
           ten: tenNorm,
           msp: mspNorm,
-          homNay: { row: (existingCard && existingCard.homNay) ? existingCard.homNay.row : null, lotId: lc.lotId, bao: lc.bao, kg: lc.kg, rows: lc.rows },
+          homNay: {
+            row: (existingCard && existingCard.homNay) ? existingCard.homNay.row : null,
+            lotId: lc.lotId,
+            bao: tongBao,
+            kg: tongKg,
+            baoGoc: lc.bao,
+            kgGoc: lc.kg,
+            rows: lc.rows
+          },
           cu: (existingCard && existingCard.cu) ? existingCard.cu : [],
-          daGhepBao: existingCard ? existingCard.daGhepBao : 0,
-          daGhepKg: existingCard ? existingCard.daGhepKg : 0
+          daGhepBao: daGhepBao,
+          daGhepKg: daGhepKg
         };
       }
     });
@@ -1228,10 +1244,14 @@ function moTongKgCX5(dsQC) {
         for (let i = 0; i < thuTuLocal.length; i++) {
           const rows = luotMapLocal.get(thuTuLocal[i]);
           if (rows.length > 0) {
+            const rowDaGhepBao = (rows[0] && rows[0].daGhepBao) || 0;
+            const rowDaGhepKg = (rows[0] && rows[0].daGhepKg) || 0;
             localCandidates.push({
               lotId: idPhienHienTaiC5 + "_" + thuTuLocal[i],
               bao: rows.length,
               kg: Math.round(rows.reduce(function (s, r) { return s + r.kg; }, 0) * 10) / 10,
+              daGhepBao: rowDaGhepBao,
+              daGhepKg: rowDaGhepKg,
               matched: false,
               rows: rows
             });
@@ -1245,18 +1265,37 @@ function moTongKgCX5(dsQC) {
            
            let matchedRows = null;
            let matchedLotId = null;
-           const lIdx = localCandidates.findIndex(lc => !lc.matched && lc.bao === cBao && Math.abs(lc.kg - cKg) <= 0.2);
+           let matchedDaGhepBao = 0;
+           let matchedDaGhepKg = 0;
+
+           const lIdx = localCandidates.findIndex(lc => {
+             if (lc.matched) return false;
+             const khopHieuLuc = (lc.bao + lc.daGhepBao === cBao && Math.abs((lc.kg + lc.daGhepKg) - cKg) <= 0.2);
+             const khopGoc = (lc.bao === c.bao && Math.abs(lc.kg - c.kg) <= 0.2);
+             const khopScanned = (lc.bao === cBao && Math.abs(lc.kg - cKg) <= 0.2);
+             return khopHieuLuc || khopGoc || khopScanned;
+           });
+
            if (lIdx >= 0) {
                localCandidates[lIdx].matched = true;
                matchedLotId = localCandidates[lIdx].lotId;
                matchedRows = localCandidates[lIdx].rows;
+               matchedDaGhepBao = localCandidates[lIdx].daGhepBao;
+               matchedDaGhepKg = localCandidates[lIdx].daGhepKg;
            }
+
+           const sheetGhepBao = (c.effBao !== undefined && c.bao !== undefined && c.effBao > c.bao) ? (c.effBao - c.bao) : 0;
+           const sheetGhepKg = (c.effKg !== undefined && c.kg !== undefined && c.effKg > c.kg) ? Math.round((c.effKg - c.kg) * 10) / 10 : 0;
 
            anchorCandidates.push({
              row: c.row,
              lotId: matchedLotId,
              bao: cBao,
              kg: cKg,
+             baoGoc: c.bao,
+             kgGoc: c.kg,
+             daGhepBao: Math.max(matchedDaGhepBao, sheetGhepBao),
+             daGhepKg: Math.max(matchedDaGhepKg, sheetGhepKg),
              rows: matchedRows
            });
         });
@@ -1269,39 +1308,73 @@ function moTongKgCX5(dsQC) {
                    localCandidates[lIdx].matched = true;
                    anchor.lotId = localCandidates[lIdx].lotId;
                    anchor.rows = localCandidates[lIdx].rows;
+                   if (!anchor.daGhepBao && localCandidates[lIdx].daGhepBao) {
+                     anchor.daGhepBao = localCandidates[lIdx].daGhepBao;
+                     anchor.daGhepKg = localCandidates[lIdx].daGhepKg;
+                   }
                }
            }
         });
 
         localCandidates.forEach(lc => {
             if (!lc.matched) {
-                anchorCandidates.push({ row: null, lotId: lc.lotId, bao: lc.bao, kg: lc.kg, rows: lc.rows });
+                anchorCandidates.push({
+                  row: null,
+                  lotId: lc.lotId,
+                  bao: lc.bao + lc.daGhepBao,
+                  kg: Math.round((lc.kg + lc.daGhepKg) * 10) / 10,
+                  baoGoc: lc.bao,
+                  kgGoc: lc.kg,
+                  daGhepBao: lc.daGhepBao,
+                  daGhepKg: lc.daGhepKg,
+                  rows: lc.rows
+                });
             }
         });
 
         if (anchorCandidates.length === 0) {
-           anchorCandidates.push({ row: null, lotId: null, bao: 0, kg: 0, rows: null });
+           anchorCandidates.push({ row: null, lotId: null, bao: 0, kg: 0, daGhepBao: 0, daGhepKg: 0, rows: null });
         }
 
         anchorCandidates.forEach((anchor, idx) => {
           if (anchor.bao > 0 || cu.length > 0) {
             const cardKey = key + "|" + idx;
             
-            let existingCard = oldState[cardKey];
-            if (existingCard && existingCard.homNay && existingCard.homNay.bao === anchor.bao && Math.abs(existingCard.homNay.kg - anchor.kg) <= 0.2) {
-                delete oldState[cardKey];
-            } else {
-                const foundKey = Object.keys(oldState).find(k => {
-                    const oc = oldState[k];
-                    return k.startsWith(key + "|") && oc.homNay && oc.homNay.bao === anchor.bao && Math.abs(oc.homNay.kg - anchor.kg) <= 0.2;
-                });
-                if (foundKey) {
-                    existingCard = oldState[foundKey];
-                    delete oldState[foundKey];
-                } else {
-                    existingCard = null;
-                }
+            // Ưu tiên 1: Khớp existingCard theo lotId chính xác
+            let existingCard = null;
+            if (anchor.lotId) {
+              const kByLot = Object.keys(oldState).find(k => oldState[k] && oldState[k].homNay && oldState[k].homNay.lotId === anchor.lotId);
+              if (kByLot) {
+                existingCard = oldState[kByLot];
+                delete oldState[kByLot];
+              }
             }
+            // Ưu tiên 2: Khớp theo cardKey
+            if (!existingCard && oldState[cardKey]) {
+              existingCard = oldState[cardKey];
+              delete oldState[cardKey];
+            }
+            // Ưu tiên 3: Khớp theo cùng quy cách
+            if (!existingCard) {
+              const foundKey = Object.keys(oldState).find(k => k.startsWith(key + "|") && oldState[k]);
+              if (foundKey) {
+                existingCard = oldState[foundKey];
+                delete oldState[foundKey];
+              }
+            }
+
+            const rowDaGhepBao = (anchor.rows && anchor.rows[0] && anchor.rows[0].daGhepBao) || 0;
+            const rowDaGhepKg = (anchor.rows && anchor.rows[0] && anchor.rows[0].daGhepKg) || 0;
+            const daGhepBao = Math.max(
+              anchor.daGhepBao || 0,
+              existingCard ? (existingCard.daGhepBao || 0) : 0,
+              rowDaGhepBao
+            );
+            const daGhepKg = Math.max(
+              anchor.daGhepKg || 0,
+              existingCard ? (existingCard.daGhepKg || 0) : 0,
+              rowDaGhepKg
+            );
 
             tongKgDataCX5[cardKey] = {
               ten: tenNorm,
@@ -1320,8 +1393,8 @@ function moTongKgCX5(dsQC) {
                   checked: isChecked
                 };
               }),
-              daGhepBao: existingCard ? existingCard.daGhepBao : 0,
-              daGhepKg: existingCard ? existingCard.daGhepKg : 0
+              daGhepBao: daGhepBao,
+              daGhepKg: daGhepKg
             };
           }
         });
@@ -1487,8 +1560,8 @@ function renderTongKetPhienTongKgCX5() {
       cardKey = Object.keys(tongKgDataCX5).find(function (k) {
         const c = tongKgDataCX5[k];
         if (!c || !c.homNay || appliedCards.has(k)) return false;
-        const kBao = c.homNay.bao - (c.daGhepBao || 0);
-        const kKg = c.homNay.kg - (c.daGhepKg || 0);
+        const kBao = c.homNay.baoGoc !== undefined ? c.homNay.baoGoc : (c.homNay.bao - (c.daGhepBao || 0));
+        const kKg = c.homNay.kgGoc !== undefined ? c.homNay.kgGoc : (c.homNay.kg - (c.daGhepKg || 0));
         return c.ten === first.ten && kBao === bao && Math.abs(kKg - kg) < 0.2;
       });
     }
@@ -1501,31 +1574,32 @@ function renderTongKetPhienTongKgCX5() {
       });
     }
 
+    let extraBao = (first && first.daGhepBao) || 0;
+    let extraKg = (first && first.daGhepKg) || 0;
+
     if (cardKey && tongKgDataCX5[cardKey]) {
       appliedCards.add(cardKey); // Luôn đánh dấu thẻ này đã gán cho lượt này
       const card = tongKgDataCX5[cardKey];
       const chosen = (card.cu || []).filter(function (c) { return c.checked; });
-      let extraBao = 0, extraKg = 0;
       if (chosen.length > 0) {
         extraBao = chosen.reduce(function (s, c) { return s + (c.effBao !== undefined ? c.effBao : c.bao); }, 0);
         extraKg = chosen.reduce(function (s, c) { return s + (c.effKg !== undefined ? c.effKg : c.kg); }, 0);
       } else if (card.daGhepBao) {
-        extraBao = card.daGhepBao;
-        extraKg = card.daGhepKg;
+        extraBao = Math.max(extraBao, card.daGhepBao);
+        extraKg = Math.max(extraKg, card.daGhepKg);
+      } else if (card.homNay && card.homNay.bao > bao) {
+        extraBao = Math.max(extraBao, card.homNay.bao - bao);
+        extraKg = Math.max(extraKg, Math.round((card.homNay.kg - kg) * 10) / 10);
       }
+    }
 
-      if (extraBao > 0 || extraKg > 0) {
-        bao += extraBao;
-        kg += extraKg;
-        trangThaiHtml = '<i class="ti ti-layers-intersect" style="color:var(--accent-2);font-size:18px" title="Đã chọn ghép"></i>';
-      } else if (bao >= 10) {
-        trangThaiHtml = '<i class="ti ti-check" style="color:var(--success);font-size:18px" title="OK (≥10 bao)"></i>';
-      } else if (first.daDongBo) {
-        trangThaiHtml = '<i class="ti ti-check" style="color:var(--success);font-size:18px" title="Đã đồng bộ"></i>';
-      }
+    if (extraBao > 0 || extraKg > 0) {
+      bao += extraBao;
+      kg += extraKg;
+      trangThaiHtml = '<i class="ti ti-layers-intersect" style="color:var(--accent-2);font-size:18px" title="Đã ghép"></i>';
     } else if (bao >= 10) {
       trangThaiHtml = '<i class="ti ti-check" style="color:var(--success);font-size:18px" title="OK (≥10 bao)"></i>';
-    } else if (first.daDongBo) {
+    } else if (first.daDongBo || first.daDongBoLSC5) {
       trangThaiHtml = '<i class="ti ti-check" style="color:var(--success);font-size:18px" title="Đã đồng bộ"></i>';
     }
 
@@ -1553,8 +1627,11 @@ function renderTongKetPhienTongKgCX5() {
     const card = tongKgDataCX5[cardKey];
     if (!card) return;
     const homNay = card.homNay || { bao: 0, kg: 0 };
-    let bao = homNay.bao || 0;
-    let kg = homNay.kg || 0;
+    const daGhep = card.daGhepBao || 0;
+    const daGhepK = card.daGhepKg || 0;
+    let bao = homNay.baoGoc !== undefined ? homNay.baoGoc : (homNay.bao - daGhep);
+    let kg = homNay.kgGoc !== undefined ? homNay.kgGoc : (homNay.kg - daGhepK);
+    if (bao <= 0 && homNay.bao > 0) { bao = homNay.bao; kg = homNay.kg; }
     if (bao === 0 && (!card.cu || card.cu.length === 0)) return;
 
     let trangThaiHtml = '<i class="ti ti-minus" style="color:var(--cream-soft);font-size:18px" title="Chưa ghép"></i>';
@@ -1563,15 +1640,15 @@ function renderTongKetPhienTongKgCX5() {
     if (chosen.length > 0) {
       extraBao = chosen.reduce(function (s, c) { return s + (c.effBao !== undefined ? c.effBao : c.bao); }, 0);
       extraKg = chosen.reduce(function (s, c) { return s + (c.effKg !== undefined ? c.effKg : c.kg); }, 0);
-    } else if (card.daGhepBao) {
-      extraBao = card.daGhepBao;
-      extraKg = card.daGhepKg;
+    } else if (daGhep > 0) {
+      extraBao = daGhep;
+      extraKg = daGhepK;
     }
 
     if (extraBao > 0 || extraKg > 0) {
       bao += extraBao;
       kg += extraKg;
-      trangThaiHtml = '<i class="ti ti-layers-intersect" style="color:var(--accent-2);font-size:18px" title="Đã chọn ghép"></i>';
+      trangThaiHtml = '<i class="ti ti-layers-intersect" style="color:var(--accent-2);font-size:18px" title="Đã ghép"></i>';
     } else if (bao >= 10) {
       trangThaiHtml = '<i class="ti ti-check" style="color:var(--success);font-size:18px" title="OK (≥10 bao)"></i>';
     }
@@ -1720,11 +1797,37 @@ async function dongBoGhepCX5() {
       const d = tongKgDataCX5[g.key];
       if (!d || !d.homNay) return;
       
-      d.daGhepBao = (d.daGhepBao || 0) + (g.tongBao - d.homNay.bao);
-      d.daGhepKg = (d.daGhepKg || 0) + (g.tongKg - d.homNay.kg);
+      const extraBaoMoi = g.tongBao - (d.homNay.baoGoc || (d.homNay.bao - (d.daGhepBao || 0)));
+      const extraKgMoi = Math.round((g.tongKg - (d.homNay.kgGoc || (d.homNay.kg - (d.daGhepKg || 0)))) * 10) / 10;
+
+      d.daGhepBao = Math.max(d.daGhepBao || 0, extraBaoMoi, g.tongBao - d.homNay.bao);
+      d.daGhepKg = Math.max(d.daGhepKg || 0, extraKgMoi, Math.round((g.tongKg - d.homNay.kg) * 10) / 10);
 
       d.homNay.bao = g.tongBao;
       d.homNay.kg = g.tongKg;
+
+      // Lưu vết trực tiếp vào phienCX5 để bất cứ khi nào render lại cũng không bị mất
+      const targetLotId = d.homNay.lotId;
+      phienCX5.forEach(function (r) {
+        const rLotId = idPhienHienTaiC5 + "_" + r.luot;
+        if (targetLotId && rLotId === targetLotId) {
+          r.daGhepBao = d.daGhepBao;
+          r.daGhepKg = d.daGhepKg;
+          r.tongBaoGhep = g.tongBao;
+          r.tongKgGhep = g.tongKg;
+          r.daDongBoLSC5 = true;
+        }
+      });
+      if (d.homNay.rows && Array.isArray(d.homNay.rows)) {
+        d.homNay.rows.forEach(function (r) {
+          r.daGhepBao = d.daGhepBao;
+          r.daGhepKg = d.daGhepKg;
+          r.tongBaoGhep = g.tongBao;
+          r.tongKgGhep = g.tongKg;
+          r.daDongBoLSC5 = true;
+        });
+      }
+
       const rowsDaGhep = g.cuList.map(function (c) { return c.row; });
       Object.keys(tongKgDataCX5).forEach(function (k) {
         if (tongKgDataCX5[k].cu) {
@@ -2028,8 +2131,8 @@ function xemChiTietLichSuCX5(idPhien) {
       cardKey = Object.keys(tkData).find(function (k) {
         const c = tkData[k];
         if (!c || !c.homNay || appliedCards.has(k)) return false;
-        const kBao = c.homNay.bao - (c.daGhepBao || 0);
-        const kKg = c.homNay.kg - (c.daGhepKg || 0);
+        const kBao = c.homNay.baoGoc !== undefined ? c.homNay.baoGoc : (c.homNay.bao - (c.daGhepBao || 0));
+        const kKg = c.homNay.kgGoc !== undefined ? c.homNay.kgGoc : (c.homNay.kg - (c.daGhepKg || 0));
         return c.ten === first.ten && kBao === bao && Math.abs(kKg - kg) < 0.2;
       });
     }
@@ -2042,31 +2145,32 @@ function xemChiTietLichSuCX5(idPhien) {
       });
     }
 
+    let extraBao = (first && first.daGhepBao) || 0;
+    let extraKg = (first && first.daGhepKg) || 0;
+
     if (cardKey && tkData[cardKey]) {
       appliedCards.add(cardKey);
       const card = tkData[cardKey];
       const chosen = (card.cu || []).filter(function (c) { return c.checked; });
-      let extraBao = 0, extraKg = 0;
       if (chosen.length > 0) {
         extraBao = chosen.reduce(function (s, c) { return s + (c.effBao !== undefined ? c.effBao : c.bao); }, 0);
         extraKg = chosen.reduce(function (s, c) { return s + (c.effKg !== undefined ? c.effKg : c.kg); }, 0);
       } else if (card.daGhepBao) {
-        extraBao = card.daGhepBao;
-        extraKg = card.daGhepKg;
+        extraBao = Math.max(extraBao, card.daGhepBao);
+        extraKg = Math.max(extraKg, card.daGhepKg);
+      } else if (card.homNay && card.homNay.bao > bao) {
+        extraBao = Math.max(extraBao, card.homNay.bao - bao);
+        extraKg = Math.max(extraKg, Math.round((card.homNay.kg - kg) * 10) / 10);
       }
+    }
 
-      if (extraBao > 0 || extraKg > 0) {
-        bao += extraBao;
-        kg += extraKg;
-        trangThaiHtml = '<i class="ti ti-layers-intersect" style="color:var(--brass);font-size:18px" title="Đã chọn ghép"></i>';
-      } else if (bao >= 10) {
-        trangThaiHtml = '<i class="ti ti-check" style="color:var(--success);font-size:18px" title="OK (≥10 bao)"></i>';
-      } else if (first.daDongBo) {
-        trangThaiHtml = '<i class="ti ti-check" style="color:var(--success);font-size:18px" title="Đã đồng bộ"></i>';
-      }
+    if (extraBao > 0 || extraKg > 0) {
+      bao += extraBao;
+      kg += extraKg;
+      trangThaiHtml = '<i class="ti ti-layers-intersect" style="color:var(--brass);font-size:18px" title="Đã ghép"></i>';
     } else if (bao >= 10) {
       trangThaiHtml = '<i class="ti ti-check" style="color:var(--success);font-size:18px" title="OK (≥10 bao)"></i>';
-    } else if (first.daDongBo) {
+    } else if (first.daDongBo || first.daDongBoLSC5) {
       trangThaiHtml = '<i class="ti ti-check" style="color:var(--success);font-size:18px" title="Đã đồng bộ"></i>';
     }
 
@@ -2094,8 +2198,11 @@ function xemChiTietLichSuCX5(idPhien) {
     const card = tkData[cardKey];
     if (!card) return;
     const homNay = card.homNay || { bao: 0, kg: 0 };
-    let bao = homNay.bao || 0;
-    let kg = homNay.kg || 0;
+    const daGhep = card.daGhepBao || 0;
+    const daGhepK = card.daGhepKg || 0;
+    let bao = homNay.baoGoc !== undefined ? homNay.baoGoc : (homNay.bao - daGhep);
+    let kg = homNay.kgGoc !== undefined ? homNay.kgGoc : (homNay.kg - daGhepK);
+    if (bao <= 0 && homNay.bao > 0) { bao = homNay.bao; kg = homNay.kg; }
     if (bao === 0 && (!card.cu || card.cu.length === 0)) return;
 
     let trangThaiHtml = '<i class="ti ti-minus" style="color:var(--cream-soft);font-size:18px"></i>';
@@ -2104,9 +2211,9 @@ function xemChiTietLichSuCX5(idPhien) {
     if (chosen.length > 0) {
       extraBao = chosen.reduce(function (s, c) { return s + (c.effBao !== undefined ? c.effBao : c.bao); }, 0);
       extraKg = chosen.reduce(function (s, c) { return s + (c.effKg !== undefined ? c.effKg : c.kg); }, 0);
-    } else if (card.daGhepBao) {
-      extraBao = card.daGhepBao;
-      extraKg = card.daGhepKg;
+    } else if (daGhep > 0) {
+      extraBao = daGhep;
+      extraKg = daGhepK;
     }
 
     if (extraBao > 0 || extraKg > 0) {
