@@ -6,6 +6,7 @@
    ============================================================ */
 
 :root {
+  color-scheme: light;
   /* THEME TOKENS (New Design System) */
   --bg-body: #f9f7f1; 
   --surface: #ffffff;
@@ -235,6 +236,20 @@
   --neutral-solid: rgba(255, 255, 255, 0.1);
   --overlay-bg: rgba(6, 10, 8, 0.78);
   --glow-color: rgba(82, 163, 115, 0.3);
+}
+
+/* Khóa chặn hoàn toàn thuật toán Force Dark / Tự đảo màu của Android WebView & Chrome */
+[data-theme="light"],
+[data-theme="paper"],
+[data-theme="warm_gold"],
+[data-theme="eink"] {
+  color-scheme: only light;
+}
+
+[data-theme="dark"],
+[data-theme="coffee"],
+[data-theme="sage"] {
+  color-scheme: only dark;
 }
 
 /* ============================================================

@@ -50,6 +50,9 @@ public class MainActivity extends BridgeActivity {
             webView.getSettings().setCacheMode(WebSettings.LOAD_DEFAULT);
             webView.getSettings().setDomStorageEnabled(true);
             webView.getSettings().setDatabaseEnabled(true);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                webView.getSettings().setForceDark(WebSettings.FORCE_DARK_OFF);
+            }
             webView.addJavascriptInterface(new Object() {
                 @JavascriptInterface
                 public void exitApp() {
@@ -248,6 +251,9 @@ public class MainActivity extends BridgeActivity {
             WebView webView = getBridge().getWebView();
             webView.getSettings().setMediaPlaybackRequiresUserGesture(false);
             webView.getSettings().setCacheMode(WebSettings.LOAD_DEFAULT);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                webView.getSettings().setForceDark(WebSettings.FORCE_DARK_OFF);
+            }
         }
     }
 
