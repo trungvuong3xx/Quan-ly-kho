@@ -9,7 +9,15 @@
     (function() {
       try {
         var t = localStorage.getItem('user_theme') || 'dark';
-        var validThemes = ['dark', 'light', 'cyberpunk', 'matrix', 'ocean', 'volcano', 'tokyo'];
+        var legacyMap = {
+          'cyberpunk': 'paper',
+          'matrix': 'warm_gold',
+          'volcano': 'coffee',
+          'ocean': 'eink',
+          'tokyo': 'sage'
+        };
+        if (legacyMap[t]) t = legacyMap[t];
+        var validThemes = ['dark', 'light', 'paper', 'warm_gold', 'coffee', 'eink', 'sage'];
         if (validThemes.indexOf(t) === -1) {
           t = (t === 'light' ? 'light' : 'dark');
         }
@@ -1348,13 +1356,13 @@
     const htmlEl = document.documentElement;
 
     const danhSachThemes = [
-      { id: 'dark', ten: 'Obsidian Amber (Tối)', moTa: 'Nền than chì, viền & nút Vàng Hổ Phách', bg: '#0f172a', accent: '#f59e0b', icon: 'ti-moon', metaColor: '#0f172a' },
-      { id: 'light', ten: 'Sáng Chuẩn Mực (Light)', moTa: 'Nền ngà sáng, chữ đậm rõ ngoài trời', bg: '#f9f7f1', accent: '#3b82f6', icon: 'ti-sun', metaColor: '#f9f7f1' },
-      { id: 'cyberpunk', ten: 'Cyberpunk 2077', moTa: 'Nền OLED, viền LED Cyan & Hồng Neon', bg: '#08080c', accent: '#00f3ff', icon: 'ti-bolt', metaColor: '#08080c' },
-      { id: 'matrix', ten: 'Matrix Terminal', moTa: 'Hacker vi mạch, Xanh Lục huỳnh quang', bg: '#040805', accent: '#00ff66', icon: 'ti-terminal-2', metaColor: '#040805' },
-      { id: 'ocean', ten: 'Deep Arctic Ocean', moTa: 'Biển sâu đêm, Xanh Băng Tuyết mát mắt', bg: '#080f1e', accent: '#38bdf8', icon: 'ti-droplet', metaColor: '#080f1e' },
-      { id: 'volcano', ten: 'Volcano Magma', moTa: 'Xám carbon, Cam Lửa Dung Nham', bg: '#110d0e', accent: '#f97316', icon: 'ti-flame', metaColor: '#110d0e' },
-      { id: 'tokyo', ten: 'Tokyo Night', moTa: 'Tím đêm huyền ảo & Xanh Bạc Hà Pastel', bg: '#0d0a1a', accent: '#a855f7', icon: 'ti-sparkles', metaColor: '#0d0a1a' }
+      { id: 'dark', ten: 'Obsidian Amber (Tối)', moTa: 'Nền than chì & Vàng Hổ Phách sang trọng', bg: '#0f172a', accent: '#f59e0b', icon: 'ti-moon', metaColor: '#0f172a' },
+      { id: 'light', ten: 'Sáng Thanh Lịch (Light)', moTa: 'Nền ngà sáng, tương phản đậm rõ ngoài trời', bg: '#f9f7f1', accent: '#3b82f6', icon: 'ti-sun', metaColor: '#f9f7f1' },
+      { id: 'paper', ten: 'Sổ Giấy Kraft (Parchment)', moTa: 'Giấy mộc ngà vintage, cực kỳ êm mắt', bg: '#f4eee3', accent: '#945827', icon: 'ti-notebook', metaColor: '#f4eee3' },
+      { id: 'warm_gold', ten: 'Warm Vàng Mật Ong', moTa: 'Be ấm & Vàng Hổ Phách thư thái', bg: '#faf5eb', accent: '#d97706', icon: 'ti-sun-high', metaColor: '#faf5eb' },
+      { id: 'coffee', ten: 'Cà Phê Espresso (Mocha)', moTa: 'Nâu hạt cà phê & Caramel ấm cúng ca đêm', bg: '#161311', accent: '#c28e5c', icon: 'ti-coffee', metaColor: '#161311' },
+      { id: 'eink', ten: 'Mực E-Ink (Editorial)', moTa: 'Phong cách máy đọc sách, chống mỏi mắt', bg: '#f4f4f4', accent: '#1f2937', icon: 'ti-file-text', metaColor: '#f4f4f4' },
+      { id: 'sage', ten: 'Thảo Mộc Xô Thơm (Olive)', moTa: 'Rêu rừng trầm & Xanh thảo mộc tự nhiên', bg: '#111613', accent: '#52a373', icon: 'ti-leaf', metaColor: '#111613' }
     ];
 
     function layThemeHienTai() {

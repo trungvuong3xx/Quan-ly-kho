@@ -107,134 +107,134 @@
   --glow-color: rgba(245, 158, 11, 0.35);
 }
 
-/* THEME 2: Cyberpunk 2077 (OLED & Neon) */
-[data-theme="cyberpunk"] {
-  --bg-body: #08080c;
-  --surface: #12121c;
-  --surface-grad: linear-gradient(145deg, #181726 0%, #0c0b14 100%);
-  --surface-glass: rgba(18, 18, 28, 0.88);
-  --text-main: #f0f6fc;
-  --text-muted: #8b949e;
-  --text-lighter: #6e7681;
-  --primary: #00f3ff;
-  --success: #00ffaa;
-  --danger: #ff0055;
-  --warning: #ffe600;
-  --border: rgba(0, 243, 255, 0.22);
-  --border-card: rgba(255, 0, 127, 0.18);
-  --table-header-bg: #161524;
-  --table-row-hover: #222038;
-  --shadow-card: 0 8px 32px rgba(0, 243, 255, 0.12);
-  --shadow-pressed: 0 4px 15px rgba(255, 0, 127, 0.25);
-  --badge-bg: rgba(0, 243, 255, 0.12);
-  --neutral-hover: rgba(0, 243, 255, 0.08);
-  --neutral-solid: rgba(0, 243, 255, 0.15);
-  --overlay-bg: rgba(4, 4, 8, 0.8);
-  --glow-color: rgba(0, 243, 255, 0.45);
+/* THEME 2: Sổ Giấy Kraft (Vintage Parchment) */
+[data-theme="paper"] {
+  --bg-body: #f4eee3;
+  --surface: #fdfaf4;
+  --surface-grad: linear-gradient(145deg, #fdfaf4 0%, #f6efe2 100%);
+  --surface-glass: rgba(253, 250, 244, 0.9);
+  --text-main: #2b231c;
+  --text-muted: #736456;
+  --text-lighter: #9e8e7e;
+  --primary: #945827;
+  --success: #2e7d32;
+  --danger: #c62828;
+  --warning: #b45309;
+  --border: rgba(100, 75, 50, 0.18);
+  --border-card: rgba(100, 75, 50, 0.1);
+  --table-header-bg: #ece3d3;
+  --table-row-hover: #e4d8c4;
+  --shadow-card: 0 4px 16px rgba(80, 60, 40, 0.08);
+  --shadow-pressed: 0 2px 8px rgba(80, 60, 40, 0.05);
+  --badge-bg: rgba(148, 88, 39, 0.1);
+  --neutral-hover: rgba(100, 75, 50, 0.06);
+  --neutral-solid: rgba(100, 75, 50, 0.12);
+  --overlay-bg: rgba(43, 35, 28, 0.65);
+  --glow-color: rgba(148, 88, 39, 0.2);
 }
 
-/* THEME 3: Matrix Terminal (Hacker Green) */
-[data-theme="matrix"] {
-  --bg-body: #040805;
-  --surface: #0a140c;
-  --surface-grad: linear-gradient(145deg, #0e1d11 0%, #050b06 100%);
-  --surface-glass: rgba(10, 20, 12, 0.9);
-  --text-main: #00ff66;
-  --text-muted: #4ade80;
-  --text-lighter: #22c55e;
-  --primary: #00ff66;
-  --success: #00ff66;
-  --danger: #f43f5e;
-  --warning: #eab308;
-  --border: rgba(0, 255, 102, 0.25);
-  --border-card: rgba(0, 255, 102, 0.15);
-  --table-header-bg: #0d1a0f;
-  --table-row-hover: #142818;
-  --shadow-card: 0 8px 32px rgba(0, 255, 102, 0.12);
-  --shadow-pressed: 0 4px 15px rgba(0, 255, 102, 0.25);
-  --badge-bg: rgba(0, 255, 102, 0.12);
-  --neutral-hover: rgba(0, 255, 102, 0.08);
-  --neutral-solid: rgba(0, 255, 102, 0.15);
-  --overlay-bg: rgba(2, 6, 3, 0.82);
-  --glow-color: rgba(0, 255, 102, 0.4);
+/* THEME 3: Warm Vàng Mật Ong (Golden Sand) */
+[data-theme="warm_gold"] {
+  --bg-body: #faf5eb;
+  --surface: #ffffff;
+  --surface-grad: linear-gradient(145deg, #ffffff 0%, #fcf6eb 100%);
+  --surface-glass: rgba(255, 255, 255, 0.92);
+  --text-main: #2e2619;
+  --text-muted: #786850;
+  --text-lighter: #a09075;
+  --primary: #d97706;
+  --success: #15803d;
+  --danger: #dc2626;
+  --warning: #b45309;
+  --border: rgba(180, 130, 40, 0.18);
+  --border-card: rgba(180, 130, 40, 0.1);
+  --table-header-bg: #f4ecd8;
+  --table-row-hover: #ece1c7;
+  --shadow-card: 0 4px 16px rgba(180, 130, 40, 0.08);
+  --shadow-pressed: 0 2px 8px rgba(180, 130, 40, 0.05);
+  --badge-bg: rgba(217, 119, 6, 0.12);
+  --neutral-hover: rgba(217, 119, 6, 0.06);
+  --neutral-solid: rgba(217, 119, 6, 0.12);
+  --overlay-bg: rgba(46, 38, 25, 0.65);
+  --glow-color: rgba(217, 119, 6, 0.25);
 }
 
-/* THEME 4: Deep Arctic Ocean (Ice Blue) */
-[data-theme="ocean"] {
-  --bg-body: #080f1e;
-  --surface: #0f1c36;
-  --surface-grad: linear-gradient(145deg, #132445 0%, #0b152b 100%);
-  --surface-glass: rgba(15, 28, 54, 0.88);
-  --text-main: #f0f9ff;
-  --text-muted: #7dd3fc;
-  --text-lighter: #38bdf8;
-  --primary: #38bdf8;
-  --success: #34d399;
-  --danger: #fb7185;
-  --warning: #38bdf8;
-  --border: rgba(56, 189, 248, 0.22);
-  --border-card: rgba(56, 189, 248, 0.12);
-  --table-header-bg: #122242;
-  --table-row-hover: #1a2f5c;
-  --shadow-card: 0 8px 32px rgba(56, 189, 248, 0.12);
-  --shadow-pressed: 0 4px 15px rgba(56, 189, 248, 0.25);
-  --badge-bg: rgba(56, 189, 248, 0.12);
-  --neutral-hover: rgba(56, 189, 248, 0.08);
-  --neutral-solid: rgba(56, 189, 248, 0.15);
-  --overlay-bg: rgba(4, 8, 16, 0.8);
-  --glow-color: rgba(56, 189, 248, 0.4);
+/* THEME 4: Cà Phê Espresso (Dark Mocha) */
+[data-theme="coffee"] {
+  --bg-body: #161311;
+  --surface: #221d1a;
+  --surface-grad: linear-gradient(145deg, #28221e 0%, #1c1815 100%);
+  --surface-glass: rgba(34, 29, 26, 0.9);
+  --text-main: #f5eee6;
+  --text-muted: #a89a8f;
+  --text-lighter: #7a6e64;
+  --primary: #c28e5c;
+  --success: #4ade80;
+  --danger: #f87171;
+  --warning: #d97706;
+  --border: rgba(194, 142, 92, 0.18);
+  --border-card: rgba(194, 142, 92, 0.1);
+  --table-header-bg: #2a2420;
+  --table-row-hover: #362e2a;
+  --shadow-card: 0 8px 24px rgba(0, 0, 0, 0.35);
+  --shadow-pressed: 0 4px 12px rgba(0, 0, 0, 0.25);
+  --badge-bg: rgba(194, 142, 92, 0.15);
+  --neutral-hover: rgba(255, 255, 255, 0.06);
+  --neutral-solid: rgba(255, 255, 255, 0.1);
+  --overlay-bg: rgba(10, 8, 7, 0.78);
+  --glow-color: rgba(194, 142, 92, 0.3);
 }
 
-/* THEME 5: Volcano Magma (Lava Fire) */
-[data-theme="volcano"] {
-  --bg-body: #110d0e;
-  --surface: #1e1517;
-  --surface-grad: linear-gradient(145deg, #271b1e 0%, #171012 100%);
-  --surface-glass: rgba(30, 21, 23, 0.88);
-  --text-main: #fff1f2;
-  --text-muted: #fda4af;
-  --text-lighter: #f87171;
-  --primary: #f97316;
-  --success: #22c55e;
-  --danger: #ef4444;
-  --warning: #f97316;
-  --border: rgba(249, 115, 22, 0.25);
-  --border-card: rgba(239, 68, 68, 0.15);
-  --table-header-bg: #261a1d;
-  --table-row-hover: #362428;
-  --shadow-card: 0 8px 32px rgba(249, 115, 22, 0.12);
-  --shadow-pressed: 0 4px 15px rgba(249, 115, 22, 0.25);
-  --badge-bg: rgba(249, 115, 22, 0.12);
-  --neutral-hover: rgba(249, 115, 22, 0.08);
-  --neutral-solid: rgba(249, 115, 22, 0.15);
-  --overlay-bg: rgba(8, 5, 6, 0.82);
-  --glow-color: rgba(249, 115, 22, 0.45);
+/* THEME 5: Mực E-Ink (Editorial Monochrome) */
+[data-theme="eink"] {
+  --bg-body: #f4f4f4;
+  --surface: #ffffff;
+  --surface-grad: linear-gradient(145deg, #ffffff 0%, #f7f7f7 100%);
+  --surface-glass: rgba(255, 255, 255, 0.95);
+  --text-main: #111111;
+  --text-muted: #555555;
+  --text-lighter: #888888;
+  --primary: #1f2937;
+  --success: #15803d;
+  --danger: #b91c1c;
+  --warning: #4b5563;
+  --border: rgba(0, 0, 0, 0.15);
+  --border-card: rgba(0, 0, 0, 0.08);
+  --table-header-bg: #e8e8e8;
+  --table-row-hover: #dddddd;
+  --shadow-card: 0 2px 12px rgba(0, 0, 0, 0.06);
+  --shadow-pressed: 0 1px 4px rgba(0, 0, 0, 0.04);
+  --badge-bg: rgba(0, 0, 0, 0.08);
+  --neutral-hover: rgba(0, 0, 0, 0.05);
+  --neutral-solid: rgba(0, 0, 0, 0.1);
+  --overlay-bg: rgba(0, 0, 0, 0.6);
+  --glow-color: rgba(31, 41, 55, 0.15);
 }
 
-/* THEME 6: Tokyo Night (Purple Vaporwave) */
-[data-theme="tokyo"] {
-  --bg-body: #0d0a1a;
-  --surface: #18132d;
-  --surface-grad: linear-gradient(145deg, #20193c 0%, #120e24 100%);
-  --surface-glass: rgba(24, 19, 45, 0.88);
-  --text-main: #f5f3ff;
-  --text-muted: #c4b5fd;
-  --text-lighter: #a78bfa;
-  --primary: #a855f7;
-  --success: #2dd4bf;
-  --danger: #f43f5e;
-  --warning: #2dd4bf;
-  --border: rgba(168, 85, 247, 0.25);
-  --border-card: rgba(45, 212, 191, 0.15);
-  --table-header-bg: #1f1839;
-  --table-row-hover: #2c2352;
-  --shadow-card: 0 8px 32px rgba(168, 85, 247, 0.14);
-  --shadow-pressed: 0 4px 15px rgba(168, 85, 247, 0.25);
-  --badge-bg: rgba(168, 85, 247, 0.12);
-  --neutral-hover: rgba(168, 85, 247, 0.08);
-  --neutral-solid: rgba(168, 85, 247, 0.15);
-  --overlay-bg: rgba(6, 4, 13, 0.82);
-  --glow-color: rgba(168, 85, 247, 0.45);
+/* THEME 6: Thảo Mộc Xô Thơm (Sage & Olive) */
+[data-theme="sage"] {
+  --bg-body: #111613;
+  --surface: #1b231e;
+  --surface-grad: linear-gradient(145deg, #212b25 0%, #161d19 100%);
+  --surface-glass: rgba(27, 35, 30, 0.9);
+  --text-main: #e8f0eb;
+  --text-muted: #8fa597;
+  --text-lighter: #657b6d;
+  --primary: #52a373;
+  --success: #4ade80;
+  --danger: #f87171;
+  --warning: #a3e635;
+  --border: rgba(82, 163, 115, 0.2);
+  --border-card: rgba(82, 163, 115, 0.1);
+  --table-header-bg: #222d26;
+  --table-row-hover: #2c3a32;
+  --shadow-card: 0 8px 24px rgba(0, 0, 0, 0.35);
+  --shadow-pressed: 0 4px 12px rgba(0, 0, 0, 0.25);
+  --badge-bg: rgba(82, 163, 115, 0.15);
+  --neutral-hover: rgba(255, 255, 255, 0.06);
+  --neutral-solid: rgba(255, 255, 255, 0.1);
+  --overlay-bg: rgba(6, 10, 8, 0.78);
+  --glow-color: rgba(82, 163, 115, 0.3);
 }
 
 /* ============================================================
