@@ -10,6 +10,7 @@ let btpToastTimeout = null;
 
 let idPhienHienTaiBTP = null;
 let soLuongDaGuiHienTaiBTP = 0;
+let maQRVuaQuetBTP = "";
 
 const BTP_LICHSU_KEY = "btp_lich_su";
 const BTP_LICHSU_SO_NGAY_GIU = 30;
@@ -142,8 +143,9 @@ function nhapThuCongBTP(src) {
   if (demEl) demEl.textContent = "Đã quét: " + phienBTP.length + " mã";
   luuPhienDoDangBTP();
   capNhatLogBTP();
+  maQRVuaQuetBTP = data.rawQR || data.msp || "";
   const lockStatusEl = document.getElementById("btp-lock-status");
-  if (lockStatusEl) lockStatusEl.innerHTML = '<i class="ti ti-check-double" style="color:var(--success)"></i> ' + (typeof escapeHtml === "function" ? escapeHtml(data.rawQR || data.msp) : (data.rawQR || data.msp));
+  if (lockStatusEl) lockStatusEl.innerHTML = '<i class="ti ti-check-double" style="color:var(--success); margin-right:4px;"></i>' + (typeof escapeHtml === "function" ? escapeHtml(maQRVuaQuetBTP) : maQRVuaQuetBTP);
   showCanhBaoBTP("Đã thêm: " + (data.msp || data.rawQR));
 }
 window.nhapThuCongBTP = nhapThuCongBTP;
@@ -287,8 +289,9 @@ function khiQuetDuocMaBTP(result) {
   luuPhienDoDangBTP();
   capNhatLogBTP();
 
+  maQRVuaQuetBTP = data.rawQR || data.msp || "";
   const lockStatusEl = document.getElementById("btp-lock-status");
-  if (lockStatusEl) lockStatusEl.innerHTML = '<i class="ti ti-check-double" style="color:var(--success)"></i> ' + (typeof escapeHtml === "function" ? escapeHtml(data.rawQR || data.msp) : (data.rawQR || data.msp));
+  if (lockStatusEl) lockStatusEl.innerHTML = '<i class="ti ti-check-double" style="color:var(--success); margin-right:4px;"></i>' + (typeof escapeHtml === "function" ? escapeHtml(maQRVuaQuetBTP) : maQRVuaQuetBTP);
 }
 
 function luuPhienDoDangBTP() {
@@ -353,6 +356,7 @@ async function batDauPhienMoiBTP() {
   document.getElementById("btp-ketqua").style.display = "none";
   document.getElementById("btp-dem").textContent = "Đã quét: 0 mã";
   document.getElementById("btp-status").innerHTML = '<i class="ti ti-radar" style="color:var(--success)"></i> Đang quét Đợt 1...';
+  maQRVuaQuetBTP = "";
   const lockStatusEl = document.getElementById("btp-lock-status");
   if (lockStatusEl) lockStatusEl.textContent = "Chờ quét...";
 
@@ -714,6 +718,52 @@ function quetMoiBTP() {
   document.getElementById("btp-form").style.display = "block";
 }
 
+function saoChepMaQRBTP(ev) {
+  if (ev) ev.stopPropagation();
+  const textToCopy = (maQRVuaQuetBTP || "").trim();
+  if (!textToCopy) {
+    if (typeof showCanhBaoBTP === "function") showCanhBaoBTP("Chưa có mã QR nào để sao chép!", "warning");
+    return;
+  }
+
+  const copySuccess = () => {
+    const iconEl = document.getElementById("icon-copy-btp");
+    if (iconEl) {
+      iconEl.className = "ti ti-check";
+      iconEl.style.color = "var(--success)";
+      setTimeout(() => {
+        iconEl.className = "ti ti-copy";
+        iconEl.style.color = "";
+      }, 1500);
+    }
+    if (typeof showCanhBaoBTP === "function") showCanhBaoBTP("Đã sao chép: " + textToCopy, "success");
+  };
+
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(textToCopy).then(copySuccess).catch(() => fallbackCopy(textToCopy));
+  } else {
+    fallbackCopy(textToCopy);
+  }
+
+  function fallbackCopy(str) {
+    try {
+      const textarea = document.createElement("textarea");
+      textarea.value = str;
+      textarea.style.position = "fixed";
+      textarea.style.opacity = "0";
+      textarea.style.left = "-9999px";
+      document.body.appendChild(textarea);
+      textarea.select();
+      document.execCommand("copy");
+      document.body.removeChild(textarea);
+      copySuccess();
+    } catch (e) {
+      if (typeof showCanhBaoBTP === "function") showCanhBaoBTP("Lỗi sao chép: " + (e.message || e), "error");
+    }
+  }
+}
+window.saoChepMaQRBTP = saoChepMaQRBTP;
+
 let timerCanhBaoBTP = null;
 function showCanhBaoBTP(text, type = "error") {
   if (typeof showCanhBao === "function") {
@@ -775,6 +825,17 @@ async function khoiPhucBTP(state) {
   document.getElementById("btp-ketqua").style.display = "none";
   document.getElementById("btp-dem").textContent = "Đã quét: " + phienBTP.length + " mã";
   document.getElementById("btp-status").innerHTML = '<i class="ti ti-radar" style="color:var(--success)"></i> Đang quét Đợt ' + demSoDotBTP + '...';
+
+  const lastItemBTP = phienBTP.length > 0 ? phienBTP[phienBTP.length - 1] : null;
+  maQRVuaQuetBTP = lastItemBTP ? (lastItemBTP.rawQR || lastItemBTP.msp || "") : "";
+  const lockStatusEl = document.getElementById("btp-lock-status");
+  if (lockStatusEl) {
+    if (maQRVuaQuetBTP) {
+      lockStatusEl.innerHTML = '<i class="ti ti-check-double" style="color:var(--success); margin-right:4px;"></i>' + (typeof escapeHtml === "function" ? escapeHtml(maQRVuaQuetBTP) : maQRVuaQuetBTP);
+    } else {
+      lockStatusEl.textContent = "Chờ quét...";
+    }
+  }
 
   capNhatLogBTP();
 
