@@ -621,7 +621,7 @@ function taoHangKetQuaBTP(danhSach, isReadonly = false) {
   const danhSachGom = Object.values(tongGomLoaiMa).sort((a, b) => {
     const cmpMsp = String(a.msp || "").localeCompare(String(b.msp || ""), undefined, { numeric: true, sensitivity: 'base' });
     if (cmpMsp !== 0) return cmpMsp;
-    return (parseFloat(a.soMat) || 0) - (parseFloat(b.soMat) || 0);
+    return (parseFloat(b.soMat) || 0) - (parseFloat(a.soMat) || 0);
   });
 
   danhSachGom.forEach(item => {
