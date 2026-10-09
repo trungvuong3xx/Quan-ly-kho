@@ -355,11 +355,14 @@ function tongHopBTPSheet(sheetId, ngayLoc, phienLoc) {
   }
 
   var rowsTongHop = [];
-  var groupKeys = Object.keys(gomData);
+  var groupList = Object.keys(gomData).map(function(k) { return gomData[k]; }).sort(function(a, b) {
+    var cmpEM = String(a.maEM || "").localeCompare(String(b.maEM || ""), undefined, { numeric: true, sensitivity: 'base' });
+    if (cmpEM !== 0) return cmpEM;
+    return (parseFloat(b.matTam) || 0) - (parseFloat(a.matTam) || 0);
+  });
 
-  for (var k = 0; k < groupKeys.length; k++) {
-    var gKey = groupKeys[k];
-    var item = gomData[gKey];
+  for (var k = 0; k < groupList.length; k++) {
+    var item = groupList[k];
 
     var maEM = item.maEM;
     var mspERP = item.mspERP;
@@ -370,7 +373,9 @@ function tongHopBTPSheet(sheetId, ngayLoc, phienLoc) {
 
     // Kiểm tra đơn này có CẢ tấm hoàn chỉnh VÀ kiện lẻ không
     var coNguyenTam = item.nguyenTamCount > 0;
-    var soKeoKeys = Object.keys(item.kienMap);
+    var soKeoKeys = Object.keys(item.kienMap).sort(function(a, b) {
+      return (parseFloat(b) || 0) - (parseFloat(a) || 0);
+    });
     var coKienLe = soKeoKeys.length > 0;
 
     if (coNguyenTam) {
