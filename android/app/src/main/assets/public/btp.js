@@ -618,13 +618,23 @@ function taoHangKetQuaBTP(danhSach, isReadonly = false) {
     </div>`;
 
   let hangGom = "";
-  Object.values(tongGomLoaiMa).forEach(item => {
-    hangGom += `
+  const danhSachGom = Object.values(tongGomLoaiMa).sort((a, b) => {
+    const cmpMsp = String(a.msp || "").localeCompare(String(b.msp || ""), undefined, { numeric: true, sensitivity: 'base' });
+    if (cmpMsp !== 0) return cmpMsp;
+    return (parseFloat(a.soMat) || 0) - (parseFloat(b.soMat) || 0);
+  });
+
+  danhSachGom.forEach(item => {
+    const mspStr = String(item.msp || "").toLowerCase();
+    const soMatStr = String(item.soMat || "").toLowerCase();
+    if (!tuKhoa || mspStr.includes(tuKhoa) || soMatStr.includes(tuKhoa)) {
+      hangGom += `
     <div style="display:flex; width: 100%; box-sizing: border-box; align-items:center; padding:10px; border-bottom:1px solid var(--line-soft); font-size:14px;">
       <div style="flex:1; font-weight:600;">${item.msp}</div>
       <div style="flex:2; text-align:center; font-weight:700;">${item.soMat}</div>
       <div style="flex:1; text-align:right; font-weight:700; color:var(--success);">${item.soLuong}</div>
     </div>`;
+    }
   });
 
   let footGom = `

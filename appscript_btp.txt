@@ -37,6 +37,101 @@ function tongHopBTP() {
   chayTongHopBTP();
 }
 
+// Tách số mắt (sau chữ "x" thứ 2) và chiều dài từ chuỗi quy cách QC
+function tachSoMatVaChieuDaiQC(qcV) {
+  var matVal = 0;
+  var daiVal = 0;
+  if (!qcV) return { mat: 0, dai: 0 };
+  
+  var partsQC = String(qcV).trim().split(/\s+[xX]\s+/);
+  if (partsQC.length < 3) {
+    partsQC = String(qcV).trim().split(/\s*[xX]\s*/);
+  }
+
+  if (partsQC.length >= 3) {
+    // Lấy phần sau chữ "x" thứ 2 (số mắt / số kèo MD)
+    var valStr = partsQC[2].replace(/[^0-9\.]/g, "");
+    matVal = parseFloat(valStr) || 0;
+  } else {
+    var nums = String(qcV).match(/\d+/g);
+    if (nums && nums.length >= 2) {
+      matVal = parseFloat(nums[nums.length - 2]) || 0;
+    }
+  }
+
+  if (partsQC.length >= 4) {
+    // Lấy phần sau chữ "x" thứ 3 (chiều dài)
+    var daiStr = partsQC[3].replace(/[^0-9\.]/g, "");
+    daiVal = parseFloat(daiStr) || 0;
+  }
+
+  return { mat: matVal, dai: daiVal };
+}
+
+// Tìm đúng quy cách TẤM NGUYÊN phù hợp dựa trên mã EM và số kèo (so thêm chiều dài sau chữ "x" thứ 3)
+function timInfoQCBTP(mapQC, maEM, soKeo) {
+  var key = String(maEM || "").trim().toUpperCase();
+  var qcEntry = mapQC[key];
+  if (!qcEntry) return null;
+
+  var targetSoKeo = parseFloat(soKeo) || 0;
+
+  // 1. Kiểm tra xem soKeo tương ứng với dòng nào trong QC để tìm ra CHIỀU DÀI (sau chữ "x" thứ 3)
+  var matchedRow = null;
+  if (targetSoKeo > 0 && qcEntry.rowByMat && qcEntry.rowByMat[targetSoKeo]) {
+    matchedRow = qcEntry.rowByMat[targetSoKeo];
+  } else if (targetSoKeo > 0 && qcEntry.rows) {
+    for (var r = 0; r < qcEntry.rows.length; r++) {
+      if (qcEntry.rows[r].mat === targetSoKeo) {
+        matchedRow = qcEntry.rows[r];
+        break;
+      }
+    }
+  }
+
+  // 2. Nếu tìm được dòng tương ứng với soKeo:
+  // Lấy TẤM NGUYÊN có CÙNG CHIỀU DÀI (sau chữ "x" thứ 3) với dòng đó!
+  // (Ví dụ: kiện lẻ 320md dài 505 sẽ lấy tấm nguyên 960md dài 505)
+  // (Ví dụ: kiện lẻ 125md dài 1201 sẽ lấy tấm nguyên 250md dài 1201)
+  // (Ví dụ: tem 200md dài 1080 sẽ lấy dòng 200md dài 1080 vì chiều dài 1080 không có dòng nào lớn hơn)
+  if (matchedRow) {
+    var keyDai = String(matchedRow.dai);
+    if (qcEntry.nguyenTamByDai && qcEntry.nguyenTamByDai[keyDai]) {
+      return qcEntry.nguyenTamByDai[keyDai];
+    }
+  }
+
+  // 3. Nếu soKeo là kiện lẻ không có trong QC (ví dụ kiện lẻ bất kỳ):
+  // Tìm tấm nguyên có mat >= soKeo nhỏ nhất
+  if (targetSoKeo > 0 && qcEntry.rows && qcEntry.rows.length > 0) {
+    var bestMatch = null;
+    for (var r = 0; r < qcEntry.rows.length; r++) {
+      var item = qcEntry.rows[r];
+      if (item.mat >= targetSoKeo) {
+        if (!bestMatch || item.mat < bestMatch.mat) {
+          bestMatch = item;
+        }
+      }
+    }
+    if (bestMatch) {
+      var keyDaiBest = String(bestMatch.dai);
+      if (qcEntry.nguyenTamByDai && qcEntry.nguyenTamByDai[keyDaiBest]) {
+        return qcEntry.nguyenTamByDai[keyDaiBest];
+      }
+      return bestMatch;
+    }
+  }
+
+  // 4. Fallback: trả về dòng mặc định / lớn nhất của mã EM
+  return {
+    maEM: qcEntry.maEM,
+    mspERP: qcEntry.mspERP,
+    qcV: qcEntry.qcV,
+    kgAA: qcEntry.kgAA,
+    mat: qcEntry.matMax
+  };
+}
+
 function tongHopBTPSheet(ngayLoc, phienLoc) {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   var sheetQC = ss.getSheetByName("QC");
@@ -67,32 +162,64 @@ function tongHopBTPSheet(ngayLoc, phienLoc) {
         var qcV = String(row[21] || "").trim();
         var kgAA = parseFloat(row[26]) || 0;
 
-        var matMaxVal = 0;
-        if (qcV) {
-          var partsQC = qcV.split(/\s+[xX]\s+/);
-          if (partsQC.length >= 3) {
-            var valStr = partsQC[2].replace(/[^0-9\.]/g, "");
-            matMaxVal = parseFloat(valStr) || 0;
-          } else {
-            var nums = qcV.match(/\d+/g);
-            if (nums && nums.length >= 2) {
-              matMaxVal = parseFloat(nums[nums.length - 2]) || 0;
-            }
+        var tach = tachSoMatVaChieuDaiQC(qcV);
+        var matVal = tach.mat;
+        var daiVal = tach.dai;
+
+        if (!mapQC[maEM]) {
+          mapQC[maEM] = {
+            maEM: maEM,
+            mspERP: mspFinal,
+            qcV: qcV,
+            kgAA: kgAA,
+            matMax: matVal,
+            rows: [],
+            // Map theo chiều dài (sau chữ "x" thứ 3): key = daiVal
+            // Lưu dòng có số mắt (sau chữ "x" thứ 2) LỚN NHẤT trong cùng chiều dài -> TẤM NGUYÊN
+            nguyenTamByDai: {},
+            // Map theo số mắt trực tiếp để tra chiều dài
+            rowByMat: {}
+          };
+        }
+
+        var rowItem = {
+          maEM: maEM,
+          mspERP: mspFinal,
+          qcV: qcV,
+          kgAA: kgAA,
+          mat: matVal,
+          dai: daiVal
+        };
+        mapQC[maEM].rows.push(rowItem);
+
+        if (matVal > 0) {
+          if (!mapQC[maEM].rowByMat[matVal]) {
+            mapQC[maEM].rowByMat[matVal] = rowItem;
           }
         }
 
-        if (!mapQC[maEM]) {
-          mapQC[maEM] = { maEM: maEM, mspERP: mspFinal, qcV: qcV, kgAA: kgAA, matMax: matMaxVal };
+        // Xác định TẤM NGUYÊN cho từng chiều dài (dòng có mat lớn nhất trong cùng chiều dài dai)
+        var keyDai = String(daiVal);
+        if (!mapQC[maEM].nguyenTamByDai[keyDai]) {
+          mapQC[maEM].nguyenTamByDai[keyDai] = rowItem;
         } else {
-          if (matMaxVal > mapQC[maEM].matMax) {
-            mapQC[maEM].matMax = matMaxVal;
-            if (qcV) mapQC[maEM].qcV = qcV;
-            if (kgAA > 0) mapQC[maEM].kgAA = kgAA;
-          } else if (matMaxVal === mapQC[maEM].matMax && kgAA > 0 && mapQC[maEM].kgAA === 0) {
-            mapQC[maEM].kgAA = kgAA;
+          var currentMax = mapQC[maEM].nguyenTamByDai[keyDai];
+          if (matVal > currentMax.mat) {
+            mapQC[maEM].nguyenTamByDai[keyDai] = rowItem;
+          } else if (matVal === currentMax.mat && kgAA > 0 && currentMax.kgAA === 0) {
+            mapQC[maEM].nguyenTamByDai[keyDai] = rowItem;
           }
-          if (mspFinal && !mapQC[maEM].mspERP) mapQC[maEM].mspERP = mspFinal;
         }
+
+        // Dòng mặc định / lớn nhất toàn đơn
+        if (matVal > mapQC[maEM].matMax) {
+          mapQC[maEM].matMax = matVal;
+          if (qcV) mapQC[maEM].qcV = qcV;
+          if (kgAA > 0) mapQC[maEM].kgAA = kgAA;
+        } else if (matVal === mapQC[maEM].matMax && kgAA > 0 && mapQC[maEM].kgAA === 0) {
+          mapQC[maEM].kgAA = kgAA;
+        }
+        if (mspFinal && !mapQC[maEM].mspERP) mapQC[maEM].mspERP = mspFinal;
       }
     }
   }
@@ -126,13 +253,25 @@ function tongHopBTPSheet(ngayLoc, phienLoc) {
     var soKeo = parseFloat(qrRow[2]) || 0;
     if (!maEM || soKeo <= 0) continue;
 
-    var infoQC = mapQC[maEM] || mapQC[maEM.trim().toUpperCase()] || {};
-    var matTam = infoQC.matMax || 960;
+    // Tìm quy cách QC tương ứng dựa trên maEM và soKeo (sau dấu "-")
+    var infoQC = timInfoQCBTP(mapQC, maEM, soKeo) || {};
+    var matTam = infoQC.mat || 960;
     var isNguyenTam = (soKeo >= matTam && matTam > 0) || (soKeo === 960);
 
-    if (!gomData[maEM]) {
-      gomData[maEM] = {
+    var qcV = infoQC.qcV || "";
+    var mspERP = infoQC.mspERP || maEM;
+    var kgAA = infoQC.kgAA || 0;
+    // Khóa nhóm phân biệt theo cả mã EM và quy cách để tách riêng các quy cách khác nhau
+    var groupKey = maEM + "__" + (qcV || matTam);
+
+    if (!gomData[groupKey]) {
+      gomData[groupKey] = {
+        groupKey: groupKey,
         maEM: maEM,
+        mspERP: mspERP,
+        qcV: qcV,
+        kgAA: kgAA,
+        matTam: matTam,
         nguyenTamCount: 0,
         nguyenTamSize: matTam,
         kienMap: {},
@@ -141,29 +280,29 @@ function tongHopBTPSheet(ngayLoc, phienLoc) {
     }
 
     if (isNguyenTam) {
-      gomData[maEM].nguyenTamCount += 1;
-      gomData[maEM].nguyenTamSize = soKeo;
+      gomData[groupKey].nguyenTamCount += 1;
+      gomData[groupKey].nguyenTamSize = soKeo;
     } else {
-      if (!gomData[maEM].kienMap[soKeo]) {
-        gomData[maEM].kienMap[soKeo] = 0;
+      if (!gomData[groupKey].kienMap[soKeo]) {
+        gomData[groupKey].kienMap[soKeo] = 0;
       }
-      gomData[maEM].kienMap[soKeo] += 1;
-      gomData[maEM].tongKienEyes += soKeo;
+      gomData[groupKey].kienMap[soKeo] += 1;
+      gomData[groupKey].tongKienEyes += soKeo;
     }
   }
 
   var rowsTongHop = [];
-  var emKeys = Object.keys(gomData);
+  var groupKeys = Object.keys(gomData);
 
-  for (var k = 0; k < emKeys.length; k++) {
-    var maEM = emKeys[k];
-    var item = gomData[maEM];
-    var infoQC = mapQC[maEM] || mapQC[maEM.trim().toUpperCase()] || {};
+  for (var k = 0; k < groupKeys.length; k++) {
+    var gKey = groupKeys[k];
+    var item = gomData[gKey];
 
-    var mspERP = infoQC.mspERP || maEM;
-    var qcV = infoQC.qcV || "";
-    var kgAA = infoQC.kgAA || 0;
-    var matTam = infoQC.matMax || item.nguyenTamSize || 960;
+    var maEM = item.maEM;
+    var mspERP = item.mspERP;
+    var qcV = item.qcV;
+    var kgAA = item.kgAA;
+    var matTam = item.matTam || item.nguyenTamSize || 960;
     var maSoDonOnly = maEM.replace(/^EM/i, "");
 
     // Kiểm tra đơn này có CẢ tấm hoàn chỉnh VÀ kiện lẻ không
