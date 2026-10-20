@@ -525,17 +525,7 @@ function batchSubmitEntryX5(payload) {
       const baoCol = CONFIG.AF_COL_INDEX + (day - 1) * 8;
 
       const mspData = sheet.getRange(6, CONFIG.MSP_COL_IN_MONTH_SHEET, 639, 1).getValues();
-      const dataRange = sheet.getRange(6, baoCol, 639, 2);
-      const dataValues = dataRange.getValues();
-
-      // TỐI ƯU HÓA: Chỉ đọc/ghi 639 Notes khi thực sự có item chứa ghiChu
-      const hasAnyGhiChu = dateItems.some(function (it) { return !!it.ghiChu; });
-      let noteRange = null;
-      let noteValues = null;
-      if (hasAnyGhiChu) {
-        noteRange = sheet.getRange(6, baoCol + 1, 639, 1);
-        noteValues = noteRange.getNotes();
-      }
+      const dataValues = sheet.getRange(6, baoCol, 639, 2).getValues();
 
       const mspMapNormal = {};
       for (let i = 0; i < mspData.length; i++) {
@@ -547,7 +537,8 @@ function batchSubmitEntryX5(payload) {
         }
       }
 
-      let hasChanges = false;
+      // Theo dõi các dòng thực sự bị thay đổi
+      const changedRowsMap = {};
 
       for (let i = 0; i < dateItems.length; i++) {
         const item = dateItems[i];
@@ -578,18 +569,30 @@ function batchSubmitEntryX5(payload) {
            continue;
         }
 
-        dataValues[idx][0] = Math.round(baoResult.val * 100) / 100;
-        dataValues[idx][1] = Math.round(kgResult.val * 100) / 100;
-        if (item.ghiChu && noteValues) noteValues[idx][0] = item.ghiChu;
-        hasChanges = true;
+        const newBao = Math.round(baoResult.val * 100) / 100;
+        const newKg = Math.round(kgResult.val * 100) / 100;
+        dataValues[idx][0] = newBao;
+        dataValues[idx][1] = newKg;
 
-        results.push({ key: item.key, msp: item.msp, ten: item.ten, success: true, message: 'Đã ghi vào sheet ' + sheetName + ', dòng ' + (6 + idx) });
+        const actualRowNum = 6 + idx;
+        changedRowsMap[actualRowNum] = {
+          row: actualRowNum,
+          bao: newBao,
+          kg: newKg,
+          ghiChu: item.ghiChu || ""
+        };
+
+        results.push({ key: item.key, msp: item.msp, ten: item.ten, success: true, message: 'Đã ghi vào sheet ' + sheetName + ', dòng ' + actualRowNum });
       }
 
-      if (hasChanges) {
-        dataRange.setValues(dataValues);
-        if (hasAnyGhiChu && noteRange && noteValues) {
-          noteRange.setNotes(noteValues);
+      // Ghi CHÍNH XÁC từng dòng thay đổi - TUYỆT ĐỐI KHÔNG ghi đè toàn bộ cột làm mất công thức các dòng tổng (như dòng 537, 541...)
+      const changedKeys = Object.keys(changedRowsMap);
+      for (let k = 0; k < changedKeys.length; k++) {
+        const rNum = Number(changedKeys[k]);
+        const rData = changedRowsMap[rNum];
+        sheet.getRange(rNum, baoCol, 1, 2).setValues([[rData.bao, rData.kg]]);
+        if (rData.ghiChu) {
+          sheet.getRange(rNum, baoCol + 1).setNote(rData.ghiChu);
         }
       }
     }

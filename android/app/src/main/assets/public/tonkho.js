@@ -36,26 +36,86 @@ function tkGhiNhanTanSuat(ten) {
   } catch (e) {}
 }
 
-// Lọc gợi ý tìm kiếm theo cơ chế chuẩn từ sidebar.txt & NX (2).txt:
-// 1. Tách từ khoá, tìm kiếm linh hoạt (không phân biệt hoa/thường, có dấu/không dấu, thứ tự từ).
-// 2. Lọc vùng: Nếu 1 mã MSP có bản ghi ở kho NORMAL thì loại bỏ bản ghi FOR trùng (trừ khi là Nhập FOR hoặc MSP chỉ có ở FOR).
-// 3. Sắp xếp ưu tiên: Theo lịch sử chọn (freqMap) -> Tần suất lượt dùng từ sheet (count) -> Độ khớp cụm -> Bảng chữ cái.
+// Lọc gợi ý tìm kiếm thông minh theo cơ chế chấm điểm ưu tiên (Tier Scoring Engine):
+// 1. Ưu tiên TUYỆT ĐỐI cho TÊN Quy Cách (khớp phân đoạn / bắt đầu từ / chứa từ).
+// 2. Chặn tìm kiếm chuỗi ngắn (< 4 số) ở giữa mã MSP để không bị dính tiền tố trùng lặp (ví dụ 11130...).
+// 3. Cho phép tìm theo MSP khi gõ đủ 4 số cuối hoặc khớp trọn vẹn mã MSP.
+// 4. Tần suất (lịch sử thiết bị freqMap & số lượt sheet count) dùng làm điểm cộng phụ, không đè độ khớp tên.
+// 5. Lọc vùng NORMAL/FOR chuẩn theo quy tắc dự án.
 function tkLocDanhSach(list, query, gioiHan = 30, isLoaiXuat = false) {
   if (!query || !query.trim()) return [];
   const { norm: qNorm, clean: qClean } = tkChuanHoaTimKiem(query);
-
-  const wordsClean = qClean.split(/\s+/).filter(w => w.length > 0);
-  if (wordsClean.length === 0) return [];
+  const qWords = qClean.split(/\s+/).filter(Boolean);
+  if (qWords.length === 0) return [];
 
   const freqMap = tkLayLichSuTanSuat();
+  const scoredItems = [];
 
-  const matched = list.filter(item => {
-    const { clean: tenClean } = tkChuanHoaTimKiem(item.ten);
-    const { clean: mspClean } = tkChuanHoaTimKiem(item.msp);
-    const fullClean = tenClean + " " + mspClean;
+  for (let i = 0; i < list.length; i++) {
+    const item = list[i];
+    const { norm: tenNorm, clean: tenClean } = tkChuanHoaTimKiem(item.ten);
+    const { norm: mspNorm, clean: mspClean } = tkChuanHoaTimKiem(item.msp);
 
-    return wordsClean.every(w => fullClean.includes(w));
-  });
+    let score = 0;
+
+    if (qWords.length === 1) {
+      // Query đơn từ (ví dụ: "30", "380", "pe")
+      const singleQ = qWords[0];
+      const tokens = tenNorm.split(/[\s/_\-]+/).filter(Boolean);
+      const tokenExact = tokens.some(t => t === singleQ);
+      const tokenStarts = tokens.some(t => t.startsWith(singleQ));
+
+      if (tenNorm === singleQ || tenClean === singleQ) {
+        score += 10000; // Khớp chính xác cả tên
+      } else if (tokenExact) {
+        score += 8500;  // Khớp chính xác phân đoạn/từ riêng (ví dụ: /30 trong 365d/30)
+      } else if (tenNorm.startsWith(singleQ) || tenClean.startsWith(singleQ)) {
+        score += 8000;  // Tên bắt đầu bằng từ khóa (ví dụ: 300D/...)
+      } else if (tokenStarts) {
+        score += 7500;  // Phân đoạn bắt đầu bằng từ khóa (ví dụ: 30EX, 30B)
+      } else if (tenClean.includes(singleQ)) {
+        score += 3000;  // Chứa ở giữa từ (ví dụ: 330Đen)
+      }
+    } else {
+      // Query đa từ (ví dụ: "380 30", "380/30", "pe trang")
+      const allInTen = qWords.every(w => tenClean.includes(w));
+      if (allInTen) {
+        score += 7000;
+        if (tenClean.includes(qClean)) {
+          score += 2000; // Khớp đúng thứ tự liền nhau
+        }
+        if (tenClean.startsWith(qClean)) {
+          score += 1000;
+        }
+      }
+    }
+
+    // Khớp theo mã MSP (chỉ xét khi TÊN chưa khớp để không làm nhiễu kết quả quy cách)
+    if (score === 0) {
+      if (mspNorm === qNorm || mspClean === qClean) {
+        score += 5000; // Khớp chính xác toàn bộ mã MSP
+      } else if (mspNorm.startsWith(qNorm)) {
+        score += 2000; // Khớp tiền tố mã MSP
+      } else if (qNorm.length >= 4 && mspNorm.endsWith(qNorm)) {
+        score += 1500; // Khớp đuôi mã MSP (4 số cuối)
+      } else if (qNorm.length >= 4 && mspNorm.includes(qNorm)) {
+        score += 800;  // Chứa chuỗi nếu query đủ dài (>= 4 ký tự)
+      }
+    }
+
+    if (score > 0) {
+      // Điểm cộng phụ từ tần suất sử dụng (chỉ để xếp hạng trong cùng tier)
+      const localCount = Number(freqMap[item.ten] || 0);
+      const sheetCount = Number(item.count || item.countThuong || item.countFor || 0);
+      score += Math.min(localCount * 25, 400) + Math.min(sheetCount, 400);
+
+      scoredItems.push({ item, score });
+    }
+  }
+
+  scoredItems.sort((a, b) => b.score - a.score || String(a.item.ten).localeCompare(String(b.item.ten), 'vi'));
+
+  const matched = scoredItems.map(s => s.item);
 
   // Quy tắc lọc vùng theo sidebar.txt:
   let filteredResult;
@@ -65,29 +125,6 @@ function tkLocDanhSach(list, query, gioiHan = 30, isLoaiXuat = false) {
   } else {
     filteredResult = matched;
   }
-
-  // Quy tắc sắp xếp ưu tiên theo sidebar.txt & NX (2).txt:
-  filteredResult.sort((a, b) => {
-    // 1. Lịch sử tra cứu chọn nhiều trên thiết bị
-    const localA = freqMap[a.ten] || 0;
-    const localB = freqMap[b.ten] || 0;
-    if (localA !== localB) return localB - localA;
-
-    // 2. Tần suất số lượt sử dụng từ sheet (count / countThuong / countFor)
-    const countA = Number(a.count || a.countThuong || a.countFor || 0);
-    const countB = Number(b.count || b.countThuong || b.countFor || 0);
-    if (countA !== countB) return countB - countA;
-
-    // 3. Độ khớp nguyên cụm từ khoá
-    const { norm: normA } = tkChuanHoaTimKiem(a.ten);
-    const { norm: normB } = tkChuanHoaTimKiem(b.ten);
-    const exactA = normA.includes(qNorm) ? 1 : 0;
-    const exactB = normB.includes(qNorm) ? 1 : 0;
-    if (exactA !== exactB) return exactB - exactA;
-
-    // 4. Theo thứ tự bảng chữ cái tiếng Việt
-    return String(a.ten).localeCompare(String(b.ten), 'vi');
-  });
 
   return filteredResult.slice(0, gioiHan);
 }

@@ -784,10 +784,10 @@
       }
       if (State.selectedVung === 'FOR') {
         el.className = 'vung-indicator for';
-        el.innerHTML = '⚡ VÙNG XUẤT: CHỈ X1 (FOR)';
+        el.innerHTML = '📦 VÙNG XUẤT: CHỈ X1 ';
       } else {
         el.className = 'vung-indicator thuong';
-        el.innerHTML = '📦 VÙNG XUẤT: CHỈ X5 (THƯỜNG)';
+        el.innerHTML = '📦 VÙNG XUẤT: CHỈ X5 ';
       }
     },
 
