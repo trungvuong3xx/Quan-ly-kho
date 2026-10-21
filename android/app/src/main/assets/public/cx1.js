@@ -225,15 +225,16 @@ async function tiepTucKhoiTaoCX1(cheDo = "quet") {
   document.getElementById("cx1-cam").style.display = "block";
   document.getElementById("cx1-ketqua").style.display = "none";
   document.getElementById("cx1-dem").textContent = "Đã quét: 0 mã";
-  document.getElementById("cx1-status").textContent = "Đang quét Đợt 1...";
-  document.getElementById("btn-flash-cx1").style.background = "var(--neutral)";
-  document.getElementById("btn-flash-cx1").style.color = "var(--cream)";
-  document.getElementById("btn-flash-cx1").textContent = "Bật đèn pin";
+  const statusEl = document.getElementById("cx1-status");
+  if (statusEl) statusEl.innerHTML = '<div class="cam-status-dot"></div><span>Đợt 1</span>';
   capNhatLogCX1();
 
   const btnToggle = document.getElementById("btn-dung-tieptuc-cx1");
-  btnToggle.textContent = "Dừng quét";
-  btnToggle.className = "btn btn-red btn-full";
+  if (btnToggle) {
+    btnToggle.innerHTML = '<i class="ti ti-player-pause-filled"></i>';
+    btnToggle.classList.remove("paused");
+    btnToggle.title = "Dừng quét";
+  }
 
   try {
     const cx1Vid = document.getElementById("cx1-reader");
@@ -260,10 +261,14 @@ async function tiepTucKhoiTaoCX1(cheDo = "quet") {
 
 function dungCX1() {
   dangQuetCX1 = false;
-  // Giữ nguyên phần cứng camera chạy ngầm để bật lại tức thì
-  // dungCameraFast("cx1-reader", zxingReaderCX1);
-  // zxingReaderCX1 = null;
-  document.getElementById("cx1-status").textContent = "Đã dừng Đợt " + demSoDot;
+  const statusEl = document.getElementById("cx1-status");
+  if (statusEl) statusEl.innerHTML = '<div class="cam-status-dot paused"></div><span>Đợt ' + (demSoDot || 1) + '</span>';
+  const btnToggle = document.getElementById("btn-dung-tieptuc-cx1");
+  if (btnToggle) {
+    btnToggle.innerHTML = '<i class="ti ti-player-play-filled"></i>';
+    btnToggle.classList.add("paused");
+    btnToggle.title = "Quét tiếp";
+  }
 }
 
 async function tiepTucCX1() {
@@ -271,10 +276,14 @@ async function tiepTucCX1() {
   demSoDot = maxDot > 0 ? maxDot + 1 : 1;
   dangQuetCX1 = true;
   denPinBat = false;
-  document.getElementById("cx1-status").textContent = "Đang quét Đợt " + demSoDot + "...";
-  document.getElementById("btn-flash-cx1").style.background = "var(--neutral)";
-  document.getElementById("btn-flash-cx1").style.color = "var(--cream)";
-  document.getElementById("btn-flash-cx1").textContent = "Bật đèn pin";
+  const statusEl = document.getElementById("cx1-status");
+  if (statusEl) statusEl.innerHTML = '<div class="cam-status-dot"></div><span>Đợt ' + demSoDot + '</span>';
+  const btnToggle = document.getElementById("btn-dung-tieptuc-cx1");
+  if (btnToggle) {
+    btnToggle.innerHTML = '<i class="ti ti-player-pause-filled"></i>';
+    btnToggle.classList.remove("paused");
+    btnToggle.title = "Dừng quét";
+  }
   try {
     const cx1Vid = document.getElementById("cx1-reader");
     const cx1Track = cx1Vid && cx1Vid.srcObject ? cx1Vid.srcObject.getVideoTracks()[0] : null;
@@ -299,15 +308,10 @@ async function tiepTucCX1() {
 }
 
 function toggleDungTiepTuc() {
-  const btn = document.getElementById("btn-dung-tieptuc-cx1");
   if (dangQuetCX1) {
     dungCX1();
-    btn.textContent = "Quét tiếp";
-    btn.className = "btn btn-blue btn-full";
   } else {
     tiepTucCX1();
-    btn.textContent = "Dừng quét";
-    btn.className = "btn btn-red btn-full";
   }
 }
 

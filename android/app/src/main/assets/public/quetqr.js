@@ -117,15 +117,16 @@ async function batDauQuetQR() {
   document.body.classList.add("cam-active");
 
   const statusEl = document.getElementById("qr-status");
-  if (statusEl) statusEl.textContent = "🟢 " + loaiQuetQR + " | Đợt " + demSoDotQR;
+  if (statusEl) statusEl.innerHTML = '<div class="cam-status-dot"></div><span>Đợt ' + demSoDotQR + '</span>';
 
   const demEl = document.getElementById("qr-dem");
   if (demEl) demEl.textContent = "Đã quét: " + phienQuetQR.length + " bao";
 
   const btnToggle = document.getElementById("btn-dung-tieptuc-qr");
   if (btnToggle) {
-    btnToggle.textContent = "Dừng quét";
-    btnToggle.className = "btn btn-red btn-full";
+    btnToggle.innerHTML = '<i class="ti ti-player-pause-filled"></i>';
+    btnToggle.classList.remove("paused");
+    btnToggle.title = "Dừng quét";
   }
 
   capNhatLogQR();
@@ -220,10 +221,67 @@ function khiQuetDuocMaQR(result) {
   luuPhienDoDangQR();
   capNhatLogQR();
 
+  maQRVuaQuetQR = data.id || rawText;
   const lockStatusEl = document.getElementById("qr-lock-status");
-  if (lockStatusEl) lockStatusEl.innerHTML = '<i class="ti ti-check-double" style="color:var(--success)"></i> ' + data.id;
+  if (lockStatusEl) lockStatusEl.innerHTML = '<i class="ti ti-check-double" style="color:var(--success)"></i> ' + (typeof escapeHtml === "function" ? escapeHtml(maQRVuaQuetQR) : maQRVuaQuetQR);
 }
 window.khiQuetDuocMaQR = khiQuetDuocMaQR;
+
+let maQRVuaQuetQR = "";
+function saoChepMaQR(ev) {
+  if (ev) ev.stopPropagation();
+  const textToCopy = (maQRVuaQuetQR || "").trim();
+  if (!textToCopy) {
+    if (typeof showCanhBaoQR === "function") showCanhBaoQR("Chưa có mã QR nào để sao chép!", "warning");
+    return;
+  }
+  const copySuccess = () => {
+    const iconEl = document.getElementById("icon-copy-qr");
+    if (iconEl) {
+      iconEl.className = "ti ti-check";
+      iconEl.style.color = "var(--success)";
+      setTimeout(() => {
+        iconEl.className = "ti ti-copy";
+        iconEl.style.color = "";
+      }, 1500);
+    }
+    if (typeof showCanhBaoQR === "function") showCanhBaoQR("Đã sao chép: " + textToCopy, "success");
+  };
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(textToCopy).then(copySuccess).catch(() => fallbackCopy(textToCopy));
+  } else {
+    fallbackCopy(textToCopy);
+  }
+  function fallbackCopy(str) {
+    try {
+      const textarea = document.createElement("textarea");
+      textarea.value = str;
+      textarea.style.position = "fixed";
+      textarea.style.opacity = "0";
+      document.body.appendChild(textarea);
+      textarea.select();
+      document.execCommand("copy");
+      document.body.removeChild(textarea);
+      copySuccess();
+    } catch (e) {
+      if (typeof showCanhBaoQR === "function") showCanhBaoQR("Lỗi sao chép: " + (e.message || e), "error");
+    }
+  }
+}
+window.saoChepMaQR = saoChepMaQR;
+
+function themMaThuCongQR() {
+  const el = document.getElementById("qr-manual-input-cam");
+  if (!el) return;
+  const val = (el.value || "").trim();
+  if (!val) {
+    if (typeof showCanhBaoQR === "function") showCanhBaoQR("Vui lòng nhập mã!", "warning");
+    return;
+  }
+  el.value = "";
+  khiQuetDuocMaQR({ getText: () => val });
+}
+window.themMaThuCongQR = themMaThuCongQR;
 
 // ── Nhập tay mã thủ công ───────────────────────────────────────────
 let denPinBatQR = false;
@@ -239,13 +297,13 @@ window.toggleFlashQR = toggleFlashQR;
 function dungQuetQR() {
   dangQuetQR = false;
   window.dangQuetQR = false;
-  // Giữ nguyên phần cứng camera chạy ngầm để bật lại tức thì giống BTP & CX1
   const statusEl = document.getElementById("qr-status");
-  if (statusEl) statusEl.innerHTML = '<i class="ti ti-player-pause" style="color:var(--red)"></i> Đã dừng quét (Đợt ' + (demSoDotQR || 1) + ')';
+  if (statusEl) statusEl.innerHTML = '<div class="cam-status-dot paused"></div><span>Đợt ' + (demSoDotQR || 1) + '</span>';
   const btnToggle = document.getElementById("btn-dung-tieptuc-qr");
   if (btnToggle) {
-    btnToggle.textContent = "Quét tiếp";
-    btnToggle.className = "btn btn-blue btn-full";
+    btnToggle.innerHTML = '<i class="ti ti-player-play-filled"></i>';
+    btnToggle.classList.add("paused");
+    btnToggle.title = "Quét tiếp";
   }
 }
 window.dungQuetQR = dungQuetQR;
@@ -258,11 +316,12 @@ async function tiepTucQuetQR() {
   luuPhienDoDangQR();
   document.body.classList.add("cam-active");
   const statusEl = document.getElementById("qr-status");
-  if (statusEl) statusEl.textContent = "🟢 " + (loaiQuetQR || "Đang quét") + " | Đợt " + demSoDotQR;
+  if (statusEl) statusEl.innerHTML = '<div class="cam-status-dot"></div><span>Đợt ' + demSoDotQR + '</span>';
   const btnToggle = document.getElementById("btn-dung-tieptuc-qr");
   if (btnToggle) {
-    btnToggle.textContent = "Dừng quét";
-    btnToggle.className = "btn btn-red btn-full";
+    btnToggle.innerHTML = '<i class="ti ti-player-pause-filled"></i>';
+    btnToggle.classList.remove("paused");
+    btnToggle.title = "Dừng quét";
   }
 
   try {

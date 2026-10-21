@@ -518,7 +518,7 @@ const lastCameraCallbackMap = {};
 const cameraSleepTimerMap = {};
 const cameraSleepingMap = {};
 const cameraWakingUpMap = {};
-const CAMERA_IDLE_TIMEOUT_MS = 60000; // 60 giây không quét & không chạm -> tự ngủ để máy mát và tiết kiệm pin
+const CAMERA_IDLE_TIMEOUT_MS = 30000; // 30 giây không quét & không chạm -> tự ngủ để máy mát và tiết kiệm pin
 
 // Lắng nghe tương tác người dùng 1 lần duy nhất ở cấp document (ngăn rò rỉ listener khi camera ngủ/thức nhiều lần)
 function onGlobalCameraInteraction() {
@@ -933,6 +933,106 @@ window.doiCameraNhanh = async function (videoId) {
 };
 window.doiCamera = window.doiCameraNhanh;
 
+// Vẽ khung định vị tức thời Bounding Box màu xanh lá ôm trọn mã QR vừa quét
+function veKhungBoundingBoxQR(videoId, codeObj, srcW, srcH) {
+  if (!codeObj) return;
+  const videoEl = document.getElementById(videoId);
+  if (!videoEl || !videoEl.parentElement) return;
+  let canvas = videoEl.parentElement.querySelector('.qr-bounding-canvas');
+  if (!canvas) {
+    canvas = document.createElement('canvas');
+    canvas.className = 'qr-bounding-canvas';
+    canvas.style.cssText = 'position:absolute; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:4;';
+    videoEl.parentElement.appendChild(canvas);
+  }
+  const rect = videoEl.getBoundingClientRect();
+  if (!rect.width || !rect.height) return;
+
+  canvas.width = rect.width;
+  canvas.height = rect.height;
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  const vw = srcW || videoEl.videoWidth || 1280;
+  const vh = srcH || videoEl.videoHeight || 960;
+  const scaleX = rect.width / vw;
+  const scaleY = rect.height / vh;
+
+  ctx.strokeStyle = '#22c55e';
+  ctx.lineWidth = 3;
+  ctx.shadowColor = '#22c55e';
+  ctx.shadowBlur = 12;
+  ctx.fillStyle = 'rgba(34, 197, 94, 0.15)';
+
+  if (codeObj.cornerPoints && codeObj.cornerPoints.length >= 4) {
+    ctx.beginPath();
+    ctx.moveTo(codeObj.cornerPoints[0].x * scaleX, codeObj.cornerPoints[0].y * scaleY);
+    for (let i = 1; i < codeObj.cornerPoints.length; i++) {
+      ctx.lineTo(codeObj.cornerPoints[i].x * scaleX, codeObj.cornerPoints[i].y * scaleY);
+    }
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+  } else if (codeObj.boundingBox) {
+    const b = codeObj.boundingBox;
+    const x = b.x * scaleX;
+    const y = b.y * scaleY;
+    const w = b.width * scaleX;
+    const h = b.height * scaleY;
+    ctx.strokeRect(x, y, w, h);
+    ctx.fillRect(x, y, w, h);
+  }
+
+  setTimeout(() => {
+    if (canvas) {
+      const c = canvas.getContext('2d');
+      c.clearRect(0, 0, canvas.width, canvas.height);
+    }
+  }, 250);
+}
+
+// Bộ lọc cân bằng tương phản và nén vùng cháy sáng (Highlight Suppression & Contrast Boost)
+function locChongChoaCanvas(ctx, w, h) {
+  try {
+    const imgData = ctx.getImageData(0, 0, w, h);
+    const d = imgData.data;
+    const len = d.length;
+    for (let i = 0; i < len; i += 4) {
+      const r = d[i], g = d[i + 1], b = d[i + 2];
+      const lum = 0.299 * r + 0.587 * g + 0.114 * b;
+      if (lum > 215) {
+        const n = 215 + (lum - 215) * 0.25;
+        const factor = n / (lum || 1);
+        d[i] = r * factor;
+        d[i + 1] = g * factor;
+        d[i + 2] = b * factor;
+      } else if (lum < 160) {
+        const factor = 0.85;
+        d[i] = r * factor;
+        d[i + 1] = g * factor;
+        d[i + 2] = b * factor;
+      }
+    }
+    ctx.putImageData(imgData, 0, 0);
+  } catch (e) {}
+}
+
+window.toggleFlashlightHUD = async function (videoId, btnEl) {
+  if (typeof batTatDenPinCamera === "function") {
+    const isCurrentlyActive = btnEl.classList.contains("active-flash");
+    const newState = await batTatDenPinCamera(videoId, null, isCurrentlyActive);
+    btnEl.classList.toggle("active-flash", !!newState);
+  }
+};
+
+window.toggleQuetTrungHUD = function (checkboxId, btnEl) {
+  const cb = document.getElementById(checkboxId);
+  if (!cb) return;
+  cb.checked = !cb.checked;
+  cb.dispatchEvent(new Event("change"));
+  btnEl.classList.toggle("active-repeat", cb.checked);
+};
+
 async function khoiTaoCameraFast(videoId, onDecodedCallback) {
   const videoEl = document.getElementById(videoId);
   if (!videoEl) return null;
@@ -1033,6 +1133,7 @@ async function khoiTaoCameraFast(videoId, onDecodedCallback) {
 
   let isScanning = true;
   let isDecoding = false;
+  let lastScanSuccessTime = Date.now();
 
   const quetKhungHinh = async () => {
     if (!isScanning || !videoEl.srcObject || videoEl.ended) return;
@@ -1057,14 +1158,33 @@ async function khoiTaoCameraFast(videoId, onDecodedCallback) {
           const codes = await nativeDetector.detect(videoEl);
           if (codes && codes.length > 0 && codes[0].rawValue) {
             qrText = codes[0].rawValue;
+            veKhungBoundingBoxQR(videoId, codes[0]);
           }
         } catch (eNative) {
           nativeDetector = null; // Nếu phần cứng gặp lỗi thì mới cho fallback sang ZXing
         }
+
+        // Tăng cường chống chóa: nếu quét thẳng luồng video chưa dính, thử qua bộ lọc tương phản canvas
+        if (!qrText && nativeDetector && videoEl.readyState >= 2) {
+          try {
+            if (!zxCanvas) {
+              zxCanvas = document.createElement('canvas');
+              zxCanvas.width = 480;
+              zxCanvas.height = 360;
+              zxCtx = zxCanvas.getContext('2d', { willReadFrequently: true });
+            }
+            zxCtx.drawImage(videoEl, 0, 0, 480, 360);
+            locChongChoaCanvas(zxCtx, 480, 360);
+            const codesCanvas = await nativeDetector.detect(zxCanvas);
+            if (codesCanvas && codesCanvas.length > 0 && codesCanvas[0].rawValue) {
+              qrText = codesCanvas[0].rawValue;
+              veKhungBoundingBoxQR(videoId, codesCanvas[0], 480, 360);
+            }
+          } catch (eGlare) {}
+        }
       }
 
       // ── ƯU TIÊN 2: CHỈ CHẠY ZXING KHI MÁY HOÀN TOÀN KHÔNG CÓ BarcodeDetector ──
-      // Triệt tiêu 100% bug chạy kép song song cả 2 bộ giải mã gây nóng máy và tụt pin
       if (!qrText && !nativeDetector && videoEl.readyState >= 2) {
         try {
           if (!zxingReader) {
@@ -1073,10 +1193,11 @@ async function khoiTaoCameraFast(videoId, onDecodedCallback) {
           if (!zxCanvas) {
             zxCanvas = document.createElement('canvas');
             zxCanvas.width = 480;
-            zxCanvas.height = 360; // Tỉ lệ chuẩn 4:3, chỉ 172K pixel thay vì 1.23M pixel (giảm 86% tải CPU)
+            zxCanvas.height = 360;
             zxCtx = zxCanvas.getContext('2d', { willReadFrequently: true });
           }
           zxCtx.drawImage(videoEl, 0, 0, 480, 360);
+          locChongChoaCanvas(zxCtx, 480, 360);
           const res = zxingReader.decodeFromCanvas(zxCanvas);
           if (res && res.getText()) {
             qrText = res.getText();
@@ -1086,7 +1207,8 @@ async function khoiTaoCameraFast(videoId, onDecodedCallback) {
 
       if (qrText) {
         try {
-          resetSleepTimerCamera(videoId); // Reset timer 60s khi quét thành công
+          lastScanSuccessTime = Date.now();
+          resetSleepTimerCamera(videoId); // Reset timer 30s khi quét thành công
           onDecodedCallback(qrText);
         } catch (eCb) {
           console.warn("Callback error:", eCb);
@@ -1097,11 +1219,12 @@ async function khoiTaoCameraFast(videoId, onDecodedCallback) {
     }
 
     if (isScanning && videoEl.srcObject) {
-      // Nhịp quét 125ms (~8 khung hình/giây):
-      // - Với BarcodeDetector: Xử lý chỉ mất 3-5ms, CPU nghỉ hơn 120ms (nhàn rỗi >95%).
-      // - Với ZXing canvas 480x360: Xử lý chỉ mất ~15ms, CPU nghỉ hơn 110ms.
-      // -> Đảm bảo máy mát rượi, pin dùng cả ngày, bắt mã tức thì không trễ 1 giây nào.
-      animFrameMap[videoId] = setTimeout(quetKhungHinh, 125);
+      // Nhịp quét thích ứng (Adaptive Turbo Scan):
+      // - Khi vừa quét trúng hoặc đang tương tác dồn dập (< 4s): quét siêu tốc 65ms (~15 fps) để bắt mã tức thì.
+      // - Khi để máy chờ quá 4s: tự động hạ nhịp về 150ms để CPU nghỉ ngơi, máy mát rượi và tiết kiệm pin.
+      const isTurbo = (Date.now() - lastScanSuccessTime) < 4000;
+      const nextInterval = isTurbo ? 65 : 150;
+      animFrameMap[videoId] = setTimeout(quetKhungHinh, nextInterval);
     }
   };
 

@@ -355,7 +355,8 @@ async function batDauPhienMoiBTP() {
   document.getElementById("btp-cam").style.display = "block";
   document.getElementById("btp-ketqua").style.display = "none";
   document.getElementById("btp-dem").textContent = "Đã quét: 0 mã";
-  document.getElementById("btp-status").innerHTML = '<i class="ti ti-radar" style="color:var(--success)"></i> Đang quét Đợt 1...';
+  const statusEl = document.getElementById("btp-status");
+  if (statusEl) statusEl.innerHTML = '<div class="cam-status-dot"></div><span>Đợt 1</span>';
   maQRVuaQuetBTP = "";
   const lockStatusEl = document.getElementById("btp-lock-status");
   if (lockStatusEl) lockStatusEl.textContent = "Chờ quét...";
@@ -364,8 +365,9 @@ async function batDauPhienMoiBTP() {
 
   const btnToggle = document.getElementById("btn-dung-tieptuc-btp");
   if (btnToggle) {
-    btnToggle.textContent = "Dừng quét";
-    btnToggle.className = "btn btn-red btn-full";
+    btnToggle.innerHTML = '<i class="ti ti-player-pause-filled"></i>';
+    btnToggle.classList.remove("paused");
+    btnToggle.title = "Dừng quét";
   }
 
   try {
@@ -396,7 +398,13 @@ function dungBTP() {
   // }
   // zxingReaderBTP = null;
   const statusEl = document.getElementById("btp-status");
-  if (statusEl) statusEl.innerHTML = '<i class="ti ti-player-pause" style="color:var(--red)"></i> Đã dừng quét (Đợt ' + (demSoDotBTP || 1) + ')';
+  if (statusEl) statusEl.innerHTML = '<div class="cam-status-dot paused"></div><span>Đợt ' + (demSoDotBTP || 1) + '</span>';
+  const btn = document.getElementById("btn-dung-tieptuc-btp");
+  if (btn) {
+    btn.innerHTML = '<i class="ti ti-player-play-filled"></i>';
+    btn.classList.add("paused");
+    btn.title = "Quét tiếp";
+  }
 }
 
 async function tiepTucBTP() {
@@ -405,7 +413,14 @@ async function tiepTucBTP() {
   demSoDotBTP = maxDot > 0 ? maxDot + 1 : 1;
   dangQuetBTP = true;
   luuPhienDoDangBTP();
-  document.getElementById("btp-status").innerHTML = '<i class="ti ti-radar" style="color:var(--success)"></i> Đang quét Đợt ' + demSoDotBTP + '...';
+  const statusEl = document.getElementById("btp-status");
+  if (statusEl) statusEl.innerHTML = '<div class="cam-status-dot"></div><span>Đợt ' + demSoDotBTP + '</span>';
+  const btn = document.getElementById("btn-dung-tieptuc-btp");
+  if (btn) {
+    btn.innerHTML = '<i class="ti ti-player-pause-filled"></i>';
+    btn.classList.remove("paused");
+    btn.title = "Dừng quét";
+  }
   try {
     const btpVid = document.getElementById("btp-reader");
     const btpTrack = btpVid && btpVid.srcObject ? btpVid.srcObject.getVideoTracks()[0] : null;
@@ -426,16 +441,10 @@ async function tiepTucBTP() {
 }
 
 function toggleDungTiepTucBTP() {
-  const btn = document.getElementById("btn-dung-tieptuc-btp");
-  if (!btn) return;
   if (dangQuetBTP) {
     dungBTP();
-    btn.textContent = "Quét tiếp";
-    btn.className = "btn btn-blue btn-full";
   } else {
     tiepTucBTP();
-    btn.textContent = "Dừng quét";
-    btn.className = "btn btn-red btn-full";
   }
 }
 
@@ -834,7 +843,8 @@ async function khoiPhucBTP(state) {
   document.getElementById("btp-cam").style.display = "block";
   document.getElementById("btp-ketqua").style.display = "none";
   document.getElementById("btp-dem").textContent = "Đã quét: " + phienBTP.length + " mã";
-  document.getElementById("btp-status").innerHTML = '<i class="ti ti-radar" style="color:var(--success)"></i> Đang quét Đợt ' + demSoDotBTP + '...';
+  const statusEl = document.getElementById("btp-status");
+  if (statusEl) statusEl.innerHTML = '<div class="cam-status-dot"></div><span>Đợt ' + demSoDotBTP + '</span>';
 
   const lastItemBTP = phienBTP.length > 0 ? phienBTP[phienBTP.length - 1] : null;
   maQRVuaQuetBTP = lastItemBTP ? (lastItemBTP.rawQR || lastItemBTP.msp || "") : "";
@@ -851,8 +861,9 @@ async function khoiPhucBTP(state) {
 
   const btnToggle = document.getElementById("btn-dung-tieptuc-btp");
   if (btnToggle) {
-    btnToggle.textContent = "Dừng quét";
-    btnToggle.className = "btn btn-red btn-full";
+    btnToggle.innerHTML = '<i class="ti ti-player-pause-filled"></i>';
+    btnToggle.classList.remove("paused");
+    btnToggle.title = "Dừng quét";
   }
 
   try {
