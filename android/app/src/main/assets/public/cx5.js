@@ -293,23 +293,38 @@ function onInputCX5() {
     filteredCX5 = tkLocDanhSach(mspDataCX5, query, 50);
   } else {
     const q = boDauCX5(query).toUpperCase();
+    const freqMap = typeof tkLayLichSuTanSuat === "function" ? tkLayLichSuTanSuat() : (() => {
+      try { return JSON.parse(localStorage.getItem("tk_search_freq") || "{}"); } catch (e) { return {}; }
+    })();
     filteredCX5 = mspDataCX5
       .filter(item => boDauCX5(item.ten).toUpperCase().includes(q))
-      .sort(sapXepQCCX5)
+      .sort((a, b) => sapXepQCCX5(a, b, freqMap))
       .slice(0, 50);
   }
   activeIndexCX5 = -1;
   renderDropdownCX5();
 }
 
-function sapXepQCCX5(a, b) {
-  return (Number(b.count) || 0) - (Number(a.count) || 0) || String(a.ten).localeCompare(String(b.ten), "vi");
+function sapXepQCCX5(a, b, freqMap) {
+  const map = freqMap || (typeof tkLayLichSuTanSuat === "function" ? tkLayLichSuTanSuat() : (() => {
+    try { return JSON.parse(localStorage.getItem("tk_search_freq") || "{}"); } catch (e) { return {}; }
+  })());
+  const localA = Number(map[a.ten] || 0);
+  const localB = Number(map[b.ten] || 0);
+  if (localA !== localB) return localB - localA;
+  const countA = Number(a.count || 0);
+  const countB = Number(b.count || 0);
+  if (countA !== countB) return countB - countA;
+  return String(a.ten).localeCompare(String(b.ten), "vi");
 }
 
 function hienGoiYQCCX5() {
   if (!mspDataCX5.length) return;
   dangHienGoiYCX5 = true;
-  filteredCX5 = mspDataCX5.slice().sort(sapXepQCCX5).slice(0, 8);
+  const freqMap = typeof tkLayLichSuTanSuat === "function" ? tkLayLichSuTanSuat() : (() => {
+    try { return JSON.parse(localStorage.getItem("tk_search_freq") || "{}"); } catch (e) { return {}; }
+  })();
+  filteredCX5 = mspDataCX5.slice().sort((a, b) => sapXepQCCX5(a, b, freqMap)).slice(0, 8);
   activeIndexCX5 = -1;
   renderDropdownCX5();
 }

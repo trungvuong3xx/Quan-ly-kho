@@ -537,8 +537,17 @@ function resetKhoaQCCX1() {
 }
 window.resetKhoaQCCX1 = resetKhoaQCCX1;
 
-function sapXepQCCX1(a, b) {
-  return (Number(b.count) || 0) - (Number(a.count) || 0) || String(a.ten).localeCompare(String(b.ten), "vi");
+function sapXepQCCX1(a, b, freqMap) {
+  const map = freqMap || (typeof tkLayLichSuTanSuat === "function" ? tkLayLichSuTanSuat() : (() => {
+    try { return JSON.parse(localStorage.getItem("tk_search_freq") || "{}"); } catch (e) { return {}; }
+  })());
+  const localA = Number(map[a.ten] || 0);
+  const localB = Number(map[b.ten] || 0);
+  if (localA !== localB) return localB - localA;
+  const countA = Number(a.count || 0);
+  const countB = Number(b.count || 0);
+  if (countA !== countB) return countB - countA;
+  return String(a.ten).localeCompare(String(b.ten), "vi");
 }
 
 function onInputCX1() {
@@ -557,13 +566,16 @@ function onInputCX1() {
     filteredCX1 = tkLocDanhSach(mspDataCX1, query, 50);
   } else {
     const q = (typeof boDauCX5 === "function" ? boDauCX5(query) : query).toUpperCase();
+    const freqMap = typeof tkLayLichSuTanSuat === "function" ? tkLayLichSuTanSuat() : (() => {
+      try { return JSON.parse(localStorage.getItem("tk_search_freq") || "{}"); } catch (e) { return {}; }
+    })();
     filteredCX1 = (mspDataCX1 || [])
       .filter(item => {
         const t = (typeof boDauCX5 === "function" ? boDauCX5(item.ten) : item.ten).toUpperCase();
         const m = item.msp ? (typeof boDauCX5 === "function" ? boDauCX5(item.msp) : item.msp).toUpperCase() : "";
         return t.includes(q) || m.includes(q);
       })
-      .sort(sapXepQCCX1)
+      .sort((a, b) => sapXepQCCX1(a, b, freqMap))
       .slice(0, 50);
   }
   activeIndexCX1 = -1;
@@ -578,7 +590,10 @@ function hienGoiYQCCX1() {
     return;
   }
   dangHienGoiYCX1 = true;
-  filteredCX1 = mspDataCX1.slice().sort(sapXepQCCX1).slice(0, 8);
+  const freqMap = typeof tkLayLichSuTanSuat === "function" ? tkLayLichSuTanSuat() : (() => {
+    try { return JSON.parse(localStorage.getItem("tk_search_freq") || "{}"); } catch (e) { return {}; }
+  })();
+  filteredCX1 = mspDataCX1.slice().sort((a, b) => sapXepQCCX1(a, b, freqMap)).slice(0, 8);
   activeIndexCX1 = -1;
   renderDropdownCX1();
 }

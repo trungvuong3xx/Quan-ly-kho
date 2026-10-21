@@ -104,10 +104,13 @@ function tkLocDanhSach(list, query, gioiHan = 30, isLoaiXuat = false) {
     }
 
     if (score > 0) {
-      // Điểm cộng phụ từ tần suất sử dụng (chỉ để xếp hạng trong cùng tier)
+      // Điểm cộng ưu tiên tần suất sử dụng thực tế trên thiết bị (localCount)
+      // Mã nào người dùng chọn nhiều trên máy sẽ được cộng điểm mạnh để vượt lên đầu
       const localCount = Number(freqMap[item.ten] || 0);
       const sheetCount = Number(item.count || item.countThuong || item.countFor || 0);
-      score += Math.min(localCount * 25, 400) + Math.min(sheetCount, 400);
+      const localBonus = localCount > 0 ? (score >= 3000 ? 1200 + localCount * 300 : localCount * 50) : 0;
+      const sheetBonus = Math.min(sheetCount * 2, 300);
+      score += localBonus + sheetBonus;
 
       scoredItems.push({ item, score });
     }
