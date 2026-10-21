@@ -25,17 +25,29 @@ function formatKg(value) {
 }
 
 // ── Hàm nạp lười thư viện xuất Excel (chỉ tải khi bấm Xuất, giúp mở app tức thì) ──
+let isXlsxLoading = false;
+let xlsxLoadingCallbacks = [];
+
 function napThuVienXLSX(callback) {
   if (typeof XLSX !== "undefined") {
     if (callback) callback();
     return;
   }
+  if (callback) xlsxLoadingCallbacks.push(callback);
+  if (isXlsxLoading) return;
+  isXlsxLoading = true;
+
   const script = document.createElement("script");
   script.src = "lib/xlsx.full.min.js";
   script.onload = () => {
-    if (callback) callback();
+    isXlsxLoading = false;
+    const cbs = xlsxLoadingCallbacks;
+    xlsxLoadingCallbacks = [];
+    cbs.forEach(cb => { try { cb(); } catch (e) {} });
   };
   script.onerror = () => {
+    isXlsxLoading = false;
+    xlsxLoadingCallbacks = [];
     if (typeof showCanhBao === "function") showCanhBao("Không thể nạp thư viện xuất Excel. Vui lòng thử lại!", "error");
   };
   document.head.appendChild(script);
@@ -54,9 +66,27 @@ function exportToExcel(filename, sheetName, dataArray) {
   }
   try {
     const ws = XLSX.utils.json_to_sheet(dataArray);
+
+    // Tự động căn chỉnh độ rộng cột chuẩn đẹp
+    if (dataArray.length > 0) {
+      const keys = Object.keys(dataArray[0]);
+      const colWidths = keys.map(key => {
+        let maxLen = key.length;
+        for (let i = 0; i < Math.min(dataArray.length, 100); i++) {
+          const val = dataArray[i][key];
+          const len = val != null ? String(val).length : 0;
+          if (len > maxLen) maxLen = len;
+        }
+        return { wch: Math.min(Math.max(maxLen + 3, 10), 45) };
+      });
+      ws['!cols'] = colWidths;
+    }
+
     const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, sheetName || "Báo Cáo");
-    const fullFileName = (filename || "BaoCaoKho") + ".xlsx";
+    let safeSheetName = (sheetName || "Báo Cáo").replace(/[\\/*?:\[\]]/g, "").slice(0, 31).trim() || "Báo Cáo";
+    XLSX.utils.book_append_sheet(wb, ws, safeSheetName);
+    const safeBaseName = (filename || "BaoCaoKho").replace(/\.xlsx$/i, "");
+    const fullFileName = safeBaseName + ".xlsx";
 
     if (window.AndroidNative && typeof window.AndroidNative.saveFileToDownload === "function") {
       const base64Data = XLSX.write(wb, { bookType: 'xlsx', type: 'base64' });
@@ -83,6 +113,9 @@ function exportToExcel(filename, sheetName, dataArray) {
     }
 
     XLSX.writeFile(wb, fullFileName);
+    if (typeof showCanhBao === "function") {
+      showCanhBao("Đã tải xuống " + fullFileName, "success");
+    }
   } catch (e) {
     if (typeof showCanhBao === "function") showCanhBao("Lỗi khi xuất file Excel: " + e.message, "error");
   }

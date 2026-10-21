@@ -10,6 +10,7 @@ async function batDauKiemKe() {
   if (!ngayKiemKe) { showCanhBaoKK("⚠️ Vui lòng chọn ngày!", "warning"); return; }
 
   dsQuetKiemKe = [];
+  dsChiTietQuetKK = [];
   batch = [];
   dangQuetKK = true;
 
@@ -152,7 +153,8 @@ function xuatExcelKiemKe() {
     "Mã ID": item.id,
     "Mã MSP": item.msp,
     "Tên sản phẩm": item.ten,
-    "Màu sắc": item.mau
+    "Màu sắc": item.mau,
+    "Thời gian": item.thoiGian ? new Date(item.thoiGian).toLocaleTimeString("vi-VN") : ""
   }));
   if (typeof exportToExcel === "function") {
     exportToExcel("KiemKe_" + dateStr, "Kiểm Kê " + dateStr, exportData);

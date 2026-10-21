@@ -1135,21 +1135,25 @@ function xuatCSVBTP() {
 }
 
 function xuatExcelBTP() {
-  if (phienBTP.length === 0) { showCanhBaoBTP("Chưa có dữ liệu để xuất", "warning"); return; }
+  if (!phienBTP || phienBTP.length === 0) {
+    showCanhBaoBTP("Chưa có dữ liệu để xuất", "warning");
+    return;
+  }
   const ngay = ngayBTP || new Date().toISOString().split("T")[0];
   const data = phienBTP.map((r, i) => ({
     "STT": i + 1,
     "Đợt": r.dotQuet || 1,
+    "Ngày": ngay,
     "Mã QR Gốc": r.rawQR,
     "Mã BTP": r.msp,
     "Loại": r.kg,
-    "Thời gian": new Date(r.thoiGian).toLocaleTimeString("vi-VN")
+    "Thời gian": r.thoiGian ? new Date(r.thoiGian).toLocaleTimeString("vi-VN") : ""
   }));
-  const ws = XLSX.utils.json_to_sheet(data);
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, "BTP");
-  XLSX.writeFile(wb, "Quet_BTP_" + ngay + ".xlsx");
+  if (typeof exportToExcel === "function") {
+    exportToExcel("Quet_BTP_" + ngay, "BTP", data);
+  }
 }
+window.xuatExcelBTP = xuatExcelBTP;
 
 function toggleDropdownPhienBTP(e) {
   if (e) e.stopPropagation();
