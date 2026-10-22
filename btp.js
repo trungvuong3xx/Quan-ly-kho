@@ -625,6 +625,11 @@ async function batDauPhienMoiBTP() {
     btnToggle.title = "Dừng quét";
   }
 
+  const cbTrung = document.getElementById("btp-cho-phep-trung-cam");
+  if (cbTrung) cbTrung.checked = false;
+  const btnTrung = document.getElementById("btn-quet-trung-btp");
+  if (btnTrung) btnTrung.classList.remove("active-repeat");
+
   try {
     const btpVid = document.getElementById("btp-reader");
     const btpTrack = btpVid && btpVid.srcObject ? btpVid.srcObject.getVideoTracks()[0] : null;

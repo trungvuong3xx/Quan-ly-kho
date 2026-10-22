@@ -899,7 +899,7 @@
         </span>
       </div>
 
-      <!-- Góc trên phải: Đèn pin + Đảo camera (vùng chạm 44px, kính mờ tối) -->
+      <!-- Góc trên phải: Đèn pin + Quét trùng (vùng chạm 44px, kính mờ tối) -->
       <div class="cam-hud-top-right">
         <button type="button" class="cam-hud-btn" onclick="toggleFlashlightHUD('btp-reader', this)" title="Bật/Tắt Đèn pin">
           <svg class="torch-svg" viewBox="0 0 24 24" width="20" height="20" fill="none" style="display:block; transform: rotate(-35deg);">
@@ -909,8 +909,8 @@
             <path d="M6 3h12" stroke="#fef08a" stroke-width="1.6" stroke-linecap="round"/>
           </svg>
         </button>
-        <button type="button" class="cam-hud-btn" onclick="doiCameraNhanh('btp-reader')" title="Đảo camera">
-          <i class="ti ti-camera-rotate"></i>
+        <button id="btn-quet-trung-btp" type="button" class="cam-hud-btn" onclick="toggleQuetTrungHUD('btp-cho-phep-trung-cam', this)" title="Bật/Tắt Quét trùng">
+          <i class="ti ti-repeat"></i>
         </button>
       </div>
 
