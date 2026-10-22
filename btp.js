@@ -17,6 +17,9 @@ const BTP_LICHSU_SO_NGAY_GIU = 30;
 const BTP_DODANG_KEY = "btp_phien_dodang";
 const BTP_PENDING_KEY = "btp_pending_saves";
 
+const SVG_SHUTTER_PAUSE = '<svg viewBox="0 0 24 24" width="22" height="22" fill="#22d3ee"><rect x="6" y="4" width="4" height="16" rx="2" /><rect x="14" y="4" width="4" height="16" rx="2" /></svg>';
+const SVG_SHUTTER_PLAY = '<svg viewBox="0 0 24 24" width="22" height="22" fill="#10b981"><path d="M8 5v14l11-7z" /></svg>';
+
 function xuLyDuLieuQRBTP(text) {
   if (!text) return null;
   const rawQR = text.trim();
@@ -366,7 +369,7 @@ async function batDauPhienMoiBTP() {
 
   const btnToggle = document.getElementById("btn-dung-tieptuc-btp");
   if (btnToggle) {
-    btnToggle.innerHTML = '<i class="ti ti-player-pause-filled"></i>';
+    btnToggle.innerHTML = SVG_SHUTTER_PAUSE;
     btnToggle.classList.remove("paused");
     btnToggle.title = "Dừng quét";
   }
@@ -402,7 +405,7 @@ function dungBTP() {
   if (statusEl) statusEl.innerHTML = '<div class="cam-status-dot paused"></div><span>Đợt ' + (demSoDotBTP || 1) + '</span>';
   const btn = document.getElementById("btn-dung-tieptuc-btp");
   if (btn) {
-    btn.innerHTML = '<i class="ti ti-player-play-filled"></i>';
+    btn.innerHTML = SVG_SHUTTER_PLAY;
     btn.classList.add("paused");
     btn.title = "Quét tiếp";
   }
@@ -418,7 +421,7 @@ async function tiepTucBTP() {
   if (statusEl) statusEl.innerHTML = '<div class="cam-status-dot"></div><span>Đợt ' + demSoDotBTP + '</span>';
   const btn = document.getElementById("btn-dung-tieptuc-btp");
   if (btn) {
-    btn.innerHTML = '<i class="ti ti-player-pause-filled"></i>';
+    btn.innerHTML = SVG_SHUTTER_PAUSE;
     btn.classList.remove("paused");
     btn.title = "Dừng quét";
   }
@@ -705,7 +708,7 @@ async function quetTiepBTP() {
 
   const btnToggle = document.getElementById("btn-dung-tieptuc-btp");
   if (btnToggle) {
-    btnToggle.innerHTML = '<i class="ti ti-player-pause-filled"></i>';
+    btnToggle.innerHTML = SVG_SHUTTER_PAUSE;
     btnToggle.classList.remove("paused");
     btnToggle.title = "Dừng quét";
   }
@@ -863,7 +866,7 @@ async function khoiPhucBTP(state) {
 
   const btnToggle = document.getElementById("btn-dung-tieptuc-btp");
   if (btnToggle) {
-    btnToggle.innerHTML = '<i class="ti ti-player-pause-filled"></i>';
+    btnToggle.innerHTML = SVG_SHUTTER_PAUSE;
     btnToggle.classList.remove("paused");
     btnToggle.title = "Dừng quét";
   }
