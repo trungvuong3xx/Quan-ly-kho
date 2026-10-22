@@ -391,21 +391,23 @@ function capNhatLogBTP() {
     }).join("");
 
     return `<div class="btp-swipe-container${flashClass}">
-      <div class="btp-swipe-actions">
-        <button type="button" class="btp-swipe-btn-del" onclick="xoaNhomBTP('${escapedKeyJs}', event)">
-          <i class="ti ti-trash"></i>
-          <span>Xóa</span>
-        </button>
-      </div>
-      <div class="btp-swipe-content" onclick="onTapRowBTP('${escapedKeyJs}', event)">
-        <span class="btp-col-dot">${g.lastDot}</span>
-        <div class="btp-col-msp-wrap">
-          <span class="btp-col-msp">${safeMsp}</span>
-          ${countBadge}
+      <div class="btp-swipe-row-wrap">
+        <div class="btp-swipe-actions">
+          <button type="button" class="btp-swipe-btn-del" onclick="xoaNhomBTP('${escapedKeyJs}', event)">
+            <i class="ti ti-trash"></i>
+            <span>Xóa</span>
+          </button>
         </div>
-        <span class="btp-col-kg">${kgText}</span>
-        <span class="btp-col-gio">${gio}</span>
-        <i id="chev-${safeId}" class="ti ti-chevron-down btp-chevron" style="transform:${isExpanded ? 'rotate(180deg)' : 'none'};"></i>
+        <div class="btp-swipe-content" onclick="onTapRowBTP('${escapedKeyJs}', event)">
+          <span class="btp-col-dot">${g.lastDot}</span>
+          <div class="btp-col-msp-wrap">
+            <span class="btp-col-msp">${safeMsp}</span>
+            ${countBadge}
+          </div>
+          <span class="btp-col-kg">${kgText}</span>
+          <span class="btp-col-gio">${gio}</span>
+          <i id="chev-${safeId}" class="ti ti-chevron-down btp-chevron" style="transform:${isExpanded ? 'rotate(180deg)' : 'none'};"></i>
+        </div>
       </div>
       <div id="details-${safeId}" class="btp-group-details" style="display:${isExpanded ? 'block' : 'none'};">
         ${subItemsHtml}

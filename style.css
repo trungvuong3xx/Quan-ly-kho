@@ -3026,12 +3026,26 @@ body { padding: 0 !important; background: var(--bg-body) !important; color: var(
   border-bottom: none;
 }
 
+#btpPage {
+  background: #f8fafc !important;
+}
+
+.btp-swipe-row-wrap {
+  position: relative;
+  overflow: hidden;
+  width: 100%;
+}
+
 .btp-swipe-content {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  box-sizing: border-box;
   display: grid;
-  grid-template-columns: 28px 1fr 45px 56px 18px;
+  grid-template-columns: 26px 1fr 50px 58px 18px;
   align-items: center;
   gap: 6px;
-  padding: 9px 4px;
+  padding: 10px 6px;
   background: #ffffff;
   transition: transform 0.2s cubic-bezier(0.2, 0.9, 0.3, 1);
   cursor: pointer;
