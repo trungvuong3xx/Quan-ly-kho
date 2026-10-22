@@ -378,15 +378,21 @@ function capNhatLogBTP() {
     const countBadge = g.items.length > 1 ? `<span class="btp-badge-count">×${g.items.length}</span>` : '';
     const gio = g.lastThoiGian ? new Date(g.lastThoiGian).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit", second: "2-digit" }) : "";
     const flashClass = idx === 0 ? ' scan-flash-new' : '';
-    const kgText = g.totalKg > 0 ? (g.totalKg + ' kg') : '—';
+    const kgText = g.totalKg > 0 ? g.totalKg : '—';
     const escapedKeyJs = g.key.replace(/'/g, "\\'");
 
     let subItemsHtml = g.items.map((it, subIdx) => {
       const subGio = it.item.thoiGian ? new Date(it.item.thoiGian).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit", second: "2-digit" }) : "";
-      const subKg = (Number(it.item.kg) || 0) > 0 ? (it.item.kg + ' kg') : '';
+      const subKg = (Number(it.item.kg) || 0) > 0 ? it.item.kg : '0';
+      const safeSubMsp = typeof escapeHtml === "function" ? escapeHtml(it.item.msp || g.msp) : (it.item.msp || g.msp);
       return `<div class="btp-sub-item">
-        <span>Lần ${subIdx + 1}: Đợt ${it.item.dotQuet || 1} ${subKg ? '• ' + subKg : ''} • ${subGio}</span>
-        <button type="button" class="btp-sub-del-btn" onclick="xoaMaBTP(${it.originalIndex}, event)"><i class="ti ti-trash"></i> Xóa</button>
+        <span class="btp-sub-stt">${subIdx + 1}</span>
+        <span class="btp-sub-msp">${safeSubMsp}</span>
+        <span class="btp-sub-kg">${subKg}</span>
+        <span class="btp-sub-gio">${subGio}</span>
+        <button type="button" class="btp-sub-del-btn" onclick="xoaMaBTP(${it.originalIndex}, event)" title="Xóa lần quét này">
+          <i class="ti ti-trash"></i>
+        </button>
       </div>`;
     }).join("");
 
