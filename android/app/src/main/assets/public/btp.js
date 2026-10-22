@@ -17,8 +17,8 @@ const BTP_LICHSU_SO_NGAY_GIU = 30;
 const BTP_DODANG_KEY = "btp_phien_dodang";
 const BTP_PENDING_KEY = "btp_pending_saves";
 
-const SVG_SHUTTER_PAUSE = '<svg viewBox="0 0 24 24" width="22" height="22" fill="#22d3ee"><rect x="6" y="4" width="4" height="16" rx="2" /><rect x="14" y="4" width="4" height="16" rx="2" /></svg>';
-const SVG_SHUTTER_PLAY = '<svg viewBox="0 0 24 24" width="22" height="22" fill="#10b981"><path d="M8 5v14l11-7z" /></svg>';
+const SVG_SHUTTER_PAUSE = '<svg viewBox="0 0 24 24" width="24" height="24" fill="#22d3ee"><rect x="6" y="4" width="4" height="16" rx="2" /><rect x="14" y="4" width="4" height="16" rx="2" /></svg>';
+const SVG_SHUTTER_PLAY = '<svg viewBox="0 0 24 24" width="24" height="24" fill="#10b981"><path d="M8 5v14l11-7z" /></svg>';
 
 function xuLyDuLieuQRBTP(text) {
   if (!text) return null;

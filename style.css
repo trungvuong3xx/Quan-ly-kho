@@ -2622,24 +2622,24 @@ body { padding: 0 !important; background: var(--bg-body) !important; color: var(
   box-shadow: 0 0 20px rgba(16, 185, 129, 0.8);
 }
 
-/* 2. HÀNG MÃ VỪA QUÉT + NHẬP TAY (CHUẨN MOCKUP V2) */
+/* 2. HÀNG MÃ VỪA QUÉT + NHẬP TAY (THANH THOÁT, SẠCH SẼ, CHỐNG LỖI ANDROID AUTOFILL) */
 .cam-quick-row {
   display: flex;
   align-items: center;
   gap: 8px;
   width: 100%;
   box-sizing: border-box;
-  margin: 0 0 8px 0;
+  margin: 0 0 10px 0;
 }
 
 .cam-scanned-chip {
   flex: 1.1;
   min-width: 0;
   height: 42px;
-  padding: 0 14px;
-  background: #fdf6ec;
-  border: 1.5px solid #f2e2ce;
-  border-radius: 9999px;
+  padding: 0 12px;
+  background: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 14px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -2651,24 +2651,24 @@ body { padding: 0 !important; background: var(--bg-body) !important; color: var(
 }
 
 .cam-scanned-chip:active {
-  background: #f5ebe0;
+  background: #f8fafc;
   transform: scale(0.99);
 }
 
 .cam-scanned-text {
   font-family: "IBM Plex Mono", monospace;
-  font-size: 14px;
-  font-weight: 800;
-  color: #1e293b;
+  font-size: 13px;
+  font-weight: 700;
+  color: #d97706;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  letter-spacing: 0.3px;
+  letter-spacing: 0.2px;
 }
 
 .cam-scanned-copy {
-  color: #64748b;
-  font-size: 17px;
+  color: #94a3b8;
+  font-size: 16px;
   flex-shrink: 0;
 }
 
@@ -2676,13 +2676,13 @@ body { padding: 0 !important; background: var(--bg-body) !important; color: var(
   flex: 1.2;
   min-width: 0;
   height: 42px;
-  background: #1e293b;
-  border: 1.5px solid rgba(255, 255, 255, 0.1);
+  background: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.08);
   border-radius: 14px;
   display: flex;
   align-items: center;
-  padding: 0 5px 0 14px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  padding: 0 4px 0 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
   box-sizing: border-box;
 }
 
@@ -2693,7 +2693,8 @@ body { padding: 0 !important; background: var(--bg-body) !important; color: var(
   outline: none !important;
   background: transparent !important;
   font-size: 13px !important;
-  color: #f8fafc !important;
+  font-weight: 600 !important;
+  color: #1e293b !important;
   padding: 0 !important;
   margin: 0 !important;
   height: auto !important;
@@ -2702,12 +2703,20 @@ body { padding: 0 !important; background: var(--bg-body) !important; color: var(
 
 .cam-manual-box input::placeholder {
   color: #94a3b8 !important;
+  font-weight: 400 !important;
+}
+
+.cam-manual-box input:-webkit-autofill,
+.cam-manual-box input:-webkit-autofill:hover, 
+.cam-manual-box input:-webkit-autofill:focus {
+  -webkit-box-shadow: 0 0 0 1000px #ffffff inset !important;
+  -webkit-text-fill-color: #1e293b !important;
 }
 
 .cam-manual-btn {
-  width: 32px;
-  height: 32px;
-  border-radius: 9px;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
   background: #3b82f6;
   color: #ffffff;
   border: none;
@@ -2725,46 +2734,45 @@ body { padding: 0 !important; background: var(--bg-body) !important; color: var(
   transform: scale(0.92);
 }
 
-/* 3. THANH ĐÁY SHUTTER DOCK HIỆN ĐẠI (DARK SLATE COHESIVE DOCK THEO ĐÚNG MOCKUP) */
+/* 3. THANH ĐÁY SHUTTER NỔI KHỐI TỰ NHIÊN (BỎ HỘP ĐEN THÔ, NÚT SHUTTER 3D BỒNG BỀNH) */
 .cam-shutter-bar {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 8px 14px;
+  padding: 4px 6px;
   width: 100%;
   box-sizing: border-box;
-  margin: 0 0 10px 0;
-  background: #0f172a;
-  border-radius: 24px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25), inset 0 1px 1px rgba(255, 255, 255, 0.1);
+  margin: 2px 0 12px 0;
+  background: transparent;
+  border: none;
+  box-shadow: none;
 }
 
-/* Badge Đợt bên trái: Pill mờ sang trọng */
+/* Cánh trái: Badge Đợt dạng Pill thanh thoát */
 .cam-dot-badge {
   display: inline-flex;
   align-items: center;
-  gap: 7px;
-  background: rgba(16, 185, 129, 0.18);
-  border: 1px solid rgba(16, 185, 129, 0.4);
-  padding: 0 16px;
-  height: 40px;
+  gap: 8px;
+  background: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  padding: 0 18px;
+  height: 42px;
   border-radius: 9999px;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 700;
-  color: #ecfdf5;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  color: #1e293b;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
   box-sizing: border-box;
-  min-width: 90px;
+  min-width: 96px;
   justify-content: center;
 }
 
 .cam-status-dot {
-  width: 9px;
-  height: 9px;
+  width: 8px;
+  height: 8px;
   border-radius: 50%;
   background: #10b981;
-  box-shadow: 0 0 10px #10b981;
+  box-shadow: 0 0 8px #10b981;
   animation: pulseDot 1.6s infinite;
   display: inline-block;
   vertical-align: middle;
@@ -2773,7 +2781,7 @@ body { padding: 0 !important; background: var(--bg-body) !important; color: var(
 
 .cam-status-dot.paused {
   background: #ef4444;
-  box-shadow: 0 0 10px #ef4444;
+  box-shadow: 0 0 8px #ef4444;
   animation: none;
 }
 
@@ -2783,15 +2791,15 @@ body { padding: 0 !important; background: var(--bg-body) !important; color: var(
   100% { opacity: 0.6; transform: scale(0.9); }
 }
 
-/* NÚT TRÒN SHUTTER TRUNG TÂM PHÁT SÁNG NEON NỔI KHỐI 3D (CĂN CHUẨN GIỮA TUYỆT ĐỐI BẰNG SVG) */
+/* TÂM ĐIỂM: NÚT TRÒN SHUTTER 3D NEON CYAN BỒNG BỀNH NỔI BẬT */
 .cam-shutter-center-btn {
-  width: 62px;
-  height: 62px;
+  width: 66px;
+  height: 66px;
   border-radius: 50%;
-  background: radial-gradient(circle at 35% 35%, #164e63 0%, #082f49 60%, #03141f 100%);
-  border: 3.5px solid #22d3ee;
-  box-shadow: 0 0 0 3px rgba(34, 211, 238, 0.25), 0 0 24px rgba(34, 211, 238, 0.75), inset 0 0 12px rgba(34, 211, 238, 0.4);
-  color: #22d3ee;
+  background: radial-gradient(circle at 35% 30%, #1e3a5f 0%, #0c1a2e 70%, #060e18 100%);
+  border: 3.5px solid #38bdf8;
+  box-shadow: 0 0 0 4px rgba(56, 189, 248, 0.22), 0 8px 26px rgba(56, 189, 248, 0.55), 0 3px 8px rgba(0, 0, 0, 0.25), inset 0 2px 4px rgba(255, 255, 255, 0.35), inset 0 -3px 6px rgba(0, 0, 0, 0.5);
+  color: #38bdf8;
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
@@ -2803,26 +2811,28 @@ body { padding: 0 !important; background: var(--bg-body) !important; color: var(
   outline: none;
   -webkit-tap-highlight-color: transparent;
   flex-shrink: 0;
+  transform: translateY(-2px);
 }
 
 .cam-shutter-center-btn:active {
-  transform: scale(0.92);
-  box-shadow: 0 0 0 2px rgba(34, 211, 238, 0.35), 0 0 12px rgba(34, 211, 238, 0.9);
+  transform: translateY(0) scale(0.93);
+  box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.35), 0 4px 14px rgba(56, 189, 248, 0.85);
 }
 
 .cam-shutter-center-btn.paused {
-  background: radial-gradient(circle at 35% 35%, #064e3b 0%, #022c22 60%, #01140e 100%);
+  background: radial-gradient(circle at 35% 30%, #064e3b 0%, #022c22 70%, #01140e 100%);
   border-color: #10b981;
   color: #10b981;
-  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.25), 0 0 24px rgba(16, 185, 129, 0.75), inset 0 0 12px rgba(16, 185, 129, 0.4);
+  box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.22), 0 8px 26px rgba(16, 185, 129, 0.55), 0 3px 8px rgba(0, 0, 0, 0.25), inset 0 2px 4px rgba(255, 255, 255, 0.35), inset 0 -3px 6px rgba(0, 0, 0, 0.5);
 }
 
 .cam-shutter-center-btn svg {
   display: block !important;
-  width: 22px !important;
-  height: 22px !important;
+  width: 24px !important;
+  height: 24px !important;
   margin: auto !important;
   pointer-events: none;
+  filter: drop-shadow(0 0 4px currentColor);
 }
 
 .cam-shutter-center-btn i {
@@ -2838,10 +2848,10 @@ body { padding: 0 !important; background: var(--bg-body) !important; color: var(
   text-align: center !important;
 }
 
-/* NÚT TỔNG KẾT BÊN PHẢI SHUTTER (PILL XANH NGỌC CÂN XỨNG VỚI BÊN TRÁI) */
+/* CÁNH PHẢI: NÚT TỔNG KẾT PILL XANH NGỌC LỤC BẢO CÂN XỨNG VỚI CÁNH TRÁI */
 .cam-finish-btn {
-  height: 40px;
-  padding: 0 18px;
+  height: 42px;
+  padding: 0 20px;
   border-radius: 9999px;
   background: linear-gradient(135deg, #10b981 0%, #059669 100%);
   color: #ffffff;
@@ -2849,17 +2859,17 @@ body { padding: 0 !important; background: var(--bg-body) !important; color: var(
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-size: 21px;
+  font-size: 20px;
   cursor: pointer;
   box-shadow: 0 4px 14px rgba(16, 185, 129, 0.4), inset 0 1px 1px rgba(255, 255, 255, 0.3);
-  transition: transform 0.15s, box-shadow 0.15s;
+  transition: all 0.15s;
   outline: none;
   box-sizing: border-box;
-  min-width: 90px;
+  min-width: 96px;
 }
 
 .cam-finish-btn:active {
-  transform: scale(0.92);
+  transform: scale(0.93);
   box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
 }
 
