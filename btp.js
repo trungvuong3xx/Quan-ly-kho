@@ -189,18 +189,22 @@ window.onTapRowBTP = onTapRowBTP;
 
 function xoaNhomBTP(key, ev) {
   if (ev) ev.stopPropagation();
-  const targetKey = String(key || '').toUpperCase();
+  const targetKey = String(key || '');
   const count = phienBTP.filter(item => {
-    const k = (item.msp || item.rawQR || 'KHAC').toUpperCase();
-    return k === targetKey;
+    const dot = item.dotQuet || 1;
+    const msp = (item.msp || item.rawQR || 'KHAC').toUpperCase();
+    const kgVal = (item.kg !== undefined && item.kg !== null) ? item.kg : 0;
+    return `${dot}_${msp}_${kgVal}` === targetKey;
   }).length;
 
   if (count === 0) return;
 
   const doXoa = () => {
     phienBTP = phienBTP.filter(item => {
-      const k = (item.msp || item.rawQR || 'KHAC').toUpperCase();
-      return k !== targetKey;
+      const dot = item.dotQuet || 1;
+      const msp = (item.msp || item.rawQR || 'KHAC').toUpperCase();
+      const kgVal = (item.kg !== undefined && item.kg !== null) ? item.kg : 0;
+      return `${dot}_${msp}_${kgVal}` !== targetKey;
     });
     window.expandedBTPGroups.delete(targetKey);
     const maxDot = phienBTP.length > 0 ? Math.max(0, ...phienBTP.map(r => r.dotQuet || 1)) : 0;
@@ -216,10 +220,10 @@ function xoaNhomBTP(key, ev) {
     if (document.getElementById("btp-ketqua") && document.getElementById("btp-ketqua").style.display !== "none") {
       hienKetQuaBTP();
     }
-    showCanhBaoBTP("Đã xóa mã " + targetKey);
+    showCanhBaoBTP("Đã xóa nhóm mã");
   };
 
-  const tieuDe = count > 1 ? `Xóa toàn bộ ${count} lần quét của mã ${targetKey}?` : `Xóa mã ${targetKey} khỏi phiên quét?`;
+  const tieuDe = count > 1 ? `Xóa toàn bộ ${count} lần quét của nhóm này?` : `Xóa mã này khỏi phiên quét?`;
   if (typeof moXacNhanApp === "function") {
     moXacNhanApp(tieuDe, doXoa, "Xóa", null, "Hủy", "Xóa mã BTP");
   } else {
@@ -344,25 +348,27 @@ function capNhatLogBTP() {
     return;
   }
 
-  // Nhóm các mã quét theo mã sản phẩm (msp)
+  // Nhóm các mã quét theo ĐỢT (dotQuet) và mã đơn loại (msp, kg) - KHÔNG CỘNG TRỪ NHÂN CHIA
   const groupMap = new Map();
   phienBTP.forEach((item, originalIndex) => {
-    const key = (item.msp || item.rawQR || 'KHAC').toUpperCase();
+    const dot = item.dotQuet || 1;
+    const msp = (item.msp || item.rawQR || 'KHAC').toUpperCase();
+    const kgVal = (item.kg !== undefined && item.kg !== null) ? item.kg : 0;
+    const key = `${dot}_${msp}_${kgVal}`;
+
     if (!groupMap.has(key)) {
       groupMap.set(key, {
         key: key,
+        dot: dot,
         msp: item.msp || item.rawQR || '—',
-        totalKg: 0,
+        kg: kgVal,
         items: [],
-        lastThoiGian: item.thoiGian,
-        lastDot: item.dotQuet || 1
+        lastThoiGian: item.thoiGian
       });
     }
     const g = groupMap.get(key);
-    g.totalKg = Math.round((g.totalKg + (Number(item.kg) || 0)) * 100) / 100;
     g.items.push({ item, originalIndex });
     g.lastThoiGian = item.thoiGian;
-    g.lastDot = item.dotQuet || 1;
   });
 
   const MAX_LIVE_LOG = 30;
@@ -378,12 +384,12 @@ function capNhatLogBTP() {
     const countBadge = g.items.length > 1 ? `<span class="btp-badge-count">×${g.items.length}</span>` : '';
     const gio = g.lastThoiGian ? new Date(g.lastThoiGian).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit", second: "2-digit" }) : "";
     const flashClass = idx === 0 ? ' scan-flash-new' : '';
-    const kgText = g.totalKg > 0 ? g.totalKg : '—';
+    const kgText = (g.kg !== undefined && g.kg !== null && Number(g.kg) > 0) ? g.kg : '—';
     const escapedKeyJs = g.key.replace(/'/g, "\\'");
 
     let subItemsHtml = g.items.map((it, subIdx) => {
       const subGio = it.item.thoiGian ? new Date(it.item.thoiGian).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit", second: "2-digit" }) : "";
-      const subKg = (Number(it.item.kg) || 0) > 0 ? it.item.kg : '0';
+      const subKg = (it.item.kg !== undefined && it.item.kg !== null && Number(it.item.kg) > 0) ? it.item.kg : (Number(g.kg) > 0 ? g.kg : '0');
       const safeSubMsp = typeof escapeHtml === "function" ? escapeHtml(it.item.msp || g.msp) : (it.item.msp || g.msp);
       return `<div class="btp-sub-item">
         <span class="btp-sub-stt">${subIdx + 1}</span>
@@ -405,7 +411,7 @@ function capNhatLogBTP() {
           </button>
         </div>
         <div class="btp-swipe-content" onclick="onTapRowBTP('${escapedKeyJs}', event)">
-          <span class="btp-col-dot">${g.lastDot}</span>
+          <span class="btp-col-dot">${g.dot}</span>
           <div class="btp-col-msp-wrap">
             <span class="btp-col-msp">${safeMsp}</span>
             ${countBadge}
