@@ -875,9 +875,11 @@
 
   <div id="btp-cam" style="display:none; width:100%; max-width:600px; box-sizing:border-box; margin:0 auto; padding:6px 12px 10px 12px; overflow:hidden;">
     <span id="btp-dem" style="display:none;"></span>
-    <div id="btp-video-box" class="video-container" style="position:relative; width:100%; height:230px; background:#000; border-radius:16px; overflow:hidden; margin:0 0 8px 0; border: 1.5px solid rgba(255, 255, 255, 0.12); box-shadow: 0 4px 16px rgba(0,0,0,0.25); box-sizing:border-box;">
+    <input type="checkbox" id="btp-cho-phep-trung-cam" style="display:none;">
+    <div id="btp-video-box" class="video-container btp-camera-main">
       <video id="btp-reader" autoplay playsinline muted disablePictureInPicture style="position:absolute; width:100%; height:100%; object-fit:cover; transform:translateZ(0); will-change:transform;"></video>
-      
+      <div id="btp-cam-flash-overlay" class="cam-flash-overlay"></div>
+
       <!-- Khung ngắm Reticle 4 góc bo + laser scan -->
       <div class="cam-reticle-overlay">
         <div class="cam-reticle-box">
@@ -889,57 +891,60 @@
         </div>
       </div>
 
-      <!-- Hai nút HUD mờ đồng nhất (nhỏ gọn 36x36, không nhãn) -->
-      <div class="cam-hud-controls">
-        <button type="button" class="cam-hud-item-btn cam-hud-torch-btn" onclick="toggleFlashlightHUD('btp-reader', this)" title="Bật/Tắt Đèn pin">
-          <svg class="torch-svg" viewBox="0 0 24 24" width="18" height="18" fill="none" style="display:block; transform: rotate(-35deg);">
+      <!-- Góc trên trái: Đợt -->
+      <div class="cam-hud-top-left">
+        <span id="btp-status" class="cam-status-pill">
+          <div class="cam-status-dot"></div>
+          <span>Đợt 1</span>
+        </span>
+      </div>
+
+      <!-- Góc trên phải: Đèn pin + Đảo camera (vùng chạm 44px, kính mờ tối) -->
+      <div class="cam-hud-top-right">
+        <button type="button" class="cam-hud-btn" onclick="toggleFlashlightHUD('btp-reader', this)" title="Bật/Tắt Đèn pin">
+          <svg class="torch-svg" viewBox="0 0 24 24" width="20" height="20" fill="none" style="display:block; transform: rotate(-35deg);">
             <path d="M7 3h10l-2 6H9L7 3z" fill="#f59e0b" stroke="#fbbf24" stroke-width="1.3"/>
             <path d="M9 9v9a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2V9H9z" fill="#334155" stroke="#94a3b8" stroke-width="1.3"/>
             <circle cx="12" cy="13" r="1.5" fill="#fbbf24"/>
             <path d="M6 3h12" stroke="#fef08a" stroke-width="1.6" stroke-linecap="round"/>
           </svg>
         </button>
-        <button type="button" class="cam-hud-item-btn" onclick="toggleQuetTrungHUD('btp-cho-phep-trung-cam', this)" title="Bật/Tắt Quét trùng">
-          <i class="ti ti-repeat"></i>
+        <button type="button" class="cam-hud-btn" onclick="doiCameraNhanh('btp-reader')" title="Đảo camera">
+          <i class="ti ti-camera-rotate"></i>
         </button>
       </div>
-      <input type="checkbox" id="btp-cho-phep-trung-cam" style="display:none;">
-    </div>
 
-    <!-- Cụm điều khiển thống nhất đóng khung thẻ trắng, bóng nhẹ -->
-    <div class="btp-control-panel">
-      <!-- Hàng 1: Mã vừa quét + Ô nhập tay -->
-      <div class="cam-quick-row">
-        <div id="btp-qr-display-box" class="cam-scanned-chip" onclick="saoChepMaQRBTP(event)" title="Chạm để sao chép mã">
-          <span id="btp-lock-status" class="cam-scanned-text">Chờ quét...</span>
-          <button type="button" id="btn-copy-btp" onclick="saoChepMaQRBTP(event)" style="background:transparent; border:none; color:#64748b; cursor:pointer; padding:0; display:inline-flex; align-items:center; justify-content:center;" title="Sao chép mã">
-            <i id="icon-copy-btp" class="ti ti-copy cam-scanned-copy"></i>
-          </button>
-        </div>
-        <div class="cam-manual-box">
-          <input type="text" id="btp-manual-input-cam" placeholder="Nhập tay mã BTP..." onkeydown="if(event.key==='Enter') nhapThuCongBTP('cam')">
-          <button type="button" class="cam-manual-btn" onclick="nhapThuCongBTP('cam')" title="Thêm mã"><i class="ti ti-check"></i></button>
-        </div>
-      </div>
-
-      <div class="btp-control-divider"></div>
-
-      <!-- Hàng 2: Thanh điều khiển (Đợt | Tạm dừng/Tiếp tục | Hoàn tất) -->
-      <div class="cam-shutter-bar">
-        <div class="cam-dot-badge">
-          <span id="btp-status" style="display:inline-flex; align-items:center; gap:6px;">
-            <div class="cam-status-dot"></div>
-            <span>Đợt 1</span>
-          </span>
-        </div>
+      <!-- Đáy camera: Thanh mờ chứa Icon Bàn phím | Pause/Play | Hoàn tất -->
+      <div class="cam-hud-bottom-bar">
+        <button id="btn-toggle-banphim-btp" type="button" class="cam-hud-btn" onclick="toggleNhapTayBTP()" title="Mở ô nhập tay">
+          <i class="ti ti-keyboard"></i>
+        </button>
 
         <button id="btn-dung-tieptuc-btp" type="button" class="cam-shutter-center-btn" onclick="toggleDungTiepTucBTP()" title="Dừng / Quét tiếp">
           <svg viewBox="0 0 24 24" width="22" height="22" fill="#ffffff"><rect x="6" y="4" width="4" height="16" rx="2" /><rect x="14" y="4" width="4" height="16" rx="2" /></svg>
         </button>
 
-        <button type="button" class="cam-finish-btn" onclick="xemKetQuaBTP()" title="Xem bảng tổng kết">
-          <i class="ti ti-clipboard-check"></i>
-          <span style="font-size:12px; font-weight:700;">Hoàn tất</span>
+        <button type="button" class="cam-hud-btn" onclick="xemKetQuaBTP()" title="Xem bảng tổng kết">
+          <i class="ti ti-clipboard-list"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- Hàng mỏng full chiều ngang ngay dưới camera (Toggle Mã vừa quét vs Ô nhập tay) -->
+    <div id="btp-subcam-bar" class="btp-subcam-bar">
+      <!-- Chế độ 1: Mã vừa quét + Copy (mặc định) -->
+      <div id="btp-chip-mode" class="btp-subcam-chip-mode" onclick="saoChepMaQRBTP(event)" title="Chạm để sao chép mã">
+        <span id="btp-lock-status" class="btp-scanned-code">Chờ quét...</span>
+        <button type="button" id="btn-copy-btp" class="btp-copy-btn" onclick="saoChepMaQRBTP(event)" title="Sao chép mã">
+          <i id="icon-copy-btp" class="ti ti-copy"></i>
+        </button>
+      </div>
+
+      <!-- Chế độ 2: Ô nhập tay khi mở bàn phím -->
+      <div id="btp-input-mode" class="btp-subcam-input-mode" style="display:none;">
+        <input type="text" id="btp-manual-input-cam" placeholder="Nhập tay mã BTP..." onkeydown="if(event.key==='Enter') nhapThuCongBTP('cam')">
+        <button type="button" class="btp-input-submit-btn" onclick="nhapThuCongBTP('cam')" title="Thêm mã">
+          <i class="ti ti-check"></i>
         </button>
       </div>
     </div>

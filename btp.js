@@ -88,9 +88,57 @@ function docGiongNoiBTP(msp, kg) {
 }
 
 function hienVienFeedbackBTP(loai) {
-  if (typeof hienVienFeedbackCamera === "function") hienVienFeedbackCamera("btp-video-box", loai);
+  const overlay = document.getElementById("btp-cam-flash-overlay");
+  if (overlay) {
+    overlay.classList.remove("flash-success", "flash-duplicate");
+    void overlay.offsetWidth;
+    if (loai === "success") {
+      overlay.classList.add("flash-success");
+      setTimeout(() => overlay.classList.remove("flash-success"), 300);
+    } else {
+      overlay.classList.add("flash-duplicate");
+      setTimeout(() => overlay.classList.remove("flash-duplicate"), 450);
+    }
+  }
+  if (typeof hienVienFeedbackCamera === "function") {
+    try { hienVienFeedbackCamera("btp-video-box", loai); } catch (e) { }
+  }
 }
 window.hienVienFeedbackBTP = hienVienFeedbackBTP;
+
+function toggleNhapTayBTP() {
+  const chipMode = document.getElementById("btp-chip-mode");
+  const inputMode = document.getElementById("btp-input-mode");
+  const btnKeyboard = document.getElementById("btn-toggle-banphim-btp");
+  const inputField = document.getElementById("btp-manual-input-cam");
+  if (!chipMode || !inputMode) return;
+
+  const isInputOpen = inputMode.style.display !== "none";
+  if (isInputOpen) {
+    dongNhapTayBTP();
+  } else {
+    chipMode.style.display = "none";
+    inputMode.style.display = "flex";
+    if (btnKeyboard) btnKeyboard.classList.add("active-mode");
+    if (inputField) {
+      inputField.value = "";
+      setTimeout(() => inputField.focus(), 80);
+    }
+  }
+}
+window.toggleNhapTayBTP = toggleNhapTayBTP;
+
+function dongNhapTayBTP() {
+  const chipMode = document.getElementById("btp-chip-mode");
+  const inputMode = document.getElementById("btp-input-mode");
+  const btnKeyboard = document.getElementById("btn-toggle-banphim-btp");
+  const inputField = document.getElementById("btp-manual-input-cam");
+  if (inputMode) inputMode.style.display = "none";
+  if (chipMode) chipMode.style.display = "flex";
+  if (btnKeyboard) btnKeyboard.classList.remove("active-mode");
+  if (inputField) inputField.value = "";
+}
+window.dongNhapTayBTP = dongNhapTayBTP;
 
 function nhapThuCongBTP(src) {
   const inputId = src === 'cam' ? 'btp-manual-input-cam' : 'btp-manual-input';
@@ -98,7 +146,7 @@ function nhapThuCongBTP(src) {
   if (!el) return;
   const rawText = el.value.trim();
   if (!rawText) {
-    showCanhBaoBTP("Vui lòng nhập chuỗi mã QR hoặc mã BTP!");
+    showCanhBaoBTP("Vui lòng nhập mã BTP!", "warning");
     return;
   }
 
@@ -149,7 +197,10 @@ function nhapThuCongBTP(src) {
   capNhatLogBTP();
   maQRVuaQuetBTP = data.rawQR || data.msp || "";
   const lockStatusEl = document.getElementById("btp-lock-status");
-  if (lockStatusEl) lockStatusEl.innerHTML = '<i class="ti ti-check-double" style="color:var(--success); margin-right:4px;"></i>' + (typeof escapeHtml === "function" ? escapeHtml(maQRVuaQuetBTP) : maQRVuaQuetBTP);
+  if (lockStatusEl) lockStatusEl.textContent = maQRVuaQuetBTP;
+  if (src === 'cam') {
+    dongNhapTayBTP();
+  }
   showCanhBaoBTP("Đã thêm: " + (data.msp || data.rawQR));
 }
 window.nhapThuCongBTP = nhapThuCongBTP;
@@ -495,7 +546,7 @@ function khiQuetDuocMaBTP(result) {
 
   maQRVuaQuetBTP = data.rawQR || data.msp || "";
   const lockStatusEl = document.getElementById("btp-lock-status");
-  if (lockStatusEl) lockStatusEl.innerHTML = '<i class="ti ti-check-double" style="color:var(--success); margin-right:4px;"></i>' + (typeof escapeHtml === "function" ? escapeHtml(maQRVuaQuetBTP) : maQRVuaQuetBTP);
+  if (lockStatusEl) lockStatusEl.textContent = maQRVuaQuetBTP;
 }
 
 function luuPhienDoDangBTP() {
@@ -1055,11 +1106,7 @@ async function khoiPhucBTP(state) {
   maQRVuaQuetBTP = lastItemBTP ? (lastItemBTP.rawQR || lastItemBTP.msp || "") : "";
   const lockStatusEl = document.getElementById("btp-lock-status");
   if (lockStatusEl) {
-    if (maQRVuaQuetBTP) {
-      lockStatusEl.innerHTML = '<i class="ti ti-check-double" style="color:var(--success); margin-right:4px;"></i>' + (typeof escapeHtml === "function" ? escapeHtml(maQRVuaQuetBTP) : maQRVuaQuetBTP);
-    } else {
-      lockStatusEl.textContent = "Chờ quét...";
-    }
+    lockStatusEl.textContent = maQRVuaQuetBTP || "Chờ quét...";
   }
 
   capNhatLogBTP();
