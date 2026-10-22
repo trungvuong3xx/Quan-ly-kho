@@ -2573,40 +2573,53 @@ body { padding: 0 !important; background: var(--bg-body) !important; color: var(
 }
 
 .cam-hud-btn {
-  width: 40px;
-  height: 40px;
+  width: 42px;
+  height: 42px;
   border-radius: 50%;
   background: rgba(15, 23, 42, 0.65);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  border: 1px solid rgba(255, 255, 255, 0.25);
-  color: #cbd5e1;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1.5px solid rgba(255, 255, 255, 0.22);
+  color: #f8fafc;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 19px;
+  font-size: 20px;
   cursor: pointer;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4);
   padding: 0;
+  margin: 0;
+  outline: none;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .cam-hud-btn:active {
   transform: scale(0.9);
 }
 
+.cam-hud-torch-btn {
+  border-color: rgba(251, 191, 36, 0.45);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4), 0 0 10px rgba(245, 158, 11, 0.25);
+}
+
 .cam-hud-btn.active-flash {
-  background: rgba(245, 158, 11, 0.3);
+  background: rgba(245, 158, 11, 0.35);
   border-color: #f59e0b;
   color: #fbbf24;
-  box-shadow: 0 0 16px rgba(245, 158, 11, 0.7);
+  box-shadow: 0 0 22px rgba(245, 158, 11, 0.85);
+}
+
+.cam-hud-btn.active-flash .torch-svg path:first-child {
+  fill: #fde047;
+  filter: drop-shadow(0 0 6px #fde047);
 }
 
 .cam-hud-btn.active-repeat {
-  background: rgba(16, 185, 129, 0.3);
+  background: rgba(16, 185, 129, 0.35);
   border-color: #10b981;
   color: #34d399;
-  box-shadow: 0 0 16px rgba(16, 185, 129, 0.7);
+  box-shadow: 0 0 20px rgba(16, 185, 129, 0.8);
 }
 
 /* 2. HÀNG MÃ VỪA QUÉT + NHẬP TAY (1 HÀNG DUY NHẤT 38PX) */
@@ -2623,22 +2636,23 @@ body { padding: 0 !important; background: var(--bg-body) !important; color: var(
   flex: 1;
   min-width: 0;
   height: 38px;
-  padding: 0 10px;
+  padding: 0 12px;
   background: var(--surface, #ffffff);
-  border: 1px solid var(--border-card, var(--line-soft, rgba(0,0,0,0.15)));
-  border-radius: 10px;
+  border: 1px solid var(--border-card, var(--line-soft, rgba(0,0,0,0.12)));
+  border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 6px;
   cursor: pointer;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
-  transition: background 0.15s;
+  transition: all 0.15s;
   box-sizing: border-box;
 }
 
 .cam-scanned-chip:active {
-  background: rgba(0, 0, 0, 0.05);
+  background: rgba(0, 0, 0, 0.04);
+  transform: scale(0.99);
 }
 
 .cam-scanned-text {
@@ -2649,6 +2663,7 @@ body { padding: 0 !important; background: var(--bg-body) !important; color: var(
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  letter-spacing: 0.2px;
 }
 
 .cam-scanned-copy {
@@ -2662,11 +2677,11 @@ body { padding: 0 !important; background: var(--bg-body) !important; color: var(
   min-width: 0;
   height: 38px;
   background: var(--surface, #ffffff);
-  border: 1px solid var(--border-card, var(--line-soft, rgba(0,0,0,0.15)));
-  border-radius: 10px;
+  border: 1px solid var(--border-card, var(--line-soft, rgba(0,0,0,0.12)));
+  border-radius: 12px;
   display: flex;
   align-items: center;
-  padding: 0 4px 0 10px;
+  padding: 0 4px 0 12px;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
   box-sizing: border-box;
 }
@@ -2688,7 +2703,7 @@ body { padding: 0 !important; background: var(--bg-body) !important; color: var(
 .cam-manual-btn {
   width: 30px;
   height: 30px;
-  border-radius: 7px;
+  border-radius: 8px;
   background: var(--primary, #3b82f6);
   color: #fff;
   border: none;
@@ -2720,14 +2735,14 @@ body { padding: 0 !important; background: var(--bg-body) !important; color: var(
 .cam-dot-badge {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 7px;
   background: var(--surface, #ffffff);
-  border: 1px solid var(--border-card, var(--line-soft, rgba(0,0,0,0.15)));
-  padding: 6px 14px;
+  border: 1px solid var(--border-card, var(--line-soft, rgba(0,0,0,0.12)));
+  padding: 7px 14px;
   border-radius: 20px;
   font-size: 13px;
   font-weight: 700;
-  color: var(--text-main, #27272a);
+  color: var(--text-main, #1e293b);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 }
 
@@ -2754,52 +2769,168 @@ body { padding: 0 !important; background: var(--bg-body) !important; color: var(
   100% { opacity: 0.6; transform: scale(0.9); }
 }
 
+/* NÚT TRÒN SHUTTER TRUNG TÂM PHÁT SÁNG NEON NỔI KHỐI 3D (CĂN CHUẨN GIỮA TUYỆT ĐỐI) */
 .cam-shutter-center-btn {
-  width: 56px;
-  height: 56px;
+  width: 58px;
+  height: 58px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #1e293b, #0f172a);
-  border: 2.5px solid #38bdf8;
-  box-shadow: 0 0 18px rgba(56, 189, 248, 0.5), inset 0 0 10px rgba(56, 189, 248, 0.2);
+  background: radial-gradient(circle at 35% 35%, #164e63 0%, #082f49 60%, #03141f 100%);
+  border: 3px solid #38bdf8;
+  box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.22), 0 0 22px rgba(56, 189, 248, 0.65), inset 0 0 12px rgba(56, 189, 248, 0.35);
   color: #38bdf8;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 24px;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
   cursor: pointer;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  padding: 0;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  padding: 0 !important;
+  margin: 0 !important;
+  box-sizing: border-box;
+  outline: none;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .cam-shutter-center-btn:active {
   transform: scale(0.92);
-  box-shadow: 0 0 8px rgba(56, 189, 248, 0.8);
+  box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.35), 0 0 12px rgba(56, 189, 248, 0.85);
 }
 
 .cam-shutter-center-btn.paused {
+  background: radial-gradient(circle at 35% 35%, #064e3b 0%, #022c22 60%, #01140e 100%);
   border-color: #10b981;
   color: #10b981;
-  box-shadow: 0 0 18px rgba(16, 185, 129, 0.5);
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.22), 0 0 22px rgba(16, 185, 129, 0.65), inset 0 0 12px rgba(16, 185, 129, 0.35);
 }
 
+.cam-shutter-center-btn i {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  line-height: 0 !important;
+  font-size: 26px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  text-align: center !important;
+}
+
+/* Icon Pause: 2 thanh đứng song song căn chuẩn giữa tâm */
+.cam-shutter-center-btn i.ti-player-pause-filled {
+  transform: none !important;
+}
+
+/* Icon Play: tam giác nhọn hướng phải, bù quang học 2.5px sang phải để trọng tâm nằm chính xác giữa tâm tròn */
+.cam-shutter-center-btn.paused i.ti-player-play-filled {
+  transform: translateX(2.5px) !important;
+}
+
+/* NÚT TỔNG KẾT BÊN PHẢI SHUTTER (XANH NGỌC LỤC BẢO SANG TRỌNG) */
 .cam-finish-btn {
-  width: 44px;
-  height: 44px;
-  border-radius: 12px;
-  background: linear-gradient(135deg, #10b981, #059669);
-  color: #fff;
+  width: 46px;
+  height: 46px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: #ffffff;
   border: none;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 20px;
+  font-size: 22px;
   cursor: pointer;
-  box-shadow: 0 4px 14px rgba(16, 185, 129, 0.4);
-  transition: transform 0.15s;
+  box-shadow: 0 4px 14px rgba(16, 185, 129, 0.38), inset 0 1px 1px rgba(255, 255, 255, 0.3);
+  transition: transform 0.15s, box-shadow 0.15s;
   padding: 0;
+  outline: none;
 }
 
 .cam-finish-btn:active {
   transform: scale(0.92);
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
 }
+
+/* DÒNG NHẬT KÝ QUÉT BTP (CĂN CHỈNH CSS GRID THẲNG TẮP, MÀU SẮC HÀI HÒA CHUẨN MOCKUP) */
+.btp-log-row {
+  display: grid;
+  grid-template-columns: 28px 1fr 24px 44px 58px 24px;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 4px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  font-size: 13px;
+  box-sizing: border-box;
+  width: 100%;
+  transition: background-color 0.15s ease;
+}
+
+.btp-log-row:last-child {
+  border-bottom: none;
+}
+
+.btp-log-col-dot {
+  font-size: 12px;
+  font-weight: 700;
+  color: #64748b;
+  text-align: left;
+}
+
+.btp-log-col-msp {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 13px;
+  font-weight: 700;
+  color: #1e293b;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  letter-spacing: 0.3px;
+}
+
+.btp-log-col-dem {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 700;
+  color: #475569;
+  background: rgba(100, 116, 139, 0.12);
+  border-radius: 4px;
+  height: 20px;
+  min-width: 20px;
+  box-sizing: border-box;
+}
+
+.btp-log-col-kg {
+  font-size: 13px;
+  font-weight: 800;
+  color: #059669;
+  text-align: right;
+  padding-right: 2px;
+}
+
+.btp-log-col-gio {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 11px;
+  color: #94a3b8;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.btp-log-col-del {
+  background: transparent;
+  border: none;
+  color: #cbd5e1;
+  cursor: pointer;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  transition: color 0.15s;
+}
+
+.btp-log-col-del:hover,
+.btp-log-col-del:active {
+  color: #ef4444;
+}
+
 

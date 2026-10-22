@@ -211,14 +211,15 @@ function capNhatLogBTP() {
     const originalIndex = phienBTP.length - 1 - idx;
     const gio = item.thoiGian ? new Date(item.thoiGian).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit", second: "2-digit" }) : "";
     const flashClass = idx === 0 ? ' scan-flash-new' : '';
+    const safeMsp = typeof escapeHtml === "function" ? escapeHtml(item.msp || '—') : (item.msp || '—');
 
-    return `<div class="${flashClass}" style="display:flex; justify-content:space-between; align-items:center; padding:4px 0; border-bottom:1px solid var(--line-soft); font-size:12px; border-radius:6px; width:100%; box-sizing:border-box;">
-      <span style="color:var(--steel); font-weight:700; width:26px; flex-shrink:0;">${dot}</span>
-      <span style="color:var(--brass); font-weight:800; flex:1; min-width:0; text-align:left; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${item.msp || '—'}</span>
-      <span style="color:var(--blue); font-weight:700; width:30px; text-align:center; margin:0 2px; flex-shrink:0;">${item.dem || 1}</span>
-      <span style="color:var(--success); font-weight:700; width:40px; text-align:center; flex-shrink:0;">${item.kg || 0}</span>
-      <span style="color:var(--cream-soft); font-size:11px; width:48px; text-align:right; flex-shrink:0;">${gio}</span>
-      <button class="" onclick="xoaMaBTP(${originalIndex}, event)" title="Xóa mã này" style="margin-left:4px; background:none; border:none; color:var(--red); cursor:pointer; padding:2px 4px; flex-shrink:0; display:inline-flex; align-items:center; justify-content:center;">
+    return `<div class="btp-log-row${flashClass}">
+      <span class="btp-log-col-dot">${dot}</span>
+      <span class="btp-log-col-msp">${safeMsp}</span>
+      <span class="btp-log-col-dem">${item.dem || 1}</span>
+      <span class="btp-log-col-kg">${item.kg || 0}</span>
+      <span class="btp-log-col-gio">${gio}</span>
+      <button class="btp-log-col-del" onclick="xoaMaBTP(${originalIndex}, event)" title="Xóa mã này">
         <i class="ti ti-trash"></i>
       </button>
     </div>`;
@@ -700,12 +701,13 @@ async function quetTiepBTP() {
 
   document.getElementById("btp-ketqua").style.display = "none";
   document.getElementById("btp-cam").style.display = "block";
-  document.getElementById("btp-status").innerHTML = '<i class="ti ti-radar" style="color:var(--success)"></i> Đang quét Đợt ' + demSoDotBTP + '...';
+  document.getElementById("btp-status").innerHTML = '<div class="cam-status-dot"></div><span>Đợt ' + demSoDotBTP + '</span>';
 
   const btnToggle = document.getElementById("btn-dung-tieptuc-btp");
   if (btnToggle) {
-    btnToggle.textContent = "Dừng quét";
-    btnToggle.className = "btn btn-red btn-full";
+    btnToggle.innerHTML = '<i class="ti ti-player-pause-filled"></i>';
+    btnToggle.classList.remove("paused");
+    btnToggle.title = "Dừng quét";
   }
 
   try {
