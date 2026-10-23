@@ -3085,11 +3085,9 @@ body { padding: 0 !important; background: var(--bg-body) !important; color: var(
   border-bottom: none;
 }
 
-#btpPage,
+/* Nền xám xanh nhạt dịu mắt #e8ecf1 CHỈ áp dụng ở trang quét camera, không áp dụng ở trang bắt đầu */
 body.cam-active #btpPage.active,
-#quetQR,
 body.cam-active #quetQR.active,
-#chiFor,
 body.cam-active #chiFor.active {
   background: #e8ecf1 !important;
 }
