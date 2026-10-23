@@ -3350,6 +3350,8 @@ body.cam-active #chiFor.active {
 }
 
 .btn-submit-manual {
+  width: 100% !important;
+  box-sizing: border-box !important;
   height: 42px !important;
   font-size: 13.5px !important;
   font-weight: 700 !important;

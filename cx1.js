@@ -661,13 +661,12 @@ function hienGoiYQCCX1() {
   napDuLieuQCCX1Local();
   if (!mspDataCX1 || !mspDataCX1.length) {
     taiDanhSachQCCX1();
-    return;
   }
   dangHienGoiYCX1 = true;
   const freqMap = typeof tkLayLichSuTanSuat === "function" ? tkLayLichSuTanSuat() : (() => {
     try { return JSON.parse(localStorage.getItem("tk_search_freq") || "{}"); } catch (e) { return {}; }
   })();
-  filteredCX1 = mspDataCX1.slice().sort((a, b) => sapXepQCCX1(a, b, freqMap)).slice(0, 8);
+  filteredCX1 = (mspDataCX1 || []).slice().sort((a, b) => sapXepQCCX1(a, b, freqMap)).slice(0, 8);
   activeIndexCX1 = -1;
   renderDropdownCX1();
 }
@@ -678,6 +677,13 @@ function renderDropdownCX1() {
   const kgKhu = document.getElementById("cx1-kg-khu");
   if (!el) return;
   if (!filteredCX1 || filteredCX1.length === 0) {
+    if (dangHienGoiYCX1 && (!mspDataCX1 || !mspDataCX1.length)) {
+      el.innerHTML = '<div style="padding:10px 12px; font-size:12px; color:#64748b; text-align:center;">Đang tải danh mục QC hoặc gõ để tìm kiếm...</div>';
+      el.style.display = "block";
+      el.classList.add("open");
+      if (kgKhu) kgKhu.style.display = "none";
+      return;
+    }
     el.classList.remove("open");
     el.style.display = "none";
     el.innerHTML = "";
@@ -686,11 +692,11 @@ function renderDropdownCX1() {
   }
   if (kgKhu) kgKhu.style.display = "none";
   const tieuDe = dangHienGoiYCX1
-    ? '<div class="cx5-dropdown-title" style="padding:6px 10px; font-size:11px; font-weight:700; color:var(--cream-soft); border-bottom:1px solid var(--line-soft); text-transform:uppercase;">Gợi ý quy cách thường dùng</div>'
+    ? '<div class="cx5-dropdown-title" style="padding:6px 10px; font-size:11px; font-weight:700; color:#64748b; border-bottom:1px solid #e2e8f0; text-transform:uppercase;">Gợi ý quy cách thường dùng</div>'
     : "";
   el.innerHTML = tieuDe + filteredCX1.map((item, idx) => {
-    const tenEsc = (typeof escHtmlCX5 === "function") ? escHtmlCX5(item.ten) : item.ten;
-    return '<div class="cx5-dropdown-item' + (idx === activeIndexCX1 ? " active" : "") + '" data-idx="' + idx + '" style="padding:10px 12px; cursor:pointer; border-bottom:1px solid var(--line-soft); font-size:14px; font-weight:600; color:var(--cream);">' + tenEsc + '</div>';
+    const tenEsc = (typeof escapeHtml === "function") ? escapeHtml(item.ten) : ((typeof escHtmlCX5 === "function") ? escHtmlCX5(item.ten) : item.ten);
+    return '<div class="cx5-dropdown-item' + (idx === activeIndexCX1 ? " active" : "") + '" data-idx="' + idx + '" style="padding:10px 12px; cursor:pointer; border-bottom:1px solid #f1f5f9; font-size:14px; font-weight:600; color:#0f172a;">' + tenEsc + '</div>';
   }).join("");
   el.style.display = "block";
   el.classList.add("open");
@@ -746,7 +752,6 @@ function chonQCX1(item, mspTruyen) {
   const kgInput = document.getElementById("cx1-kg");
   if (kgInput) {
     kgInput.focus();
-    if (typeof moBanPhimCX5 === "function") moBanPhimCX5(kgInput, "kg");
   }
 }
 window.chonQCX1 = chonQCX1;
@@ -818,17 +823,19 @@ function themDongNhapTayCX1() {
     khoaQCCX1(msp, qc);
   }
 
-  const id = "MANUAL_" + Date.now() + "_" + Math.random().toString(36).slice(2, 6);
-  phienCX1.push({
-    id: id,
-    msp: msp,
-    qc: qc,
-    bao: bao,
-    kg: Math.round(kg * 10) / 10,
-    thoiGian: new Date(),
-    dotQuet: demSoDot,
-    isManual: true
-  });
+  for (let b = 0; b < bao; b++) {
+    const id = "MANUAL_" + Date.now() + "_" + Math.random().toString(36).slice(2, 6) + "_" + b;
+    phienCX1.push({
+      id: id,
+      msp: msp,
+      qc: qc,
+      bao: 1,
+      kg: Math.round(kg * 10) / 10,
+      thoiGian: new Date(),
+      dotQuet: demSoDot,
+      isManual: true
+    });
+  }
 
   phatTiengBip();
   luuPhienDoDangCX1();
@@ -837,7 +844,6 @@ function themDongNhapTayCX1() {
   if (kgInput) {
     kgInput.value = "";
     kgInput.focus();
-    if (typeof moBanPhimCX5 === "function") moBanPhimCX5(kgInput, "kg");
   }
   if (baoInput) baoInput.value = "1";
 }
@@ -871,10 +877,8 @@ function chuyenSangNhapTayCX1() {
   const tenInput = document.getElementById("cx1-ten");
   if (qcKhoaCX1 && kgInput) {
     kgInput.focus();
-    if (typeof moBanPhimCX5 === "function") moBanPhimCX5(kgInput, "kg");
   } else if (tenInput) {
     tenInput.focus();
-    if (typeof moBanPhimCX5 === "function") moBanPhimCX5(tenInput, "qc");
   }
 }
 window.chuyenSangNhapTayCX1 = chuyenSangNhapTayCX1;
@@ -1217,6 +1221,161 @@ function xoaNhomDotCX1(dot, msp, qc) {
 }
 window.xoaNhomDotCX1 = xoaNhomDotCX1;
 
+// ── Cập nhật Bảng Nhật Ký Trực Tiếp (Live Log) Nhóm Đợt + Accordion + Swipe to Delete CX1 ──
+window.expandedCX1Groups = window.expandedCX1Groups || new Set();
+
+function toggleChiTietCX1Group(groupKey) {
+  if (window.expandedCX1Groups.has(groupKey)) {
+    window.expandedCX1Groups.delete(groupKey);
+  } else {
+    window.expandedCX1Groups.add(groupKey);
+  }
+  const safeId = 'cx1-grp-' + btoa(encodeURIComponent(groupKey)).replace(/[^a-zA-Z0-9]/g, '');
+  const detailsList = document.querySelectorAll('[id="details-' + safeId + '"]');
+  const chevList = document.querySelectorAll('[id="chev-' + safeId + '"]');
+  const isOpen = window.expandedCX1Groups.has(groupKey);
+  if (detailsList.length > 0) {
+    detailsList.forEach(el => el.style.display = isOpen ? 'block' : 'none');
+    chevList.forEach(el => el.style.transform = isOpen ? 'rotate(180deg)' : 'none');
+  } else {
+    capNhatLogCX1();
+  }
+}
+window.toggleChiTietCX1Group = toggleChiTietCX1Group;
+
+function onTapRowCX1(groupKey, event) {
+  const content = event.currentTarget;
+  if (content && content.classList.contains('swiped')) {
+    content.style.transform = 'translateX(0px)';
+    content.classList.remove('swiped');
+    return;
+  }
+  toggleChiTietCX1Group(groupKey);
+}
+window.onTapRowCX1 = onTapRowCX1;
+
+function xoaNhomCX1(groupKey, event) {
+  if (event) event.stopPropagation();
+  const parts = groupKey.split("___");
+  const dotNum = parseInt(parts[0], 10) || 1;
+  const qcVal = parts[1] || '—';
+
+  const doXoa = () => {
+    phienCX1 = phienCX1.filter(item => !((item.dotQuet || 1) === dotNum && String(item.qc || item.msp || '—') === qcVal));
+    const maxDot = phienCX1.length > 0 ? Math.max(0, ...phienCX1.map(r => r.dotQuet || 1)) : 0;
+    demSoDot = maxDot > 0 ? maxDot : 1;
+    luuPhienDoDangCX1();
+    capNhatLogCX1();
+    if (typeof showCanhBaoCX1 === "function") showCanhBaoCX1("Đã xóa nhóm " + qcVal, "success");
+  };
+
+  if (typeof moXacNhanApp === "function") {
+    moXacNhanApp("Xóa toàn bộ mã " + qcVal + " trong Đợt " + dotNum + "?", doXoa, "Xóa", null, "Hủy", "Xác nhận xóa");
+  } else {
+    doXoa();
+  }
+}
+window.xoaNhomCX1 = xoaNhomCX1;
+
+function xoaMaTrongLiveLogCX1(originalIndex, event) {
+  if (event) event.stopPropagation();
+  if (originalIndex >= 0 && originalIndex < phienCX1.length) {
+    const item = phienCX1[originalIndex];
+    const tenMa = item ? (item.qc || item.msp || "mã này") : "mã này";
+    const doXoa = () => {
+      phienCX1.splice(originalIndex, 1);
+      const maxDot = phienCX1.length > 0 ? Math.max(0, ...phienCX1.map(r => r.dotQuet || 1)) : 0;
+      demSoDot = maxDot > 0 ? maxDot : 1;
+      const demEl = document.getElementById("cx1-dem");
+      if (demEl) demEl.textContent = "Đã quét: " + phienCX1.length + " mã";
+      const statusEl = document.getElementById("cx1-status");
+      if (statusEl && !dangQuetCX1) {
+        statusEl.textContent = "Đã dừng Đợt " + demSoDot;
+      }
+      luuPhienDoDangCX1();
+      capNhatLogCX1();
+      if (typeof showCanhBaoCX1 === "function") showCanhBaoCX1("Đã xóa " + tenMa);
+    };
+    if (typeof moXacNhanApp === "function") {
+      moXacNhanApp("Xóa lần quét này của " + tenMa + "?", doXoa, "Xóa", null, "Hủy", "Xác nhận xóa");
+    } else {
+      doXoa();
+    }
+  }
+}
+window.xoaMaTrongLiveLogCX1 = xoaMaTrongLiveLogCX1;
+
+let cx1SwipeTouchState = null;
+function khoiTaoSuKienSwipeCX1(containerId) {
+  const container = document.getElementById(containerId);
+  if (!container || container.__swipeInit) return;
+  container.__swipeInit = true;
+
+  container.addEventListener("touchstart", (e) => {
+    const touch = e.touches[0];
+    const content = e.target.closest(".btp-swipe-content");
+    if (!content) return;
+
+    const allSwiped = container.querySelectorAll(".btp-swipe-content.swiped");
+    allSwiped.forEach(el => {
+      if (el !== content) {
+        el.style.transform = "translateX(0px)";
+        el.classList.remove("swiped");
+      }
+    });
+
+    const isAlreadySwiped = content.classList.contains("swiped");
+    cx1SwipeTouchState = {
+      content: content,
+      startX: touch.clientX,
+      startY: touch.clientY,
+      currentX: touch.clientX,
+      isSwiping: false,
+      isAlreadySwiped: isAlreadySwiped
+    };
+  }, { passive: true });
+
+  container.addEventListener("touchmove", (e) => {
+    if (!cx1SwipeTouchState) return;
+    const touch = e.touches[0];
+    const dx = touch.clientX - cx1SwipeTouchState.startX;
+    const dy = touch.clientY - cx1SwipeTouchState.startY;
+
+    if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 10) {
+      cx1SwipeTouchState.isSwiping = true;
+      let offset = dx;
+      if (cx1SwipeTouchState.isAlreadySwiped) {
+        offset = -76 + dx;
+      }
+      if (offset > 0) offset = 0;
+      if (offset < -85) offset = -85;
+      cx1SwipeTouchState.content.style.transition = "none";
+      cx1SwipeTouchState.content.style.transform = `translateX(${offset}px)`;
+    }
+  }, { passive: true });
+
+  container.addEventListener("touchend", (e) => {
+    if (!cx1SwipeTouchState) return;
+    const content = cx1SwipeTouchState.content;
+    const dx = (e.changedTouches[0]?.clientX || cx1SwipeTouchState.currentX) - cx1SwipeTouchState.startX;
+    
+    content.style.transition = "transform 0.2s cubic-bezier(0.2, 0.9, 0.3, 1)";
+    if (cx1SwipeTouchState.isSwiping) {
+      if (dx < -35) {
+        content.style.transform = "translateX(-76px)";
+        content.classList.add("swiped");
+      } else {
+        content.style.transform = "translateX(0px)";
+        content.classList.remove("swiped");
+      }
+    } else if (cx1SwipeTouchState.isAlreadySwiped) {
+      content.style.transform = "translateX(0px)";
+      content.classList.remove("swiped");
+    }
+    cx1SwipeTouchState = null;
+  });
+}
+
 function capNhatLogCX1() {
   const containerQuet = document.getElementById("cx1-log-list");
   const containerNhap = document.getElementById("cx1-nhap-log-list");
@@ -1233,47 +1392,99 @@ function capNhatLogCX1() {
   if (!containerQuet && !containerNhap) return;
 
   if (phienCX1.length === 0) {
-    const emptyHtml = '<div style="color:var(--cream-soft); font-size:12px; text-align:center; padding:8px 0;">Chưa có mã nào</div>';
+    const emptyHtml = '<div class="btp-empty-log">Chưa có mã nào được quét</div>';
     if (containerQuet) containerQuet.innerHTML = emptyHtml;
     if (containerNhap) containerNhap.innerHTML = emptyHtml;
     return;
   }
 
-  const dotSeq = {};
-  phienCX1.forEach(item => {
-    dotSeq[item.dotQuet] = (dotSeq[item.dotQuet] || 0) + 1;
-    item.seqTrongDot = dotSeq[item.dotQuet];
+  // Nhóm các mã theo ĐỢT (dotQuet) và QUY CÁCH (qc)
+  const groupMap = new Map();
+  phienCX1.forEach((item, originalIndex) => {
+    const dot = item.dotQuet || 1;
+    const qc = item.qc || item.msp || '—';
+    const key = `${dot}___${qc}`;
+
+    if (!groupMap.has(key)) {
+      groupMap.set(key, {
+        key: key,
+        dot: dot,
+        qc: qc,
+        items: [],
+        lastThoiGian: item.thoiGian
+      });
+    }
+    const g = groupMap.get(key);
+    g.items.push({ item, originalIndex });
+    g.lastThoiGian = item.thoiGian;
   });
 
   const MAX_LIVE_LOG = 30;
-  const newestFirst = phienCX1.slice().reverse();
-  const displayedItems = newestFirst.slice(0, MAX_LIVE_LOG);
+  const groups = Array.from(groupMap.values()).reverse();
+  const displayedGroups = groups.slice(0, MAX_LIVE_LOG);
 
-  let html = displayedItems.map((item, idx) => {
-    const dot = item.dotQuet || 1;
-    const originalIndex = phienCX1.length - 1 - idx;
-    const gio = item.thoiGian ? new Date(item.thoiGian).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit", second: "2-digit" }) : "";
+  let html = displayedGroups.map((g, idx) => {
+    const safeQc = typeof escapeHtml === "function" ? escapeHtml(g.qc) : g.qc;
+    const safeId = 'cx1-grp-' + btoa(encodeURIComponent(g.key)).replace(/[^a-zA-Z0-9]/g, '');
+    const isExpanded = window.expandedCX1Groups.has(g.key);
+    const countBadge = g.items.length > 1 ? `<span class="btp-badge-count">×${g.items.length}</span>` : '';
+    const gio = g.lastThoiGian ? new Date(g.lastThoiGian).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit", second: "2-digit" }) : "";
     const flashClass = idx === 0 ? ' scan-flash-new' : '';
 
-    return `<div class="${flashClass}" style="display:flex; justify-content:space-between; align-items:center; padding:4px 0; border-bottom:1px solid var(--line-soft); font-size:12px; border-radius:6px; width:100%; box-sizing:border-box;">
-      <span style="color:var(--steel); font-weight:700; width:26px; flex-shrink:0;">${dot}</span>
-      <span style="color:var(--brass); font-weight:800; flex:1; min-width:0; text-align:left; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${item.qc || item.msp || '—'}</span>
-      <span style="color:var(--cream-soft); font-size:11px; width:22px; text-align:center; flex-shrink:0;">${item.seqTrongDot}</span>
-      <span style="color:var(--success); font-weight:700; width:40px; text-align:center; flex-shrink:0;">${item.kg || 0}</span>
-      <span style="color:var(--cream-soft); font-size:11px; width:48px; text-align:right; flex-shrink:0;">${gio}</span>
-      <button class="" onclick="xoaMaCX1(${originalIndex}, event)" title="Xóa mã này" style="margin-left:4px; background:none; border:none; color:var(--red); cursor:pointer; padding:2px 4px; flex-shrink:0; display:inline-flex; align-items:center; justify-content:center;">
-        <i class="ti ti-trash"></i>
-      </button>
+    const tongKgNhom = g.items.reduce((sum, it) => sum + (Number(it.item.kg) || 0), 0);
+    const kgText = tongKgNhom > 0 ? (Number.isInteger(tongKgNhom) ? tongKgNhom : tongKgNhom.toFixed(1)) : '—';
+    const escapedKeyJs = g.key.replace(/'/g, "\\'");
+
+    let subItemsHtml = g.items.map((it, subIdx) => {
+      const subGio = it.item.thoiGian ? new Date(it.item.thoiGian).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit", second: "2-digit" }) : "";
+      const subKg = (it.item.kg !== undefined && it.item.kg !== null && Number(it.item.kg) > 0) ? it.item.kg : '0';
+      const safeSubQc = typeof escapeHtml === "function" ? escapeHtml(it.item.qc || g.qc) : (it.item.qc || g.qc);
+      return `<div class="btp-sub-item">
+        <span class="btp-sub-stt">${subIdx + 1}</span>
+        <span class="btp-sub-msp">${safeSubQc}</span>
+        <span class="btp-sub-kg">${subKg}</span>
+        <span class="btp-sub-gio">${subGio}</span>
+        <button type="button" class="btp-sub-del-btn" onclick="xoaMaTrongLiveLogCX1(${it.originalIndex}, event)" title="Xóa lần quét này">
+          <i class="ti ti-trash"></i>
+        </button>
+      </div>`;
+    }).join("");
+
+    return `<div class="btp-swipe-container${flashClass}">
+      <div class="btp-swipe-row-wrap">
+        <div class="btp-swipe-actions">
+          <button type="button" class="btp-swipe-btn-del" onclick="xoaNhomCX1('${escapedKeyJs}', event)">
+            <i class="ti ti-trash"></i>
+            <span>Xóa</span>
+          </button>
+        </div>
+        <div class="btp-swipe-content" onclick="onTapRowCX1('${escapedKeyJs}', event)">
+          <span class="btp-col-dot">${g.dot}</span>
+          <div class="btp-col-msp-wrap">
+            <span class="btp-col-msp">${safeQc}</span>
+            ${countBadge}
+          </div>
+          <span class="btp-col-kg">${kgText}</span>
+          <span class="btp-col-gio">${gio}</span>
+          <i id="chev-${safeId}" class="ti ti-chevron-down btp-chevron" style="transform:${isExpanded ? 'rotate(180deg)' : 'none'};"></i>
+        </div>
+      </div>
+      <div id="details-${safeId}" class="btp-group-details" style="display:${isExpanded ? 'block' : 'none'};">
+        ${subItemsHtml}
+      </div>
     </div>`;
   }).join("");
 
-  if (phienCX1.length > MAX_LIVE_LOG) {
-    const conLai = phienCX1.length - MAX_LIVE_LOG;
-    html += `<div style="text-align:center; padding:6px 0; font-size:11px; color:var(--cream-soft); font-style:italic;">... và ${conLai} mã trước đó (xem đầy đủ ở bảng kết quả)</div>`;
+  if (groups.length > MAX_LIVE_LOG) {
+    const conLai = groups.length - MAX_LIVE_LOG;
+    html += `<div style="text-align:center; padding:6px 0; font-size:11px; color:#64748b; font-style:italic;">... và ${conLai} loại mã trước đó (xem đầy đủ ở bảng kết quả)</div>`;
   }
 
   if (containerQuet) containerQuet.innerHTML = html;
   if (containerNhap) containerNhap.innerHTML = html;
+
+  khoiTaoSuKienSwipeCX1("cx1-log-list");
+  khoiTaoSuKienSwipeCX1("cx1-nhap-log-list");
 }
 
 function taoHangKetQuaCX1(danhSach, isReadonly = false) {

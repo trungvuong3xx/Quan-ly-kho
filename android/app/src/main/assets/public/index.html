@@ -610,27 +610,38 @@
         </button>
       </div>
 
-      <!-- Form nhập tay chính -->
+      <!-- Form nhập tay chính (QC, Bao, Kg giống CX1) -->
       <div class="manual-input-body">
-        <div style="margin-bottom:8px;">
-          <label style="font-size:12px; font-weight:700; color:#475569; margin-bottom:4px; display:block;">Mã QR / Chuỗi tem</label>
-          <input type="text" id="qr-nhap-ma-input" placeholder="Dán hoặc nhập mã tem..." style="width:100%; height:38px; border-radius:9px; border:1px solid #cbd5e1; padding:0 12px; font-size:13.5px;" onkeydown="if(event.key==='Enter'){event.preventDefault();themMaNhapTayQR()}">
+        <div style="position:relative; margin-bottom:8px;">
+          <label style="font-size:12px; font-weight:700; color:#475569; margin-bottom:4px; display:block;">Quy cách (QC)</label>
+          <div class="cx5-ten-wrap" id="qr-qc-tim-wrap" style="position:relative;">
+            <input type="text" id="qr-ten" placeholder="Tìm hoặc chọn QC..." autocomplete="off" onfocus="hienGoiYQCQR()" onclick="hienGoiYQCQR()" oninput="onInputQR()" style="padding-right: 40px; width:100%; height:38px; border-radius:9px; border:1px solid #cbd5e1; padding-left:12px; font-size:13.5px;">
+            <i class="ti ti-refresh" onclick="taiDanhSachQCQR(true)" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); color: #64748b; cursor: pointer; font-size: 18px; z-index: 2; padding: 6px;" title="Tải lại danh sách QC"></i>
+            <div id="qr-dropdown" class="cx5-dropdown" style="position:absolute; top:calc(100% + 4px); left:0; right:0; z-index:50; border:1px solid #cbd5e1; border-radius:10px; background:#ffffff; max-height:180px; overflow-y:auto; box-shadow:0 4px 12px rgba(0,0,0,0.15); display:none;"></div>
+          </div>
+          <div id="qr-qc-khoa" class="cx5-qc-khoa" style="display:none; margin-bottom:4px;" onclick="moKhoaQCQR()">
+            <span id="qr-qc-khoa-ten"></span>
+            <span class="cx5-qc-khoa-doi">Đổi</span>
+          </div>
+          <input type="hidden" id="qr-msp">
         </div>
 
-        <div style="display:flex; gap:8px; margin-bottom:10px;">
-          <div style="flex:1.2;">
-            <label style="font-size:12px; font-weight:700; color:#475569; margin-bottom:4px; display:block;">Quy cách (nếu có)</label>
-            <input type="text" id="qr-nhap-qc-input" placeholder="VD: 550..." style="width:100%; height:38px; border-radius:9px; border:1px solid #cbd5e1; padding:0 12px; font-size:13.5px;" onkeydown="if(event.key==='Enter'){event.preventDefault();document.getElementById('qr-nhap-kg-input').focus()}">
+        <div id="qr-kg-khu">
+          <div style="display: flex; gap: 8px; margin-bottom: 10px;">
+            <div style="flex: 1;">
+              <label style="font-size:12px; font-weight:700; color:#475569; margin-bottom:4px; display:block;">Bao</label>
+              <input type="number" id="qr-bao" value="1" min="1" style="width:100%; height:38px; border-radius:9px; border:1px solid #cbd5e1; padding:0 12px; font-size:13.5px;" onkeydown="if(event.key==='Enter'){event.preventDefault();document.getElementById('qr-kg').focus()}">
+            </div>
+            <div style="flex: 1;">
+              <label style="font-size:12px; font-weight:700; color:#475569; margin-bottom:4px; display:block;">Kg</label>
+              <input type="number" step="0.01" id="qr-kg" placeholder="Nhập kg..." style="width:100%; height:38px; border-radius:9px; border:1px solid #cbd5e1; padding:0 12px; font-size:13.5px;" onkeydown="if(event.key==='Enter'){event.preventDefault();themMaNhapTayQR()}">
+            </div>
           </div>
-          <div style="flex:0.8;">
-            <label style="font-size:12px; font-weight:700; color:#475569; margin-bottom:4px; display:block;">Khối lượng (Kg)</label>
-            <input type="number" step="0.01" id="qr-nhap-kg-input" placeholder="Kg..." style="width:100%; height:38px; border-radius:9px; border:1px solid #cbd5e1; padding:0 12px; font-size:13.5px;" onkeydown="if(event.key==='Enter'){event.preventDefault();themMaNhapTayQR()}">
-          </div>
-        </div>
 
-        <button type="button" class="btn-submit-manual" onclick="themMaNhapTayQR()">
-          <i class="ti ti-plus"></i> THÊM VÀO ĐỢT
-        </button>
+          <button type="button" class="btn-submit-manual" onclick="themMaNhapTayQR()">
+            <i class="ti ti-plus"></i> THÊM VÀO ĐỢT
+          </button>
+        </div>
       </div>
 
       <!-- Footer: Dừng/Nhập tiếp & Xem kết quả -->
@@ -872,7 +883,7 @@
         <div style="position:relative; margin-bottom:8px;">
           <label style="font-size:12px; font-weight:700; color:#475569; margin-bottom:4px; display:block;">Quy cách (QC)</label>
           <div class="cx5-ten-wrap" id="cx1-qc-tim-wrap" style="position:relative;">
-            <input type="text" id="cx1-ten" placeholder="Tìm hoặc chọn QC..." autocomplete="off" inputmode="none" onfocus="hienGoiYQCCX1()" onclick="hienGoiYQCCX1()" oninput="onInputCX1()" style="padding-right: 40px; width:100%; height:38px; border-radius:9px; border:1px solid #cbd5e1; padding-left:12px; font-size:13.5px;">
+            <input type="text" id="cx1-ten" placeholder="Tìm hoặc chọn QC..." autocomplete="off" onfocus="hienGoiYQCCX1()" onclick="hienGoiYQCCX1()" oninput="onInputCX1()" style="padding-right: 40px; width:100%; height:38px; border-radius:9px; border:1px solid #cbd5e1; padding-left:12px; font-size:13.5px;">
             <i class="ti ti-refresh" onclick="taiDanhSachQCCX1(true)" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); color: #64748b; cursor: pointer; font-size: 18px; z-index: 2; padding: 6px;" title="Tải lại danh sách QC"></i>
             <div id="cx1-dropdown" class="cx5-dropdown" style="position:absolute; top:calc(100% + 4px); left:0; right:0; z-index:50; border:1px solid #cbd5e1; border-radius:10px; background:#ffffff; max-height:180px; overflow-y:auto; box-shadow:0 4px 12px rgba(0,0,0,0.15); display:none;"></div>
           </div>
@@ -887,11 +898,11 @@
           <div style="display: flex; gap: 8px; margin-bottom: 10px;">
             <div style="flex: 1;">
               <label style="font-size:12px; font-weight:700; color:#475569; margin-bottom:4px; display:block;">Bao</label>
-              <input type="text" id="cx1-bao" value="1" inputmode="none" style="width:100%; height:38px; border-radius:9px; border:1px solid #cbd5e1; padding:0 12px; font-size:13.5px;" onkeydown="if(event.key==='Enter'){event.preventDefault();document.getElementById('cx1-kg').focus()}">
+              <input type="number" id="cx1-bao" value="1" min="1" style="width:100%; height:38px; border-radius:9px; border:1px solid #cbd5e1; padding:0 12px; font-size:13.5px;" onkeydown="if(event.key==='Enter'){event.preventDefault();document.getElementById('cx1-kg').focus()}">
             </div>
             <div style="flex: 1;">
               <label style="font-size:12px; font-weight:700; color:#475569; margin-bottom:4px; display:block;">Kg</label>
-              <input type="text" id="cx1-kg" placeholder="Nhập kg..." inputmode="none" style="width:100%; height:38px; border-radius:9px; border:1px solid #cbd5e1; padding:0 12px; font-size:13.5px;" onkeydown="if(event.key==='Enter'){event.preventDefault();themDongNhapTayCX1()}">
+              <input type="number" step="0.01" id="cx1-kg" placeholder="Nhập kg..." style="width:100%; height:38px; border-radius:9px; border:1px solid #cbd5e1; padding:0 12px; font-size:13.5px;" onkeydown="if(event.key==='Enter'){event.preventDefault();themDongNhapTayCX1()}">
             </div>
           </div>
 

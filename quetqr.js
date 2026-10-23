@@ -41,6 +41,213 @@ function hienVienFeedbackQR(loai) {
 window.hienVienFeedbackQR = hienVienFeedbackQR;
 
 let dangNhapQR = false;
+let qcKhoaQR = null;
+let mspKhoaQR = null;
+let mspDataQR = [];
+let filteredQR = [];
+let activeIndexQR = -1;
+let dangHienGoiYQR = false;
+
+function napDuLieuQCQRLocal() {
+  if (mspDataQR && mspDataQR.length > 0) return;
+  const mapQC = {};
+
+  try {
+    const cached = JSON.parse(localStorage.getItem("cx1_danh_sach_qc") || localStorage.getItem("qr_danh_sach_qc") || "[]");
+    if (Array.isArray(cached)) {
+      cached.forEach(i => {
+        if (i && i.ten) mapQC[i.ten.trim()] = { msp: i.msp || i.ten, count: Number(i.count) || 1 };
+      });
+    }
+  } catch (e) {}
+
+  if (Array.isArray(phienQuetQR)) {
+    phienQuetQR.forEach(i => {
+      const ten = (i.qc || i.msp || "").trim();
+      if (ten) {
+        if (!mapQC[ten]) mapQC[ten] = { msp: i.msp || ten, count: 0 };
+        mapQC[ten].count += 10;
+      }
+    });
+  }
+
+  try {
+    const hist = typeof docLichSuQuetQR === "function" ? docLichSuQuetQR() : [];
+    if (Array.isArray(hist)) {
+      hist.forEach(h => {
+        (h.phienQuetQR || []).forEach(i => {
+          const ten = (i.qc || i.msp || "").trim();
+          if (ten) {
+            if (!mapQC[ten]) mapQC[ten] = { msp: i.msp || ten, count: 0 };
+            mapQC[ten].count += 1;
+          }
+        });
+      });
+    }
+  } catch (e) {}
+
+  const list = Object.keys(mapQC).map(k => ({ ten: k, msp: mapQC[k].msp, count: mapQC[k].count }));
+  if (list.length > 0) {
+    mspDataQR = list;
+  }
+}
+
+async function taiDanhSachQCQR(forceRefresh = false) {
+  napDuLieuQCQRLocal();
+  if (!forceRefresh && mspDataQR && mspDataQR.length > 0) return;
+  try {
+    const URL_API = "https://script.google.com/macros/s/AKfycbzk7afcuHDOTnL6QSIQ0ZgT-CSiIDNZ8h5S8_IkGXahc7PQRvqZKpLpjkBphioXAyzDKQ/exec";
+    const res = await fetch(URL_API, {
+      method: "POST",
+      headers: { "Content-Type": "text/plain;charset=utf-8" },
+      body: JSON.stringify({ action: "layDanhSachQC" })
+    });
+    const text = await res.text();
+    let json;
+    try { json = JSON.parse(text); } catch (e) {}
+    if (json && json.list && Array.isArray(json.list) && json.list.length > 0) {
+      mspDataQR = json.list;
+      localStorage.setItem("qr_danh_sach_qc", JSON.stringify(mspDataQR));
+      const input = document.getElementById("qr-ten");
+      if (input && input.value.trim()) onInputQR();
+      else hienGoiYQCQR();
+    }
+  } catch (e) {}
+}
+window.taiDanhSachQCQR = taiDanhSachQCQR;
+
+function hienGoiYQCQR() {
+  napDuLieuQCQRLocal();
+  if (!mspDataQR || !mspDataQR.length) {
+    taiDanhSachQCQR();
+  }
+  dangHienGoiYQR = true;
+  filteredQR = (mspDataQR || []).slice().sort((a, b) => (b.count || 0) - (a.count || 0)).slice(0, 8);
+  activeIndexQR = -1;
+  renderDropdownQR();
+}
+window.hienGoiYQCQR = hienGoiYQCQR;
+
+function renderDropdownQR() {
+  const el = document.getElementById("qr-dropdown");
+  const kgKhu = document.getElementById("qr-kg-khu");
+  if (!el) return;
+  if (!filteredQR || filteredQR.length === 0) {
+    el.classList.remove("open");
+    el.style.display = "none";
+    el.innerHTML = "";
+    if (kgKhu) kgKhu.style.display = "";
+    return;
+  }
+  if (kgKhu) kgKhu.style.display = "none";
+  const tieuDe = dangHienGoiYQR
+    ? '<div class="cx5-dropdown-title" style="padding:6px 10px; font-size:11px; font-weight:700; color:#64748b; border-bottom:1px solid #e2e8f0; text-transform:uppercase;">Gợi ý quy cách thường dùng</div>'
+    : "";
+  el.innerHTML = tieuDe + filteredQR.map((item, idx) => {
+    const tenEsc = (typeof escapeHtml === "function") ? escapeHtml(item.ten) : item.ten;
+    return '<div class="cx5-dropdown-item' + (idx === activeIndexQR ? " active" : "") + '" data-idx="' + idx + '" style="padding:10px 12px; cursor:pointer; border-bottom:1px solid #f1f5f9; font-size:14px; font-weight:600; color:#0f172a;">' + tenEsc + '</div>';
+  }).join("");
+  el.style.display = "block";
+  el.classList.add("open");
+
+  Array.from(el.querySelectorAll(".cx5-dropdown-item")).forEach(child => {
+    const handleChon = e => {
+      e.preventDefault();
+      e.stopPropagation();
+      const idx = parseInt(child.getAttribute("data-idx"), 10);
+      if (!isNaN(idx) && filteredQR[idx]) {
+        chonQCQR(filteredQR[idx]);
+      }
+    };
+    child.addEventListener("pointerdown", handleChon);
+    child.addEventListener("click", handleChon);
+  });
+}
+
+function closeDropdownQR() {
+  filteredQR = [];
+  activeIndexQR = -1;
+  dangHienGoiYQR = false;
+  const el = document.getElementById("qr-dropdown");
+  if (el) {
+    el.classList.remove("open");
+    el.style.display = "none";
+    el.innerHTML = "";
+  }
+  const kgKhu = document.getElementById("qr-kg-khu");
+  if (kgKhu) kgKhu.style.display = "";
+}
+window.closeDropdownQR = closeDropdownQR;
+
+document.addEventListener("click", e => {
+  const trongOTimKiem = e.target.closest("#qr-qc-tim-wrap");
+  if (!trongOTimKiem) {
+    closeDropdownQR();
+  }
+});
+
+function chonQCQR(item) {
+  if (!item) return;
+  const tenVal = (typeof item === "object") ? item.ten : item;
+  const mspVal = (typeof item === "object") ? (item.msp || item.ten) : item;
+  const tenEl = document.getElementById("qr-ten");
+  const mspEl = document.getElementById("qr-msp");
+  if (tenEl) tenEl.value = tenVal;
+  if (mspEl) mspEl.value = mspVal;
+  closeDropdownQR();
+  khoaQCQR(mspVal, tenVal);
+  const kgInput = document.getElementById("qr-kg");
+  if (kgInput) kgInput.focus();
+}
+window.chonQCQR = chonQCQR;
+
+function khoaQCQR(msp, ten) {
+  qcKhoaQR = ten;
+  mspKhoaQR = msp;
+  const timWrap = document.getElementById("qr-qc-tim-wrap");
+  if (timWrap) timWrap.style.display = "none";
+  const khoa = document.getElementById("qr-qc-khoa");
+  if (khoa) khoa.style.display = "flex";
+  const tenEl = document.getElementById("qr-qc-khoa-ten");
+  if (tenEl) tenEl.textContent = ten;
+}
+window.khoaQCQR = khoaQCQR;
+
+function moKhoaQCQR() {
+  qcKhoaQR = null;
+  mspKhoaQR = null;
+  const khoa = document.getElementById("qr-qc-khoa");
+  if (khoa) khoa.style.display = "none";
+  const timWrap = document.getElementById("qr-qc-tim-wrap");
+  if (timWrap) timWrap.style.display = "block";
+  const ten = document.getElementById("qr-ten");
+  if (ten) {
+    ten.value = "";
+    ten.focus();
+    hienGoiYQCQR();
+  }
+}
+window.moKhoaQCQR = moKhoaQCQR;
+
+function onInputQR() {
+  const mspInput = document.getElementById("qr-msp");
+  if (mspInput) mspInput.value = "";
+  const input = document.getElementById("qr-ten");
+  const query = input ? input.value.trim() : "";
+  if (!query) { hienGoiYQCQR(); return; }
+  dangHienGoiYQR = false;
+
+  napDuLieuQCQRLocal();
+  const q = query.toUpperCase();
+  filteredQR = (mspDataQR || []).filter(item => {
+    const t = String(item.ten || "").toUpperCase();
+    const m = String(item.msp || "").toUpperCase();
+    return t.includes(q) || m.includes(q);
+  }).slice(0, 15);
+  activeIndexQR = -1;
+  renderDropdownQR();
+}
+window.onInputQR = onInputQR;
 
 function chuyenSangNhapTayQR() {
   dungQuetQR();
@@ -65,12 +272,16 @@ function chuyenSangNhapTayQR() {
     btn.className = "btn-sub-action";
   }
 
+  taiDanhSachQCQR();
   capNhatLogQR();
 
-  const inputEl = document.getElementById("qr-nhap-ma-input");
-  if (inputEl) {
-    inputEl.value = "";
-    setTimeout(() => inputEl.focus(), 80);
+  const kgInput = document.getElementById("qr-kg");
+  const tenInput = document.getElementById("qr-ten");
+  if (qcKhoaQR && kgInput) {
+    kgInput.focus();
+  } else if (tenInput) {
+    tenInput.focus();
+    hienGoiYQCQR();
   }
 }
 window.chuyenSangNhapTayQR = chuyenSangNhapTayQR;
@@ -79,6 +290,8 @@ function chuyenSangQuetCamQR() {
   dangNhapQR = false;
   const qrNhap = document.getElementById("qr-nhap");
   if (qrNhap) qrNhap.style.display = "none";
+  const qrKetQua = document.getElementById("qr-ketqua");
+  if (qrKetQua) qrKetQua.style.display = "none";
   const qrCam = document.getElementById("qr-cam");
   if (qrCam) qrCam.style.display = "block";
 
@@ -106,41 +319,70 @@ function toggleDungTiepTucNhapQR() {
       btn.className = "btn-sub-action";
     }
     if (statusEl) statusEl.innerHTML = '<div class="cam-status-dot"></div><span>Đợt ' + demSoDotQR + '</span>';
-    const inputEl = document.getElementById("qr-nhap-ma-input");
-    if (inputEl) inputEl.focus();
+    const kgInput = document.getElementById("qr-kg");
+    if (kgInput) kgInput.focus();
   }
 }
 window.toggleDungTiepTucNhapQR = toggleDungTiepTucNhapQR;
 
 function themMaNhapTayQR() {
-  const inputMa = document.getElementById("qr-nhap-ma-input");
-  const inputQC = document.getElementById("qr-nhap-qc-input");
-  const inputKG = document.getElementById("qr-nhap-kg-input");
-  if (!inputMa) return;
+  const qcInput = document.getElementById("qr-ten");
+  const mspInput = document.getElementById("qr-msp");
+  const baoInput = document.getElementById("qr-bao");
+  const kgInput = document.getElementById("qr-kg");
 
-  const rawVal = (inputMa.value || "").trim();
-  const valQC = inputQC ? (inputQC.value || "").trim() : "";
-  const valKG = inputKG ? parseFloat(inputKG.value) || 0 : 0;
-
-  if (!rawVal && !valQC) {
-    if (typeof showCanhBaoQR === "function") showCanhBaoQR("Vui lòng nhập mã hoặc quy cách!", "warning");
+  const qc = (qcKhoaQR || (qcInput ? qcInput.value.trim() : "")).trim();
+  if (!qc) {
+    if (typeof showCanhBaoQR === "function") showCanhBaoQR("Vui lòng chọn hoặc nhập QC!", "warning");
+    if (qcInput) qcInput.focus();
     return;
   }
 
-  const codeToAdd = rawVal || (valQC + (valKG > 0 ? "-" + valKG : ""));
-  khiQuetDuocMaQR({ getText: () => codeToAdd });
+  let msp = (mspKhoaQR || (mspInput ? mspInput.value.trim() : "")).trim();
+  if (!msp && mspDataQR && mspDataQR.length > 0) {
+    const match = mspDataQR.find(i => i.ten && i.ten.toLowerCase() === qc.toLowerCase());
+    if (match) msp = match.msp;
+  }
+  if (!msp) msp = qc;
 
-  if (phienQuetQR.length > 0 && (valQC || valKG > 0)) {
-    const lastItem = phienQuetQR[phienQuetQR.length - 1];
-    if (valQC) lastItem.qc = valQC;
-    if (valKG > 0) lastItem.kg = valKG;
-    luuPhienDoDangQR();
-    capNhatLogQR();
+  const soBao = Math.max(1, parseInt(baoInput ? baoInput.value : "1") || 1);
+  const kg = parseFloat(kgInput ? kgInput.value : "0") || 0;
+
+  if (kg <= 0) {
+    if (typeof showCanhBaoQR === "function") showCanhBaoQR("Vui lòng nhập số KG hợp lệ!", "warning");
+    if (kgInput) kgInput.focus();
+    return;
   }
 
-  inputMa.value = "";
-  if (inputKG) inputKG.value = "";
-  inputMa.focus();
+  if (!qcKhoaQR) {
+    khoaQCQR(msp, qc);
+  }
+
+  const dot = demSoDotQR || 1;
+  const now = Date.now();
+  for (let b = 0; b < soBao; b++) {
+    const id = "MANUAL_QR_" + (now + b) + "_" + Math.random().toString(36).slice(2, 6);
+    phienQuetQR.push({
+      id: id,
+      rawQR: qc,
+      msp: msp,
+      qc: qc,
+      bao: 1,
+      kg: Math.round(kg * 10) / 10,
+      thoiGian: new Date(now + b * 10),
+      dotQuet: dot,
+      isManual: true
+    });
+  }
+
+  if (typeof phatTiengBip === "function") phatTiengBip();
+  luuPhienDoDangQR();
+  capNhatLogQR();
+
+  if (kgInput) {
+    kgInput.value = "";
+    kgInput.focus();
+  }
 }
 window.themMaNhapTayQR = themMaNhapTayQR;
 
@@ -249,6 +491,8 @@ async function batDauQuetQR() {
   window.dangQuetQR = true;
 
   document.getElementById("form-chon").style.display = "none";
+  const qrNhap = document.getElementById("qr-nhap");
+  if (qrNhap) qrNhap.style.display = "none";
   document.getElementById("qr-cam").style.display = "block";
   if (typeof khoaCuonTrangQuet === "function") khoaCuonTrangQuet(true); else document.body.classList.add("cam-active");
   document.getElementById("qr-ketqua").style.display = "none";
@@ -511,7 +755,161 @@ function tatCameraQR() {
 window.tatCameraQR = tatCameraQR;
 window.dungQuet = tatCameraQR;
 
-// ── Cập nhật Bảng Nhật Ký Trực Tiếp (Live Log) ─────────────────────
+// ── Cập nhật Bảng Nhật Ký Trực Tiếp (Live Log) Nhóm Đợt + Accordion + Swipe to Delete ──
+window.expandedQRGroups = window.expandedQRGroups || new Set();
+
+function toggleChiTietQRGroup(groupKey) {
+  if (window.expandedQRGroups.has(groupKey)) {
+    window.expandedQRGroups.delete(groupKey);
+  } else {
+    window.expandedQRGroups.add(groupKey);
+  }
+  const safeId = 'qr-grp-' + btoa(encodeURIComponent(groupKey)).replace(/[^a-zA-Z0-9]/g, '');
+  const detailsList = document.querySelectorAll('[id="details-' + safeId + '"]');
+  const chevList = document.querySelectorAll('[id="chev-' + safeId + '"]');
+  const isOpen = window.expandedQRGroups.has(groupKey);
+  if (detailsList.length > 0) {
+    detailsList.forEach(el => el.style.display = isOpen ? 'block' : 'none');
+    chevList.forEach(el => el.style.transform = isOpen ? 'rotate(180deg)' : 'none');
+  } else {
+    capNhatLogQR();
+  }
+}
+window.toggleChiTietQRGroup = toggleChiTietQRGroup;
+
+function onTapRowQR(groupKey, event) {
+  const content = event.currentTarget;
+  if (content && content.classList.contains('swiped')) {
+    content.style.transform = 'translateX(0px)';
+    content.classList.remove('swiped');
+    return;
+  }
+  toggleChiTietQRGroup(groupKey);
+}
+window.onTapRowQR = onTapRowQR;
+
+function xoaNhomQR(groupKey, event) {
+  if (event) event.stopPropagation();
+  const parts = groupKey.split("___");
+  const dotNum = parseInt(parts[0], 10) || 1;
+  const qcVal = parts[1] || '—';
+
+  const doXoa = () => {
+    phienQuetQR = phienQuetQR.filter(item => !((item.dotQuet || 1) === dotNum && String(item.qc || item.msp || '—') === qcVal));
+    const maxDot = phienQuetQR.length > 0 ? Math.max(0, ...phienQuetQR.map(r => r.dotQuet || 1)) : 0;
+    demSoDotQR = maxDot > 0 ? maxDot : 1;
+    luuPhienDoDangQR();
+    capNhatLogQR();
+    if (typeof showCanhBaoQR === "function") showCanhBaoQR("Đã xóa nhóm " + qcVal);
+  };
+
+  if (typeof moXacNhanApp === "function") {
+    moXacNhanApp("Xóa toàn bộ mã " + qcVal + " trong Đợt " + dotNum + "?", doXoa, "Xóa", null, "Hủy", "Xác nhận xóa");
+  } else {
+    doXoa();
+  }
+}
+window.xoaNhomQR = xoaNhomQR;
+
+function xoaMaTrongLiveLogQR(originalIndex, event) {
+  if (event) event.stopPropagation();
+  if (originalIndex >= 0 && originalIndex < phienQuetQR.length) {
+    const item = phienQuetQR[originalIndex];
+    const tenMa = item ? (item.qc || item.msp || "mã này") : "mã này";
+    const doXoa = () => {
+      phienQuetQR.splice(originalIndex, 1);
+      const maxDot = phienQuetQR.length > 0 ? Math.max(0, ...phienQuetQR.map(r => r.dotQuet || 1)) : 0;
+      demSoDotQR = maxDot > 0 ? maxDot : 1;
+      const demEl = document.getElementById("qr-dem");
+      if (demEl) demEl.textContent = "Đã quét: " + phienQuetQR.length + " bao";
+      const statusEl = document.getElementById("qr-status");
+      if (statusEl && !dangQuetQR) {
+        statusEl.innerHTML = '<div class="cam-status-dot paused"></div><span>Đợt ' + demSoDotQR + '</span>';
+      }
+      luuPhienDoDangQR();
+      capNhatLogQR();
+      if (typeof showCanhBaoQR === "function") showCanhBaoQR("Đã xóa " + tenMa);
+    };
+    if (typeof moXacNhanApp === "function") {
+      moXacNhanApp("Xóa lần quét này của " + tenMa + "?", doXoa, "Xóa", null, "Hủy", "Xác nhận xóa");
+    } else {
+      doXoa();
+    }
+  }
+}
+window.xoaMaTrongLiveLogQR = xoaMaTrongLiveLogQR;
+
+let qrSwipeTouchState = null;
+function khoiTaoSuKienSwipeQR(containerId) {
+  const container = document.getElementById(containerId);
+  if (!container || container.__swipeInit) return;
+  container.__swipeInit = true;
+
+  container.addEventListener("touchstart", (e) => {
+    const touch = e.touches[0];
+    const content = e.target.closest(".btp-swipe-content");
+    if (!content) return;
+
+    const allSwiped = container.querySelectorAll(".btp-swipe-content.swiped");
+    allSwiped.forEach(el => {
+      if (el !== content) {
+        el.style.transform = "translateX(0px)";
+        el.classList.remove("swiped");
+      }
+    });
+
+    const isAlreadySwiped = content.classList.contains("swiped");
+    qrSwipeTouchState = {
+      content: content,
+      startX: touch.clientX,
+      startY: touch.clientY,
+      currentX: touch.clientX,
+      isSwiping: false,
+      isAlreadySwiped: isAlreadySwiped
+    };
+  }, { passive: true });
+
+  container.addEventListener("touchmove", (e) => {
+    if (!qrSwipeTouchState) return;
+    const touch = e.touches[0];
+    const dx = touch.clientX - qrSwipeTouchState.startX;
+    const dy = touch.clientY - qrSwipeTouchState.startY;
+
+    if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 10) {
+      qrSwipeTouchState.isSwiping = true;
+      let offset = dx;
+      if (qrSwipeTouchState.isAlreadySwiped) {
+        offset = -76 + dx;
+      }
+      if (offset > 0) offset = 0;
+      if (offset < -85) offset = -85;
+      qrSwipeTouchState.content.style.transition = "none";
+      qrSwipeTouchState.content.style.transform = `translateX(${offset}px)`;
+    }
+  }, { passive: true });
+
+  container.addEventListener("touchend", (e) => {
+    if (!qrSwipeTouchState) return;
+    const content = qrSwipeTouchState.content;
+    const dx = (e.changedTouches[0]?.clientX || qrSwipeTouchState.currentX) - qrSwipeTouchState.startX;
+    
+    content.style.transition = "transform 0.2s cubic-bezier(0.2, 0.9, 0.3, 1)";
+    if (qrSwipeTouchState.isSwiping) {
+      if (dx < -35) {
+        content.style.transform = "translateX(-76px)";
+        content.classList.add("swiped");
+      } else {
+        content.style.transform = "translateX(0px)";
+        content.classList.remove("swiped");
+      }
+    } else if (qrSwipeTouchState.isAlreadySwiped) {
+      content.style.transform = "translateX(0px)";
+      content.classList.remove("swiped");
+    }
+    qrSwipeTouchState = null;
+  });
+}
+
 function capNhatLogQR() {
   const container = document.getElementById("qr-log-list");
   const containerNhap = document.getElementById("qr-nhap-log-list");
@@ -522,75 +920,101 @@ function capNhatLogQR() {
   if (!container && !containerNhap) return;
 
   if (phienQuetQR.length === 0) {
-    const emptyHtml = '<div style="color:var(--cream-soft); font-size:12px; text-align:center; padding:6px 0;">Chưa có mã nào</div>';
+    const emptyHtml = '<div class="btp-empty-log">Chưa có mã nào được quét</div>';
     if (container) container.innerHTML = emptyHtml;
     if (containerNhap) containerNhap.innerHTML = emptyHtml;
     return;
   }
 
-  // Tính số thứ tự trong đợt (seqTrongDot) cho từng mã giống CX1
-  const dotSeq = {};
-  phienQuetQR.forEach(item => {
+  // Nhóm các mã quét theo ĐỢT (dotQuet) và QUY CÁCH (qc)
+  const groupMap = new Map();
+  phienQuetQR.forEach((item, originalIndex) => {
     const dot = item.dotQuet || 1;
-    dotSeq[dot] = (dotSeq[dot] || 0) + 1;
-    item.seqTrongDot = dotSeq[dot];
+    const qc = item.qc || item.msp || item.rawQR || '—';
+    const key = `${dot}___${qc}`;
+
+    if (!groupMap.has(key)) {
+      groupMap.set(key, {
+        key: key,
+        dot: dot,
+        qc: qc,
+        items: [],
+        lastThoiGian: item.thoiGian
+      });
+    }
+    const g = groupMap.get(key);
+    g.items.push({ item, originalIndex });
+    g.lastThoiGian = item.thoiGian;
   });
 
-  // Hiển thị danh sách từ mới nhất lên trên: Đợt | ID | QC | KG | SL trong đợt | Thời gian | Xóa
-  // Tối ưu hiệu năng: Giới hạn 30 mã mới nhất ở khung Live Log để máy luôn mượt và không nóng CPU khi quét hàng trăm bao
   const MAX_LIVE_LOG = 30;
-  const newestFirst = phienQuetQR.slice().reverse();
-  const displayedItems = newestFirst.slice(0, MAX_LIVE_LOG);
+  // Nhóm có lượt quét mới nhất hiển thị trên cùng
+  const groups = Array.from(groupMap.values()).reverse();
+  const displayedGroups = groups.slice(0, MAX_LIVE_LOG);
 
-  let html = displayedItems.map((item, revIdx) => {
-    const origIdx = phienQuetQR.length - 1 - revIdx;
-    const dot = item.dotQuet || 1;
-    const gio = item.thoiGian ? new Date(item.thoiGian).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit", second: "2-digit" }) : "—";
-    const flashClass = revIdx === 0 ? ' scan-flash-new' : '';
-    const kgStr = item.kg ? Number(item.kg).toFixed(1) : "0";
+  let html = displayedGroups.map((g, idx) => {
+    const safeQc = typeof escapeHtml === "function" ? escapeHtml(g.qc) : g.qc;
+    const safeId = 'qr-grp-' + btoa(encodeURIComponent(g.key)).replace(/[^a-zA-Z0-9]/g, '');
+    const isExpanded = window.expandedQRGroups.has(g.key);
+    const countBadge = g.items.length > 1 ? `<span class="btp-badge-count">×${g.items.length}</span>` : '';
+    const gio = g.lastThoiGian ? new Date(g.lastThoiGian).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit", second: "2-digit" }) : "";
+    const flashClass = idx === 0 ? ' scan-flash-new' : '';
 
-    return `<div class="${flashClass}" style="display:flex; justify-content:space-between; align-items:center; padding:4px 0; border-bottom:1px solid var(--line-soft); font-size:12px; border-radius:6px; width:100%; box-sizing:border-box;">
-      <span style="color:var(--steel); font-weight:700; width:26px; flex-shrink:0;">${dot}</span>
-      <span style="color:var(--brass); font-weight:800; flex:1; min-width:0; text-align:left; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${item.qc || item.msp || '—'}</span>
-      <span style="color:var(--cream-soft); font-size:11px; width:22px; text-align:center; flex-shrink:0;">${item.seqTrongDot}</span>
-      <span style="color:var(--success); font-weight:700; width:40px; text-align:center; flex-shrink:0;">${kgStr}</span>
-      <span style="color:var(--cream-soft); font-size:11px; width:48px; text-align:right; flex-shrink:0;">${gio}</span>
-      <button class="" onclick="xoaMaTrongLiveLogQR(${origIdx})" title="Xóa mã này" style="margin-left:4px; background:none; border:none; color:var(--red); cursor:pointer; padding:2px 4px; flex-shrink:0; display:inline-flex; align-items:center; justify-content:center;">
-        <i class="ti ti-trash"></i>
-      </button>
+    const tongKgNhom = g.items.reduce((sum, it) => sum + (Number(it.item.kg) || 0), 0);
+    const kgText = tongKgNhom > 0 ? (Number.isInteger(tongKgNhom) ? tongKgNhom : tongKgNhom.toFixed(1)) : '—';
+    const escapedKeyJs = g.key.replace(/'/g, "\\'");
+
+    let subItemsHtml = g.items.map((it, subIdx) => {
+      const subGio = it.item.thoiGian ? new Date(it.item.thoiGian).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit", second: "2-digit" }) : "";
+      const subKg = (it.item.kg !== undefined && it.item.kg !== null && Number(it.item.kg) > 0) ? it.item.kg : '0';
+      const safeSubQc = typeof escapeHtml === "function" ? escapeHtml(it.item.qc || g.qc) : (it.item.qc || g.qc);
+      return `<div class="btp-sub-item">
+        <span class="btp-sub-stt">${subIdx + 1}</span>
+        <span class="btp-sub-msp">${safeSubQc}</span>
+        <span class="btp-sub-kg">${subKg}</span>
+        <span class="btp-sub-gio">${subGio}</span>
+        <button type="button" class="btp-sub-del-btn" onclick="xoaMaTrongLiveLogQR(${it.originalIndex}, event)" title="Xóa lần quét này">
+          <i class="ti ti-trash"></i>
+        </button>
+      </div>`;
+    }).join("");
+
+    return `<div class="btp-swipe-container${flashClass}">
+      <div class="btp-swipe-row-wrap">
+        <div class="btp-swipe-actions">
+          <button type="button" class="btp-swipe-btn-del" onclick="xoaNhomQR('${escapedKeyJs}', event)">
+            <i class="ti ti-trash"></i>
+            <span>Xóa</span>
+          </button>
+        </div>
+        <div class="btp-swipe-content" onclick="onTapRowQR('${escapedKeyJs}', event)">
+          <span class="btp-col-dot">${g.dot}</span>
+          <div class="btp-col-msp-wrap">
+            <span class="btp-col-msp">${safeQc}</span>
+            ${countBadge}
+          </div>
+          <span class="btp-col-kg">${kgText}</span>
+          <span class="btp-col-gio">${gio}</span>
+          <i id="chev-${safeId}" class="ti ti-chevron-down btp-chevron" style="transform:${isExpanded ? 'rotate(180deg)' : 'none'};"></i>
+        </div>
+      </div>
+      <div id="details-${safeId}" class="btp-group-details" style="display:${isExpanded ? 'block' : 'none'};">
+        ${subItemsHtml}
+      </div>
     </div>`;
   }).join("");
 
-  if (phienQuetQR.length > MAX_LIVE_LOG) {
-    const conLai = phienQuetQR.length - MAX_LIVE_LOG;
-    html += `<div style="text-align:center; padding:6px 0; font-size:11px; color:var(--cream-soft); font-style:italic;">... và ${conLai} mã trước đó (xem đầy đủ ở bảng kết quả)</div>`;
+  if (groups.length > MAX_LIVE_LOG) {
+    const conLai = groups.length - MAX_LIVE_LOG;
+    html += `<div style="text-align:center; padding:6px 0; font-size:11px; color:#64748b; font-style:italic;">... và ${conLai} loại mã trước đó (xem đầy đủ ở bảng kết quả)</div>`;
   }
 
   if (container) container.innerHTML = html;
   if (containerNhap) containerNhap.innerHTML = html;
-}
 
-function xoaMaTrongLiveLogQR(index) {
-  if (index >= 0 && index < phienQuetQR.length) {
-    phienQuetQR.splice(index, 1);
-    const maxDot = phienQuetQR.length > 0 ? Math.max(0, ...phienQuetQR.map(r => r.dotQuet || 1)) : 0;
-    demSoDotQR = maxDot > 0 ? maxDot : 1;
-    const demEl = document.getElementById("qr-dem");
-    if (demEl) demEl.textContent = "Đã quét: " + phienQuetQR.length + " bao";
-    const statusEl = document.getElementById("qr-status");
-    if (statusEl && !dangQuetQR) {
-      statusEl.innerHTML = '<div class="cam-status-dot paused"></div><span>Đợt ' + demSoDotQR + '</span>';
-    }
-    const lastItem = phienQuetQR.length > 0 ? phienQuetQR[phienQuetQR.length - 1] : null;
-    maQRVuaQuetQR = lastItem ? lastItem.id : "";
-    const lockStatusEl = document.getElementById("qr-lock-status");
-    if (lockStatusEl) lockStatusEl.textContent = maQRVuaQuetQR || "Chờ quét...";
-
-    luuPhienDoDangQR();
-    capNhatLogQR();
-  }
+  khoiTaoSuKienSwipeQR("qr-log-list");
+  khoiTaoSuKienSwipeQR("qr-nhap-log-list");
 }
-window.xoaMaTrongLiveLogQR = xoaMaTrongLiveLogQR;
 
 // ── Tính toán 2 Bảng Kết Quả Chuẩn CX1 (Đợt, QC, Bao, KG) ───────────
 function taoHangKetQuaQuetQR(danhSach) {
@@ -728,7 +1152,10 @@ function hienKetQuaQuetQR() {
   const tieuDeKetQua = document.getElementById("qr-ketqua-tieude");
   if (tieuDeKetQua) tieuDeKetQua.textContent = "Hoàn tất: " + (loaiQuetQR || "Giao dịch") + " (" + (ngayQuetQR || "") + ")";
 
-  document.getElementById("qr-cam").style.display = "none";
+  const qrCam = document.getElementById("qr-cam");
+  if (qrCam) qrCam.style.display = "none";
+  const qrNhap = document.getElementById("qr-nhap");
+  if (qrNhap) qrNhap.style.display = "none";
   if (typeof khoaCuonTrangQuet === "function") khoaCuonTrangQuet(false); else document.body.classList.remove("cam-active");
   document.getElementById("form-chon").style.display = "none";
   document.getElementById("qr-ketqua").style.display = "block";
@@ -908,6 +1335,8 @@ async function quetTiepQuetQR() {
   if (loaiQuetQR && typeof chonLoaiQR === "function") chonLoaiQR(loaiQuetQR);
 
   document.getElementById("qr-ketqua").style.display = "none";
+  const qrNhap = document.getElementById("qr-nhap");
+  if (qrNhap) qrNhap.style.display = "none";
   document.getElementById("form-chon").style.display = "none";
   document.getElementById("qr-cam").style.display = "block";
   if (typeof khoaCuonTrangQuet === "function") khoaCuonTrangQuet(true); else document.body.classList.add("cam-active");
