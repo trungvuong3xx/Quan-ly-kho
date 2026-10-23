@@ -501,59 +501,97 @@
 
   <div id="qr-cam" style="display:none; width:100%; max-width:600px; box-sizing:border-box; margin:0 auto; padding:6px 12px 10px 12px; overflow:hidden;">
     <span id="qr-dem" style="display:none;"></span>
-    <div class="video-container" style="position:relative; width:100%; height:230px; background:#000; border-radius:16px; overflow:hidden; margin:0 0 6px 0; border: 2px solid var(--primary); box-sizing:border-box;">
+    <input type="checkbox" id="qr-cho-phep-trung-cam" style="display:none;" onchange="if(typeof capNhatTrangThaiTrungQR==='function') capNhatTrangThaiTrungQR()">
+    <div id="qr-video-box" class="video-container btp-camera-main">
       <video id="reader" autoplay playsinline muted disablePictureInPicture style="position:absolute; width:100%; height:100%; object-fit:cover; transform:translateZ(0); will-change:transform;"></video>
-      <div class="cam-hud-controls">
-        <button id="btn-flash-qr" type="button" class="cam-hud-btn" onclick="toggleFlashlightHUD('reader', this)" title="Bật/Tắt Đèn Pin">
-          <i class="ti ti-flashlight"></i>
-        </button>
-        <button type="button" class="cam-hud-btn" onclick="toggleQuetTrungHUD('qr-cho-phep-trung-cam', this)" title="Bật/Tắt Quét Trùng">
-          <i class="ti ti-repeat"></i>
-        </button>
-      </div>
-      <input type="checkbox" id="qr-cho-phep-trung-cam" style="display:none;" onchange="if(typeof capNhatTrangThaiTrungQR==='function') capNhatTrangThaiTrungQR()">
-    </div>
+      <div id="qr-cam-flash-overlay" class="cam-flash-overlay"></div>
 
-    <!-- Hàng mã vừa quét + Ô nhập tay (1 hàng duy nhất) -->
-    <div class="cam-quick-row">
-      <div id="qr-display-box" class="cam-scanned-chip" onclick="saoChepMaQR(event)" title="Chạm để sao chép mã">
-        <span id="qr-lock-status" class="cam-scanned-text">Chờ quét...</span>
-        <button type="button" id="btn-copy-qr" onclick="saoChepMaQR(event)" style="background:transparent; border:none; color:var(--text-muted); cursor:pointer; padding:0; display:inline-flex; align-items:center; justify-content:center;" title="Sao chép mã QR">
-          <i id="icon-copy-qr" class="ti ti-copy cam-scanned-copy"></i>
-        </button>
+      <!-- Khung ngắm Reticle 4 góc bo + laser scan -->
+      <div class="cam-reticle-overlay">
+        <div class="cam-reticle-box">
+          <div class="reticle-corner reticle-tl"></div>
+          <div class="reticle-corner reticle-tr"></div>
+          <div class="reticle-corner reticle-bl"></div>
+          <div class="reticle-corner reticle-br"></div>
+          <div class="reticle-laser-line"></div>
+        </div>
       </div>
-      <div class="cam-manual-box">
-        <input type="text" id="qr-manual-input-cam" placeholder="Nhập tay mã..." onkeydown="if(event.key==='Enter') themMaThuCongQR()">
-        <button type="button" class="cam-manual-btn" onclick="themMaThuCongQR()" title="Thêm mã"><i class="ti ti-check"></i></button>
-      </div>
-    </div>
 
-    <!-- Thanh đáy Shutter (1 hàng duy nhất: Đợt | Nút tròn Shutter | Xem kết quả) -->
-    <div class="cam-shutter-bar">
-      <div class="cam-dot-badge">
-        <span id="qr-status" style="display:inline-flex; align-items:center; gap:6px;">
+      <!-- Góc trên trái: Đợt -->
+      <div class="cam-hud-top-left">
+        <span id="qr-status" class="cam-status-pill">
           <div class="cam-status-dot"></div>
           <span>Đợt 1</span>
         </span>
       </div>
 
-      <button id="btn-dung-tieptuc-qr" type="button" class="cam-shutter-center-btn" onclick="toggleDungTiepTucQR()" title="Dừng / Quét tiếp">
-        <i class="ti ti-player-pause-filled"></i>
-      </button>
+      <!-- Góc trên phải: Đèn pin + Quét trùng -->
+      <div class="cam-hud-top-right">
+        <button id="btn-flash-qr" type="button" class="cam-hud-btn" onclick="toggleFlashlightHUD('reader', this)" title="Bật/Tắt Đèn pin">
+          <svg class="torch-svg" viewBox="0 0 24 24" width="20" height="20" fill="none" style="display:block; transform: rotate(-35deg);">
+            <path d="M7 3h10l-2 6H9L7 3z" fill="#f59e0b" stroke="#fbbf24" stroke-width="1.3"/>
+            <path d="M9 9v9a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2V9H9z" fill="#334155" stroke="#94a3b8" stroke-width="1.3"/>
+            <circle cx="12" cy="13" r="1.5" fill="#fbbf24"/>
+            <path d="M6 3h12" stroke="#fef08a" stroke-width="1.6" stroke-linecap="round"/>
+          </svg>
+        </button>
+        <button id="btn-quet-trung-qr" type="button" class="cam-hud-btn" onclick="toggleQuetTrungHUD('qr-cho-phep-trung-cam', this)" title="Bật/Tắt Quét trùng">
+          <i class="ti ti-repeat"></i>
+        </button>
+      </div>
 
-      <button type="button" class="cam-finish-btn" onclick="xemKetQuaQuetQR()" title="Xem kết quả">
-        <i class="ti ti-list-check"></i>
-      </button>
+      <!-- Đáy camera: Thanh mờ chứa Icon Bàn phím | Pause/Play | Xem kết quả -->
+      <div class="cam-hud-bottom-bar">
+        <button id="btn-toggle-banphim-qr" type="button" class="cam-hud-btn" onclick="toggleNhapTayQR()" title="Mở ô nhập tay">
+          <i class="ti ti-keyboard"></i>
+        </button>
+
+        <button id="btn-dung-tieptuc-qr" type="button" class="cam-shutter-center-btn" onclick="toggleDungTiepTucQR()" title="Dừng / Quét tiếp">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="#ffffff"><rect x="6" y="4" width="4" height="16" rx="2" /><rect x="14" y="4" width="4" height="16" rx="2" /></svg>
+        </button>
+
+        <button type="button" class="cam-hud-btn" onclick="xemKetQuaQuetQR()" title="Xem bảng tổng kết">
+          <i class="ti ti-clipboard-list"></i>
+        </button>
+      </div>
+
+      <!-- Overlay khi Tạm dừng camera (Chạm để quét tiếp) -->
+      <div id="qr-cam-pause-overlay" class="cam-pause-overlay" style="display:none;" onclick="toggleDungTiepTucQR()">
+        <div class="cam-pause-badge">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><rect x="6" y="4" width="4" height="16" rx="2"/><rect x="14" y="4" width="4" height="16" rx="2"/></svg>
+          <span>ĐÃ TẠM DỪNG</span>
+        </div>
+        <div class="cam-pause-subtext">Chạm vào màn hình để quét tiếp</div>
+      </div>
     </div>
 
-    <!-- Bảng nhật ký quét -->
-    <div id="qr-log-container" style="margin:0; background:var(--card-raised); border-radius:12px; padding:8px 10px; border:1px solid var(--line-soft); display:flex; flex-direction:column; width:100%; box-sizing:border-box; flex:1 1 auto; overflow:hidden;">
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px; border-bottom:1px solid var(--line); padding-bottom:4px; gap:8px;">
-        <span style="font-size:12px; font-weight:800; color:var(--brass); letter-spacing:0.5px; white-space:nowrap;"><i class="ti ti-clipboard-list"></i> NHẬT KÝ QUÉT</span>
-        <span id="qr-log-count" style="font-size:12px; font-weight:700; color:var(--steel); white-space:nowrap;">0 bao</span>
+    <!-- Hàng mỏng full chiều ngang ngay dưới camera (Toggle Mã vừa quét vs Ô nhập tay) -->
+    <div id="qr-subcam-bar" class="btp-subcam-bar">
+      <!-- Chế độ 1: Mã vừa quét + Copy (mặc định) -->
+      <div id="qr-chip-mode" class="btp-subcam-chip-mode" onclick="saoChepMaQR(event)" title="Chạm để sao chép mã">
+        <span id="qr-lock-status" class="btp-scanned-code">Chờ quét...</span>
+        <button type="button" id="btn-copy-qr" class="btp-copy-btn" onclick="saoChepMaQR(event)" title="Sao chép mã">
+          <i id="icon-copy-qr" class="ti ti-copy"></i>
+        </button>
       </div>
-      <div id="qr-log-list" style="max-height:280px; min-height:140px; overflow-y:auto; padding-right:4px; flex:1 1 auto;">
-        <div style="color:var(--cream-soft); font-size:12px; text-align:center; padding:6px 0;">Chưa có mã nào được quét</div>
+
+      <!-- Chế độ 2: Ô nhập tay khi mở bàn phím -->
+      <div id="qr-input-mode" class="btp-subcam-input-mode" style="display:none;">
+        <input type="text" id="qr-manual-input-cam" placeholder="Nhập tay mã..." onkeydown="if(event.key==='Enter') themMaThuCongQR()">
+        <button type="button" class="btp-input-submit-btn" onclick="themMaThuCongQR()" title="Thêm mã">
+          <i class="ti ti-check"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- Bảng nhật ký quét thẻ trắng, bóng nhẹ -->
+    <div id="qr-log-container" class="btp-log-card">
+      <div class="btp-log-card-header">
+        <span class="btp-log-card-title"><i class="ti ti-clipboard-list"></i> NHẬT KÝ QUÉT</span>
+        <span id="qr-log-count" class="btp-log-card-badge">0 bao</span>
+      </div>
+      <div id="qr-log-list" class="btp-log-list-scroll">
+        <div class="btp-empty-log">Chưa có mã nào được quét</div>
       </div>
     </div>
   </div>
@@ -669,55 +707,88 @@
 
   <div id="cx1-cam" style="display:none; width:100%; max-width:600px; box-sizing:border-box; margin:0 auto; padding:6px 12px 10px 12px; overflow:hidden;">
     <span id="cx1-dem" class="cx5-badge" style="display:none;"></span>
-    <div class="video-container" style="position:relative; width:100%; height:230px; background:#000; border-radius:16px; overflow:hidden; margin:0 0 6px 0; border: 2px solid var(--steel); box-sizing:border-box;">
+    <input type="checkbox" id="cx1-cho-phep-trung-cam" style="display:none;" onchange="if(typeof capNhatTrangThaiTrungCX1==='function') capNhatTrangThaiTrungCX1()">
+    <div id="cx1-video-box" class="video-container btp-camera-main">
       <video id="cx1-reader" autoplay playsinline muted disablePictureInPicture style="position:absolute; width:100%; height:100%; object-fit:cover; transform:translateZ(0); will-change:transform;"></video>
-      <div class="cam-hud-controls">
-        <button id="btn-flash-cx1" type="button" class="cam-hud-btn" onclick="toggleFlashlightHUD('cx1-reader', this)" title="Bật/Tắt Đèn Pin">
-          <i class="ti ti-flashlight"></i>
-        </button>
-        <button type="button" class="cam-hud-btn" onclick="toggleQuetTrungHUD('cx1-cho-phep-trung-cam', this)" title="Bật/Tắt Quét Trùng">
-          <i class="ti ti-repeat"></i>
-        </button>
-      </div>
-      <input type="checkbox" id="cx1-cho-phep-trung-cam" style="display:none;" onchange="if(typeof capNhatTrangThaiTrungCX1==='function') capNhatTrangThaiTrungCX1()">
-    </div>
+      <div id="cx1-cam-flash-overlay" class="cam-flash-overlay"></div>
 
-    <!-- Hàng mã vừa quét + Nút chuyển nhập tay -->
-    <div class="cam-quick-row">
-      <div id="cx1-display-box" class="cam-scanned-chip" style="flex:1;" title="Mã vừa quét">
-        <span id="cx1-lock-status" class="cam-scanned-text">Chờ quét...</span>
+      <!-- Khung ngắm Reticle 4 góc bo + laser scan -->
+      <div class="cam-reticle-overlay">
+        <div class="cam-reticle-box">
+          <div class="reticle-corner reticle-tl"></div>
+          <div class="reticle-corner reticle-tr"></div>
+          <div class="reticle-corner reticle-bl"></div>
+          <div class="reticle-corner reticle-br"></div>
+          <div class="reticle-laser-line"></div>
+        </div>
       </div>
-      <button type="button" class="btn btn-blue" style="height:38px; padding:0 14px; font-size:13px; font-weight:700; margin:0; border-radius:10px; display:inline-flex; align-items:center; gap:6px;" onclick="chuyenSangNhapTayCX1()">
-        <i class="ti ti-keyboard"></i> Nhập tay
-      </button>
-    </div>
 
-    <!-- Thanh đáy Shutter (1 hàng duy nhất: Đợt | Nút tròn Shutter | Xem kết quả) -->
-    <div class="cam-shutter-bar">
-      <div class="cam-dot-badge">
-        <span id="cx1-status" style="display:inline-flex; align-items:center; gap:6px;">
+      <!-- Góc trên trái: Đợt -->
+      <div class="cam-hud-top-left">
+        <span id="cx1-status" class="cam-status-pill">
           <div class="cam-status-dot"></div>
           <span>Đợt 1</span>
         </span>
       </div>
 
-      <button id="btn-dung-tieptuc-cx1" type="button" class="cam-shutter-center-btn" onclick="toggleDungTiepTuc()" title="Dừng / Quét tiếp">
-        <i class="ti ti-player-pause-filled"></i>
-      </button>
+      <!-- Góc trên phải: Đèn pin + Quét trùng -->
+      <div class="cam-hud-top-right">
+        <button id="btn-flash-cx1" type="button" class="cam-hud-btn" onclick="toggleFlashlightHUD('cx1-reader', this)" title="Bật/Tắt Đèn pin">
+          <svg class="torch-svg" viewBox="0 0 24 24" width="20" height="20" fill="none" style="display:block; transform: rotate(-35deg);">
+            <path d="M7 3h10l-2 6H9L7 3z" fill="#f59e0b" stroke="#fbbf24" stroke-width="1.3"/>
+            <path d="M9 9v9a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2V9H9z" fill="#334155" stroke="#94a3b8" stroke-width="1.3"/>
+            <circle cx="12" cy="13" r="1.5" fill="#fbbf24"/>
+            <path d="M6 3h12" stroke="#fef08a" stroke-width="1.6" stroke-linecap="round"/>
+          </svg>
+        </button>
+        <button id="btn-quet-trung-cx1" type="button" class="cam-hud-btn" onclick="toggleQuetTrungHUD('cx1-cho-phep-trung-cam', this)" title="Bật/Tắt Quét trùng">
+          <i class="ti ti-repeat"></i>
+        </button>
+      </div>
 
-      <button type="button" class="cam-finish-btn" onclick="ketThucCX1()" title="Xem kết quả">
-        <i class="ti ti-list-check"></i>
-      </button>
+      <!-- Đáy camera: Thanh mờ chứa Icon Bàn phím | Pause/Play | Xem kết quả -->
+      <div class="cam-hud-bottom-bar">
+        <button id="btn-toggle-banphim-cx1" type="button" class="cam-hud-btn" onclick="chuyenSangNhapTayCX1()" title="Chuyển sang Nhập tay">
+          <i class="ti ti-keyboard"></i>
+        </button>
+
+        <button id="btn-dung-tieptuc-cx1" type="button" class="cam-shutter-center-btn" onclick="toggleDungTiepTuc()" title="Dừng / Quét tiếp">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="#ffffff"><rect x="6" y="4" width="4" height="16" rx="2" /><rect x="14" y="4" width="4" height="16" rx="2" /></svg>
+        </button>
+
+        <button type="button" class="cam-hud-btn" onclick="ketThucCX1()" title="Xem bảng tổng kết">
+          <i class="ti ti-clipboard-list"></i>
+        </button>
+      </div>
+
+      <!-- Overlay khi Tạm dừng camera (Chạm để quét tiếp) -->
+      <div id="cx1-cam-pause-overlay" class="cam-pause-overlay" style="display:none;" onclick="toggleDungTiepTuc()">
+        <div class="cam-pause-badge">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><rect x="6" y="4" width="4" height="16" rx="2"/><rect x="14" y="4" width="4" height="16" rx="2"/></svg>
+          <span>ĐÃ TẠM DỪNG</span>
+        </div>
+        <div class="cam-pause-subtext">Chạm vào màn hình để quét tiếp</div>
+      </div>
     </div>
 
-    <!-- Bảng nhật ký quét -->
-    <div id="cx1-log-container" style="margin:0; background:var(--card-raised); border-radius:12px; padding:8px 10px; border:1px solid var(--line-soft); display:flex; flex-direction:column; width:100%; box-sizing:border-box; flex:1 1 auto; overflow:hidden;">
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px; border-bottom:1px solid var(--line); padding-bottom:4px; gap:8px;">
-        <span style="font-size:12px; font-weight:800; color:var(--brass); letter-spacing:0.5px; white-space:nowrap;"><i class="ti ti-clipboard-list"></i> NHẬT KÝ QUÉT</span>
-        <span id="cx1-log-count" style="font-size:12px; font-weight:700; color:var(--steel); white-space:nowrap;">0 mã</span>
+    <!-- Hàng mỏng full chiều ngang ngay dưới camera (Mã vừa quét + Nút sao chép) -->
+    <div id="cx1-subcam-bar" class="btp-subcam-bar">
+      <div id="cx1-chip-mode" class="btp-subcam-chip-mode" onclick="saoChepMaQRCX1(event)" title="Chạm để sao chép mã">
+        <span id="cx1-lock-status" class="btp-scanned-code">Chờ quét...</span>
+        <button type="button" id="btn-copy-cx1" class="btp-copy-btn" onclick="saoChepMaQRCX1(event)" title="Sao chép mã">
+          <i id="icon-copy-cx1" class="ti ti-copy"></i>
+        </button>
       </div>
-      <div id="cx1-log-list" style="max-height:280px; min-height:140px; overflow-y:auto; padding-right:4px; flex:1 1 auto;">
-        <div style="color:var(--cream-soft); font-size:12px; text-align:center; padding:6px 0;">Chưa có mã nào được quét</div>
+    </div>
+
+    <!-- Bảng nhật ký quét thẻ trắng, bóng nhẹ -->
+    <div id="cx1-log-container" class="btp-log-card">
+      <div class="btp-log-card-header">
+        <span class="btp-log-card-title"><i class="ti ti-clipboard-list"></i> NHẬT KÝ QUÉT</span>
+        <span id="cx1-log-count" class="btp-log-card-badge">0 mã</span>
+      </div>
+      <div id="cx1-log-list" class="btp-log-list-scroll">
+        <div class="btp-empty-log">Chưa có mã nào được quét</div>
       </div>
     </div>
   </div>

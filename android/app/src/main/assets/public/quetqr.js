@@ -18,17 +18,68 @@ let mapKhoaQR = new Map();
 let idPhienHienTaiQR = null;
 let soLuongDaGuiHienTaiQR = 0;
 
+const SVG_SHUTTER_PAUSE = '<svg viewBox="0 0 24 24" width="22" height="22" fill="#ffffff"><rect x="6" y="4" width="4" height="16" rx="2" /><rect x="14" y="4" width="4" height="16" rx="2" /></svg>';
+const SVG_SHUTTER_PLAY = '<svg viewBox="0 0 24 24" width="22" height="22" fill="#ffffff" style="margin-left:2px;"><path d="M8 5v14l11-7z" /></svg>';
+
+function hienVienFeedbackQR(loai) {
+  const overlay = document.getElementById("qr-cam-flash-overlay");
+  if (overlay) {
+    overlay.classList.remove("flash-success", "flash-duplicate");
+    void overlay.offsetWidth;
+    if (loai === "success") {
+      overlay.classList.add("flash-success");
+      setTimeout(() => overlay.classList.remove("flash-success"), 300);
+    } else {
+      overlay.classList.add("flash-duplicate");
+      setTimeout(() => overlay.classList.remove("flash-duplicate"), 450);
+    }
+  }
+  if (typeof hienVienFeedbackCamera === "function") {
+    try { hienVienFeedbackCamera("qr-video-box", loai); } catch (e) { }
+  }
+}
+window.hienVienFeedbackQR = hienVienFeedbackQR;
+
+function toggleNhapTayQR() {
+  const chipMode = document.getElementById("qr-chip-mode");
+  const inputMode = document.getElementById("qr-input-mode");
+  const btnKeyboard = document.getElementById("btn-toggle-banphim-qr");
+  const inputField = document.getElementById("qr-manual-input-cam");
+  if (!chipMode || !inputMode) return;
+
+  const isInputOpen = inputMode.style.display !== "none";
+  if (isInputOpen) {
+    dongNhapTayQR();
+  } else {
+    chipMode.style.display = "none";
+    inputMode.style.display = "flex";
+    if (btnKeyboard) btnKeyboard.classList.add("active-mode");
+    if (inputField) {
+      inputField.value = "";
+      setTimeout(() => inputField.focus(), 80);
+    }
+  }
+}
+window.toggleNhapTayQR = toggleNhapTayQR;
+
+function dongNhapTayQR() {
+  const chipMode = document.getElementById("qr-chip-mode");
+  const inputMode = document.getElementById("qr-input-mode");
+  const btnKeyboard = document.getElementById("btn-toggle-banphim-qr");
+  const inputField = document.getElementById("qr-manual-input-cam");
+  if (inputMode) inputMode.style.display = "none";
+  if (chipMode) chipMode.style.display = "flex";
+  if (btnKeyboard) btnKeyboard.classList.remove("active-mode");
+  if (inputField) inputField.value = "";
+}
+window.dongNhapTayQR = dongNhapTayQR;
+
 // ── Cập nhật trạng thái công tắc quét trùng ────────────────────────
 function capNhatTrangThaiTrungQR() {
   const elCheck = document.getElementById("qr-cho-phep-trung-cam");
-  const elStatus = document.getElementById("qr-lock-status");
-  if (!elStatus) return;
-  if (elCheck && elCheck.checked) {
-    elStatus.textContent = "Cho phép";
-    elStatus.style.color = "var(--success)";
-  } else {
-    elStatus.textContent = "Chờ quét...";
-    elStatus.style.color = "var(--cream-soft)";
+  const btnTrung = document.getElementById("btn-quet-trung-qr");
+  if (btnTrung && elCheck) {
+    btnTrung.classList.toggle("active-repeat", elCheck.checked);
   }
 }
 window.capNhatTrangThaiTrungQR = capNhatTrangThaiTrungQR;
@@ -124,10 +175,13 @@ async function batDauQuetQR() {
 
   const btnToggle = document.getElementById("btn-dung-tieptuc-qr");
   if (btnToggle) {
-    btnToggle.innerHTML = '<i class="ti ti-player-pause-filled"></i>';
+    btnToggle.innerHTML = SVG_SHUTTER_PAUSE;
     btnToggle.classList.remove("paused");
     btnToggle.title = "Dừng quét";
   }
+
+  const pauseOverlay = document.getElementById("qr-cam-pause-overlay");
+  if (pauseOverlay) pauseOverlay.style.display = "none";
 
   capNhatLogQR();
 
@@ -184,22 +238,18 @@ function khiQuetDuocMaQR(result) {
   const trung = phienQuetQR.find(r => r.id === data.id);
   if (!choPhepTrung && trung) {
     mapKhoaQR.set(keyQR, Date.now() + 1500); // Khóa 1.5s để không nháy cảnh báo liên tục
+    if (typeof hienVienFeedbackQR === "function") hienVienFeedbackQR("duplicate");
     if (typeof phatVibrateError === "function") phatVibrateError();
     else if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
 
     // Hiện popup thông báo màu đỏ nổi bật khi quét trùng: Đã quét + thời gian trong 2s
     const gioQuet = typeof dinhDangGioQuetTrung === "function" ? dinhDangGioQuetTrung(trung.thoiGian) : "";
     showCanhBaoQR("Đã quét " + gioQuet, "error");
-
-    const vc = document.querySelector("#qr-cam .video-container");
-    if (vc) {
-      vc.classList.add("canh-bao-trung");
-      setTimeout(() => vc.classList.remove("canh-bao-trung"), 500);
-    }
     return;
   }
 
   // Quét thành công: KHÔNG HIỆN POPUP, chỉ phát âm thanh/rung và hiển thị dưới nhật ký (log)
+  if (typeof hienVienFeedbackQR === "function") hienVienFeedbackQR("success");
   if (typeof phatTiengBip === "function") phatTiengBip();
   if (typeof phatVibrateSuccess === "function") phatVibrateSuccess();
 
@@ -223,7 +273,7 @@ function khiQuetDuocMaQR(result) {
 
   maQRVuaQuetQR = data.id || rawText;
   const lockStatusEl = document.getElementById("qr-lock-status");
-  if (lockStatusEl) lockStatusEl.innerHTML = '<i class="ti ti-check-double" style="color:var(--success)"></i> ' + (typeof escapeHtml === "function" ? escapeHtml(maQRVuaQuetQR) : maQRVuaQuetQR);
+  if (lockStatusEl) lockStatusEl.textContent = maQRVuaQuetQR;
 }
 window.khiQuetDuocMaQR = khiQuetDuocMaQR;
 
@@ -279,6 +329,7 @@ function themMaThuCongQR() {
     return;
   }
   el.value = "";
+  if (typeof dongNhapTayQR === "function") dongNhapTayQR();
   khiQuetDuocMaQR({ getText: () => val });
 }
 window.themMaThuCongQR = themMaThuCongQR;
@@ -301,28 +352,32 @@ function dungQuetQR() {
   if (statusEl) statusEl.innerHTML = '<div class="cam-status-dot paused"></div><span>Đợt ' + (demSoDotQR || 1) + '</span>';
   const btnToggle = document.getElementById("btn-dung-tieptuc-qr");
   if (btnToggle) {
-    btnToggle.innerHTML = '<i class="ti ti-player-play-filled"></i>';
+    btnToggle.innerHTML = SVG_SHUTTER_PLAY;
     btnToggle.classList.add("paused");
     btnToggle.title = "Quét tiếp";
   }
+  const pauseOverlay = document.getElementById("qr-cam-pause-overlay");
+  if (pauseOverlay) pauseOverlay.style.display = "flex";
 }
 window.dungQuetQR = dungQuetQR;
 
 async function tiepTucQuetQR() {
+  if (typeof khoaCuonTrangQuet === "function") khoaCuonTrangQuet(true); else document.body.classList.add("cam-active");
   const maxDot = phienQuetQR.length > 0 ? Math.max(0, ...phienQuetQR.map(r => r.dotQuet || 1)) : 0;
   demSoDotQR = maxDot > 0 ? maxDot + 1 : 1;
   dangQuetQR = true;
   window.dangQuetQR = true;
   luuPhienDoDangQR();
-  document.body.classList.add("cam-active");
   const statusEl = document.getElementById("qr-status");
   if (statusEl) statusEl.innerHTML = '<div class="cam-status-dot"></div><span>Đợt ' + demSoDotQR + '</span>';
   const btnToggle = document.getElementById("btn-dung-tieptuc-qr");
   if (btnToggle) {
-    btnToggle.innerHTML = '<i class="ti ti-player-pause-filled"></i>';
+    btnToggle.innerHTML = SVG_SHUTTER_PAUSE;
     btnToggle.classList.remove("paused");
     btnToggle.title = "Dừng quét";
   }
+  const pauseOverlay = document.getElementById("qr-cam-pause-overlay");
+  if (pauseOverlay) pauseOverlay.style.display = "none";
 
   try {
     const videoEl = document.getElementById("reader");
@@ -359,6 +414,8 @@ function tatCameraQR() {
     dungCameraFast("reader", zxingReaderQR);
     zxingReaderQR = null;
   }
+  const pauseOverlay = document.getElementById("qr-cam-pause-overlay");
+  if (pauseOverlay) pauseOverlay.style.display = "none";
   document.body.classList.remove("cam-active");
 }
 window.tatCameraQR = tatCameraQR;
@@ -426,8 +483,13 @@ function xoaMaTrongLiveLogQR(index) {
     if (demEl) demEl.textContent = "Đã quét: " + phienQuetQR.length + " bao";
     const statusEl = document.getElementById("qr-status");
     if (statusEl && !dangQuetQR) {
-      statusEl.innerHTML = '<i class="ti ti-player-pause" style="color:var(--red)"></i> Đã dừng quét (Đợt ' + demSoDotQR + ')';
+      statusEl.innerHTML = '<div class="cam-status-dot paused"></div><span>Đợt ' + demSoDotQR + '</span>';
     }
+    const lastItem = phienQuetQR.length > 0 ? phienQuetQR[phienQuetQR.length - 1] : null;
+    maQRVuaQuetQR = lastItem ? lastItem.id : "";
+    const lockStatusEl = document.getElementById("qr-lock-status");
+    if (lockStatusEl) lockStatusEl.textContent = maQRVuaQuetQR || "Chờ quét...";
+
     luuPhienDoDangQR();
     capNhatLogQR();
   }

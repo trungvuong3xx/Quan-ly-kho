@@ -1961,8 +1961,8 @@ body.cam-active .video-container {
   box-sizing: border-box !important;
 }
 
-body.cam-active #btp-video-box.btp-camera-main,
-#btp-video-box.btp-camera-main {
+body.cam-active .video-container.btp-camera-main,
+.video-container.btp-camera-main {
   flex: 0 0 auto !important;
   height: 40vh !important;
   min-height: 280px !important;
@@ -1989,11 +1989,11 @@ body.cam-active #qr-log-container {
   width: 100% !important;
   max-width: 100% !important;
   margin: 0 !important;
-  padding: 8px 10px !important;
+  padding: 0 !important;
   overflow: hidden !important;
   max-height: none !important;
   min-height: 120px !important;
-  border-radius: 12px !important;
+  border-radius: 16px !important;
   box-sizing: border-box !important;
 }
 
@@ -3086,7 +3086,11 @@ body { padding: 0 !important; background: var(--bg-body) !important; color: var(
 }
 
 #btpPage,
-body.cam-active #btpPage.active {
+body.cam-active #btpPage.active,
+#quetQR,
+body.cam-active #quetQR.active,
+#chiFor,
+body.cam-active #chiFor.active {
   background: #e8ecf1 !important;
 }
 

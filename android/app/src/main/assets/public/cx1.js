@@ -19,6 +19,52 @@ let mspKhoaCX1 = null;
 // Theo dõi phiên hiện tại để nối vào Lịch sử + tránh gửi trùng khi "tiếp tục" 1 phiên cũ
 let idPhienHienTai = null;
 let soLuongDaGuiHienTai = 0;
+let maQRVuaQuetCX1 = "";
+
+const SVG_SHUTTER_PAUSE = '<svg viewBox="0 0 24 24" width="22" height="22" fill="#ffffff"><rect x="6" y="4" width="4" height="16" rx="2" /><rect x="14" y="4" width="4" height="16" rx="2" /></svg>';
+const SVG_SHUTTER_PLAY = '<svg viewBox="0 0 24 24" width="22" height="22" fill="#ffffff" style="margin-left:2px;"><path d="M8 5v14l11-7z" /></svg>';
+
+function saoChepMaQRCX1(ev) {
+  if (ev) ev.stopPropagation();
+  const textToCopy = (maQRVuaQuetCX1 || "").trim();
+  if (!textToCopy) {
+    if (typeof showCanhBaoCX1 === "function") showCanhBaoCX1("Chưa có mã QR nào để sao chép!", "warning");
+    return;
+  }
+  const copySuccess = () => {
+    const iconEl = document.getElementById("icon-copy-cx1");
+    if (iconEl) {
+      iconEl.className = "ti ti-check";
+      iconEl.style.color = "var(--success)";
+      setTimeout(() => {
+        iconEl.className = "ti ti-copy";
+        iconEl.style.color = "";
+      }, 1500);
+    }
+    if (typeof showCanhBaoCX1 === "function") showCanhBaoCX1("Đã sao chép: " + textToCopy, "success");
+  };
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(textToCopy).then(copySuccess).catch(() => fallbackCopy(textToCopy));
+  } else {
+    fallbackCopy(textToCopy);
+  }
+  function fallbackCopy(str) {
+    try {
+      const textarea = document.createElement("textarea");
+      textarea.value = str;
+      textarea.style.position = "fixed";
+      textarea.style.opacity = "0";
+      document.body.appendChild(textarea);
+      textarea.select();
+      document.execCommand("copy");
+      document.body.removeChild(textarea);
+      copySuccess();
+    } catch (e) {
+      if (typeof showCanhBaoCX1 === "function") showCanhBaoCX1("Lỗi sao chép: " + (e.message || e), "error");
+    }
+  }
+}
+window.saoChepMaQRCX1 = saoChepMaQRCX1;
 
 const CX1_LICHSU_KEY = "cx1_lich_su";
 const CX1_LICHSU_SO_NGAY_GIU = 30;
@@ -38,8 +84,23 @@ async function toggleFlashCX1() {
 }
 
 function hienVienFeedbackCX1(loai) {
-  if (typeof hienVienFeedbackCamera === "function") hienVienFeedbackCamera("#cx1-cam .video-container", loai);
+  const overlay = document.getElementById("cx1-cam-flash-overlay");
+  if (overlay) {
+    overlay.classList.remove("flash-success", "flash-duplicate");
+    void overlay.offsetWidth;
+    if (loai === "success") {
+      overlay.classList.add("flash-success");
+      setTimeout(() => overlay.classList.remove("flash-success"), 300);
+    } else {
+      overlay.classList.add("flash-duplicate");
+      setTimeout(() => overlay.classList.remove("flash-duplicate"), 450);
+    }
+  }
+  if (typeof hienVienFeedbackCamera === "function") {
+    try { hienVienFeedbackCamera("cx1-video-box", loai); } catch (e) { }
+  }
 }
+window.hienVienFeedbackCX1 = hienVienFeedbackCX1;
 
 function xuLyDuLieuQR(text) {
   if (typeof window.parseQRText === "function") {
@@ -94,14 +155,9 @@ let mapKhoaCX1 = new Map();
 
 function capNhatTrangThaiTrungCX1() {
   const elCheck = document.getElementById("cx1-cho-phep-trung-cam");
-  const elStatus = document.getElementById("cx1-lock-status");
-  if (!elStatus) return;
-  if (elCheck && elCheck.checked) {
-    elStatus.textContent = "Cho phép";
-    elStatus.style.color = "var(--success)";
-  } else {
-    elStatus.textContent = "Chờ quét...";
-    elStatus.style.color = "var(--cream-soft)";
+  const btnTrung = document.getElementById("btn-quet-trung-cx1");
+  if (btnTrung && elCheck) {
+    btnTrung.classList.toggle("active-repeat", elCheck.checked);
   }
 }
 window.capNhatTrangThaiTrungCX1 = capNhatTrangThaiTrungCX1;
@@ -143,8 +199,9 @@ function khiQuetDuocMa(result) {
   if (typeof phatVibrateSuccess === "function") phatVibrateSuccess();
   hienVienFeedbackCX1("success");
 
+  maQRVuaQuetCX1 = data.id || rawText;
   const lockStatusEl = document.getElementById("cx1-lock-status");
-  if (lockStatusEl) lockStatusEl.innerHTML = '<i class="ti ti-check-double" style="color:var(--success)"></i> ' + data.id;
+  if (lockStatusEl) lockStatusEl.textContent = maQRVuaQuetCX1;
 
   phienCX1.push({
     id: data.id, msp: data.msp, qc: data.qc,
@@ -231,10 +288,13 @@ async function tiepTucKhoiTaoCX1(cheDo = "quet") {
 
   const btnToggle = document.getElementById("btn-dung-tieptuc-cx1");
   if (btnToggle) {
-    btnToggle.innerHTML = '<i class="ti ti-player-pause-filled"></i>';
+    btnToggle.innerHTML = SVG_SHUTTER_PAUSE;
     btnToggle.classList.remove("paused");
     btnToggle.title = "Dừng quét";
   }
+
+  const pauseOverlay = document.getElementById("cx1-cam-pause-overlay");
+  if (pauseOverlay) pauseOverlay.style.display = "none";
 
   try {
     const cx1Vid = document.getElementById("cx1-reader");
@@ -265,13 +325,16 @@ function dungCX1() {
   if (statusEl) statusEl.innerHTML = '<div class="cam-status-dot paused"></div><span>Đợt ' + (demSoDot || 1) + '</span>';
   const btnToggle = document.getElementById("btn-dung-tieptuc-cx1");
   if (btnToggle) {
-    btnToggle.innerHTML = '<i class="ti ti-player-play-filled"></i>';
+    btnToggle.innerHTML = SVG_SHUTTER_PLAY;
     btnToggle.classList.add("paused");
     btnToggle.title = "Quét tiếp";
   }
+  const pauseOverlay = document.getElementById("cx1-cam-pause-overlay");
+  if (pauseOverlay) pauseOverlay.style.display = "flex";
 }
 
 async function tiepTucCX1() {
+  if (typeof khoaCuonTrangQuet === "function") khoaCuonTrangQuet(true); else document.body.classList.add("cam-active");
   const maxDot = phienCX1.length > 0 ? Math.max(0, ...phienCX1.map(r => r.dotQuet || 1)) : 0;
   demSoDot = maxDot > 0 ? maxDot + 1 : 1;
   dangQuetCX1 = true;
@@ -280,10 +343,12 @@ async function tiepTucCX1() {
   if (statusEl) statusEl.innerHTML = '<div class="cam-status-dot"></div><span>Đợt ' + demSoDot + '</span>';
   const btnToggle = document.getElementById("btn-dung-tieptuc-cx1");
   if (btnToggle) {
-    btnToggle.innerHTML = '<i class="ti ti-player-pause-filled"></i>';
+    btnToggle.innerHTML = SVG_SHUTTER_PAUSE;
     btnToggle.classList.remove("paused");
     btnToggle.title = "Dừng quét";
   }
+  const pauseOverlay = document.getElementById("cx1-cam-pause-overlay");
+  if (pauseOverlay) pauseOverlay.style.display = "none";
   try {
     const cx1Vid = document.getElementById("cx1-reader");
     const cx1Track = cx1Vid && cx1Vid.srcObject ? cx1Vid.srcObject.getVideoTracks()[0] : null;
@@ -347,6 +412,8 @@ async function guiLenSheetCX1(rows) {
 function ketThucCX1() {
   if (typeof dongBanPhimCX5 === "function") dongBanPhimCX5();
   dungCX1();
+  const pauseOverlay = document.getElementById("cx1-cam-pause-overlay");
+  if (pauseOverlay) pauseOverlay.style.display = "none";
   dangNhapCX1 = false;
   if (document.getElementById("cx1-cam")) document.getElementById("cx1-cam").style.display = "none";
   if (document.getElementById("cx1-nhap")) document.getElementById("cx1-nhap").style.display = "none";
@@ -775,6 +842,8 @@ window.themDongNhapTayCX1 = themDongNhapTayCX1;
 
 function chuyenSangNhapTayCX1() {
   dungCX1();
+  const pauseOverlay = document.getElementById("cx1-cam-pause-overlay");
+  if (pauseOverlay) pauseOverlay.style.display = "none";
   cheDoCX1 = "nhap";
   dangNhapCX1 = true;
 
@@ -1093,6 +1162,11 @@ function xoaMaCX1(index, ev) {
     phienCX1.splice(index, 1);
     const maxDot = phienCX1.length > 0 ? Math.max(0, ...phienCX1.map(r => r.dotQuet || 1)) : 0;
     demSoDot = maxDot > 0 ? maxDot : 1;
+    const lastItem = phienCX1.length > 0 ? phienCX1[phienCX1.length - 1] : null;
+    maQRVuaQuetCX1 = lastItem ? lastItem.id : "";
+    const lockStatusEl = document.getElementById("cx1-lock-status");
+    if (lockStatusEl) lockStatusEl.textContent = maQRVuaQuetCX1 || "Chờ quét...";
+
     luuPhienDoDangCX1();
     capNhatLogCX1();
     const demEl = document.getElementById("cx1-dem");
