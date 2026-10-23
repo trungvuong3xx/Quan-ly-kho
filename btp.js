@@ -25,31 +25,40 @@ function xuLyDuLieuQRBTP(text) {
   if (!text) return null;
   const rawQR = text.trim();
 
-  // Trích xuất mã BTP (VD: EM260405 từ 1AEM2604051-150 hoặc 10BEM2603691-320)
-  const matchEM = rawQR.match(/EM\d{6}/i) || rawQR.match(/EM\d+/i);
-  // Trích xuất số lượng sau dấu - ở cuối (VD: 150 từ -150)
-  const matchSL = rawQR.match(/-(\d+(?:\.\d+)?)/);
-
-  let msp = matchEM ? matchEM[0].toUpperCase() : "";
-  let kg = matchSL ? parseFloat(matchSL[1]) : 0;
+  let id = "";
+  let msp = "";
   let qc = "";
+  let kg = 0;
 
-  // Nếu không khớp pattern BTP trực tiếp, thử qua parseQRText toàn cục
-  if (!msp && typeof window.parseQRText === "function") {
+  // 1. Thử giải mã qua parseQRText toàn cục trước (cho mã tem có tag {|T, dấu | hoặc nhiều dòng \n)
+  if (typeof window.parseQRText === "function") {
     const parsed = window.parseQRText(rawQR);
-    if (parsed) {
-      msp = parsed.msp || "";
-      kg = parsed.kg || 0;
+    if (parsed && (parsed.id || parsed.msp)) {
+      id = (parsed.id || "").trim();
+      msp = (parsed.msp || "").trim().toUpperCase();
       qc = parsed.qc || "";
+      kg = typeof parsed.kg === "number" ? parsed.kg : (parseFloat(parsed.kg) || 0);
     }
   }
 
-  // Trường hợp chuỗi đơn giản nếu không có EM
-  if (!msp && rawQR) {
-    msp = rawQR;
+  // 2. Nếu không có tag/nhiều dòng (mã BTP chuỗi đơn dạng 27BEM2603111-83, 1AEM2604051-150...)
+  if (!id) {
+    id = rawQR;
   }
 
-  return { rawQR, msp, qc, kg };
+  // 3. Nếu chưa bóc tách được msp từ tag, trích xuất từ id/rawQR (VD: EM260311 từ 27BEM2603111-83)
+  if (!msp) {
+    const matchEM = id.match(/EM\d{6}/i) || id.match(/EM\d+/i);
+    msp = matchEM ? matchEM[0].toUpperCase() : id;
+  }
+
+  // 4. Nếu chưa bóc tách được kg từ tag, trích xuất số sau dấu - ở cuối
+  if (!kg) {
+    const matchSL = id.match(/-(\d+(?:\.\d+)?)/);
+    kg = matchSL ? parseFloat(matchSL[1]) : 0;
+  }
+
+  return { id, rawQR: id, msp, qc, kg };
 }
 
 const mapKhoaBTP = new Map();
@@ -159,7 +168,11 @@ function nhapThuCongBTP(src) {
   const elCheck = document.getElementById("btp-cho-phep-trung-cam");
   const choPhepTrung = elCheck ? elCheck.checked : false;
 
-  const trung = phienBTP.find(item => item.rawQR && item.rawQR.toLowerCase() === data.rawQR.toLowerCase());
+  const keyQR = (data.id || data.rawQR || "").toLowerCase();
+  const trung = phienBTP.find(item => {
+    const itemKey = (item.id || item.rawQR || "").toLowerCase();
+    return itemKey && itemKey === keyQR;
+  });
   if (!choPhepTrung && trung) {
     hienVienFeedbackBTP("duplicate");
     if (typeof window.phatVibrateError === "function") window.phatVibrateError();
@@ -181,8 +194,8 @@ function nhapThuCongBTP(src) {
   docGiongNoiBTP(data.msp, data.kg);
 
   phienBTP.push({
-    rawQR: data.rawQR,
-    id: data.rawQR,
+    rawQR: data.id || data.rawQR,
+    id: data.id || data.rawQR,
     msp: data.msp,
     qc: data.qc,
     kg: data.kg,
@@ -195,13 +208,13 @@ function nhapThuCongBTP(src) {
   if (demEl) demEl.textContent = "Đã quét: " + phienBTP.length + " mã";
   luuPhienDoDangBTP();
   capNhatLogBTP();
-  maQRVuaQuetBTP = data.rawQR || data.msp || "";
+  maQRVuaQuetBTP = data.id || data.rawQR || data.msp || "";
   const lockStatusEl = document.getElementById("btp-lock-status");
   if (lockStatusEl) lockStatusEl.textContent = maQRVuaQuetBTP;
   if (src === 'cam') {
     dongNhapTayBTP();
   }
-  showCanhBaoBTP("Đã thêm: " + (data.msp || data.rawQR));
+  showCanhBaoBTP("Đã thêm: " + maQRVuaQuetBTP);
 }
 window.nhapThuCongBTP = nhapThuCongBTP;
 
@@ -262,6 +275,10 @@ function xoaNhomBTP(key, ev) {
     demSoDotBTP = maxDot > 0 ? maxDot : 1;
     luuPhienDoDangBTP();
     capNhatLogBTP();
+    const lastItem = phienBTP.length > 0 ? phienBTP[phienBTP.length - 1] : null;
+    maQRVuaQuetBTP = lastItem ? (lastItem.id || lastItem.rawQR || lastItem.msp || "") : "";
+    const lockStatusEl = document.getElementById("btp-lock-status");
+    if (lockStatusEl) lockStatusEl.textContent = maQRVuaQuetBTP || "Chờ quét...";
     const demEl = document.getElementById("btp-dem");
     if (demEl) demEl.textContent = "Đã quét: " + phienBTP.length + " mã";
     const statusEl = document.getElementById("btp-status");
@@ -296,6 +313,10 @@ function xoaMaBTP(index, ev) {
     demSoDotBTP = maxDot > 0 ? maxDot : 1;
     luuPhienDoDangBTP();
     capNhatLogBTP();
+    const lastItem = phienBTP.length > 0 ? phienBTP[phienBTP.length - 1] : null;
+    maQRVuaQuetBTP = lastItem ? (lastItem.id || lastItem.rawQR || lastItem.msp || "") : "";
+    const lockStatusEl = document.getElementById("btp-lock-status");
+    if (lockStatusEl) lockStatusEl.textContent = maQRVuaQuetBTP || "Chờ quét...";
     const demEl = document.getElementById("btp-dem");
     if (demEl) demEl.textContent = "Đã quét: " + phienBTP.length + " mã";
     const statusEl = document.getElementById("btp-status");
@@ -499,12 +520,16 @@ function khiQuetDuocMaBTP(result) {
   const now = Date.now();
 
   // Khóa Per-QR
-  if (mapKhoaBTP.has(data.rawQR) && (now - mapKhoaBTP.get(data.rawQR)) < lockMs) {
+  const keyQR = (data.id || data.rawQR || "").toLowerCase();
+  if (mapKhoaBTP.has(keyQR) && (now - mapKhoaBTP.get(keyQR)) < lockMs) {
     return;
   }
-  mapKhoaBTP.set(data.rawQR, now);
+  mapKhoaBTP.set(keyQR, now);
 
-  const trung = phienBTP.find(item => item.rawQR && item.rawQR.toLowerCase() === data.rawQR.toLowerCase());
+  const trung = phienBTP.find(item => {
+    const itemKey = (item.id || item.rawQR || "").toLowerCase();
+    return itemKey && itemKey === keyQR;
+  });
   if (!choPhepTrung && trung) {
     hienVienFeedbackBTP("duplicate");
     if (typeof window.phatVibrateError === "function") window.phatVibrateError();
@@ -512,7 +537,7 @@ function khiQuetDuocMaBTP(result) {
     showCanhBaoBTP("Đã quét " + gioQuet, "error");
 
     // Nếu quét trùng, phạt khóa mã này lâu hơn (2 giây) để tránh chớp đỏ liên tục nếu lỡ để quên camera
-    mapKhoaBTP.set(data.rawQR, Date.now() + 1500);
+    mapKhoaBTP.set(keyQR, Date.now() + 1500);
 
     return;
   }
@@ -530,8 +555,8 @@ function khiQuetDuocMaBTP(result) {
   docGiongNoiBTP(data.msp, data.kg);
 
   phienBTP.push({
-    rawQR: data.rawQR,
-    id: data.rawQR,
+    rawQR: data.id || data.rawQR,
+    id: data.id || data.rawQR,
     msp: data.msp,
     qc: data.qc,
     kg: data.kg,
@@ -544,7 +569,7 @@ function khiQuetDuocMaBTP(result) {
   luuPhienDoDangBTP();
   capNhatLogBTP();
 
-  maQRVuaQuetBTP = data.rawQR || data.msp || "";
+  maQRVuaQuetBTP = data.id || data.rawQR || data.msp || "";
   const lockStatusEl = document.getElementById("btp-lock-status");
   if (lockStatusEl) lockStatusEl.textContent = maQRVuaQuetBTP;
 }
@@ -969,6 +994,13 @@ async function quetTiepBTP() {
   document.getElementById("btp-cam").style.display = "block";
   document.getElementById("btp-status").innerHTML = '<div class="cam-status-dot"></div><span>Đợt ' + demSoDotBTP + '</span>';
 
+  const lastItemBTP = phienBTP.length > 0 ? phienBTP[phienBTP.length - 1] : null;
+  maQRVuaQuetBTP = lastItemBTP ? (lastItemBTP.id || lastItemBTP.rawQR || lastItemBTP.msp || "") : "";
+  const lockStatusEl = document.getElementById("btp-lock-status");
+  if (lockStatusEl) {
+    lockStatusEl.textContent = maQRVuaQuetBTP || "Chờ quét...";
+  }
+
   const btnToggle = document.getElementById("btn-dung-tieptuc-btp");
   if (btnToggle) {
     btnToggle.innerHTML = SVG_SHUTTER_PAUSE;
@@ -1118,7 +1150,7 @@ async function khoiPhucBTP(state) {
   if (statusEl) statusEl.innerHTML = '<div class="cam-status-dot"></div><span>Đợt ' + demSoDotBTP + '</span>';
 
   const lastItemBTP = phienBTP.length > 0 ? phienBTP[phienBTP.length - 1] : null;
-  maQRVuaQuetBTP = lastItemBTP ? (lastItemBTP.rawQR || lastItemBTP.msp || "") : "";
+  maQRVuaQuetBTP = lastItemBTP ? (lastItemBTP.id || lastItemBTP.rawQR || lastItemBTP.msp || "") : "";
   const lockStatusEl = document.getElementById("btp-lock-status");
   if (lockStatusEl) {
     lockStatusEl.textContent = maQRVuaQuetBTP || "Chờ quét...";
