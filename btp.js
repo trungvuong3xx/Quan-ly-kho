@@ -625,6 +625,9 @@ async function batDauPhienMoiBTP() {
     btnToggle.title = "Dừng quét";
   }
 
+  const pauseOverlay = document.getElementById("btp-cam-pause-overlay");
+  if (pauseOverlay) pauseOverlay.style.display = "none";
+
   const cbTrung = document.getElementById("btp-cho-phep-trung-cam");
   if (cbTrung) cbTrung.checked = false;
   const btnTrung = document.getElementById("btn-quet-trung-btp");
@@ -665,6 +668,8 @@ function dungBTP() {
     btn.classList.add("paused");
     btn.title = "Quét tiếp";
   }
+  const pauseOverlay = document.getElementById("btp-cam-pause-overlay");
+  if (pauseOverlay) pauseOverlay.style.display = "flex";
 }
 
 async function tiepTucBTP() {
@@ -681,6 +686,8 @@ async function tiepTucBTP() {
     btn.classList.remove("paused");
     btn.title = "Dừng quét";
   }
+  const pauseOverlay = document.getElementById("btp-cam-pause-overlay");
+  if (pauseOverlay) pauseOverlay.style.display = "none";
   try {
     const btpVid = document.getElementById("btp-reader");
     const btpTrack = btpVid && btpVid.srcObject ? btpVid.srcObject.getVideoTracks()[0] : null;
@@ -969,6 +976,9 @@ async function quetTiepBTP() {
     btnToggle.title = "Dừng quét";
   }
 
+  const pauseOverlay = document.getElementById("btp-cam-pause-overlay");
+  if (pauseOverlay) pauseOverlay.style.display = "none";
+
   try {
     const btpVid = document.getElementById("btp-reader");
     const btpTrack = btpVid && btpVid.srcObject ? btpVid.srcObject.getVideoTracks()[0] : null;
@@ -1122,6 +1132,9 @@ async function khoiPhucBTP(state) {
     btnToggle.classList.remove("paused");
     btnToggle.title = "Dừng quét";
   }
+
+  const pauseOverlay = document.getElementById("btp-cam-pause-overlay");
+  if (pauseOverlay) pauseOverlay.style.display = "none";
 
   try {
     const btpVid = document.getElementById("btp-reader");

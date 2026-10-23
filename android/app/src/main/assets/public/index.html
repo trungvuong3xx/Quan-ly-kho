@@ -928,6 +928,15 @@
           <i class="ti ti-clipboard-list"></i>
         </button>
       </div>
+
+      <!-- Overlay khi Tạm dừng camera (Chạm để quét tiếp) -->
+      <div id="btp-cam-pause-overlay" class="cam-pause-overlay" style="display:none;" onclick="toggleDungTiepTucBTP()">
+        <div class="cam-pause-badge">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><rect x="6" y="4" width="4" height="16" rx="2"/><rect x="14" y="4" width="4" height="16" rx="2"/></svg>
+          <span>ĐÃ TẠM DỪNG</span>
+        </div>
+        <div class="cam-pause-subtext">Chạm vào màn hình để quét tiếp</div>
+      </div>
     </div>
 
     <!-- Hàng mỏng full chiều ngang ngay dưới camera (Toggle Mã vừa quét vs Ô nhập tay) -->
