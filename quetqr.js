@@ -271,9 +271,12 @@ function khiQuetDuocMaQR(result) {
   luuPhienDoDangQR();
   capNhatLogQR();
 
-  maQRVuaQuetQR = data.id || rawText;
+  maQRVuaQuetQR = rawText || data.id || "";
   const lockStatusEl = document.getElementById("qr-lock-status");
-  if (lockStatusEl) lockStatusEl.textContent = maQRVuaQuetQR;
+  if (lockStatusEl) {
+    lockStatusEl.textContent = maQRVuaQuetQR;
+    lockStatusEl.title = maQRVuaQuetQR;
+  }
 }
 window.khiQuetDuocMaQR = khiQuetDuocMaQR;
 

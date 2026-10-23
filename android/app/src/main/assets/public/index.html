@@ -291,7 +291,7 @@
         <div class="grid-title">Chỉ X5</div>
         
       </div>
-      <div class="grid-card full-width" onclick="chuyenTrangKhongNav('btpPage')">
+      <div class="grid-card full-width" onclick="chuyenTrang('btpPage', document.querySelector('.nav-item[data-page=btpPage]'))">
         <div class="grid-icon" style="background: linear-gradient(135deg, #a78bfa, #7c3aed);"><i class="ti ti-box"></i></div>
         <div class="grid-text">
           <div class="grid-title" style="margin-bottom:0">Bán Thành Phẩm (BTP)</div>
@@ -1649,8 +1649,9 @@
       if(oldChuyenTrang) oldChuyenTrang(idTab, btn);
       
       // Fix active state of bottom nav items
-      document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
-      if(btn) btn.classList.add('active');
+      const targetNav = btn || document.querySelector('.nav-item[data-page="' + idTab + '"], .bnav-btn[data-page="' + idTab + '"]');
+      document.querySelectorAll('.nav-item, .bnav-btn').forEach(el => el.classList.remove('active'));
+      if(targetNav) targetNav.classList.add('active');
     };
     
     const oldChuyenTrangKhongNav = window.chuyenTrangKhongNav;
@@ -1661,6 +1662,12 @@
         else header.style.display = 'none';
       }
       if(oldChuyenTrangKhongNav) oldChuyenTrangKhongNav(idTab);
+
+      const targetNav = document.querySelector('.nav-item[data-page="' + idTab + '"], .bnav-btn[data-page="' + idTab + '"]');
+      if (targetNav) {
+        document.querySelectorAll('.nav-item, .bnav-btn').forEach(el => el.classList.remove('active'));
+        targetNav.classList.add('active');
+      }
     };
   });
 </script>

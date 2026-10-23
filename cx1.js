@@ -199,9 +199,12 @@ function khiQuetDuocMa(result) {
   if (typeof phatVibrateSuccess === "function") phatVibrateSuccess();
   hienVienFeedbackCX1("success");
 
-  maQRVuaQuetCX1 = data.id || rawText;
+  maQRVuaQuetCX1 = rawText || data.id || "";
   const lockStatusEl = document.getElementById("cx1-lock-status");
-  if (lockStatusEl) lockStatusEl.textContent = maQRVuaQuetCX1;
+  if (lockStatusEl) {
+    lockStatusEl.textContent = maQRVuaQuetCX1;
+    lockStatusEl.title = maQRVuaQuetCX1;
+  }
 
   phienCX1.push({
     id: data.id, msp: data.msp, qc: data.qc,

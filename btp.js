@@ -58,7 +58,7 @@ function xuLyDuLieuQRBTP(text) {
     kg = matchSL ? parseFloat(matchSL[1]) : 0;
   }
 
-  return { id, rawQR: id, msp, qc, kg };
+  return { id: id || rawQR, rawQR: rawQR, msp, qc, kg };
 }
 
 const mapKhoaBTP = new Map();
@@ -194,8 +194,8 @@ function nhapThuCongBTP(src) {
   docGiongNoiBTP(data.msp, data.kg);
 
   phienBTP.push({
-    rawQR: data.id || data.rawQR,
-    id: data.id || data.rawQR,
+    rawQR: data.rawQR || rawText,
+    id: data.id || data.rawQR || rawText,
     msp: data.msp,
     qc: data.qc,
     kg: data.kg,
@@ -208,9 +208,12 @@ function nhapThuCongBTP(src) {
   if (demEl) demEl.textContent = "Đã quét: " + phienBTP.length + " mã";
   luuPhienDoDangBTP();
   capNhatLogBTP();
-  maQRVuaQuetBTP = data.id || data.rawQR || data.msp || "";
+  maQRVuaQuetBTP = data.rawQR || rawText || data.id || data.msp || "";
   const lockStatusEl = document.getElementById("btp-lock-status");
-  if (lockStatusEl) lockStatusEl.textContent = maQRVuaQuetBTP;
+  if (lockStatusEl) {
+    lockStatusEl.textContent = maQRVuaQuetBTP;
+    lockStatusEl.title = maQRVuaQuetBTP;
+  }
   if (src === 'cam') {
     dongNhapTayBTP();
   }
@@ -276,9 +279,12 @@ function xoaNhomBTP(key, ev) {
     luuPhienDoDangBTP();
     capNhatLogBTP();
     const lastItem = phienBTP.length > 0 ? phienBTP[phienBTP.length - 1] : null;
-    maQRVuaQuetBTP = lastItem ? (lastItem.id || lastItem.rawQR || lastItem.msp || "") : "";
+    maQRVuaQuetBTP = lastItem ? (lastItem.rawQR || lastItem.id || lastItem.msp || "") : "";
     const lockStatusEl = document.getElementById("btp-lock-status");
-    if (lockStatusEl) lockStatusEl.textContent = maQRVuaQuetBTP || "Chờ quét...";
+    if (lockStatusEl) {
+      lockStatusEl.textContent = maQRVuaQuetBTP || "Chờ quét...";
+      lockStatusEl.title = maQRVuaQuetBTP || "";
+    }
     const demEl = document.getElementById("btp-dem");
     if (demEl) demEl.textContent = "Đã quét: " + phienBTP.length + " mã";
     const statusEl = document.getElementById("btp-status");
@@ -314,9 +320,12 @@ function xoaMaBTP(index, ev) {
     luuPhienDoDangBTP();
     capNhatLogBTP();
     const lastItem = phienBTP.length > 0 ? phienBTP[phienBTP.length - 1] : null;
-    maQRVuaQuetBTP = lastItem ? (lastItem.id || lastItem.rawQR || lastItem.msp || "") : "";
+    maQRVuaQuetBTP = lastItem ? (lastItem.rawQR || lastItem.id || lastItem.msp || "") : "";
     const lockStatusEl = document.getElementById("btp-lock-status");
-    if (lockStatusEl) lockStatusEl.textContent = maQRVuaQuetBTP || "Chờ quét...";
+    if (lockStatusEl) {
+      lockStatusEl.textContent = maQRVuaQuetBTP || "Chờ quét...";
+      lockStatusEl.title = maQRVuaQuetBTP || "";
+    }
     const demEl = document.getElementById("btp-dem");
     if (demEl) demEl.textContent = "Đã quét: " + phienBTP.length + " mã";
     const statusEl = document.getElementById("btp-status");
@@ -555,8 +564,8 @@ function khiQuetDuocMaBTP(result) {
   docGiongNoiBTP(data.msp, data.kg);
 
   phienBTP.push({
-    rawQR: data.id || data.rawQR,
-    id: data.id || data.rawQR,
+    rawQR: data.rawQR || rawText,
+    id: data.id || data.rawQR || rawText,
     msp: data.msp,
     qc: data.qc,
     kg: data.kg,
@@ -569,9 +578,12 @@ function khiQuetDuocMaBTP(result) {
   luuPhienDoDangBTP();
   capNhatLogBTP();
 
-  maQRVuaQuetBTP = data.id || data.rawQR || data.msp || "";
+  maQRVuaQuetBTP = data.rawQR || rawText || data.id || data.msp || "";
   const lockStatusEl = document.getElementById("btp-lock-status");
-  if (lockStatusEl) lockStatusEl.textContent = maQRVuaQuetBTP;
+  if (lockStatusEl) {
+    lockStatusEl.textContent = maQRVuaQuetBTP;
+    lockStatusEl.title = maQRVuaQuetBTP;
+  }
 }
 
 function luuPhienDoDangBTP() {
@@ -995,10 +1007,11 @@ async function quetTiepBTP() {
   document.getElementById("btp-status").innerHTML = '<div class="cam-status-dot"></div><span>Đợt ' + demSoDotBTP + '</span>';
 
   const lastItemBTP = phienBTP.length > 0 ? phienBTP[phienBTP.length - 1] : null;
-  maQRVuaQuetBTP = lastItemBTP ? (lastItemBTP.id || lastItemBTP.rawQR || lastItemBTP.msp || "") : "";
+  maQRVuaQuetBTP = lastItemBTP ? (lastItemBTP.rawQR || lastItemBTP.id || lastItemBTP.msp || "") : "";
   const lockStatusEl = document.getElementById("btp-lock-status");
   if (lockStatusEl) {
     lockStatusEl.textContent = maQRVuaQuetBTP || "Chờ quét...";
+    lockStatusEl.title = maQRVuaQuetBTP || "";
   }
 
   const btnToggle = document.getElementById("btn-dung-tieptuc-btp");
@@ -1150,10 +1163,11 @@ async function khoiPhucBTP(state) {
   if (statusEl) statusEl.innerHTML = '<div class="cam-status-dot"></div><span>Đợt ' + demSoDotBTP + '</span>';
 
   const lastItemBTP = phienBTP.length > 0 ? phienBTP[phienBTP.length - 1] : null;
-  maQRVuaQuetBTP = lastItemBTP ? (lastItemBTP.id || lastItemBTP.rawQR || lastItemBTP.msp || "") : "";
+  maQRVuaQuetBTP = lastItemBTP ? (lastItemBTP.rawQR || lastItemBTP.id || lastItemBTP.msp || "") : "";
   const lockStatusEl = document.getElementById("btp-lock-status");
   if (lockStatusEl) {
     lockStatusEl.textContent = maQRVuaQuetBTP || "Chờ quét...";
+    lockStatusEl.title = maQRVuaQuetBTP || "";
   }
 
   capNhatLogBTP();

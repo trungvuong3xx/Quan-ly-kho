@@ -355,9 +355,11 @@ window.layNgayHomNayLocal = layNgayHomNayLocal;
 
 function chuyenTrang(id, el) {
   document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
-  document.querySelectorAll(".bnav-btn").forEach(b => b.classList.remove("active"));
-  document.getElementById(id).classList.add("active");
-  if (el) el.classList.add("active");
+  document.querySelectorAll(".nav-item, .bnav-btn").forEach(b => b.classList.remove("active"));
+  const targetPage = document.getElementById(id);
+  if (targetPage) targetPage.classList.add("active");
+  const targetBtn = el || document.querySelector('.nav-item[data-page="' + id + '"], .bnav-btn[data-page="' + id + '"]');
+  if (targetBtn) targetBtn.classList.add("active");
   if (id !== "quetQR" && typeof dungQuet === "function") dungQuet();
   if (id !== "chiFor" && typeof dungCX1 === "function") dungCX1();
   if (id !== "kiemKe" && typeof dungKiemKe === "function") dungKiemKe();
@@ -377,7 +379,7 @@ function chuyenTrang(id, el) {
 
 // Điều hướng tới 1 tab từ nơi khác ngoài bottom-nav (nút tắt ở Trang chủ, banner tiếp tục...)
 function diToiTab(id) {
-  const btn = document.querySelector('.bnav-btn[data-page="' + id + '"]');
+  const btn = document.querySelector('.nav-item[data-page="' + id + '"], .bnav-btn[data-page="' + id + '"]');
   if (btn) chuyenTrang(id, btn);
   else chuyenTrangKhongNav(id);
 }
@@ -386,6 +388,11 @@ window.diToiTab = diToiTab;
 // Điều hướng tới 1 trang KHÔNG có nút riêng trên bottom-nav (vd: Lịch sử, chi tiết lịch sử)
 function chuyenTrangKhongNav(id) {
   document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
+  const targetNav = document.querySelector('.nav-item[data-page="' + id + '"], .bnav-btn[data-page="' + id + '"]');
+  if (targetNav) {
+    document.querySelectorAll(".nav-item, .bnav-btn").forEach(b => b.classList.remove("active"));
+    targetNav.classList.add("active");
+  }
   if (id !== "quetQR" && typeof dungQuet === "function") dungQuet();
   if (id !== "chiFor" && typeof dungCX1 === "function") dungCX1();
   if (id !== "kiemKe" && typeof dungKiemKe === "function") dungKiemKe();
