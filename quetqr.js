@@ -130,16 +130,13 @@ window.hienGoiYQCQR = hienGoiYQCQR;
 
 function renderDropdownQR() {
   const el = document.getElementById("qr-dropdown");
-  const kgKhu = document.getElementById("qr-kg-khu");
   if (!el) return;
   if (!filteredQR || filteredQR.length === 0) {
     el.classList.remove("open");
     el.style.display = "none";
     el.innerHTML = "";
-    if (kgKhu) kgKhu.style.display = "";
     return;
   }
-  if (kgKhu) kgKhu.style.display = "none";
   const tieuDe = dangHienGoiYQR
     ? '<div class="cx5-dropdown-title" style="padding:6px 10px; font-size:11px; font-weight:700; color:#64748b; border-bottom:1px solid #e2e8f0; text-transform:uppercase;">Gợi ý quy cách thường dùng</div>'
     : "";
@@ -151,16 +148,14 @@ function renderDropdownQR() {
   el.classList.add("open");
 
   Array.from(el.querySelectorAll(".cx5-dropdown-item")).forEach(child => {
-    const handleChon = e => {
+    child.addEventListener("click", e => {
       e.preventDefault();
       e.stopPropagation();
       const idx = parseInt(child.getAttribute("data-idx"), 10);
       if (!isNaN(idx) && filteredQR[idx]) {
         chonQCQR(filteredQR[idx]);
       }
-    };
-    child.addEventListener("pointerdown", handleChon);
-    child.addEventListener("click", handleChon);
+    });
   });
 }
 
@@ -174,13 +169,11 @@ function closeDropdownQR() {
     el.style.display = "none";
     el.innerHTML = "";
   }
-  const kgKhu = document.getElementById("qr-kg-khu");
-  if (kgKhu) kgKhu.style.display = "";
 }
 window.closeDropdownQR = closeDropdownQR;
 
 document.addEventListener("click", e => {
-  const trongOTimKiem = e.target.closest("#qr-qc-tim-wrap");
+  const trongOTimKiem = e.target.closest("#qr-qc-tim-wrap, #qr-dropdown, .cx5-bp-panel");
   if (!trongOTimKiem) {
     closeDropdownQR();
   }
@@ -197,7 +190,10 @@ function chonQCQR(item) {
   closeDropdownQR();
   khoaQCQR(mspVal, tenVal);
   const kgInput = document.getElementById("qr-kg");
-  if (kgInput) kgInput.focus();
+  if (kgInput) {
+    kgInput.focus();
+    if (typeof moBanPhimCX5 === "function") moBanPhimCX5(kgInput, "kg");
+  }
 }
 window.chonQCQR = chonQCQR;
 
@@ -279,14 +275,17 @@ function chuyenSangNhapTayQR() {
   const tenInput = document.getElementById("qr-ten");
   if (qcKhoaQR && kgInput) {
     kgInput.focus();
+    if (typeof moBanPhimCX5 === "function") moBanPhimCX5(kgInput, "kg");
   } else if (tenInput) {
     tenInput.focus();
+    if (typeof moBanPhimCX5 === "function") moBanPhimCX5(tenInput, "qc");
     hienGoiYQCQR();
   }
 }
 window.chuyenSangNhapTayQR = chuyenSangNhapTayQR;
 
 function chuyenSangQuetCamQR() {
+  if (typeof dongBanPhimCX5 === "function") dongBanPhimCX5();
   dangNhapQR = false;
   const qrNhap = document.getElementById("qr-nhap");
   if (qrNhap) qrNhap.style.display = "none";

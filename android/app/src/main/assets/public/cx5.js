@@ -2372,11 +2372,12 @@ window.addEventListener("load", function () {
     tenInput.addEventListener("focus", hienGoiYQCCX5);
   }
   document.addEventListener("click", e => {
-    const trongOTimKiem = e.target.closest(".cx5-ten-wrap");
+    const trongOTimKiem = e.target.closest(".cx5-ten-wrap, #cx1-qc-tim-wrap, #qr-qc-tim-wrap, #cx1-dropdown, #qr-dropdown, #cx5-dropdown");
     const trongBanPhim = e.target.closest(".cx5-bp-panel");
     if (!trongOTimKiem && !trongBanPhim) {
       closeDropdownCX5();
       if (typeof closeDropdownCX1 === "function") closeDropdownCX1();
+      if (typeof closeDropdownQR === "function") closeDropdownQR();
     }
     if (banPhimActiveElCX5 && !trongOTimKiem && !trongBanPhim && e.target !== banPhimActiveElCX5) {
       dongBanPhimCX5();
@@ -2538,9 +2539,9 @@ window.setOneHandCX5 = setOneHandCX5;
 
   function xuLyMoBanPhimInput(el) {
     if (!el || el.tagName !== "INPUT") return;
-    if (el.id === "cx5-kg" || el.id === "cx5-bao" || el.id === "cx1-kg" || el.id === "cx1-bao" || el.id === "cx5-sl-them-kg" || el.id === "cx5-sx-kg" || el.id === "cx1-them-kg" || el.id === "qr-them-kg" || el.classList.contains("cx5-sx-input")) {
+    if (el.id === "cx5-kg" || el.id === "cx5-bao" || el.id === "cx1-kg" || el.id === "cx1-bao" || el.id === "qr-kg" || el.id === "qr-bao" || el.id === "cx5-sl-them-kg" || el.id === "cx5-sx-kg" || el.id === "cx1-them-kg" || el.id === "qr-them-kg" || el.classList.contains("cx5-sx-input")) {
       moBanPhimCX5(el, "kg");
-    } else if (el.id === "cx5-ten" || el.id === "cx1-ten" || el.id === "cx5-sx-ten" || el.id === "cx5-sl-ten-tim") {
+    } else if (el.id === "cx5-ten" || el.id === "cx1-ten" || el.id === "qr-ten" || el.id === "cx5-sx-ten" || el.id === "cx5-sl-ten-tim") {
       moBanPhimCX5(el, "qc");
     }
   }
@@ -2572,7 +2573,13 @@ function moBanPhimCX5(el, loai) {
 
   if (typeof pushChanThoatState === "function") pushChanThoatState();
   setTimeout(() => {
-    if (el && el.scrollIntoView) el.scrollIntoView({ block: "center", behavior: "smooth" });
+    if (el && el.getBoundingClientRect) {
+      const rect = el.getBoundingClientRect();
+      const viewportH = window.innerHeight - h;
+      if (rect.bottom > viewportH || rect.top < 0) {
+        if (el.scrollIntoView) el.scrollIntoView({ block: "nearest", behavior: "smooth" });
+      }
+    }
   }, 120);
 }
 
@@ -2856,6 +2863,11 @@ function bpKgEnterCX5() {
   } else if (id === "cx1-bao") {
     const kgEl = document.getElementById("cx1-kg");
     if (kgEl) { kgEl.focus(); moBanPhimCX5(kgEl, "kg"); }
+  } else if (id === "qr-kg") {
+    if (typeof themMaNhapTayQR === "function") themMaNhapTayQR();
+  } else if (id === "qr-bao") {
+    const kgEl = document.getElementById("qr-kg");
+    if (kgEl) { kgEl.focus(); moBanPhimCX5(kgEl, "kg"); }
   } else if (id === "cx5-sl-them-kg") {
     themKgVaoLuotCX5();
   } else if (id === "cx5-sx-kg") {
@@ -2876,6 +2888,13 @@ function bpKgNextCX5() {
   if (banPhimActiveElCX5 && (banPhimActiveElCX5.id === "cx1-kg" || banPhimActiveElCX5.id === "cx1-bao")) {
     if (typeof moKhoaQCCX1 === "function") moKhoaQCCX1();
     const ten = document.getElementById("cx1-ten");
+    if (ten) { ten.focus(); moBanPhimCX5(ten, "qc"); }
+    return;
+  }
+  // 0.1 Kiểm tra nếu đang ở màn hình nhập tay Quét QR (qr-nhap)
+  if (banPhimActiveElCX5 && (banPhimActiveElCX5.id === "qr-kg" || banPhimActiveElCX5.id === "qr-bao")) {
+    if (typeof moKhoaQCQR === "function") moKhoaQCQR();
+    const ten = document.getElementById("qr-ten");
     if (ten) { ten.focus(); moBanPhimCX5(ten, "qc"); }
     return;
   }
@@ -2943,6 +2962,7 @@ function bpKichHoatLocCX5() {
   if (!banPhimActiveElCX5) return;
   if (banPhimActiveElCX5.id === "cx5-ten") onInputCX5();
   if (banPhimActiveElCX5.id === "cx1-ten" && typeof onInputCX1 === "function") onInputCX1();
+  if (banPhimActiveElCX5.id === "qr-ten" && typeof onInputQR === "function") onInputQR();
   if (banPhimActiveElCX5.id === "cx5-sx-ten") onInputSXCX5();
   if (banPhimActiveElCX5.id === "cx5-sl-ten-tim") onInputSLLuotCX5();
 }
@@ -2952,6 +2972,10 @@ function bpQcEnterCX5() {
   if (banPhimActiveElCX5.id === "cx1-ten") {
     if (typeof filteredCX1 !== "undefined" && filteredCX1.length && typeof chonQCX1 === "function") {
       chonQCX1(filteredCX1[activeIndexCX1 >= 0 ? activeIndexCX1 : 0]);
+    }
+  } else if (banPhimActiveElCX5.id === "qr-ten") {
+    if (typeof filteredQR !== "undefined" && filteredQR.length && typeof chonQCQR === "function") {
+      chonQCQR(filteredQR[activeIndexQR >= 0 ? activeIndexQR : 0]);
     }
   } else if (banPhimActiveElCX5.id === "cx5-ten") {
     if (filteredCX5.length) chonQCX5(filteredCX5[activeIndexCX5 >= 0 ? activeIndexCX5 : 0]);

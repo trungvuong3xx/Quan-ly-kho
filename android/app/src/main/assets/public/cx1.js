@@ -674,23 +674,19 @@ window.hienGoiYQCCX1 = hienGoiYQCCX1;
 
 function renderDropdownCX1() {
   const el = document.getElementById("cx1-dropdown");
-  const kgKhu = document.getElementById("cx1-kg-khu");
   if (!el) return;
   if (!filteredCX1 || filteredCX1.length === 0) {
     if (dangHienGoiYCX1 && (!mspDataCX1 || !mspDataCX1.length)) {
       el.innerHTML = '<div style="padding:10px 12px; font-size:12px; color:#64748b; text-align:center;">Đang tải danh mục QC hoặc gõ để tìm kiếm...</div>';
       el.style.display = "block";
       el.classList.add("open");
-      if (kgKhu) kgKhu.style.display = "none";
       return;
     }
     el.classList.remove("open");
     el.style.display = "none";
     el.innerHTML = "";
-    if (kgKhu) kgKhu.style.display = "";
     return;
   }
-  if (kgKhu) kgKhu.style.display = "none";
   const tieuDe = dangHienGoiYCX1
     ? '<div class="cx5-dropdown-title" style="padding:6px 10px; font-size:11px; font-weight:700; color:#64748b; border-bottom:1px solid #e2e8f0; text-transform:uppercase;">Gợi ý quy cách thường dùng</div>'
     : "";
@@ -702,16 +698,14 @@ function renderDropdownCX1() {
   el.classList.add("open");
 
   Array.from(el.querySelectorAll(".cx5-dropdown-item")).forEach(child => {
-    const handleChon = e => {
+    child.addEventListener("click", e => {
       e.preventDefault();
       e.stopPropagation();
       const idx = parseInt(child.getAttribute("data-idx"), 10);
       if (!isNaN(idx) && filteredCX1[idx]) {
         chonQCX1(filteredCX1[idx]);
       }
-    };
-    child.addEventListener("pointerdown", handleChon);
-    child.addEventListener("click", handleChon);
+    });
   });
 }
 window.renderDropdownCX1 = renderDropdownCX1;
@@ -726,8 +720,6 @@ function closeDropdownCX1() {
     el.style.display = "none";
     el.innerHTML = "";
   }
-  const kgKhu = document.getElementById("cx1-kg-khu");
-  if (kgKhu) kgKhu.style.display = "";
 }
 window.closeDropdownCX1 = closeDropdownCX1;
 window.dongDropdownCX1 = closeDropdownCX1;
@@ -752,6 +744,7 @@ function chonQCX1(item, mspTruyen) {
   const kgInput = document.getElementById("cx1-kg");
   if (kgInput) {
     kgInput.focus();
+    if (typeof moBanPhimCX5 === "function") moBanPhimCX5(kgInput, "kg");
   }
 }
 window.chonQCX1 = chonQCX1;
@@ -844,6 +837,7 @@ function themDongNhapTayCX1() {
   if (kgInput) {
     kgInput.value = "";
     kgInput.focus();
+    if (typeof moBanPhimCX5 === "function") moBanPhimCX5(kgInput, "kg");
   }
   if (baoInput) baoInput.value = "1";
 }
@@ -877,8 +871,11 @@ function chuyenSangNhapTayCX1() {
   const tenInput = document.getElementById("cx1-ten");
   if (qcKhoaCX1 && kgInput) {
     kgInput.focus();
+    if (typeof moBanPhimCX5 === "function") moBanPhimCX5(kgInput, "kg");
   } else if (tenInput) {
     tenInput.focus();
+    if (typeof moBanPhimCX5 === "function") moBanPhimCX5(tenInput, "qc");
+    hienGoiYQCCX1();
   }
 }
 window.chuyenSangNhapTayCX1 = chuyenSangNhapTayCX1;

@@ -615,9 +615,9 @@
         <div style="position:relative; margin-bottom:8px;">
           <label style="font-size:12px; font-weight:700; color:#475569; margin-bottom:4px; display:block;">Quy cách (QC)</label>
           <div class="cx5-ten-wrap" id="qr-qc-tim-wrap" style="position:relative;">
-            <input type="text" id="qr-ten" placeholder="Tìm hoặc chọn QC..." autocomplete="off" onfocus="hienGoiYQCQR()" onclick="hienGoiYQCQR()" oninput="onInputQR()" style="padding-right: 40px; width:100%; height:38px; border-radius:9px; border:1px solid #cbd5e1; padding-left:12px; font-size:13.5px;">
+            <input type="text" id="qr-ten" inputmode="none" placeholder="Tìm hoặc chọn QC..." autocomplete="off" onfocus="hienGoiYQCQR()" onclick="hienGoiYQCQR()" oninput="onInputQR()" style="width:100%; height:38px; box-sizing:border-box; border-radius:9px; border:1px solid #cbd5e1; padding:0 40px 0 12px; font-size:13.5px; line-height:36px; background:#ffffff; color:#0f172a;">
             <i class="ti ti-refresh" onclick="taiDanhSachQCQR(true)" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); color: #64748b; cursor: pointer; font-size: 18px; z-index: 2; padding: 6px;" title="Tải lại danh sách QC"></i>
-            <div id="qr-dropdown" class="cx5-dropdown" style="position:absolute; top:calc(100% + 4px); left:0; right:0; z-index:50; border:1px solid #cbd5e1; border-radius:10px; background:#ffffff; max-height:180px; overflow-y:auto; box-shadow:0 4px 12px rgba(0,0,0,0.15); display:none;"></div>
+            <div id="qr-dropdown" class="cx5-dropdown" style="position:absolute; top:calc(100% + 4px); left:0; right:0; z-index:90; border:1px solid #cbd5e1; border-radius:10px; background:#ffffff; max-height:190px; overflow-y:auto; -webkit-overflow-scrolling:touch; touch-action:pan-y; overscroll-behavior:contain; box-shadow:0 8px 24px rgba(0,0,0,0.18); display:none;"></div>
           </div>
           <div id="qr-qc-khoa" class="cx5-qc-khoa" style="display:none; margin-bottom:4px;" onclick="moKhoaQCQR()">
             <span id="qr-qc-khoa-ten"></span>
@@ -630,11 +630,11 @@
           <div style="display: flex; gap: 8px; margin-bottom: 10px;">
             <div style="flex: 1;">
               <label style="font-size:12px; font-weight:700; color:#475569; margin-bottom:4px; display:block;">Bao</label>
-              <input type="number" id="qr-bao" value="1" min="1" style="width:100%; height:38px; border-radius:9px; border:1px solid #cbd5e1; padding:0 12px; font-size:13.5px;" onkeydown="if(event.key==='Enter'){event.preventDefault();document.getElementById('qr-kg').focus()}">
+              <input type="number" id="qr-bao" inputmode="none" value="1" min="1" style="width:100%; height:38px; box-sizing:border-box; border-radius:9px; border:1px solid #cbd5e1; padding:0 12px; font-size:13.5px; line-height:36px; background:#ffffff; color:#0f172a;" onkeydown="if(event.key==='Enter'){event.preventDefault();document.getElementById('qr-kg').focus()}">
             </div>
             <div style="flex: 1;">
               <label style="font-size:12px; font-weight:700; color:#475569; margin-bottom:4px; display:block;">Kg</label>
-              <input type="number" step="0.01" id="qr-kg" placeholder="Nhập kg..." style="width:100%; height:38px; border-radius:9px; border:1px solid #cbd5e1; padding:0 12px; font-size:13.5px;" onkeydown="if(event.key==='Enter'){event.preventDefault();themMaNhapTayQR()}">
+              <input type="number" step="0.01" id="qr-kg" inputmode="none" placeholder="Nhập kg..." style="width:100%; height:38px; box-sizing:border-box; border-radius:9px; border:1px solid #cbd5e1; padding:0 12px; font-size:13.5px; line-height:36px; background:#ffffff; color:#0f172a;" onkeydown="if(event.key==='Enter'){event.preventDefault();themMaNhapTayQR()}">
             </div>
           </div>
 
@@ -883,9 +883,9 @@
         <div style="position:relative; margin-bottom:8px;">
           <label style="font-size:12px; font-weight:700; color:#475569; margin-bottom:4px; display:block;">Quy cách (QC)</label>
           <div class="cx5-ten-wrap" id="cx1-qc-tim-wrap" style="position:relative;">
-            <input type="text" id="cx1-ten" placeholder="Tìm hoặc chọn QC..." autocomplete="off" onfocus="hienGoiYQCCX1()" onclick="hienGoiYQCCX1()" oninput="onInputCX1()" style="padding-right: 40px; width:100%; height:38px; border-radius:9px; border:1px solid #cbd5e1; padding-left:12px; font-size:13.5px;">
+            <input type="text" id="cx1-ten" inputmode="none" placeholder="Tìm hoặc chọn QC..." autocomplete="off" onfocus="hienGoiYQCCX1()" onclick="hienGoiYQCCX1()" oninput="onInputCX1()" style="width:100%; height:38px; box-sizing:border-box; border-radius:9px; border:1px solid #cbd5e1; padding:0 40px 0 12px; font-size:13.5px; line-height:36px; background:#ffffff; color:#0f172a;">
             <i class="ti ti-refresh" onclick="taiDanhSachQCCX1(true)" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); color: #64748b; cursor: pointer; font-size: 18px; z-index: 2; padding: 6px;" title="Tải lại danh sách QC"></i>
-            <div id="cx1-dropdown" class="cx5-dropdown" style="position:absolute; top:calc(100% + 4px); left:0; right:0; z-index:50; border:1px solid #cbd5e1; border-radius:10px; background:#ffffff; max-height:180px; overflow-y:auto; box-shadow:0 4px 12px rgba(0,0,0,0.15); display:none;"></div>
+            <div id="cx1-dropdown" class="cx5-dropdown" style="position:absolute; top:calc(100% + 4px); left:0; right:0; z-index:90; border:1px solid #cbd5e1; border-radius:10px; background:#ffffff; max-height:190px; overflow-y:auto; -webkit-overflow-scrolling:touch; touch-action:pan-y; overscroll-behavior:contain; box-shadow:0 8px 24px rgba(0,0,0,0.18); display:none;"></div>
           </div>
           <div id="cx1-qc-khoa" class="cx5-qc-khoa" style="display:none; margin-bottom:4px;" onclick="moKhoaQCCX1()">
             <span id="cx1-qc-khoa-ten"></span>
@@ -898,11 +898,11 @@
           <div style="display: flex; gap: 8px; margin-bottom: 10px;">
             <div style="flex: 1;">
               <label style="font-size:12px; font-weight:700; color:#475569; margin-bottom:4px; display:block;">Bao</label>
-              <input type="number" id="cx1-bao" value="1" min="1" style="width:100%; height:38px; border-radius:9px; border:1px solid #cbd5e1; padding:0 12px; font-size:13.5px;" onkeydown="if(event.key==='Enter'){event.preventDefault();document.getElementById('cx1-kg').focus()}">
+              <input type="number" id="cx1-bao" inputmode="none" value="1" min="1" style="width:100%; height:38px; box-sizing:border-box; border-radius:9px; border:1px solid #cbd5e1; padding:0 12px; font-size:13.5px; line-height:36px; background:#ffffff; color:#0f172a;" onkeydown="if(event.key==='Enter'){event.preventDefault();document.getElementById('cx1-kg').focus()}">
             </div>
             <div style="flex: 1;">
               <label style="font-size:12px; font-weight:700; color:#475569; margin-bottom:4px; display:block;">Kg</label>
-              <input type="number" step="0.01" id="cx1-kg" placeholder="Nhập kg..." style="width:100%; height:38px; border-radius:9px; border:1px solid #cbd5e1; padding:0 12px; font-size:13.5px;" onkeydown="if(event.key==='Enter'){event.preventDefault();themDongNhapTayCX1()}">
+              <input type="number" step="0.01" id="cx1-kg" inputmode="none" placeholder="Nhập kg..." style="width:100%; height:38px; box-sizing:border-box; border-radius:9px; border:1px solid #cbd5e1; padding:0 12px; font-size:13.5px; line-height:36px; background:#ffffff; color:#0f172a;" onkeydown="if(event.key==='Enter'){event.preventDefault();themDongNhapTayCX1()}">
             </div>
           </div>
 
