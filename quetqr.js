@@ -40,25 +40,112 @@ function hienVienFeedbackQR(loai) {
 }
 window.hienVienFeedbackQR = hienVienFeedbackQR;
 
-function toggleNhapTayQR() {
-  const chipMode = document.getElementById("qr-chip-mode");
-  const inputMode = document.getElementById("qr-input-mode");
-  const btnKeyboard = document.getElementById("btn-toggle-banphim-qr");
-  const inputField = document.getElementById("qr-manual-input-cam");
-  if (!chipMode || !inputMode) return;
+let dangNhapQR = false;
 
-  const isInputOpen = inputMode.style.display !== "none";
-  if (isInputOpen) {
-    dongNhapTayQR();
-  } else {
-    chipMode.style.display = "none";
-    inputMode.style.display = "flex";
-    if (btnKeyboard) btnKeyboard.classList.add("active-mode");
-    if (inputField) {
-      inputField.value = "";
-      setTimeout(() => inputField.focus(), 80);
-    }
+function chuyenSangNhapTayQR() {
+  dungQuetQR();
+  const pauseOverlay = document.getElementById("qr-cam-pause-overlay");
+  if (pauseOverlay) pauseOverlay.style.display = "none";
+  dangNhapQR = true;
+
+  const formChon = document.getElementById("form-chon");
+  if (formChon) formChon.style.display = "none";
+  const qrCam = document.getElementById("qr-cam");
+  if (qrCam) qrCam.style.display = "none";
+  const qrKetQua = document.getElementById("qr-ketqua");
+  if (qrKetQua) qrKetQua.style.display = "none";
+  const qrNhap = document.getElementById("qr-nhap");
+  if (qrNhap) qrNhap.style.display = "block";
+
+  const statusEl = document.getElementById("qr-nhap-status");
+  if (statusEl) statusEl.innerHTML = '<div class="cam-status-dot"></div><span>Đợt ' + (demSoDotQR || 1) + '</span>';
+  const btn = document.getElementById("btn-dung-tieptuc-nhap-qr");
+  if (btn) {
+    btn.innerHTML = '<i class="ti ti-player-pause"></i> Dừng nhập';
+    btn.className = "btn-sub-action";
   }
+
+  capNhatLogQR();
+
+  const inputEl = document.getElementById("qr-nhap-ma-input");
+  if (inputEl) {
+    inputEl.value = "";
+    setTimeout(() => inputEl.focus(), 80);
+  }
+}
+window.chuyenSangNhapTayQR = chuyenSangNhapTayQR;
+
+function chuyenSangQuetCamQR() {
+  dangNhapQR = false;
+  const qrNhap = document.getElementById("qr-nhap");
+  if (qrNhap) qrNhap.style.display = "none";
+  const qrCam = document.getElementById("qr-cam");
+  if (qrCam) qrCam.style.display = "block";
+
+  tiepTucQuetQR();
+  capNhatLogQR();
+}
+window.chuyenSangQuetCamQR = chuyenSangQuetCamQR;
+
+function toggleDungTiepTucNhapQR() {
+  const btn = document.getElementById("btn-dung-tieptuc-nhap-qr");
+  const statusEl = document.getElementById("qr-nhap-status");
+  if (dangNhapQR) {
+    dangNhapQR = false;
+    if (btn) {
+      btn.innerHTML = '<i class="ti ti-player-play"></i> Nhập tiếp';
+      btn.className = "btn-sub-action active-pause";
+    }
+    if (statusEl) statusEl.innerHTML = '<div class="cam-status-dot paused"></div><span>Đã dừng Đợt ' + (demSoDotQR || 1) + '</span>';
+  } else {
+    const maxDot = phienQuetQR.length > 0 ? Math.max(0, ...phienQuetQR.map(r => r.dotQuet || 1)) : 0;
+    demSoDotQR = maxDot > 0 ? maxDot + 1 : 1;
+    dangNhapQR = true;
+    if (btn) {
+      btn.innerHTML = '<i class="ti ti-player-pause"></i> Dừng nhập';
+      btn.className = "btn-sub-action";
+    }
+    if (statusEl) statusEl.innerHTML = '<div class="cam-status-dot"></div><span>Đợt ' + demSoDotQR + '</span>';
+    const inputEl = document.getElementById("qr-nhap-ma-input");
+    if (inputEl) inputEl.focus();
+  }
+}
+window.toggleDungTiepTucNhapQR = toggleDungTiepTucNhapQR;
+
+function themMaNhapTayQR() {
+  const inputMa = document.getElementById("qr-nhap-ma-input");
+  const inputQC = document.getElementById("qr-nhap-qc-input");
+  const inputKG = document.getElementById("qr-nhap-kg-input");
+  if (!inputMa) return;
+
+  const rawVal = (inputMa.value || "").trim();
+  const valQC = inputQC ? (inputQC.value || "").trim() : "";
+  const valKG = inputKG ? parseFloat(inputKG.value) || 0 : 0;
+
+  if (!rawVal && !valQC) {
+    if (typeof showCanhBaoQR === "function") showCanhBaoQR("Vui lòng nhập mã hoặc quy cách!", "warning");
+    return;
+  }
+
+  const codeToAdd = rawVal || (valQC + (valKG > 0 ? "-" + valKG : ""));
+  khiQuetDuocMaQR({ getText: () => codeToAdd });
+
+  if (phienQuetQR.length > 0 && (valQC || valKG > 0)) {
+    const lastItem = phienQuetQR[phienQuetQR.length - 1];
+    if (valQC) lastItem.qc = valQC;
+    if (valKG > 0) lastItem.kg = valKG;
+    luuPhienDoDangQR();
+    capNhatLogQR();
+  }
+
+  inputMa.value = "";
+  if (inputKG) inputKG.value = "";
+  inputMa.focus();
+}
+window.themMaNhapTayQR = themMaNhapTayQR;
+
+function toggleNhapTayQR() {
+  chuyenSangNhapTayQR();
 }
 window.toggleNhapTayQR = toggleNhapTayQR;
 
@@ -427,12 +514,17 @@ window.dungQuet = tatCameraQR;
 // ── Cập nhật Bảng Nhật Ký Trực Tiếp (Live Log) ─────────────────────
 function capNhatLogQR() {
   const container = document.getElementById("qr-log-list");
+  const containerNhap = document.getElementById("qr-nhap-log-list");
   const countEl = document.getElementById("qr-log-count");
+  const countNhap = document.getElementById("qr-nhap-log-count");
   if (countEl) countEl.textContent = phienQuetQR.length + " bao";
-  if (!container) return;
+  if (countNhap) countNhap.textContent = phienQuetQR.length + " bao";
+  if (!container && !containerNhap) return;
 
   if (phienQuetQR.length === 0) {
-    container.innerHTML = '<div style="color:var(--cream-soft); font-size:12px; text-align:center; padding:6px 0;">Chưa có mã nào được quét</div>';
+    const emptyHtml = '<div style="color:var(--cream-soft); font-size:12px; text-align:center; padding:6px 0;">Chưa có mã nào</div>';
+    if (container) container.innerHTML = emptyHtml;
+    if (containerNhap) containerNhap.innerHTML = emptyHtml;
     return;
   }
 
@@ -474,7 +566,8 @@ function capNhatLogQR() {
     html += `<div style="text-align:center; padding:6px 0; font-size:11px; color:var(--cream-soft); font-style:italic;">... và ${conLai} mã trước đó (xem đầy đủ ở bảng kết quả)</div>`;
   }
 
-  container.innerHTML = html;
+  if (container) container.innerHTML = html;
+  if (containerNhap) containerNhap.innerHTML = html;
 }
 
 function xoaMaTrongLiveLogQR(index) {
@@ -827,8 +920,10 @@ async function quetTiepQuetQR() {
 
   const btnToggle = document.getElementById("btn-dung-tieptuc-qr");
   if (btnToggle) {
-    btnToggle.textContent = "Dừng quét";
-    btnToggle.className = "btn btn-red btn-full";
+    btnToggle.innerHTML = SVG_SHUTTER_PAUSE;
+    btnToggle.className = "cam-shutter-center-btn";
+    btnToggle.classList.remove("paused");
+    btnToggle.title = "Dừng quét";
   }
 
   capNhatLogQR();

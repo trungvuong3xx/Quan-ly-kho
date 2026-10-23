@@ -2305,11 +2305,10 @@ window.batTatDenPinCamera = async function (videoId, btnId, currentState) {
   try {
     await track.applyConstraints({ advanced: [{ torch: newState }] });
     if (btnFlash) {
-      btnFlash.style.background = newState ? "var(--brass)" : "var(--neutral)";
-      btnFlash.style.color = newState ? "var(--bg)" : "var(--cream)";
-      btnFlash.textContent = newState ? "Tắt đèn" : "Bật đèn pin";
+      btnFlash.classList.toggle("active-flash", newState);
+      btnFlash.title = newState ? "Tắt đèn pin" : "Bật đèn pin";
+      btnFlash.disabled = false;
     }
-    if (btnFlash) btnFlash.disabled = false;
     return newState;
   } catch (err) {
     console.warn("Lỗi bật/tắt đèn pin:", err);

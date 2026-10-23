@@ -856,11 +856,11 @@ function chuyenSangNhapTayCX1() {
   document.getElementById("cx1-nhap").style.display = "block";
 
   const statusEl = document.getElementById("cx1-nhap-status");
-  if (statusEl) statusEl.textContent = "🟢 Đang nhập Đợt " + demSoDot + "...";
+  if (statusEl) statusEl.innerHTML = '<div class="cam-status-dot"></div><span>Đợt ' + demSoDot + '</span>';
   const btn = document.getElementById("btn-dung-tieptuc-nhap-cx1");
   if (btn) {
-    btn.textContent = "Dừng nhập";
-    btn.className = "btn btn-red";
+    btn.innerHTML = '<i class="ti ti-player-pause"></i> Dừng nhập';
+    btn.className = "btn-sub-action";
   }
 
   khoiTaoSuKienCX1Ten();
@@ -898,19 +898,19 @@ function toggleDungTiepTucNhapCX1() {
   if (dangNhapCX1) {
     dangNhapCX1 = false;
     if (btn) {
-      btn.textContent = "Nhập tiếp";
-      btn.className = "btn btn-blue";
+      btn.innerHTML = '<i class="ti ti-player-play"></i> Nhập tiếp';
+      btn.className = "btn-sub-action active-pause";
     }
-    if (statusEl) statusEl.textContent = "Đã dừng Đợt " + demSoDot;
+    if (statusEl) statusEl.innerHTML = '<div class="cam-status-dot paused"></div><span>Đã dừng Đợt ' + demSoDot + '</span>';
   } else {
     const maxDot = phienCX1.length > 0 ? Math.max(0, ...phienCX1.map(r => r.dotQuet || 1)) : 0;
     demSoDot = maxDot > 0 ? maxDot + 1 : 1;
     dangNhapCX1 = true;
     if (btn) {
-      btn.textContent = "Dừng nhập";
-      btn.className = "btn btn-red";
+      btn.innerHTML = '<i class="ti ti-player-pause"></i> Dừng nhập';
+      btn.className = "btn-sub-action";
     }
-    if (statusEl) statusEl.textContent = "🟢 Đang nhập Đợt " + demSoDot + "...";
+    if (statusEl) statusEl.innerHTML = '<div class="cam-status-dot"></div><span>Đợt ' + demSoDot + '</span>';
     const kgInput = document.getElementById("cx1-kg");
     if (kgInput) kgInput.focus();
   }
@@ -1433,8 +1433,10 @@ async function quetTiepCX1() {
 
   const btnToggle = document.getElementById("btn-dung-tieptuc-cx1");
   if (btnToggle) {
-    btnToggle.textContent = "Dừng quét";
-    btnToggle.className = "btn btn-red btn-full";
+    btnToggle.innerHTML = SVG_SHUTTER_PAUSE;
+    btnToggle.className = "cam-shutter-center-btn";
+    btnToggle.classList.remove("paused");
+    btnToggle.title = "Dừng quét";
   }
 
   try {
@@ -1546,14 +1548,20 @@ async function khoiPhucCX1(state) {
   document.getElementById("cx1-ketqua").style.display = "none";
   document.getElementById("cx1-dem").textContent = "Đã quét: " + phienCX1.length + " mã";
   document.getElementById("cx1-status").textContent = "Đang quét Đợt " + demSoDot + "...";
-  document.getElementById("btn-flash-cx1").style.background = "var(--neutral)";
-  document.getElementById("btn-flash-cx1").style.color = "var(--cream)";
-  document.getElementById("btn-flash-cx1").textContent = "Bật đèn pin";
+  const btnFlash = document.getElementById("btn-flash-cx1");
+  if (btnFlash) {
+    btnFlash.classList.remove("active-flash");
+    btnFlash.title = "Bật/Tắt Đèn pin";
+  }
   capNhatLogCX1();
 
   const btnToggle = document.getElementById("btn-dung-tieptuc-cx1");
-  btnToggle.textContent = "Dừng quét";
-  btnToggle.className = "btn btn-red btn-full";
+  if (btnToggle) {
+    btnToggle.innerHTML = SVG_SHUTTER_PAUSE;
+    btnToggle.className = "cam-shutter-center-btn";
+    btnToggle.classList.remove("paused");
+    btnToggle.title = "Dừng quét";
+  }
 
   try {
     const cx1Vid = document.getElementById("cx1-reader");

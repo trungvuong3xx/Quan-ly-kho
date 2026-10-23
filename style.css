@@ -3284,5 +3284,123 @@ body.cam-active #chiFor.active {
   background: rgba(239, 68, 68, 0.1);
 }
 
+/* ── Khối Form Nhập Tay Cố Định Chiều Cao = Cụm Camera + Subcam Bar ── */
+.manual-input-box {
+  width: 100%;
+  box-sizing: border-box;
+  background: #ffffff;
+  border: 1px solid #d9dfe7;
+  border-radius: 16px;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06), 0 4px 12px rgba(15, 23, 42, 0.06);
+  padding: 10px 14px 12px 14px;
+  margin-bottom: 8px;
+  height: calc(40vh + 46px);
+  min-height: 326px;
+  max-height: 426px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  position: relative;
+  overflow: visible;
+}
+
+.manual-input-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+  flex-shrink: 0;
+}
+
+.manual-input-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 0;
+}
+
+.manual-input-footer {
+  display: flex;
+  gap: 8px;
+  margin-top: 6px;
+  flex-shrink: 0;
+}
+
+.btn-quick-cam {
+  background: rgba(37, 99, 235, 0.08);
+  color: #2563eb;
+  border: 1px solid rgba(37, 99, 235, 0.25);
+  border-radius: 20px;
+  padding: 4px 12px;
+  font-size: 12px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  outline: none;
+}
+
+.btn-quick-cam:active {
+  background: #2563eb;
+  color: #ffffff;
+  transform: scale(0.95);
+}
+
+.btn-submit-manual {
+  height: 42px !important;
+  font-size: 13.5px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.5px !important;
+  border-radius: 11px !important;
+  background: linear-gradient(135deg, #2563eb, #1d4ed8) !important;
+  box-shadow: 0 2px 6px rgba(37, 99, 235, 0.3) !important;
+  margin: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 6px !important;
+  color: #ffffff !important;
+  border: none !important;
+  cursor: pointer !important;
+  transition: transform 0.1s, box-shadow 0.15s !important;
+}
+
+.btn-submit-manual:active {
+  transform: scale(0.98) !important;
+  box-shadow: 0 1px 3px rgba(37, 99, 235, 0.3) !important;
+}
+
+.btn-sub-action {
+  flex: 1;
+  height: 38px;
+  border-radius: 10px;
+  border: 1px solid #d9dfe7;
+  background: #f8fafc;
+  color: #475569;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: all 0.15s ease;
+  outline: none;
+}
+
+.btn-sub-action:active {
+  background: #e2e8f0;
+  transform: scale(0.97);
+}
+
+.btn-sub-action.active-pause {
+  background: #fee2e2;
+  color: #ef4444;
+  border-color: #fca5a5;
+}
+
 
 
