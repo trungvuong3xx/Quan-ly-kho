@@ -56,7 +56,10 @@ function napDuLieuQCQRLocal() {
     const cached = JSON.parse(localStorage.getItem("cx1_danh_sach_qc") || localStorage.getItem("qr_danh_sach_qc") || "[]");
     if (Array.isArray(cached)) {
       cached.forEach(i => {
-        if (i && i.ten) mapQC[i.ten.trim()] = { msp: i.msp || i.ten, count: Number(i.count) || 1 };
+        if (i && i.ten != null) {
+          const ten = String(i.ten).trim();
+          if (ten) mapQC[ten] = { msp: String(i.msp || ten).trim(), count: Number(i.count) || 1 };
+        }
       });
     }
   } catch (e) {}
@@ -565,6 +568,14 @@ function khiQuetDuocMaQR(result) {
   }
   mapKhoaQR.set(keyQR, now);
 
+  // Dọn dẹp bộ nhớ mapKhoaQR khi quét số lượng lớn
+  if (mapKhoaQR.size > 200) {
+    const expireBefore = now - 5000;
+    for (const [k, t] of mapKhoaQR.entries()) {
+      if (t < expireBefore) mapKhoaQR.delete(k);
+    }
+  }
+
   const trung = phienQuetQR.find(r => r.id === data.id);
   if (!choPhepTrung && trung) {
     mapKhoaQR.set(keyQR, Date.now() + 1500); // Khóa 1.5s để không nháy cảnh báo liên tục
@@ -681,6 +692,9 @@ window.toggleFlashQR = toggleFlashQR;
 function dungQuetQR() {
   dangQuetQR = false;
   window.dangQuetQR = false;
+  if (typeof dungCameraFast === "function") {
+    dungCameraFast("reader", zxingReaderQR || window.zxingReaderQR);
+  }
   const statusEl = document.getElementById("qr-status");
   if (statusEl) statusEl.innerHTML = '<div class="cam-status-dot paused"></div><span>Đợt ' + (demSoDotQR || 1) + '</span>';
   const btnToggle = document.getElementById("btn-dung-tieptuc-qr");
@@ -1015,72 +1029,254 @@ function capNhatLogQR() {
   khoiTaoSuKienSwipeQR("qr-nhap-log-list");
 }
 
-// ── Tính toán 2 Bảng Kết Quả Chuẩn CX1 (Đợt, QC, Bao, KG) ───────────
+// ── Quản lý trạng thái Accordion Bảng Kết Quả Quét QR ──────────────────
+window.expandedKQQR = window.expandedKQQR || new Set();
+
+function toggleChiTietKQQR(groupKey) {
+  if (window.expandedKQQR.has(groupKey)) {
+    window.expandedKQQR.delete(groupKey);
+  } else {
+    window.expandedKQQR.add(groupKey);
+  }
+  const safeId = 'qr-kq-grp-' + btoa(encodeURIComponent(groupKey)).replace(/[^a-zA-Z0-9]/g, '');
+  const detailsEl = document.getElementById('details-' + safeId);
+  const chevEl = document.getElementById('chev-' + safeId);
+  if (detailsEl && chevEl) {
+    const isOpen = window.expandedKQQR.has(groupKey);
+    detailsEl.style.display = isOpen ? 'block' : 'none';
+    if (isOpen) chevEl.classList.add('open'); else chevEl.classList.remove('open');
+  } else {
+    hienKetQuaQuetQR();
+  }
+}
+window.toggleChiTietKQQR = toggleChiTietKQQR;
+
+function xoaItemKqQR(originalIndex, ev) {
+  if (ev) ev.stopPropagation();
+  if (originalIndex >= 0 && originalIndex < phienQuetQR.length) {
+    const item = phienQuetQR[originalIndex];
+    const tenMa = item ? (item.qc || item.msp || "bao này") : "bao này";
+    const doXoa = () => {
+      phienQuetQR.splice(originalIndex, 1);
+      luuPhienDoDangQR();
+      hienKetQuaQuetQR();
+      capNhatLogQR();
+      if (typeof showCanhBaoQR === "function") showCanhBaoQR("Đã xóa 1 bao " + tenMa, "success");
+    };
+    if (typeof moXacNhanApp === "function") {
+      moXacNhanApp("Xóa lần quét này của " + tenMa + "?", doXoa, "Xóa", null, "Hủy", "Xác nhận xóa");
+    } else {
+      doXoa();
+    }
+  }
+}
+window.xoaItemKqQR = xoaItemKqQR;
+
+let qrKqSwipeTouchState = null;
+function khoiTaoSwipeKQQR() {
+  const container = document.getElementById("qr-tbody-dot");
+  if (!container || container.__swipeKqInit) return;
+  container.__swipeKqInit = true;
+
+  container.addEventListener("touchstart", (e) => {
+    const touch = e.touches[0];
+    const content = e.target.closest(".kq-swipe-content");
+    if (!content) return;
+
+    const allSwiped = container.querySelectorAll(".kq-swipe-content.swiped");
+    allSwiped.forEach(el => {
+      if (el !== content) {
+        el.style.transform = "translateX(0px)";
+        el.classList.remove("swiped");
+      }
+    });
+
+    const isAlreadySwiped = content.classList.contains("swiped");
+    qrKqSwipeTouchState = {
+      content: content,
+      startX: touch.clientX,
+      startY: touch.clientY,
+      currentX: touch.clientX,
+      isSwiping: false,
+      isAlreadySwiped: isAlreadySwiped
+    };
+  }, { passive: true });
+
+  container.addEventListener("touchmove", (e) => {
+    if (!qrKqSwipeTouchState) return;
+    const touch = e.touches[0];
+    const dx = touch.clientX - qrKqSwipeTouchState.startX;
+    const dy = touch.clientY - qrKqSwipeTouchState.startY;
+
+    if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 10) {
+      qrKqSwipeTouchState.isSwiping = true;
+      let offset = dx;
+      if (qrKqSwipeTouchState.isAlreadySwiped) {
+        offset = -76 + dx;
+      }
+      if (offset > 0) offset = 0;
+      if (offset < -85) offset = -85;
+      qrKqSwipeTouchState.content.style.transition = "none";
+      qrKqSwipeTouchState.content.style.transform = `translateX(${offset}px)`;
+    }
+  }, { passive: true });
+
+  const ketThucVuot = (e) => {
+    if (!qrKqSwipeTouchState) return;
+    const content = qrKqSwipeTouchState.content;
+    const dx = (e && e.changedTouches ? e.changedTouches[0]?.clientX : qrKqSwipeTouchState.currentX) - qrKqSwipeTouchState.startX;
+
+    content.style.transition = "transform 0.2s cubic-bezier(0.2, 0.9, 0.3, 1)";
+    if (qrKqSwipeTouchState.isSwiping) {
+      if (dx < -35) {
+        content.style.transform = "translateX(-76px)";
+        content.classList.add("swiped");
+      } else {
+        content.style.transform = "translateX(0px)";
+        content.classList.remove("swiped");
+      }
+    } else if (qrKqSwipeTouchState.isAlreadySwiped) {
+      content.style.transform = "translateX(0px)";
+      content.classList.remove("swiped");
+    }
+    qrKqSwipeTouchState = null;
+  };
+
+  container.addEventListener("touchend", ketThucVuot);
+  container.addEventListener("touchcancel", () => {
+    if (qrKqSwipeTouchState) {
+      qrKqSwipeTouchState.content.style.transform = qrKqSwipeTouchState.isAlreadySwiped ? "translateX(-76px)" : "translateX(0px)";
+      qrKqSwipeTouchState = null;
+    }
+  });
+}
+
+// ── Tính toán 2 Bảng Kết Quả Chuẩn Accordion (Đợt, QC, Bao, KG) ───────────
 function taoHangKetQuaQuetQR(danhSach) {
   let tongDotCuaPhien = {};
   let tongGomLoaiMa = {};
   let tongBaoAll = 0;
   let tongKGAll = 0;
 
-  danhSach.forEach(r => {
+  danhSach.forEach((r, originalIndex) => {
     tongBaoAll += 1;
     tongKGAll += (r.kg || 0);
 
     // Bảng 1: Gom theo Đợt + Quy Cách
-    const keyDot = r.dotQuet + "|" + r.qc;
+    const keyDot = r.dotQuet + "___" + (r.qc || "KHAC");
     if (!tongDotCuaPhien[keyDot]) {
-      tongDotCuaPhien[keyDot] = { dot: r.dotQuet, msp: r.msp, qc: r.qc, soLuong: 0, tongKG: 0 };
+      tongDotCuaPhien[keyDot] = {
+        key: keyDot,
+        dot: r.dotQuet,
+        msp: r.msp || "—",
+        qc: r.qc || "—",
+        items: []
+      };
     }
-    tongDotCuaPhien[keyDot].soLuong += 1;
-    tongDotCuaPhien[keyDot].tongKG += (r.kg || 0);
+    tongDotCuaPhien[keyDot].items.push({ item: r, originalIndex });
 
     // Bảng 2: Gom theo Quy Cách toàn phiên
-    const keyGom = r.qc;
+    const keyGom = r.qc || "KHAC";
     if (!tongGomLoaiMa[keyGom]) {
-      tongGomLoaiMa[keyGom] = { msp: r.msp, qc: r.qc, soLuong: 0, tongKG: 0 };
+      tongGomLoaiMa[keyGom] = { msp: r.msp || "—", qc: r.qc || "—", soLuong: 0, tongKG: 0 };
     }
     tongGomLoaiMa[keyGom].soLuong += 1;
     tongGomLoaiMa[keyGom].tongKG += (r.kg || 0);
   });
 
-  // Render HTML Bảng Chi Tiết (theo Đợt)
+  // Render HTML Bảng Chi Tiết Accordion (theo Đợt)
   let hangDot = "";
-    Object.values(tongDotCuaPhien).forEach(item => {
+  const dotGroups = Object.values(tongDotCuaPhien);
+
+  if (dotGroups.length === 0) {
+    hangDot = '<div style="text-align:center; padding:24px; color:var(--text-lighter); font-size:13px;">Chưa có dữ liệu quét</div>';
+  } else {
+    dotGroups.forEach(g => {
+      const soBaoNhom = g.items.length;
+      const tongKgNhom = g.items.reduce((sum, it) => sum + (it.item.kg || 0), 0);
+      const safeKey = String(g.key);
+      const safeId = 'qr-kq-grp-' + btoa(encodeURIComponent(safeKey)).replace(/[^a-zA-Z0-9]/g, '');
+      const isOpen = window.expandedKQQR.has(safeKey);
+      const safeQc = typeof escapeHtml === "function" ? escapeHtml(g.qc) : g.qc;
+      const countBadge = soBaoNhom > 1 ? `<span class="kq-badge-count">×${soBaoNhom}</span>` : '';
+      const escapedQcParam = g.qc.replace(/'/g, "\\'");
+
+      let subItemsHtml = g.items.map((it, subIdx) => {
+        const subGio = it.item.thoiGian ? new Date(it.item.thoiGian).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit", second: "2-digit" }) : "";
+        const subKg = it.item.kg ? Number(it.item.kg).toFixed(1) : "0.0";
+        const safeSubName = typeof escapeHtml === "function" ? escapeHtml(it.item.qc || it.item.msp || "") : (it.item.qc || it.item.msp || "");
+
+        return `<div class="kq-sub-item">
+          <span class="kq-sub-stt">${subIdx + 1}</span>
+          <span class="kq-sub-name">${safeSubName}</span>
+          <span class="kq-sub-val">${subKg} kg</span>
+          <span class="kq-sub-time">${subGio}</span>
+          <button type="button" class="kq-sub-del-btn" onclick="xoaItemKqQR(${it.originalIndex}, event)" title="Xóa bao này">
+            <i class="ti ti-trash"></i>
+          </button>
+        </div>`;
+      }).join("");
+
       hangDot += `
-    <div class="cx5-swipe-row">
-      <div style="display:flex; width: 100%; box-sizing: border-box; padding:12px 10px; border-bottom:1px solid var(--line); align-items:center; flex:1; font-size:14px;" onclick="nhapTayKGQR(${item.dot}, '${item.qc}')">
-        <div style="flex:0.8; color:var(--brass); font-weight:700;">Đợt ${item.dot}</div>
-        <div style="flex:1.5;">${item.qc}</div>
-        <div style="flex:0.7; text-align:center;">${item.soLuong}</div>
-        <div style="flex:1; text-align:right; font-weight:700; color:var(--success);">${item.tongKG.toFixed(1)}</div>
-      </div>
-      <div class="cx5-del-btn" onclick="xoaNhomDotQR(${item.dot}, '${item.qc}')"><i class="ti ti-trash"></i></div>
-    </div>`;
+      <div class="kq-swipe-container">
+        <div class="kq-swipe-row-wrap">
+          <div class="kq-swipe-actions">
+            <button type="button" class="kq-swipe-btn-del" onclick="xoaNhomDotQR(${g.dot}, '${escapedQcParam}')">
+              <i class="ti ti-trash"></i>
+              <span>Xóa</span>
+            </button>
+          </div>
+          <div class="kq-swipe-content" onclick="toggleChiTietKQQR('${safeKey}')">
+            <span class="kq-col-dot">Đợt ${g.dot}</span>
+            <div class="kq-col-name">
+              <span>${safeQc}</span>
+              ${countBadge}
+            </div>
+            <span class="kq-col-count">${soBaoNhom}</span>
+            <span class="kq-col-kg">${tongKgNhom.toFixed(1)}</span>
+            <span class="kq-col-chevron"><i id="chev-${safeId}" class="ti ti-chevron-down ${isOpen ? 'open' : ''}"></i></span>
+          </div>
+        </div>
+        <div id="details-${safeId}" class="kq-group-details" style="display:${isOpen ? 'block' : 'none'};">
+          ${subItemsHtml}
+          <div style="display:flex; justify-content:flex-end; padding:4px 2px 2px 2px;">
+            <button type="button" class="kq-sub-edit-btn" onclick="nhapTayKGQR(${g.dot}, '${escapedQcParam}')">
+              <i class="ti ti-edit"></i> Sửa Kg đợt ${g.dot}
+            </button>
+          </div>
+        </div>
+      </div>`;
     });
-    let footDot = `
-    <div style="display:flex; width: 100%; box-sizing: border-box; padding:10px; background:var(--card-raised); align-items:center; font-size:14px;">
-      <div style="flex:0.8; font-weight:700; color:var(--brass);">TỔNG</div>
-      <div style="flex:1.5;">&nbsp;</div>
-      <div style="flex:0.7; text-align:center; font-weight:700; color:var(--brass);">${tongBaoAll}</div>
-      <div style="flex:1; text-align:right; font-weight:700; color:var(--brass);">${tongKGAll.toFixed(1)}</div>
-    </div>`;
+  }
+
+  let footDot = `
+    <div style="flex:0.8; font-weight:700; color:var(--row-text);">TỔNG</div>
+    <div style="flex:1.8;">&nbsp;</div>
+    <div style="flex:0.7; text-align:center; font-weight:800; font-family:'IBM Plex Mono', monospace;">${tongBaoAll}</div>
+    <div style="flex:1; text-align:right; font-weight:800; font-family:'IBM Plex Mono', monospace; color:var(--success);">${tongKGAll.toFixed(1)}</div>
+    <div style="width:22px;"></div>`;
 
   // Render HTML Bảng Tổng Hợp (theo QC)
   let hangGom = "";
-  Object.values(tongGomLoaiMa).forEach(item => {
-    hangGom += `
-    <div style="display:flex; width: 100%; box-sizing: border-box; align-items:center; padding:10px; border-bottom:1px solid var(--line-soft); font-size:14px;">
-      <div style="flex:2.3;">${item.qc}</div>
-      <div style="flex:0.7; text-align:center; font-weight:700;">${item.soLuong}</div>
-      <div style="flex:1; text-align:right; font-weight:700; color:var(--success);">${item.tongKG.toFixed(1)}</div>
-    </div>`;
-  });
+  const gomList = Object.values(tongGomLoaiMa);
+  if (gomList.length === 0) {
+    hangGom = '<div style="text-align:center; padding:24px; color:var(--text-lighter); font-size:13px;">Chưa có dữ liệu</div>';
+  } else {
+    gomList.forEach(item => {
+      const safeQc = typeof escapeHtml === "function" ? escapeHtml(item.qc) : item.qc;
+      hangGom += `
+      <div class="kq-gom-row">
+        <div style="flex:2.3; font-weight:600; color:var(--row-text);">${safeQc}</div>
+        <div style="flex:0.7; text-align:center; font-weight:700; font-family:'IBM Plex Mono', monospace;">${item.soLuong}</div>
+        <div style="flex:1; text-align:right; font-weight:700; font-family:'IBM Plex Mono', monospace; color:var(--success);">${item.tongKG.toFixed(1)}</div>
+      </div>`;
+    });
+  }
+
   let footGom = `
-    <div style="display:flex; width: 100%; box-sizing: border-box; align-items:center; padding:10px; background:var(--card-raised); font-size:14px;">
-      <div style="flex:2.3; font-weight:700; color:var(--steel);">TỔNG</div>
-      <div style="flex:0.7; text-align:center; font-weight:700; color:var(--steel);">${tongBaoAll}</div>
-      <div style="flex:1; text-align:right; font-weight:700; color:var(--steel);">${tongKGAll.toFixed(1)}</div>
-    </div>`;
+    <div style="flex:2.3; font-weight:700; color:var(--row-text);">TỔNG</div>
+    <div style="flex:0.7; text-align:center; font-weight:800; font-family:'IBM Plex Mono', monospace;">${tongBaoAll}</div>
+    <div style="flex:1; text-align:right; font-weight:800; font-family:'IBM Plex Mono', monospace; color:var(--success);">${tongKGAll.toFixed(1)}</div>`;
 
   return { hangDot, footDot, hangGom, footGom, tongBaoAll, tongKGAll };
 }
@@ -1093,30 +1289,31 @@ function toggleQRView(mode) {
   const tabTonghop = document.getElementById("qr-tab-tonghop");
 
   if (mode === "chitiet") {
-    wrapChitiet.style.display = "block";
-    wrapGom.style.display = "none";
-    tabChitiet.className = "btn btn-blue";
-    tabChitiet.style.background = "";
-    tabChitiet.style.color = "";
-    tabChitiet.style.border = "none";
-    
-    tabTonghop.className = "btn";
-    tabTonghop.style.background = "transparent";
-    tabTonghop.style.color = "var(--primary)";
-    tabTonghop.style.border = "1px solid var(--primary)";
+    if (wrapChitiet) wrapChitiet.style.display = "block";
+    if (wrapGom) wrapGom.style.display = "none";
+    if (tabChitiet) {
+      tabChitiet.style.background = "var(--surface)";
+      tabChitiet.style.color = "var(--row-text)";
+      tabChitiet.style.boxShadow = "0 2px 6px rgba(0,0,0,0.06)";
+    }
+    if (tabTonghop) {
+      tabTonghop.style.background = "transparent";
+      tabTonghop.style.color = "var(--row-muted)";
+      tabTonghop.style.boxShadow = "none";
+    }
   } else {
-    wrapChitiet.style.display = "none";
-    wrapGom.style.display = "block";
-    
-    tabTonghop.className = "btn btn-blue";
-    tabTonghop.style.background = "";
-    tabTonghop.style.color = "";
-    tabTonghop.style.border = "none";
-    
-    tabChitiet.className = "btn";
-    tabChitiet.style.background = "transparent";
-    tabChitiet.style.color = "var(--primary)";
-    tabChitiet.style.border = "1px solid var(--primary)";
+    if (wrapChitiet) wrapChitiet.style.display = "none";
+    if (wrapGom) wrapGom.style.display = "block";
+    if (tabTonghop) {
+      tabTonghop.style.background = "var(--surface)";
+      tabTonghop.style.color = "var(--row-text)";
+      tabTonghop.style.boxShadow = "0 2px 6px rgba(0,0,0,0.06)";
+    }
+    if (tabChitiet) {
+      tabChitiet.style.background = "transparent";
+      tabChitiet.style.color = "var(--row-muted)";
+      tabChitiet.style.boxShadow = "none";
+    }
   }
 }
 window.toggleQRView = toggleQRView;
@@ -1141,6 +1338,7 @@ function hienKetQuaQuetQR() {
   if (tfootDot) tfootDot.innerHTML = footDot;
   if (tbodyGom) tbodyGom.innerHTML = hangGom;
   if (tfootGom) tfootGom.innerHTML = footGom;
+  khoiTaoSwipeKQQR();
 
   const tongBaoEl = document.getElementById("qr-tong-bao");
   if (tongBaoEl) tongBaoEl.textContent = tongBaoAll;
@@ -1575,7 +1773,6 @@ function huyPhienQuetQR() {
 }
 window.huyPhienQuetQR = huyPhienQuetQR;
 
-// ── Quản lý Lịch Sử Phiên Quét (lưu 30 ngày gần nhất) ───────────────
 function docLichSuQR() {
   let list = [];
   try { list = JSON.parse(localStorage.getItem(QUETQR_LICHSU_KEY)) || []; } catch (e) { list = []; }
@@ -1583,6 +1780,9 @@ function docLichSuQR() {
   homNay.setHours(0, 0, 0, 0);
   return list.filter(s => {
     if (!s.ngay) return false;
+    // BẢO VỆ PHIÊN CHƯA GỬI XONG: Không xóa phiên còn dữ liệu chưa đồng bộ
+    const chuaGuiHet = s.phienQuetQR && s.phienQuetQR.some(r => !r.daDongBo && !r.daGui);
+    if (chuaGuiHet) return true;
     const ngayPhien = new Date(s.ngay + "T00:00:00");
     const soNgayCach = Math.floor((homNay - ngayPhien) / 86400000);
     return soNgayCach >= 0 && soNgayCach < QUETQR_LICHSU_SO_NGAY_GIU;
@@ -1590,7 +1790,15 @@ function docLichSuQR() {
 }
 
 function luuLichSuQR(list) {
-  try { localStorage.setItem(QUETQR_LICHSU_KEY, JSON.stringify(list)); } catch (e) {}
+  try { 
+    localStorage.setItem(QUETQR_LICHSU_KEY, JSON.stringify(list)); 
+  } catch (e) {
+    if (e && (e.name === "QuotaExceededError" || e.code === 22)) {
+      if (typeof showCanhBaoQR === "function") {
+        showCanhBaoQR("Bộ nhớ trình duyệt bị đầy! Hãy xóa bớt lịch sử cũ.", "error");
+      }
+    }
+  }
 }
 
 function luuVaoLichSuQR() {
@@ -1648,8 +1856,7 @@ function renderLichSuQR() {
 
   container.innerHTML = filtered.map((entry) => {
     const timeObj = entry.thoiGian ? new Date(entry.thoiGian) : new Date();
-    const gio = timeObj.toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" });
-    const ngayStr = entry.ngay || timeObj.toISOString().split("T")[0];
+    const ngayStr = entry.ngay || ((typeof layNgayHomNayLocal === "function") ? layNgayHomNayLocal() : (timeObj.getFullYear() + '-' + String(timeObj.getMonth()+1).padStart(2,'0') + '-' + String(timeObj.getDate()).padStart(2,'0')));
     const parts = ngayStr.split("-");
     const ngayNgan = parts.length === 3 ? parts[2] + "-" + parts[1] : ngayStr;
     const tongKg = (entry.tongKG || 0);
@@ -1805,7 +2012,7 @@ function xuatExcelLichSuQR(idPhien) {
         });
       });
     });
-    fileTitle = "LichSu_QuetQR_ToanBo_" + new Date().toISOString().split("T")[0];
+    fileTitle = "LichSu_QuetQR_ToanBo_" + ((typeof layNgayHomNayLocal === "function") ? layNgayHomNayLocal() : (new Date().getFullYear() + '-' + String(new Date().getMonth()+1).padStart(2,'0') + '-' + String(new Date().getDate()).padStart(2,'0')));
   }
 
   if (typeof exportToExcel === "function") {
@@ -1882,7 +2089,7 @@ function showCanhBaoQR(text, type = "error") {
 
 // ── Khởi chạy khi tải trang ────────────────────────────────────────
 window.addEventListener("DOMContentLoaded", () => {
-  const today = new Date().toISOString().split("T")[0];
+  const today = (typeof layNgayHomNayLocal === "function") ? layNgayHomNayLocal() : (new Date().getFullYear() + '-' + String(new Date().getMonth()+1).padStart(2,'0') + '-' + String(new Date().getDate()).padStart(2,'0'));
   const ngayInput = document.getElementById("chon-ngay");
   if (ngayInput && !ngayInput.value) ngayInput.value = today;
 

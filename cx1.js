@@ -180,6 +180,14 @@ function khiQuetDuocMa(result) {
   }
   mapKhoaCX1.set(keyQR, now);
 
+  // Dọn dẹp bộ nhớ mapKhoaCX1 khi số lượng mã tăng cao
+  if (mapKhoaCX1.size > 200) {
+    const expireBefore = now - 5000;
+    for (const [k, t] of mapKhoaCX1.entries()) {
+      if (t < expireBefore) mapKhoaCX1.delete(k);
+    }
+  }
+
   const trung = phienCX1.find(r => r.id === data.id);
   if (!choPhepTrung && trung) {
     mapKhoaCX1.set(keyQR, Date.now() + 1500); // Khóa 1.5s để không nháy cảnh báo liên tục
@@ -324,6 +332,10 @@ async function tiepTucKhoiTaoCX1(cheDo = "quet") {
 
 function dungCX1() {
   dangQuetCX1 = false;
+  window.dangQuetCX1 = false;
+  if (typeof dungCameraFast === "function") {
+    dungCameraFast("cx1-reader", zxingReaderCX1 || window.zxingReaderCX1);
+  }
   const statusEl = document.getElementById("cx1-status");
   if (statusEl) statusEl.innerHTML = '<div class="cam-status-dot paused"></div><span>Đợt ' + (demSoDot || 1) + '</span>';
   const btnToggle = document.getElementById("btn-dung-tieptuc-cx1");
@@ -341,6 +353,7 @@ async function tiepTucCX1() {
   const maxDot = phienCX1.length > 0 ? Math.max(0, ...phienCX1.map(r => r.dotQuet || 1)) : 0;
   demSoDot = maxDot > 0 ? maxDot + 1 : 1;
   dangQuetCX1 = true;
+  window.dangQuetCX1 = true;
   denPinBat = false;
   const statusEl = document.getElementById("cx1-status");
   if (statusEl) statusEl.innerHTML = '<div class="cam-status-dot"></div><span>Đợt ' + demSoDot + '</span>';
@@ -366,6 +379,7 @@ async function tiepTucCX1() {
           khiQuetDuocMa({ getText: () => txt });
         }
       });
+      window.zxingReaderCX1 = zxingReaderCX1;
     } else if (cx1Vid && cx1Vid.paused) {
       cx1Vid.play().catch(() => { });
     }
@@ -391,25 +405,44 @@ function docPendingCX1() {
 }
 
 function luuPendingCX1(list) {
-  try { localStorage.setItem("cx1_pending_saves", JSON.stringify(list)); } catch (e) { }
+  try {
+    localStorage.setItem("cx1_pending_saves", JSON.stringify(list));
+  } catch (e) {
+    const isQuota = e && (e.name === 'QuotaExceededError' || e.name === 'NS_ERROR_DOM_QUOTA_REACHED' || e.code === 22);
+    if (isQuota && typeof showCanhBaoCX1 === "function") {
+      showCanhBaoCX1("⚠️ BỘ NHỚ MÁY ĐẦY (5MB)! Dữ liệu KHÔNG thể lưu tạm. Vui lòng kết nối mạng để gửi ngay!", "error");
+    }
+  }
 }
 
-async function guiLenSheetCX1(rows) {
+async function guiLenSheetCX1(rows, timeoutMs = 30000) {
   const URL_API = "https://script.google.com/macros/s/AKfycbzk7afcuHDOTnL6QSIQ0ZgT-CSiIDNZ8h5S8_IkGXahc7PQRvqZKpLpjkBphioXAyzDKQ/exec";
-  const res = await fetch(URL_API, {
-    method: "POST",
-    headers: { "Content-Type": "text/plain;charset=utf-8" },
-    body: JSON.stringify({ action: "luuCX1", data: rows })
-  });
-  if (!res.ok) throw new Error("Lỗi kết nối server HTTP " + res.status);
-  const text = await res.text();
-  let json;
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
   try {
-    json = JSON.parse(text);
+    const res = await fetch(URL_API, {
+      method: "POST",
+      headers: { "Content-Type": "text/plain;charset=utf-8" },
+      body: JSON.stringify({ action: "luuCX1", data: rows }),
+      signal: controller.signal
+    });
+    clearTimeout(timer);
+    if (!res.ok) throw new Error("Lỗi kết nối server HTTP " + res.status);
+    const text = await res.text();
+    let json;
+    try {
+      json = JSON.parse(text);
+    } catch (err) {
+      throw new Error("Máy chủ phản hồi chậm hoặc gián đoạn (Timeout)");
+    }
+    if (json && json.error) throw new Error(json.error);
   } catch (err) {
-    throw new Error("Máy chủ phản hồi chậm hoặc gián đoạn (Timeout)");
+    clearTimeout(timer);
+    if (err.name === "AbortError") {
+      throw new Error("Quá thời gian chờ máy chủ (Timeout 30s)");
+    }
+    throw err;
   }
-  if (json && json.error) throw new Error(json.error);
 }
 
 function ketThucCX1() {
@@ -448,9 +481,11 @@ function napDuLieuQCCX1Local() {
     const cached = JSON.parse(localStorage.getItem(CACHE_KEY));
     if (Array.isArray(cached)) {
       cached.forEach(i => {
-        if (i && i.ten) {
-          const ten = i.ten.trim();
-          mapQC[ten] = { msp: i.msp || ten, count: Number(i.count) || 1 };
+        if (i && i.ten != null) {
+          const ten = String(i.ten).trim();
+          if (ten) {
+            mapQC[ten] = { msp: String(i.msp || ten).trim(), count: Number(i.count) || 1 };
+          }
         }
       });
     }
@@ -804,6 +839,11 @@ function themDongNhapTayCX1() {
   if (!msp) msp = qc;
 
   const bao = parseInt(baoInput ? baoInput.value : "1") || 1;
+  if (bao <= 0 || bao > 500) {
+    showCanhBaoCX1("Số bao phải từ 1 đến 500 bao!");
+    if (baoInput) baoInput.focus();
+    return;
+  }
   const kg = parseFloat(kgInput ? kgInput.value : "0") || 0;
 
   if (kg <= 0) {
@@ -940,15 +980,21 @@ function layBangChiTietCX1(danhSach) {
     tongDot[keyDot].kg += (r.kg || 0);
   });
   return Object.values(tongDot).map(item => {
-    const dNgay = ngayCX1 || (typeof layNgayHomNayLocal === "function" ? layNgayHomNayLocal() : new Date().toISOString().split("T")[0]);
+    const dNgay = ngayCX1 || (typeof layNgayHomNayLocal === "function" ? layNgayHomNayLocal() : (function() {
+      const d = new Date();
+      return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+    })());
     let ngayVN = dNgay;
     const parts = dNgay.split("-");
     if (parts.length === 3 && parts[0].length === 4) {
       ngayVN = parts[2] + "/" + parts[1] + "/" + parts[0];
     }
+    const cleanQc = String(item.qc || "").replace(/[^a-zA-Z0-9]/g, "");
+    const recordId = "CX1_" + (idPhienHienTai || "P") + "_" + item.dot + "_" + (item.msp || "") + "_" + cleanQc + "_" + (item.bao || 1);
     return {
-      id: "",
-      ID: "",
+      id: recordId,
+      ID: recordId,
+      recordId: recordId,
       msp: item.msp,
       MSP: item.msp,
       qc: item.qc,
@@ -975,7 +1021,8 @@ function layBangChiTietCX1(danhSach) {
 }
 
 async function guiDuLieuCX1() {
-  const moiBoSung = phienCX1.slice(soLuongDaGuiHienTai);
+  // Dùng cờ daGui trên từng bản ghi, không dùng slice(index) để chống lệch khi xóa bằng splice
+  const moiBoSung = phienCX1.filter(r => !r.daGui && !r.daDongBo);
   if (moiBoSung.length === 0) {
     showCanhBaoCX1("Không có dữ liệu mới để gửi!", "warning");
     return;
@@ -995,7 +1042,8 @@ async function guiDuLieuCX1() {
 
   try {
     await guiLenSheetCX1(rows);
-    soLuongDaGuiHienTai = phienCX1.length;
+    moiBoSung.forEach(r => { r.daGui = true; r.daDongBo = true; });
+    soLuongDaGuiHienTai = phienCX1.filter(r => r.daGui).length;
     xoaPhienDoDangCX1();
     luuVaoLichSuCX1();
     showCanhBaoCX1("✅ Đã gửi thành công " + rows.length + " dòng lên Sheet!", "success");
@@ -1007,11 +1055,13 @@ async function guiDuLieuCX1() {
   } catch (err) {
     const pending = docPendingCX1();
     rows.forEach(r => {
-      pending.push(r);
+      if (!pending.some(p => p.id === r.id || (p.dot === r.dot && p.msp === r.msp && p.ngay === r.ngay && p.kg === r.kg))) {
+        pending.push(r);
+      }
     });
     luuPendingCX1(pending);
     showCanhBaoCX1("Mất mạng — đã lưu tạm trên máy, sẽ tự gửi lại sau", "warning");
-    soLuongDaGuiHienTai = phienCX1.length;
+    // [BẢO VỆ]: Khi lỗi KHÔNG đánh dấu đã gửi, để người dùng có thể thử lại
     luuVaoLichSuCX1();
     if (btnGui) {
       btnGui.disabled = false;
@@ -1484,77 +1534,309 @@ function capNhatLogCX1() {
   khoiTaoSuKienSwipeCX1("cx1-nhap-log-list");
 }
 
+// ── Quản lý trạng thái Accordion Bảng Kết Quả CX1 (An toàn Base64 chống lỗi dấu nháy & XSS) ──
+window.expandedKQCX1 = window.expandedKQCX1 || new Set();
+
+function toggleChiTietKQCX1(groupKeyParam) {
+  let groupKey = String(groupKeyParam || "");
+  try {
+    groupKey = decodeURIComponent(atob(groupKeyParam));
+  } catch (e) {
+    groupKey = String(groupKeyParam || "");
+  }
+  if (window.expandedKQCX1.has(groupKey)) {
+    window.expandedKQCX1.delete(groupKey);
+  } else {
+    window.expandedKQCX1.add(groupKey);
+  }
+  const keyB64 = btoa(encodeURIComponent(groupKey));
+  const safeId = 'cx1-kq-grp-' + keyB64.replace(/[^a-zA-Z0-9]/g, '');
+  const detailsEl = document.getElementById('details-' + safeId);
+  const chevEl = document.getElementById('chev-' + safeId);
+  if (detailsEl && chevEl) {
+    const isOpen = window.expandedKQCX1.has(groupKey);
+    detailsEl.style.display = isOpen ? 'block' : 'none';
+    if (isOpen) chevEl.classList.add('open'); else chevEl.classList.remove('open');
+  } else {
+    hienKetQuaCX1();
+  }
+}
+window.toggleChiTietKQCX1 = toggleChiTietKQCX1;
+
+function xoaNhomDotCX1ByB64(keyB64, ev) {
+  if (ev) ev.stopPropagation();
+  let groupKey = "";
+  try {
+    groupKey = decodeURIComponent(atob(keyB64));
+  } catch (e) {
+    groupKey = keyB64;
+  }
+  const parts = groupKey.split("___");
+  const dotNum = parseInt(parts[0], 10) || 1;
+  const qcVal = parts.slice(1).join("___") || '—';
+  
+  if (typeof moXacNhanApp === "function") {
+    moXacNhanApp(
+      "Xóa tất cả mã của " + qcVal + " trong đợt " + dotNum + "?",
+      () => {
+        phienCX1 = phienCX1.filter(r => !( (r.dotQuet || 1) === dotNum && (r.qc || r.msp || "KHAC") === qcVal ));
+        const maxDot = phienCX1.length > 0 ? Math.max(0, ...phienCX1.map(r => r.dotQuet || 1)) : 0;
+        demSoDot = maxDot > 0 ? maxDot : 1;
+        luuPhienDoDangCX1();
+        hienKetQuaCX1();
+        capNhatLogCX1();
+        const demEl = document.getElementById("cx1-dem");
+        if (demEl) demEl.textContent = "Đã quét: " + phienCX1.length + " mã";
+        showCanhBaoCX1("Đã xóa nhóm " + qcVal, "success");
+      },
+      "Xóa nhóm",
+      null,
+      "Hủy",
+      "Xác nhận xóa"
+    );
+  }
+}
+window.xoaNhomDotCX1ByB64 = xoaNhomDotCX1ByB64;
+
+function xoaItemKqCX1(originalIndex, ev) {
+  if (ev) ev.stopPropagation();
+  if (originalIndex >= 0 && originalIndex < phienCX1.length) {
+    const item = phienCX1[originalIndex];
+    const tenMa = item ? (item.qc || item.msp || "bao này") : "bao này";
+    const doXoa = () => {
+      phienCX1.splice(originalIndex, 1);
+      luuPhienDoDangCX1();
+      hienKetQuaCX1();
+      capNhatLogCX1();
+      if (typeof showCanhBaoCX1 === "function") showCanhBaoCX1("Đã xóa 1 bao " + tenMa, "success");
+    };
+    if (typeof moXacNhanApp === "function") {
+      moXacNhanApp("Xóa lần quét này của " + tenMa + "?", doXoa, "Xóa", null, "Hủy", "Xác nhận xóa");
+    } else {
+      doXoa();
+    }
+  }
+}
+window.xoaItemKqCX1 = xoaItemKqCX1;
+
+let cx1KqSwipeTouchState = null;
+function khoiTaoSwipeKQCX1() {
+  const container = document.getElementById("cx1-tbody-dot");
+  if (!container || container.__swipeKqInit) return;
+  container.__swipeKqInit = true;
+
+  container.addEventListener("touchstart", (e) => {
+    const touch = e.touches[0];
+    const content = e.target.closest(".kq-swipe-content");
+    if (!content) return;
+
+    const allSwiped = container.querySelectorAll(".kq-swipe-content.swiped");
+    allSwiped.forEach(el => {
+      if (el !== content) {
+        el.style.transform = "translateX(0px)";
+        el.classList.remove("swiped");
+      }
+    });
+
+    const isAlreadySwiped = content.classList.contains("swiped");
+    cx1KqSwipeTouchState = {
+      content: content,
+      startX: touch.clientX,
+      startY: touch.clientY,
+      currentX: touch.clientX,
+      isSwiping: false,
+      isAlreadySwiped: isAlreadySwiped
+    };
+  }, { passive: true });
+
+  container.addEventListener("touchmove", (e) => {
+    if (!cx1KqSwipeTouchState) return;
+    const touch = e.touches[0];
+    const dx = touch.clientX - cx1KqSwipeTouchState.startX;
+    const dy = touch.clientY - cx1KqSwipeTouchState.startY;
+
+    if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 10) {
+      cx1KqSwipeTouchState.isSwiping = true;
+      let offset = dx;
+      if (cx1KqSwipeTouchState.isAlreadySwiped) {
+        offset = -76 + dx;
+      }
+      if (offset > 0) offset = 0;
+      if (offset < -85) offset = -85;
+      cx1KqSwipeTouchState.content.style.transition = "none";
+      cx1KqSwipeTouchState.content.style.transform = `translateX(${offset}px)`;
+    }
+  }, { passive: true });
+
+  const ketThucVuot = (e) => {
+    if (!cx1KqSwipeTouchState) return;
+    const content = cx1KqSwipeTouchState.content;
+    const dx = (e && e.changedTouches ? e.changedTouches[0]?.clientX : cx1KqSwipeTouchState.currentX) - cx1KqSwipeTouchState.startX;
+
+    content.style.transition = "transform 0.2s cubic-bezier(0.2, 0.9, 0.3, 1)";
+    if (cx1KqSwipeTouchState.isSwiping) {
+      if (dx < -35) {
+        content.style.transform = "translateX(-76px)";
+        content.classList.add("swiped");
+      } else {
+        content.style.transform = "translateX(0px)";
+        content.classList.remove("swiped");
+      }
+    } else if (cx1KqSwipeTouchState.isAlreadySwiped) {
+      content.style.transform = "translateX(0px)";
+      content.classList.remove("swiped");
+    }
+    cx1KqSwipeTouchState = null;
+  };
+
+  container.addEventListener("touchend", ketThucVuot);
+  container.addEventListener("touchcancel", () => {
+    if (cx1KqSwipeTouchState) {
+      cx1KqSwipeTouchState.content.style.transform = cx1KqSwipeTouchState.isAlreadySwiped ? "translateX(-76px)" : "translateX(0px)";
+      cx1KqSwipeTouchState = null;
+    }
+  });
+}
+
 function taoHangKetQuaCX1(danhSach, isReadonly = false) {
   let tongDotCuaPhien = {};
   let tongGomLoaiMa = {};
   let tongQRAll = 0;
   let tongKGAll = 0;
 
-  danhSach.forEach(r => {
+  danhSach.forEach((r, originalIndex) => {
     const baoItem = parseInt(r.bao) || 1;
     tongQRAll += baoItem;
-    tongKGAll += r.kg;
+    tongKGAll += (r.kg || 0);
 
-    const keyDot = r.dotQuet + "|" + r.msp;
+    // Bảng 1: Gom theo Đợt + Quy Cách
+    const qcStr = r.qc || r.msp || "KHAC";
+    const keyDot = r.dotQuet + "___" + qcStr;
     if (!tongDotCuaPhien[keyDot]) {
-      tongDotCuaPhien[keyDot] = { dot: r.dotQuet, msp: r.msp, qc: r.qc, soLuong: 0, tongKG: 0 };
+      tongDotCuaPhien[keyDot] = {
+        key: keyDot,
+        dot: r.dotQuet,
+        msp: r.msp || "—",
+        qc: qcStr,
+        items: []
+      };
     } else {
       if (r.qc && (!tongDotCuaPhien[keyDot].qc || r.qc.length < tongDotCuaPhien[keyDot].qc.length)) {
         tongDotCuaPhien[keyDot].qc = r.qc;
       }
     }
-    tongDotCuaPhien[keyDot].soLuong += baoItem;
-    tongDotCuaPhien[keyDot].tongKG += r.kg;
+    tongDotCuaPhien[keyDot].items.push({ item: r, originalIndex });
 
-    const keyGom = r.msp;
+    // Bảng 2: Gom theo Quy Cách toàn phiên
+    const keyGom = r.msp || qcStr;
     if (!tongGomLoaiMa[keyGom]) {
-      tongGomLoaiMa[keyGom] = { msp: r.msp, qc: r.qc, soLuong: 0, tongKG: 0 };
+      tongGomLoaiMa[keyGom] = { msp: r.msp, qc: qcStr, soLuong: 0, tongKG: 0 };
     } else {
       if (r.qc && (!tongGomLoaiMa[keyGom].qc || r.qc.length < tongGomLoaiMa[keyGom].qc.length)) {
         tongGomLoaiMa[keyGom].qc = r.qc;
       }
     }
     tongGomLoaiMa[keyGom].soLuong += baoItem;
-    tongGomLoaiMa[keyGom].tongKG += r.kg;
+    tongGomLoaiMa[keyGom].tongKG += (r.kg || 0);
   });
 
-      let hangDot = "";
-    Object.values(tongDotCuaPhien).forEach(item => {
+  // Render HTML Bảng Chi Tiết Accordion (theo Đợt)
+  let hangDot = "";
+  const dotGroups = Object.values(tongDotCuaPhien);
+
+  if (dotGroups.length === 0) {
+    hangDot = '<div style="text-align:center; padding:24px; color:var(--text-lighter); font-size:13px;">Chưa có dữ liệu quét</div>';
+  } else {
+    dotGroups.forEach(g => {
+      const soBaoNhom = g.items.reduce((sum, it) => sum + (parseInt(it.item.bao) || 1), 0);
+      const tongKgNhom = g.items.reduce((sum, it) => sum + (it.item.kg || 0), 0);
+      const safeKey = String(g.key);
+      const safeId = 'cx1-kq-grp-' + btoa(encodeURIComponent(safeKey)).replace(/[^a-zA-Z0-9]/g, '');
+      const isOpen = window.expandedKQCX1.has(safeKey);
+      const safeQc = typeof escapeHtml === "function" ? escapeHtml(g.qc) : g.qc;
+      const countBadge = soBaoNhom > 1 ? `<span class="kq-badge-count">×${soBaoNhom}</span>` : '';
+      const keyB64 = btoa(encodeURIComponent(safeKey));
+
+      let subItemsHtml = g.items.map((it, subIdx) => {
+        const subGio = it.item.thoiGian ? new Date(it.item.thoiGian).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit", second: "2-digit" }) : "";
+        const subKg = it.item.kg ? Number(it.item.kg).toFixed(1) : "0.0";
+        const safeSubName = typeof escapeHtml === "function" ? escapeHtml(it.item.qc || it.item.msp || "") : (it.item.qc || it.item.msp || "");
+
+        return `<div class="kq-sub-item">
+          <span class="kq-sub-stt">${subIdx + 1}</span>
+          <span class="kq-sub-name">${safeSubName}</span>
+          <span class="kq-sub-val">${subKg} kg</span>
+          <span class="kq-sub-time">${subGio}</span>
+          ${!isReadonly ? `
+          <button type="button" class="kq-sub-del-btn" onclick="xoaItemKqCX1(${it.originalIndex}, event)" title="Xóa bao này">
+            <i class="ti ti-trash"></i>
+          </button>` : ''}
+        </div>`;
+      }).join("");
+
       hangDot += `
-    <div class="${!isReadonly ? 'cx5-swipe-row' : ''}">
-      <div style="display:flex; width: 100%; box-sizing: border-box; padding:12px 10px; border-bottom:1px solid var(--line); align-items:center; flex:1; font-size:14px; ${!isReadonly ? 'cursor:pointer;' : ''}" ${!isReadonly ? `onclick="nhapTayCX1(${item.dot}, '${item.msp}', '${item.qc}')"` : ""}>
-        <div style="flex:0.8; color:var(--brass); font-weight:700;">Đợt ${item.dot}</div>
-        <div style="flex:1.5;">${item.qc}</div>
-        <div style="flex:0.7; text-align:center;">${item.soLuong}</div>
-        <div style="flex:1; text-align:right; font-weight:700; color:var(--success);">${item.tongKG.toFixed(1)}</div>
-      </div>
-      ${!isReadonly ? `<div class="cx5-del-btn" onclick="xoaNhomDotCX1(${item.dot}, '${item.msp}', '${item.qc}')"><i class="ti ti-trash"></i></div>` : ""}
-    </div>`;
+      <div class="kq-swipe-container">
+        <div class="kq-swipe-row-wrap">
+          ${!isReadonly ? `
+          <div class="kq-swipe-actions">
+            <button type="button" class="kq-swipe-btn-del" onclick="xoaNhomDotCX1ByB64('${keyB64}', event)">
+              <i class="ti ti-trash"></i>
+              <span>Xóa</span>
+            </button>
+          </div>` : ''}
+          <div class="kq-swipe-content" onclick="toggleChiTietKQCX1('${keyB64}')">
+            <span class="kq-col-dot">Đợt ${g.dot}</span>
+            <div class="kq-col-name">
+              <span>${safeQc}</span>
+              ${countBadge}
+            </div>
+            <span class="kq-col-count">${soBaoNhom}</span>
+            <span class="kq-col-kg">${tongKgNhom.toFixed(1)}</span>
+            <span class="kq-col-chevron"><i id="chev-${safeId}" class="ti ti-chevron-down ${isOpen ? 'open' : ''}"></i></span>
+          </div>
+        </div>
+        <div id="details-${safeId}" class="kq-group-details" style="display:${isOpen ? 'block' : 'none'};">
+          ${subItemsHtml}
+          ${!isReadonly ? `
+          <div style="display:flex; justify-content:flex-end; padding:4px 2px 2px 2px;">
+            <button type="button" class="kq-sub-edit-btn" onclick="nhapTayCX1(${g.dot}, '${escapedMspParam}', '${escapedQcParam}')">
+              <i class="ti ti-edit"></i> Sửa Kg đợt ${g.dot}
+            </button>
+          </div>` : ''}
+        </div>
+      </div>`;
     });
-    let footDot = `
-    <div style="display:flex; width: 100%; box-sizing: border-box; padding:10px; background:var(--card-raised); align-items:center; font-size:14px;">
-      <div style="flex:0.8; font-weight:700; color:var(--brass);">TỔNG</div>
-      <div style="flex:1.5;">&nbsp;</div>
-      <div style="flex:0.7; text-align:center; font-weight:700; color:var(--brass);">${tongQRAll}</div>
-      <div style="flex:1; text-align:right; font-weight:700; color:var(--brass);">${tongKGAll.toFixed(1)}</div>
-    </div>`;
+  }
 
+  let footDot = `
+    <div style="flex:0.8; font-weight:700; color:var(--row-text);">TỔNG</div>
+    <div style="flex:1.8;">&nbsp;</div>
+    <div style="flex:0.7; text-align:center; font-weight:800; font-family:'IBM Plex Mono', monospace;">${tongQRAll}</div>
+    <div style="flex:1; text-align:right; font-weight:800; font-family:'IBM Plex Mono', monospace; color:var(--success);">${tongKGAll.toFixed(1)}</div>
+    <div style="width:22px;"></div>`;
+
+  // Render HTML Bảng Tổng Hợp (theo QC)
   let hangGom = "";
-  Object.values(tongGomLoaiMa).forEach(item => {
-    hangGom += `
-    <div style="display:flex; width: 100%; box-sizing: border-box; align-items:center; padding:10px; border-bottom:1px solid var(--line-soft); font-size:14px;">
-      <div style="flex:2.3;">${item.qc}</div>
-      <div style="flex:0.7; text-align:center; font-weight:700;">${item.soLuong}</div>
-      <div style="flex:1; text-align:right; font-weight:700; color:var(--success);">${item.tongKG.toFixed(1)}</div>
-    </div>`;
-  });
+  const gomList = Object.values(tongGomLoaiMa);
+  if (gomList.length === 0) {
+    hangGom = '<div style="text-align:center; padding:24px; color:var(--text-lighter); font-size:13px;">Chưa có dữ liệu</div>';
+  } else {
+    gomList.forEach(item => {
+      const safeQc = typeof escapeHtml === "function" ? escapeHtml(item.qc) : item.qc;
+      hangGom += `
+      <div class="kq-gom-row">
+        <div style="flex:2.3; font-weight:600; color:var(--row-text);">${safeQc}</div>
+        <div style="flex:0.7; text-align:center; font-weight:700; font-family:'IBM Plex Mono', monospace;">${item.soLuong}</div>
+        <div style="flex:1; text-align:right; font-weight:700; font-family:'IBM Plex Mono', monospace; color:var(--success);">${item.tongKG.toFixed(1)}</div>
+      </div>`;
+    });
+  }
+
   let footGom = `
-    <div style="display:flex; width: 100%; box-sizing: border-box; align-items:center; padding:10px; background:var(--card-raised); font-size:14px;">
-      <div style="flex:2.3; font-weight:700; color:var(--steel);">TỔNG</div>
-      <div style="flex:0.7; text-align:center; font-weight:700; color:var(--steel);">${tongQRAll}</div>
-      <div style="flex:1; text-align:right; font-weight:700; color:var(--steel);">${tongKGAll.toFixed(1)}</div>
-    </div>`;
-  
+    <div style="flex:2.3; font-weight:700; color:var(--row-text);">TỔNG</div>
+    <div style="flex:0.7; text-align:center; font-weight:800; font-family:'IBM Plex Mono', monospace;">${tongQRAll}</div>
+    <div style="flex:1; text-align:right; font-weight:800; font-family:'IBM Plex Mono', monospace; color:var(--success);">${tongKGAll.toFixed(1)}</div>`;
+
   return { hangDot, footDot, hangGom, footGom, tongQRAll, tongKGAll };
 }
 
@@ -1566,30 +1848,31 @@ function toggleCX1View(mode) {
   const tabTonghop = document.getElementById("cx1-tab-tonghop");
 
   if (mode === "chitiet") {
-    wrapChitiet.style.display = "block";
-    wrapGom.style.display = "none";
-    tabChitiet.className = "btn btn-blue";
-    tabChitiet.style.background = "";
-    tabChitiet.style.color = "";
-    tabChitiet.style.border = "none";
-
-    tabTonghop.className = "btn";
-    tabTonghop.style.background = "transparent";
-    tabTonghop.style.color = "var(--primary)";
-    tabTonghop.style.border = "1px solid var(--primary)";
+    if (wrapChitiet) wrapChitiet.style.display = "block";
+    if (wrapGom) wrapGom.style.display = "none";
+    if (tabChitiet) {
+      tabChitiet.style.background = "var(--surface)";
+      tabChitiet.style.color = "var(--row-text)";
+      tabChitiet.style.boxShadow = "0 2px 6px rgba(0,0,0,0.06)";
+    }
+    if (tabTonghop) {
+      tabTonghop.style.background = "transparent";
+      tabTonghop.style.color = "var(--row-muted)";
+      tabTonghop.style.boxShadow = "none";
+    }
   } else {
-    wrapChitiet.style.display = "none";
-    wrapGom.style.display = "block";
-
-    tabTonghop.className = "btn btn-blue";
-    tabTonghop.style.background = "";
-    tabTonghop.style.color = "";
-    tabTonghop.style.border = "none";
-
-    tabChitiet.className = "btn";
-    tabChitiet.style.background = "transparent";
-    tabChitiet.style.color = "var(--primary)";
-    tabChitiet.style.border = "1px solid var(--primary)";
+    if (wrapChitiet) wrapChitiet.style.display = "none";
+    if (wrapGom) wrapGom.style.display = "block";
+    if (tabTonghop) {
+      tabTonghop.style.background = "var(--surface)";
+      tabTonghop.style.color = "var(--row-text)";
+      tabTonghop.style.boxShadow = "0 2px 6px rgba(0,0,0,0.06)";
+    }
+    if (tabChitiet) {
+      tabChitiet.style.background = "transparent";
+      tabChitiet.style.color = "var(--row-muted)";
+      tabChitiet.style.boxShadow = "none";
+    }
   }
 }
 window.toggleCX1View = toggleCX1View;
@@ -1605,6 +1888,7 @@ function hienKetQuaCX1() {
   if (tfootDot) tfootDot.innerHTML = footDot;
   if (tbodyGom) tbodyGom.innerHTML = hangGom;
   if (tfootGom) tfootGom.innerHTML = footGom;
+  khoiTaoSwipeKQCX1();
   
   const tongBaoEl = document.getElementById("cx1-tong-bao");
   if (tongBaoEl) tongBaoEl.textContent = tongQRAll;
@@ -1634,10 +1918,12 @@ async function quetTiepCX1() {
 
   // Quét camera
   dangQuetCX1 = true;
+  window.dangQuetCX1 = true;
   denPinBat = false;
   document.getElementById("cx1-cam").style.display = "block";
   if (typeof khoaCuonTrangQuet === "function") khoaCuonTrangQuet(true); else document.body.classList.add("cam-active");
-  document.getElementById("cx1-status").textContent = "Đang quét Đợt " + demSoDot + "...";
+  const stEl1 = document.getElementById("cx1-status");
+  if (stEl1) stEl1.innerHTML = '<div class="cam-status-dot"></div><span>Đợt ' + demSoDot + '</span>';
 
   const btnToggle = document.getElementById("btn-dung-tieptuc-cx1");
   if (btnToggle) {
@@ -1749,13 +2035,15 @@ async function khoiPhucCX1(state) {
   }
 
   dangQuetCX1 = true;
+  window.dangQuetCX1 = true;
   if (typeof khoaCuonTrangQuet === "function") khoaCuonTrangQuet(true); else document.body.classList.add("cam-active");
   document.getElementById("cx1-form").style.display = "none";
   if (document.getElementById("cx1-nhap")) document.getElementById("cx1-nhap").style.display = "none";
   document.getElementById("cx1-cam").style.display = "block";
   document.getElementById("cx1-ketqua").style.display = "none";
   document.getElementById("cx1-dem").textContent = "Đã quét: " + phienCX1.length + " mã";
-  document.getElementById("cx1-status").textContent = "Đang quét Đợt " + demSoDot + "...";
+  const stEl2 = document.getElementById("cx1-status");
+  if (stEl2) stEl2.innerHTML = '<div class="cam-status-dot"></div><span>Đợt ' + demSoDot + '</span>';
   const btnFlash = document.getElementById("btn-flash-cx1");
   if (btnFlash) {
     btnFlash.classList.remove("active-flash");
@@ -1807,32 +2095,40 @@ function huyPhienChiFor() {
   if (typeof capNhatTrangChu === "function") capNhatTrangChu();
 }
 
+let dangDongBoCX1Lock = false;
+async function dongBoOfflineCX1() {
+  if (dangDongBoCX1Lock) return;
+  const pending = docPendingCX1();
+  if (!pending || pending.length === 0) return;
+
+  dangDongBoCX1Lock = true;
+  try {
+    await guiLenSheetCX1(pending);
+    // Chỉ trừ những bản ghi vừa gửi thành công, không ghi đè xóa mất bản ghi mới
+    const sentIds = new Set(pending.map(p => p.id || (p.dot + "_" + p.msp + "_" + p.ngay + "_" + p.kg)));
+    const cur = docPendingCX1();
+    luuPendingCX1(cur.filter(p => !sentIds.has(p.id || (p.dot + "_" + p.msp + "_" + p.ngay + "_" + p.kg))));
+  } catch (e) {
+    // Vẫn còn lỗi mạng/timeout, giữ nguyên để thử lại lần tới
+  } finally {
+    dangDongBoCX1Lock = false;
+    if (typeof capNhatTrangThaiMang === "function") capNhatTrangThaiMang();
+  }
+}
+window.dongBoOfflineCX1 = dongBoOfflineCX1;
+
 window.addEventListener("load", function () {
-  const today = new Date().toISOString().split("T")[0];
+  const today = (typeof layNgayHomNayLocal === "function") ? layNgayHomNayLocal() : (function() {
+    const d = new Date();
+    return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+  })();
   const ngayInput = document.getElementById("cx1-ngay");
   if (ngayInput) ngayInput.value = today;
+  dongBoOfflineCX1();
 });
 
-window.addEventListener("load", async function () {
-  const pending = docPendingCX1();
-  if (pending.length === 0) return;
-  try {
-    await guiLenSheetCX1(pending);
-    luuPendingCX1([]);
-  } catch (e) {
-    // vẫn còn offline, giữ nguyên để thử lại lần tới
-  }
-  if (typeof capNhatTrangThaiMang === "function") capNhatTrangThaiMang();
-});
-
-window.addEventListener("online", async function () {
-  const pending = docPendingCX1();
-  if (pending.length === 0) return;
-  try {
-    await guiLenSheetCX1(pending);
-    luuPendingCX1([]);
-  } catch (e) { }
-  if (typeof capNhatTrangThaiMang === "function") capNhatTrangThaiMang();
+window.addEventListener("online", function () {
+  dongBoOfflineCX1();
 });
 
 function xuatCSVCX1() {
@@ -1845,7 +2141,10 @@ function xuatCSVCX1() {
   const blob = new Blob([bom + csv], { type: "text/csv;charset=utf-8;" });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
-  const ngay = ngayCX1 || new Date().toISOString().split("T")[0];
+  const ngay = ngayCX1 || (typeof layNgayHomNayLocal === "function" ? layNgayHomNayLocal() : (function() {
+    const d = new Date();
+    return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+  })());
   a.href = url;
   a.download = "chi-for-" + ngay + ".csv";
   document.body.appendChild(a);
@@ -1864,6 +2163,12 @@ function docLichSuCX1() {
   homNay.setHours(0, 0, 0, 0);
   return list.filter(s => {
     if (!s.ngay) return false;
+    // [BẢO VỆ DỮ LIỆU]: Nếu phiên CHƯA GỬI XONG thì TUYỆT ĐỐI KHÔNG ĐƯỢC XÓA khỏi lịch sử!
+    const chuaGuiHet = (s.phienCX1 && s.phienCX1.some(r => !r.daGui && !r.daDongBo)) ||
+                       (s.soLuongDaGui < (s.phienCX1 ? s.phienCX1.length : 0)) ||
+                       (s.chuaGuiXong === true);
+    if (chuaGuiHet) return true;
+
     const ngayPhien = new Date(s.ngay + "T00:00:00");
     const soNgayCach = Math.floor((homNay - ngayPhien) / 86400000);
     return soNgayCach >= 0 && soNgayCach < CX1_LICHSU_SO_NGAY_GIU;
@@ -1871,7 +2176,14 @@ function docLichSuCX1() {
 }
 
 function luuLichSuCX1(list) {
-  try { localStorage.setItem(CX1_LICHSU_KEY, JSON.stringify(list)); } catch (e) { }
+  try {
+    localStorage.setItem(CX1_LICHSU_KEY, JSON.stringify(list));
+  } catch (e) {
+    const isQuota = e && (e.name === 'QuotaExceededError' || e.name === 'NS_ERROR_DOM_QUOTA_REACHED' || e.code === 22);
+    if (isQuota && typeof showCanhBaoCX1 === "function") {
+      showCanhBaoCX1("⚠️ BỘ NHỚ ĐẦY (5MB)! Không thể lưu lịch sử Chỉ For. Vui lòng xóa bớt lịch sử cũ!", "error");
+    }
+  }
 }
 
 function donDepLichSuCX1() {
@@ -2046,7 +2358,10 @@ function xuatExcelLichSuCX1(idPhien) {
       showCanhBaoCX1("Chưa có dữ liệu phiên này để xuất Excel!");
       return;
     }
-    const dateStr = entry.ngay || new Date().toISOString().split("T")[0];
+    const dateStr = entry.ngay || (typeof layNgayHomNayLocal === "function" ? layNgayHomNayLocal() : (function() {
+      const d = new Date();
+      return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+    })());
     fileTitle = "LichSu_ChiX1_" + dateStr;
     exportData = entry.phienCX1.map((item, idx) => ({
       "STT": idx + 1,
@@ -2079,7 +2394,11 @@ function xuatExcelLichSuCX1(idPhien) {
         });
       });
     });
-    fileTitle = "LichSu_ChiX1_ToanBo_" + new Date().toISOString().split("T")[0];
+    const todayStr = (typeof layNgayHomNayLocal === "function" ? layNgayHomNayLocal() : (function() {
+      const d = new Date();
+      return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+    })());
+    fileTitle = "LichSu_ChiX1_ToanBo_" + todayStr;
   }
 
   if (typeof exportToExcel === "function") {
@@ -2093,7 +2412,10 @@ function xuatExcelCX1() {
     showCanhBaoCX1("Chưa có dữ liệu để xuất Excel!");
     return;
   }
-  const dateStr = ngayCX1 || new Date().toISOString().split("T")[0];
+  const dateStr = ngayCX1 || (typeof layNgayHomNayLocal === "function" ? layNgayHomNayLocal() : (function() {
+    const d = new Date();
+    return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+  })());
   const exportData = phienCX1.map((item, idx) => ({
     "STT": idx + 1,
     "Ngày": ngayCX1,

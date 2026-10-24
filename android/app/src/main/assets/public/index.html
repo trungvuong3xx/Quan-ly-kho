@@ -199,7 +199,7 @@
     <div class="title" id="header-title">Trung Vương</div>
   </div>
   <div class="header-right" style="display:flex; gap:8px; align-items:center;">
-    <button class="theme-toggle" id="btn-theme" title="Chuyển Giao Diện Sáng/Tối" aria-label="Chuyển đổi giao diện sáng/tối" onclick="chuyenThemeSangToi()">
+    <button class="theme-toggle" id="btn-theme" title="Chuyển Giao Diện Sáng/Tối" aria-label="Chuyển đổi giao diện sáng/tối" onclick="chuyenThemeSangToi(event)">
       <i class="ti ti-moon"></i>
     </button>
   </div>
@@ -669,46 +669,47 @@
   <div id="qr-ketqua" class="card" style="display:none">
     <h3 id="qr-ketqua-tieude" style="color:var(--success); text-align:center; margin-bottom:20px;">Hoàn tất</h3>
 
-    <div style="display:flex; justify-content:space-between; gap:10px; margin-bottom:16px;">
-      <div class="stat-box" style="flex:1; background:var(--card-raised); border:1px solid var(--line-soft); border-radius:12px; padding:12px; text-align:center;">
-        <div style="font-size:12px; color:var(--cream-soft); font-weight:600; text-transform:uppercase; margin-bottom:4px;">Bao</div>
-        <div id="qr-tong-bao" style="font-size:24px; font-weight:800; color:var(--brass);">0</div>
+    <div class="kq-stat-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:14px;">
+      <div style="background:var(--surface-2); border:1px solid var(--border-card); border-radius:12px; padding:10px; text-align:center;">
+        <div style="font-size:11px; color:var(--row-muted); font-weight:700; text-transform:uppercase; margin-bottom:2px;">Bao</div>
+        <div id="qr-tong-bao" style="font-family:'IBM Plex Mono', monospace; font-size:24px; font-weight:800; color:var(--brass);">0</div>
       </div>
-      <div class="stat-box" style="flex:1; background:var(--card-raised); border:1px solid var(--line-soft); border-radius:12px; padding:12px; text-align:center;">
-        <div style="font-size:12px; color:var(--cream-soft); font-weight:600; text-transform:uppercase; margin-bottom:4px;">KG</div>
-        <div id="qr-tong-kg" style="font-size:24px; font-weight:800; color:var(--green);">0</div>
+      <div style="background:var(--surface-2); border:1px solid var(--border-card); border-radius:12px; padding:10px; text-align:center;">
+        <div style="font-size:11px; color:var(--row-muted); font-weight:700; text-transform:uppercase; margin-bottom:2px;">KG</div>
+        <div id="qr-tong-kg" style="font-family:'IBM Plex Mono', monospace; font-size:24px; font-weight:800; color:var(--success);">0</div>
       </div>
     </div>
 
-    <div class="btp-tabs" style="display:flex; gap:8px; margin-bottom:12px;">
-      <button id="qr-tab-chitiet" class="btn btn-blue" style="flex:1; border-radius:8px; margin:0; padding:8px; font-size:13px; font-weight:700;" onclick="toggleQRView('chitiet')">Chi Tiết</button>
-      <button id="qr-tab-tonghop" class="btn" style="flex:1; border-radius:8px; margin:0; padding:8px; font-size:13px; font-weight:700; background:transparent; border:1px solid var(--primary); color:var(--primary);" onclick="toggleQRView('tonghop')">Tổng Hợp</button>
+    <div style="display:flex; background:var(--surface-2); border:1px solid var(--border-card); border-radius:10px; padding:3px; gap:4px; margin-bottom:12px;">
+      <button id="qr-tab-chitiet" class="btn" style="flex:1; border-radius:8px; margin:0; padding:7px 12px; font-size:13px; font-weight:700; background:var(--surface); color:var(--row-text); border:none; box-shadow:0 2px 6px rgba(0,0,0,0.06);" onclick="toggleQRView('chitiet')">Chi Tiết</button>
+      <button id="qr-tab-tonghop" class="btn" style="flex:1; border-radius:8px; margin:0; padding:7px 12px; font-size:13px; font-weight:700; background:transparent; color:var(--row-muted); border:none;" onclick="toggleQRView('tonghop')">Tổng Hợp</button>
     </div>
 
     <div id="qr-wrap-chitiet" class="table-sticky-wrap">
-        <div class="cx5-list-container">
-          <div class="cx5-list-header" style="display:flex; width: 100%; box-sizing: border-box; padding:10px; background:var(--card-raised); border-bottom:2px solid var(--steel); position:sticky; top:0; z-index:2;">
-            <div style="flex:0.8; font-weight:700; color:var(--cream);">Đợt</div>
-            <div style="flex:1.5; font-weight:700; color:var(--cream);">QC</div>
-            <div style="flex:0.7; font-weight:700; color:var(--cream); text-align:center;">Bao</div>
-            <div style="flex:1; font-weight:700; color:var(--cream); text-align:right;">KG</div>
-          </div>
-          <div id="qr-tbody-dot" style="display:flex; flex-direction:column; width:100%;"></div>
-          <div id="qr-tfoot-dot" class="table-sticky-tfoot"></div>
+      <div class="kq-card-wrap">
+        <div class="kq-table-header">
+          <div style="flex:0.8;">Đợt</div>
+          <div style="flex:1.8;">Quy cách</div>
+          <div style="flex:0.7; text-align:center;">Bao</div>
+          <div style="flex:1; text-align:right;">KG</div>
+          <div style="width:22px;"></div>
         </div>
+        <div id="qr-tbody-dot" style="display:flex; flex-direction:column; width:100%;"></div>
+        <div id="qr-tfoot-dot" class="kq-table-footer"></div>
       </div>
+    </div>
 
     <div id="qr-wrap-gom" class="table-sticky-wrap" style="display:none;">
-        <div class="cx5-list-container">
-          <div class="cx5-list-header" style="display:flex; width: 100%; box-sizing: border-box; padding:10px; background:var(--card-raised); border-bottom:2px solid var(--steel); position:sticky; top:0; z-index:2;">
-            <div style="flex:2.3; font-weight:700; color:var(--cream);">QC</div>
-            <div style="flex:0.7; font-weight:700; color:var(--cream); text-align:center;">Bao</div>
-            <div style="flex:1; font-weight:700; color:var(--cream); text-align:right;">KG</div>
-          </div>
-          <div id="qr-tbody-gom" style="display:flex; flex-direction:column; width:100%;"></div>
-          <div id="qr-tfoot-gom" class="table-sticky-tfoot"></div>
+      <div class="kq-card-wrap">
+        <div class="kq-table-header">
+          <div style="flex:2.3;">Quy cách</div>
+          <div style="flex:0.7; text-align:center;">Bao</div>
+          <div style="flex:1; text-align:right;">KG</div>
         </div>
+        <div id="qr-tbody-gom" style="display:flex; flex-direction:column; width:100%;"></div>
+        <div id="qr-tfoot-gom" class="kq-table-footer"></div>
       </div>
+    </div>
 
     <button id="btn-gui-dulieu-qr" class="btn" style="width:100%; height:42px; font-size:14px; font-weight:700; margin:0 0 8px 0; background:linear-gradient(135deg, #f59e0b, #d97706); color:#1a1a2e; border:none; box-shadow:0 4px 12px rgba(245,158,11,0.4);" onclick="guiDuLieuQuetQR()"><i class="ti ti-cloud-upload"></i> Gửi dữ liệu lên Sheet</button>
     <div style="display:flex; gap:8px; margin-bottom:8px;">
@@ -937,46 +938,47 @@
   <div id="cx1-ketqua" class="card" style="display:none">
     <h3 style="color:var(--success); text-align:center; margin-bottom:20px;">Hoàn tất</h3>
 
-    <div style="display:flex; justify-content:space-between; gap:10px; margin-bottom:16px;">
-      <div class="stat-box" style="flex:1; background:var(--card-raised); border:1px solid var(--line-soft); border-radius:12px; padding:12px; text-align:center;">
-        <div style="font-size:12px; color:var(--cream-soft); font-weight:600; text-transform:uppercase; margin-bottom:4px;">Bao</div>
-        <div id="cx1-tong-bao" style="font-size:24px; font-weight:800; color:var(--brass);">0</div>
+    <div class="kq-stat-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:14px;">
+      <div style="background:var(--surface-2); border:1px solid var(--border-card); border-radius:12px; padding:10px; text-align:center;">
+        <div style="font-size:11px; color:var(--row-muted); font-weight:700; text-transform:uppercase; margin-bottom:2px;">Bao</div>
+        <div id="cx1-tong-bao" style="font-family:'IBM Plex Mono', monospace; font-size:24px; font-weight:800; color:var(--brass);">0</div>
       </div>
-      <div class="stat-box" style="flex:1; background:var(--card-raised); border:1px solid var(--line-soft); border-radius:12px; padding:12px; text-align:center;">
-        <div style="font-size:12px; color:var(--cream-soft); font-weight:600; text-transform:uppercase; margin-bottom:4px;">KG</div>
-        <div id="cx1-tong-kg" style="font-size:24px; font-weight:800; color:var(--green);">0</div>
+      <div style="background:var(--surface-2); border:1px solid var(--border-card); border-radius:12px; padding:10px; text-align:center;">
+        <div style="font-size:11px; color:var(--row-muted); font-weight:700; text-transform:uppercase; margin-bottom:2px;">KG</div>
+        <div id="cx1-tong-kg" style="font-family:'IBM Plex Mono', monospace; font-size:24px; font-weight:800; color:var(--success);">0</div>
       </div>
     </div>
 
-    <div class="btp-tabs" style="display:flex; gap:8px; margin-bottom:12px;">
-      <button id="cx1-tab-chitiet" class="btn btn-blue" style="flex:1; border-radius:8px; margin:0; padding:8px; font-size:13px; font-weight:700;" onclick="toggleCX1View('chitiet')">Chi Tiết</button>
-      <button id="cx1-tab-tonghop" class="btn" style="flex:1; border-radius:8px; margin:0; padding:8px; font-size:13px; font-weight:700; background:transparent; border:1px solid var(--primary); color:var(--primary);" onclick="toggleCX1View('tonghop')">Tổng Hợp</button>
+    <div style="display:flex; background:var(--surface-2); border:1px solid var(--border-card); border-radius:10px; padding:3px; gap:4px; margin-bottom:12px;">
+      <button id="cx1-tab-chitiet" class="btn" style="flex:1; border-radius:8px; margin:0; padding:7px 12px; font-size:13px; font-weight:700; background:var(--surface); color:var(--row-text); border:none; box-shadow:0 2px 6px rgba(0,0,0,0.06);" onclick="toggleCX1View('chitiet')">Chi Tiết</button>
+      <button id="cx1-tab-tonghop" class="btn" style="flex:1; border-radius:8px; margin:0; padding:7px 12px; font-size:13px; font-weight:700; background:transparent; color:var(--row-muted); border:none;" onclick="toggleCX1View('tonghop')">Tổng Hợp</button>
     </div>
 
     <div id="cx1-wrap-chitiet" class="table-sticky-wrap">
-        <div class="cx5-list-container">
-          <div class="cx5-list-header" style="display:flex; width: 100%; box-sizing: border-box; padding:10px; background:var(--card-raised); border-bottom:2px solid var(--steel); position:sticky; top:0; z-index:2;">
-            <div style="flex:0.8; font-weight:700; color:var(--cream);">Đợt</div>
-            <div style="flex:1.5; font-weight:700; color:var(--cream);">QC</div>
-            <div style="flex:0.7; font-weight:700; color:var(--cream); text-align:center;">Bao</div>
-            <div style="flex:1; font-weight:700; color:var(--cream); text-align:right;">KG</div>
-          </div>
-          <div id="cx1-tbody-dot" style="display:flex; flex-direction:column; width:100%;"></div>
-          <div id="cx1-tfoot-dot" class="table-sticky-tfoot"></div>
+      <div class="kq-card-wrap">
+        <div class="kq-table-header">
+          <div style="flex:0.8;">Đợt</div>
+          <div style="flex:1.8;">Quy cách</div>
+          <div style="flex:0.7; text-align:center;">Bao</div>
+          <div style="flex:1; text-align:right;">KG</div>
+          <div style="width:22px;"></div>
         </div>
+        <div id="cx1-tbody-dot" style="display:flex; flex-direction:column; width:100%;"></div>
+        <div id="cx1-tfoot-dot" class="kq-table-footer"></div>
       </div>
+    </div>
 
     <div id="cx1-wrap-gom" class="table-sticky-wrap" style="display:none;">
-        <div class="cx5-list-container">
-          <div class="cx5-list-header" style="display:flex; width: 100%; box-sizing: border-box; padding:10px; background:var(--card-raised); border-bottom:2px solid var(--steel); position:sticky; top:0; z-index:2;">
-            <div style="flex:2.3; font-weight:700; color:var(--cream);">QC</div>
-            <div style="flex:0.7; font-weight:700; color:var(--cream); text-align:center;">Bao</div>
-            <div style="flex:1; font-weight:700; color:var(--cream); text-align:right;">KG</div>
-          </div>
-          <div id="cx1-tbody-gom" style="display:flex; flex-direction:column; width:100%;"></div>
-          <div id="cx1-tfoot-gom" class="table-sticky-tfoot"></div>
+      <div class="kq-card-wrap">
+        <div class="kq-table-header">
+          <div style="flex:2.3;">Quy cách</div>
+          <div style="flex:0.7; text-align:center;">Bao</div>
+          <div style="flex:1; text-align:right;">KG</div>
         </div>
+        <div id="cx1-tbody-gom" style="display:flex; flex-direction:column; width:100%;"></div>
+        <div id="cx1-tfoot-gom" class="kq-table-footer"></div>
       </div>
+    </div>
 
     <button id="btn-gui-dulieu-cx1" class="btn" style="width:100%; height:42px; font-size:14px; font-weight:700; margin:0 0 8px 0; background:linear-gradient(135deg, #f59e0b, #d97706); color:#1a1a2e; border:none; box-shadow:0 4px 12px rgba(245,158,11,0.4);" onclick="guiDuLieuCX1()"><i class="ti ti-cloud-upload"></i> Gửi dữ liệu lên Sheet</button>
     <div style="display:flex; gap:8px; margin-bottom:8px;">
@@ -1136,47 +1138,49 @@
 
     <div style="margin-bottom: 20px;">
       <!-- Khung Tóm Tắt (Summary Box) -->
-      <div style="display:flex; justify-content:space-around; align-items:center; background:var(--card-raised); border:1px solid var(--line); border-radius:12px; padding:12px; margin-bottom:12px;">
-        <div style="text-align:center;">
-          <div style="font-size:12px; color:var(--steel); margin-bottom:4px;">Đợt</div>
-          <div id="btp-tong-cuon" style="font-size:22px; font-weight:700; color:var(--primary);">0</div>
+      <div class="kq-stat-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:14px;">
+        <div style="background:var(--surface-2); border:1px solid var(--border-card); border-radius:12px; padding:10px; text-align:center;">
+          <div style="font-size:11px; color:var(--row-muted); font-weight:700; text-transform:uppercase; margin-bottom:2px;">Đợt</div>
+          <div id="btp-tong-cuon" style="font-family:'IBM Plex Mono', monospace; font-size:24px; font-weight:800; color:var(--primary-text, var(--primary));">0</div>
         </div>
-        <div style="text-align:center;">
-          <div style="font-size:12px; color:var(--steel); margin-bottom:4px;">Tổng</div>
-          <div id="btp-tong-kg" style="font-size:22px; font-weight:700; color:var(--brass);">0</div>
+        <div style="background:var(--surface-2); border:1px solid var(--border-card); border-radius:12px; padding:10px; text-align:center;">
+          <div style="font-size:11px; color:var(--row-muted); font-weight:700; text-transform:uppercase; margin-bottom:2px;">Tổng</div>
+          <div id="btp-tong-kg" style="font-family:'IBM Plex Mono', monospace; font-size:24px; font-weight:800; color:var(--success);">0</div>
         </div>
       </div>
 
       <!-- 2 Nút chuyển đổi & Tìm kiếm -->
-      <div style="display:flex; gap:8px; margin-bottom:8px;">
-        <button id="btn-btp-view-chitiet" class="btn btn-blue" style="flex:1; margin:0; padding:6px; font-size:13px;" onclick="toggleBTPView('chitiet')">Chi Tiết</button>
-        <button id="btn-btp-view-gom" class="btn" style="flex:1; margin:0; padding:6px; font-size:13px; background:transparent; border:1px solid var(--primary); color:var(--primary);" onclick="toggleBTPView('gom')">Tổng Hợp</button>
+      <div style="display:flex; background:var(--surface-2); border:1px solid var(--border-card); border-radius:10px; padding:3px; gap:4px; margin-bottom:8px;">
+        <button id="btn-btp-view-chitiet" class="btn" style="flex:1; border-radius:8px; margin:0; padding:7px 12px; font-size:13px; font-weight:700; background:var(--surface); color:var(--row-text); border:none; box-shadow:0 2px 6px rgba(0,0,0,0.06);" onclick="toggleBTPView('chitiet')">Chi Tiết</button>
+        <button id="btn-btp-view-gom" class="btn" style="flex:1; border-radius:8px; margin:0; padding:7px 12px; font-size:13px; font-weight:700; background:transparent; color:var(--row-muted); border:none;" onclick="toggleBTPView('gom')">Tổng Hợp</button>
       </div>
-      <input type="text" id="btp-ketqua-search" placeholder="🔍 Tìm kiếm mã..." autocapitalize="characters" autocorrect="off" spellcheck="false" oninput="locKetQuaBTP()" style="width:100%; padding:8px 12px; font-size:13px; border-radius:8px; border:1px solid var(--line); margin-bottom:12px; background:var(--bg); box-sizing: border-box;">
+      <input type="text" id="btp-ketqua-search" placeholder="🔍 Tìm kiếm mã..." autocapitalize="characters" autocorrect="off" spellcheck="false" oninput="locKetQuaBTP()" style="width:100%; padding:9px 12px; font-size:13px; border-radius:10px; border:1px solid var(--border-card); margin-bottom:12px; background:var(--surface-2); color:var(--row-text); box-sizing:border-box;">
 
       <!-- Khung Bảng Chi Tiết -->
       <div id="btp-wrap-chitiet" class="table-sticky-wrap">
-        <div class="cx5-list-container">
-          <div class="cx5-list-header" style="display:flex; width: 100%; box-sizing: border-box; padding:10px; background:var(--card-raised); border-bottom:2px solid var(--steel); position:sticky; top:0; z-index:2;">
-            <div style="flex:1; font-weight:700; color:var(--cream);">Đợt</div>
-            <div style="flex:2; font-weight:700; color:var(--cream);">Đơn</div>
-            <div style="flex:1; font-weight:700; color:var(--cream); text-align:right;">Loại</div>
+        <div class="kq-card-wrap">
+          <div class="kq-table-header">
+            <div style="flex:0.8;">Đợt</div>
+            <div style="flex:1.8;">Đơn</div>
+            <div style="flex:0.7; text-align:center;">Loại</div>
+            <div style="flex:1; text-align:right;">SL</div>
+            <div style="width:22px;"></div>
           </div>
           <div id="btp-tbody-dot" style="display:flex; flex-direction:column; width:100%;"></div>
-          <div id="btp-tfoot-dot" class="table-sticky-tfoot"></div>
+          <div id="btp-tfoot-dot" class="kq-table-footer"></div>
         </div>
       </div>
 
       <!-- Khung Bảng Tổng Hợp -->
       <div id="btp-wrap-gom" class="table-sticky-wrap" style="display:none;">
-        <div class="cx5-list-container">
-          <div class="cx5-list-header" style="display:flex; width: 100%; box-sizing: border-box; padding:10px; background:var(--card-raised); border-bottom:2px solid var(--steel); position:sticky; top:0; z-index:2;">
-            <div style="flex:1; font-weight:700; color:var(--cream);">Đơn</div>
-            <div style="flex:2; font-weight:700; color:var(--cream); text-align:center;">Loại</div>
-            <div style="flex:1; font-weight:700; color:var(--cream); text-align:right;">SL</div>
+        <div class="kq-card-wrap">
+          <div class="kq-table-header">
+            <div style="flex:1.8;">Đơn</div>
+            <div style="flex:1; text-align:center;">Loại</div>
+            <div style="flex:1; text-align:right;">SL</div>
           </div>
           <div id="btp-tbody-gom" style="display:flex; flex-direction:column; width:100%;"></div>
-          <div id="btp-tfoot-gom" class="table-sticky-tfoot"></div>
+          <div id="btp-tfoot-gom" class="kq-table-footer"></div>
         </div>
       </div>
       
@@ -1188,43 +1192,42 @@
           const wrapGom = document.getElementById('btp-wrap-gom');
           
           if (mode === 'chitiet') {
-            wrapChitiet.style.display = 'block';
-            wrapGom.style.display = 'none';
-            btnChitiet.className = 'btn btn-blue';
-            btnChitiet.style.background = '';
-            btnChitiet.style.color = '';
-            btnChitiet.style.border = 'none';
-            
-            btnGom.className = 'btn';
-            btnGom.style.background = 'transparent';
-            btnGom.style.color = 'var(--primary)';
-            btnGom.style.border = '1px solid var(--primary)';
+            if (wrapChitiet) wrapChitiet.style.display = 'block';
+            if (wrapGom) wrapGom.style.display = 'none';
+            if (btnChitiet) {
+              btnChitiet.style.background = 'var(--surface)';
+              btnChitiet.style.color = 'var(--row-text)';
+              btnChitiet.style.boxShadow = '0 2px 6px rgba(0,0,0,0.06)';
+            }
+            if (btnGom) {
+              btnGom.style.background = 'transparent';
+              btnGom.style.color = 'var(--row-muted)';
+              btnGom.style.boxShadow = 'none';
+            }
           } else {
-            wrapChitiet.style.display = 'none';
-            wrapGom.style.display = 'block';
-            btnGom.className = 'btn btn-blue';
-            btnGom.style.background = '';
-            btnGom.style.color = '';
-            btnGom.style.border = 'none';
-            
-            btnChitiet.className = 'btn';
-            btnChitiet.style.background = 'transparent';
-            btnChitiet.style.color = 'var(--primary)';
-            btnChitiet.style.border = '1px solid var(--primary)';
+            if (wrapChitiet) wrapChitiet.style.display = 'none';
+            if (wrapGom) wrapGom.style.display = 'block';
+            if (btnGom) {
+              btnGom.style.background = 'var(--surface)';
+              btnGom.style.color = 'var(--row-text)';
+              btnGom.style.boxShadow = '0 2px 6px rgba(0,0,0,0.06)';
+            }
+            if (btnChitiet) {
+              btnChitiet.style.background = 'transparent';
+              btnChitiet.style.color = 'var(--row-muted)';
+              btnChitiet.style.boxShadow = 'none';
+            }
           }
         }
       </script>
     </div>
 
-    <button id="btn-gui-dulieu-btp" class="btn" style="width:100%; height:42px; font-size:14px; font-weight:700; margin:0; background:linear-gradient(135deg, #f59e0b, #d97706); color:#1a1a2e; border:none; box-shadow:0 4px 12px rgba(245,158,11,0.4);" onclick="guiDuLieuBTP()"><i class="ti ti-cloud-upload"></i> Gửi dữ liệu lên Sheet</button>
-    <div style="display:flex; gap:8px; margin-top:8px;">
+    <button id="btn-gui-dulieu-btp" class="btn" style="width:100%; height:42px; font-size:14px; font-weight:700; margin:0 0 8px 0; background:linear-gradient(135deg, #f59e0b, #d97706); color:#1a1a2e; border:none; box-shadow:0 4px 12px rgba(245,158,11,0.4);" onclick="guiDuLieuBTP()"><i class="ti ti-cloud-upload"></i> Gửi dữ liệu lên Sheet</button>
+    <div style="display:flex; gap:8px; margin-bottom:8px;">
       <button class="btn btn-green" style="flex:1; height:38px; font-size:13px; margin:0;" onclick="quetTiepBTP()">Quét tiếp</button>
       <button class="btn btn-blue" style="flex:1; height:38px; font-size:13px; margin:0;" onclick="quetMoiBTP()">Quét mới</button>
     </div>
-    <div style="display:flex; gap:8px; margin-top:8px;">
-      <button class="btn btn-excel" style="flex:1; height:38px; font-size:13px; margin:0;" onclick="xuatExcelBTP()"><i class="ti ti-file-spreadsheet"></i> Xuất Excel</button>
-      
-    </div>
+    <button class="btn btn-excel btn-full" style="height:38px; font-size:13px; margin:0;" onclick="xuatExcelBTP()"><i class="ti ti-file-spreadsheet"></i> Xuất Excel</button>
   </div>
 </div>
 
@@ -1585,7 +1588,12 @@
       let greeting = 'Chào buổi tối';
       if (hour >= 5 && hour < 12) greeting = 'Chào buổi sáng';
       else if (hour >= 12 && hour < 18) greeting = 'Chào buổi chiều';
-      const userName = localStorage.getItem('ten_nguoi_dung') || localStorage.getItem('tenNhanVien') || 'Admin';
+      let userName = 'Admin';
+      try {
+        userName = localStorage.getItem('ten_nguoi_dung') || localStorage.getItem('tenNhanVien') || 'Admin';
+      } catch (e) {
+        userName = 'Admin';
+      }
       const el = document.getElementById('header-greeting');
       if (el) el.textContent = `${greeting}, ${userName}`;
     }
@@ -1608,12 +1616,17 @@
       return danhSachThemes.find(t => t.id === cur) || danhSachThemes[0];
     }
     
+    let isThemeToggling = false;
+
     function capNhatIconTheme() {
       const cur = layThemeHienTai();
       if (btnTheme) {
-        btnTheme.innerHTML = `<i class="ti ${cur.icon}"></i>`;
-        btnTheme.title = `Giao diện: ${cur.ten} - Bấm để chuyển`;
-        btnTheme.setAttribute('aria-label', `Giao diện hiện tại: ${cur.ten}. Bấm để chuyển.`);
+        // Icon biểu thị hành động tiếp theo: Đang ở tối thì hiện Mặt trời để sang Sáng, đang ở sáng thì hiện Mặt trăng để sang Tối
+        const iconTiepTheo = cur.id === 'dark' ? 'ti-sun' : 'ti-moon';
+        const tenTiepTheo = cur.id === 'dark' ? 'Sáng' : 'Tối';
+        btnTheme.innerHTML = `<i class="ti ${iconTiepTheo}"></i>`;
+        btnTheme.title = `Đang dùng: ${cur.ten} — Bấm để đổi sang giao diện ${tenTiepTheo}`;
+        btnTheme.setAttribute('aria-label', `Giao diện hiện tại: ${cur.ten}. Bấm để chuyển sang ${tenTiepTheo}.`);
       }
       const metaTheme = document.getElementById('meta-theme-color') || document.querySelector('meta[name="theme-color"]');
       if (metaTheme) {
@@ -1622,15 +1635,23 @@
     }
     capNhatIconTheme();
 
-    window.chuyenThemeSangToi = function() {
+    window.chuyenThemeSangToi = function(e) {
+      if (e && e.preventDefault) e.preventDefault();
+      if (e && e.stopPropagation) e.stopPropagation();
+      if (isThemeToggling) return;
+      isThemeToggling = true;
+      setTimeout(() => { isThemeToggling = false; }, 350);
+
       const cur = htmlEl.getAttribute('data-theme') || 'dark';
       const nextTheme = (cur === 'dark') ? 'light' : 'dark';
       htmlEl.setAttribute('data-theme', nextTheme);
       try {
         localStorage.setItem('user_theme', nextTheme);
-      } catch (e) {}
+      } catch (err) {}
       capNhatIconTheme();
-      if (navigator.vibrate) navigator.vibrate(12);
+      if (navigator.vibrate) {
+        try { navigator.vibrate(12); } catch (err) {}
+      }
     };
 
     function renderDanhSachTheme() {
@@ -1701,9 +1722,7 @@
       }, 180);
     };
 
-    if (btnTheme) {
-      btnTheme.addEventListener('click', window.chuyenThemeSangToi);
-    }
+    // Nút #btn-theme đã gọi trực tiếp onclick="chuyenThemeSangToi(event)" tại HTML, không gán lặp addEventListener
 
     // Pull to refresh (PTR) chuẩn: ngưỡng kéo 60px, touchcancel, không báo giả
     let ptrStartY = 0;

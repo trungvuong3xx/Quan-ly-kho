@@ -3355,5 +3355,264 @@ body.cam-active #chiFor.active {
   }
 }
 
+/* ══════════════════════════════════════════════════════════════════════════════
+   BẢNG KẾT QUẢ HOÀN TẤT ĐỒNG BỘ THEO NGÔN NGỮ THIẾT KẾ LIVE LOG CAMERA
+   ══════════════════════════════════════════════════════════════════════════════ */
 
+.kq-card-wrap {
+  width: 100%;
+  box-sizing: border-box;
+  background: var(--surface);
+  border: 1px solid var(--border-card);
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  margin-bottom: 12px;
+}
 
+.kq-table-header {
+  display: flex;
+  align-items: center;
+  background: var(--surface-2);
+  border-bottom: 1px solid var(--border-card);
+  padding: 8px 10px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--row-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  position: sticky;
+  top: 0;
+  z-index: 3;
+}
+
+.kq-table-footer {
+  display: flex;
+  align-items: center;
+  background: var(--surface-2);
+  border-top: 1px solid var(--border-card);
+  padding: 10px;
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--row-text);
+}
+
+.kq-swipe-container {
+  position: relative;
+  overflow: hidden;
+  border-bottom: 1px solid var(--border-card);
+  background: var(--surface);
+}
+
+.kq-swipe-container:last-child {
+  border-bottom: none;
+}
+
+.kq-swipe-row-wrap {
+  position: relative;
+  overflow: hidden;
+  width: 100%;
+}
+
+.kq-swipe-content {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  padding: 10px 8px;
+  background: var(--surface);
+  transition: transform 0.2s cubic-bezier(0.2, 0.9, 0.3, 1);
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.kq-col-dot {
+  flex: 0.8;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-lighter);
+}
+
+.kq-col-name {
+  flex: 1.8;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--row-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.kq-col-count {
+  flex: 0.7;
+  text-align: center;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--row-text);
+}
+
+.kq-col-kg {
+  flex: 1;
+  text-align: right;
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--success);
+  white-space: nowrap;
+}
+
+.kq-col-chevron {
+  width: 22px;
+  color: var(--text-lighter);
+  font-size: 14px;
+  text-align: right;
+  transition: transform 0.2s;
+  flex-shrink: 0;
+}
+
+.kq-col-chevron.open {
+  transform: rotate(180deg);
+}
+
+.kq-badge-count {
+  font-size: 11px;
+  font-weight: 700;
+  color: #2563eb;
+  background: var(--primary-soft);
+  padding: 1px 6px;
+  border-radius: 6px;
+  flex-shrink: 0;
+}
+
+.kq-swipe-actions {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  right: 0;
+  width: 76px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #ef4444;
+  z-index: 1;
+}
+
+.kq-swipe-btn-del {
+  width: 100%;
+  height: 100%;
+  border: none;
+  background: transparent;
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 700;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  cursor: pointer;
+  padding: 0;
+}
+
+.kq-group-details {
+  background: var(--surface-2);
+  border-radius: 8px;
+  padding: 4px 6px;
+  margin: 2px 6px 8px 6px;
+  border: 1px solid var(--border-card);
+}
+
+.kq-sub-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 4px;
+  border-bottom: 1px dashed var(--border-card);
+  box-sizing: border-box;
+  font-size: 12.5px;
+}
+
+.kq-sub-item:last-child {
+  border-bottom: none;
+}
+
+.kq-sub-stt {
+  width: 20px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-lighter);
+}
+
+.kq-sub-name {
+  flex: 1;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--row-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.kq-sub-val {
+  width: 60px;
+  text-align: right;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--row-text);
+}
+
+.kq-sub-time {
+  width: 64px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--row-muted);
+  text-align: right;
+}
+
+.kq-sub-del-btn {
+  background: transparent;
+  border: none;
+  color: var(--danger, #ef4444);
+  padding: 4px 6px;
+  cursor: pointer;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+}
+
+.kq-sub-edit-btn {
+  background: var(--primary-soft);
+  border: 1px solid var(--border-card);
+  color: var(--primary-solid);
+  font-size: 11.5px;
+  font-weight: 700;
+  padding: 4px 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 4px;
+}
+
+.kq-gom-row {
+  display: flex;
+  align-items: center;
+  padding: 10px 8px;
+  border-bottom: 1px solid var(--border-card);
+  font-size: 13.5px;
+}
+
+.kq-gom-row:last-child {
+  border-bottom: none;
+}

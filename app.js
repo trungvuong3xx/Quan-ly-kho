@@ -1,9 +1,17 @@
 // ── Web App Core v20260809-ultra ──────────────────────────
 const API = "https://script.google.com/macros/s/AKfycbzXjzccld3X04iJgIpEvKm01in0QT0i7tkjar_oJ6K5-sBGdm9xibe7Mu4UB3mWtha5-w/exec";
 
-async function callAPI(body) {
+async function callAPI(body, timeoutMs = 30000) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
   try {
-    const res = await fetch(API, { method: "POST", body: JSON.stringify(body), redirect: "follow" });
+    const res = await fetch(API, {
+      method: "POST",
+      body: JSON.stringify(body),
+      redirect: "follow",
+      signal: controller.signal
+    });
+    clearTimeout(timer);
     const text = await res.text();
     try {
       return JSON.parse(text);
@@ -11,6 +19,10 @@ async function callAPI(body) {
       return { error: "Máy chủ phản hồi chậm hoặc gián đoạn (Timeout), vui lòng thử lại." };
     }
   } catch (err) {
+    clearTimeout(timer);
+    if (err.name === "AbortError") {
+      return { error: "Quá thời gian chờ máy chủ (Timeout 30s), vui lòng thử lại." };
+    }
     return { error: "Mất kết nối mạng, vui lòng thử lại." };
   }
 }
@@ -304,12 +316,12 @@ function parseQRText(text) {
     const msp = lines[1] || "";
     let kg = 0, qc = "";
 
-    // Tìm dòng chứa Quy cách và Số kg (ưu tiên tìm từ dòng thứ 3 trở đi)
+    // Tìm dòng chứa Quy cách và Số kg (ưu tiên tìm từ dòng thứ 3 trở đi, tránh dòng 0 là ID và dòng 1 là MSP)
     const dongQCKG = lines.slice(2).find(l => {
       const hasNumberAtEnd = /[\d.]+\s*$/.test(l);
       const hasIndicator = l.includes('/') || l.includes('Kg') || l.includes('kg') || l.includes('-');
       return hasNumberAtEnd && hasIndicator;
-    }) || lines.find(l => l.includes("-") && /\d+/.test(l)) || "";
+    }) || lines.slice(2).find(l => l.includes("-") && /\d+/.test(l)) || "";
 
     if (dongQCKG) {
       const matchKG = dongQCKG.match(/([\d.]+)\s*$/);
@@ -540,27 +552,36 @@ const CAMERA_IDLE_TIMEOUT_MS = 30000; // 30 giây không quét & không chạm -
 
 // Lắng nghe tương tác người dùng 1 lần duy nhất ở cấp document (ngăn rò rỉ listener khi camera ngủ/thức nhiều lần)
 function onGlobalCameraInteraction() {
+  const pageMap = {
+    'reader': 'quetQR',
+    'kk-reader': 'kiemKe',
+    'cx1-reader': 'chiFor',
+    'btp-reader': 'btpPage'
+  };
+
   // 1. Nếu có camera của trang đang hiển thị đang ở chế độ ngủ -> Đánh thức ngay lập tức!
   for (const vid of ['reader', 'kk-reader', 'cx1-reader', 'btp-reader']) {
-    if (cameraSleepingMap[vid]) {
-      const pageMap = {
-        'reader': 'quetQR',
-        'kk-reader': 'kiemKe',
-        'cx1-reader': 'chiFor',
-        'btp-reader': 'btpPage'
-      };
-      const pageEl = document.getElementById(pageMap[vid]);
-      if (pageEl && pageEl.classList.contains('active')) {
-        danhThucCamera(vid);
-        return;
-      }
+    const pageEl = document.getElementById(pageMap[vid]);
+    const isPageActive = pageEl && pageEl.classList.contains('active') && pageEl.style.display !== 'none';
+    if (isPageActive && cameraSleepingMap[vid]) {
+      danhThucCamera(vid);
+      return;
     }
   }
 
-  // 2. Nếu camera đang thức -> gia hạn thêm 60 giây
+  // 2. CHỈ reset timer cho camera của trang ĐANG THỰC SỰ HOẠT ĐỘNG
+  // Nếu người dùng đã rời sang trang khác, không reset timer để camera cũ được giải phóng hoàn toàn
   for (const vid in cameraSleepTimerMap) {
     if (cameraSleepTimerMap[vid]) {
-      resetSleepTimerCamera(vid);
+      const pageId = pageMap[vid];
+      const pageEl = pageId ? document.getElementById(pageId) : null;
+      const isPageActive = pageEl && pageEl.classList.contains('active') && pageEl.style.display !== 'none';
+      if (isPageActive) {
+        resetSleepTimerCamera(vid);
+      } else {
+        // Cho camera ở trang không active ngủ ngay lập tức
+        choCameraNgu(vid);
+      }
     }
   }
 }
@@ -1070,7 +1091,7 @@ async function khoiTaoCameraFast(videoId, onDecodedCallback) {
 
     if (!stream) {
       console.warn("Không lấy được luồng camera sau!");
-      return null;
+      throw new Error("Không lấy được luồng camera sau!");
     }
 
     // Ghi nhớ Camera 0 trong phiên hiện tại để lần sau mở nhanh
@@ -1132,6 +1153,7 @@ async function khoiTaoCameraFast(videoId, onDecodedCallback) {
     capNhatNutDoiCamera(videoEl);
   } catch (e) {
     console.warn("getUserMedia camera stream notice:", e);
+    throw e;
   }
 
   // 2. Vòng lặp giải mã QR hiệu năng cao: Native BarcodeDetector (Ưu tiên số 1) + Fallback ZXing Canvas thu nhỏ
@@ -1332,15 +1354,20 @@ window.addEventListener("load", () => {
 
 
 window.onload = function () {
-  const today = new Date().toISOString().split("T")[0];
+  const today = (typeof layNgayHomNayLocal === "function") ? layNgayHomNayLocal() : (function() {
+    const d = new Date();
+    return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+  })();
   const ngayInput = document.getElementById("chon-ngay");
   if (ngayInput) ngayInput.value = today;
   capNhatTrangChu();
   if (typeof donDepLichSuCX1 === "function") donDepLichSuCX1();
 };
 
-// ── Trang chủ: hiện phiên dở dang (hỗ trợ cả Chỉ For và Chỉ X5) ────
+// ── Trang chủ: hiện phiên dở dang (hỗ trợ cả Chỉ For, Chỉ X5, BTP, Quét QR) ────
 function capNhatTrangChu() {
+  const safeEsc = typeof escapeHtml === "function" ? escapeHtml : (s => String(s == null ? "" : s).replace(/[&<>"']/g, ""));
+
   const card = document.getElementById("phien-dodang-card");
   const noidung = document.getElementById("phien-dodang-noidung");
   if (card && noidung) {
@@ -1355,18 +1382,18 @@ function capNhatTrangChu() {
         <div class="tk-card-header" style="margin-bottom:10px">
           <div>
             <div class="tk-card-ten">Chỉ For</div>
-            <div class="tk-card-msp">Cập nhật: <span>${gioCapNhat}</span></div>
+            <div class="tk-card-msp">Cập nhật: <span>${safeEsc(gioCapNhat)}</span></div>
           </div>
           <div class="tk-badge tk-badge-thuong">Dở dang</div>
         </div>
         <div class="tk-stat-grid">
           <div class="tk-stat-box">
             <div class="tk-stat-label">NGÀY</div>
-            <div class="tk-stat-val" style="font-size:14px;color:var(--cream)">${state.ngayCX1 || "—"}</div>
+            <div class="tk-stat-val" style="font-size:14px;color:var(--cream)">${safeEsc(state.ngayCX1 || "—")}</div>
           </div>
           <div class="tk-stat-box highlight">
             <div class="tk-stat-label">ĐÃ QUÉT</div>
-            <div class="tk-stat-val main-ton">${state.phienCX1.length} <small>mã</small></div>
+            <div class="tk-stat-val main-ton">${Number(state.phienCX1.length) || 0} <small>mã</small></div>
           </div>
         </div>
       `;
@@ -1390,18 +1417,18 @@ function capNhatTrangChu() {
         <div class="tk-card-header" style="margin-bottom:10px">
           <div>
             <div class="tk-card-ten">Chỉ X5</div>
-            <div class="tk-card-msp">Cập nhật: <span>${gioCapNhatX5}</span></div>
+            <div class="tk-card-msp">Cập nhật: <span>${safeEsc(gioCapNhatX5)}</span></div>
           </div>
           <div class="tk-badge tk-badge-for">Dở dang</div>
         </div>
         <div class="tk-stat-grid">
           <div class="tk-stat-box">
             <div class="tk-stat-label">NGÀY</div>
-            <div class="tk-stat-val" style="font-size:14px;color:var(--cream)">${stateX5.ngayCX5 || "—"}</div>
+            <div class="tk-stat-val" style="font-size:14px;color:var(--cream)">${safeEsc(stateX5.ngayCX5 || "—")}</div>
           </div>
           <div class="tk-stat-box highlight">
             <div class="tk-stat-label">ĐÃ NHẬP</div>
-            <div class="tk-stat-val main-ton">${stateX5.phienCX5.length} <small>dòng</small></div>
+            <div class="tk-stat-val main-ton">${Number(stateX5.phienCX5.length) || 0} <small>dòng</small></div>
           </div>
         </div>
       `;
@@ -1426,18 +1453,18 @@ function capNhatTrangChu() {
         <div class="tk-card-header" style="margin-bottom:10px">
           <div>
             <div class="tk-card-ten">BTP (Bán Thành Phẩm)</div>
-            <div class="tk-card-msp">Cập nhật: <span>${gioCapNhatBTP}</span></div>
+            <div class="tk-card-msp">Cập nhật: <span>${safeEsc(gioCapNhatBTP)}</span></div>
           </div>
           <div class="tk-badge tk-badge-thuong">Dở dang</div>
         </div>
         <div class="tk-stat-grid">
           <div class="tk-stat-box">
             <div class="tk-stat-label">NGÀY</div>
-            <div class="tk-stat-val" style="font-size:14px;color:var(--cream)">${stateBTP.ngayBTP || "—"}</div>
+            <div class="tk-stat-val" style="font-size:14px;color:var(--cream)">${safeEsc(stateBTP.ngayBTP || "—")}</div>
           </div>
           <div class="tk-stat-box highlight">
             <div class="tk-stat-label">ĐÃ QUÉT</div>
-            <div class="tk-stat-val main-ton">${soMa} <small>mã</small></div>
+            <div class="tk-stat-val main-ton">${Number(soMa) || 0} <small>mã</small></div>
           </div>
         </div>
       `;
@@ -1457,22 +1484,23 @@ function capNhatTrangChu() {
       const gioCapNhatQR = stateQR.capNhat
         ? new Date(stateQR.capNhat).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" })
         : "—";
+      const tenLoaiQR = stateQR.loaiQuetQR ? safeEsc(stateQR.loaiQuetQR) : "Giao dịch";
       noidungQR.innerHTML = `
         <div class="tk-card-header" style="margin-bottom:10px">
           <div>
-            <div class="tk-card-ten">Quét QR (${stateQR.loaiQuetQR || 'Giao dịch'})</div>
-            <div class="tk-card-msp">Cập nhật: <span>${gioCapNhatQR}</span></div>
+            <div class="tk-card-ten">Quét QR (${tenLoaiQR})</div>
+            <div class="tk-card-msp">Cập nhật: <span>${safeEsc(gioCapNhatQR)}</span></div>
           </div>
           <div class="tk-badge tk-badge-thuong">Dở dang</div>
         </div>
         <div class="tk-stat-grid">
           <div class="tk-stat-box">
             <div class="tk-stat-label">NGÀY</div>
-            <div class="tk-stat-val" style="font-size:14px;color:var(--cream)">${stateQR.ngayQuetQR || "—"}</div>
+            <div class="tk-stat-val" style="font-size:14px;color:var(--cream)">${safeEsc(stateQR.ngayQuetQR || "—")}</div>
           </div>
           <div class="tk-stat-box highlight">
             <div class="tk-stat-label">ĐÃ QUÉT</div>
-            <div class="tk-stat-val main-ton">${stateQR.phienQuetQR.length} <small>bao</small></div>
+            <div class="tk-stat-val main-ton">${Number(stateQR.phienQuetQR.length) || 0} <small>bao</small></div>
           </div>
         </div>
       `;
@@ -1539,29 +1567,39 @@ async function dongBoTatCaOfflineApp() {
   dangDongBoTongApp = true;
 
   try {
-    // 1. Đồng bộ App QR
-    const appPending = [...docPendingApp(), ...(function () { try { return JSON.parse(localStorage.getItem("qr_pending_saves") || "[]"); } catch (e) { return []; } })()];
-    if (appPending.length > 0) {
-      const remainingApp = [];
-      let okCount = 0;
-      for (const item of appPending) {
-        try {
-          const r = await callAPI({ action: "luuGiaoDich", ...item });
-          if (r && !r.error) okCount++;
-          else remainingApp.push(item);
-        } catch (e) { remainingApp.push(item); }
+    // 1. Đồng bộ App QR (Xóa từng item theo ID sau khi gửi thành công)
+    try {
+      const appPending = [...docPendingApp(), ...(function () { try { return JSON.parse(localStorage.getItem("qr_pending_saves") || "[]"); } catch (e) { return []; } })()];
+      if (appPending.length > 0) {
+        for (const item of appPending) {
+          try {
+            const r = await callAPI({ action: "luuGiaoDich", ...item });
+            if (r && !r.error) {
+              const itemId = item.id || (item.msp + "_" + item.ngay + "_" + item.kg);
+              const curPending = docPendingApp();
+              luuPendingApp(curPending.filter(p => (p.id || (p.msp + "_" + p.ngay + "_" + p.kg)) !== itemId));
+            }
+          } catch (e) { }
+        }
+        try { localStorage.removeItem("qr_pending_saves"); } catch (e) { }
       }
-      luuPendingApp(remainingApp);
-      try { localStorage.removeItem("qr_pending_saves"); } catch (e) { }
-    }
+    } catch (e) { }
 
-    // 2. Đồng bộ Chỉ FOR (CX1)
-    if (typeof docPendingCX1 === "function" && typeof guiLenSheetCX1 === "function") {
+    // 2. Đồng bộ Chỉ FOR (CX1) qua hàm tập trung có Mutex chống gửi trùng
+    if (typeof window.dongBoOfflineCX1 === "function") {
+      try {
+        await window.dongBoOfflineCX1();
+      } catch (e) { }
+    } else if (typeof docPendingCX1 === "function" && typeof guiLenSheetCX1 === "function") {
       const pendingCX1 = docPendingCX1();
       if (pendingCX1.length > 0) {
         try {
           await guiLenSheetCX1(pendingCX1);
-          if (typeof luuPendingCX1 === "function") luuPendingCX1([]);
+          const sentIds = new Set(pendingCX1.map(p => p.id || (p.dot + "_" + p.msp + "_" + p.ngay)));
+          const cur = docPendingCX1();
+          if (typeof luuPendingCX1 === "function") {
+            luuPendingCX1(cur.filter(p => !sentIds.has(p.id || (p.dot + "_" + p.msp + "_" + p.ngay))));
+          }
         } catch (e) { }
       }
     }
@@ -1573,35 +1611,48 @@ async function dongBoTatCaOfflineApp() {
       } catch (e) { }
     }
 
-    // 4. Đồng bộ Chỉ X5 (CX5)
+    // 4. Đồng bộ Chỉ X5 (CX5) - trừ chính xác từng item thành công
     try {
-      const pendingCX5 = JSON.parse(localStorage.getItem("cx5_pending_saves") || "[]");
-      if (pendingCX5.length > 0 && typeof callApiCX5 === "function") {
-        const remainingCX5 = [];
-        for (const item of pendingCX5) {
-          try {
-            const r = await callApiCX5({ action: "submitEntryX5", payload: item });
-            if (!r || !r.success) remainingCX5.push(item);
-          } catch (e) { remainingCX5.push(item); }
+      if (typeof window.guiLaiPendingCX5 === "function") {
+        await window.guiLaiPendingCX5();
+      } else {
+        const pendingCX5 = JSON.parse(localStorage.getItem("cx5_pending_saves") || "[]");
+        if (pendingCX5.length > 0 && typeof callApiCX5 === "function") {
+          for (const item of pendingCX5) {
+            try {
+              const r = await callApiCX5({ action: "submitEntryX5", payload: item });
+              if (r && r.success) {
+                const itemId = item.id || (item.msp + "_" + item.ten + "_" + item.dateStr);
+                const curCX5 = JSON.parse(localStorage.getItem("cx5_pending_saves") || "[]");
+                localStorage.setItem("cx5_pending_saves", JSON.stringify(
+                  curCX5.filter(p => (p.id || (p.msp + "_" + p.ten + "_" + p.dateStr)) !== itemId)
+                ));
+              }
+            } catch (e) { }
+          }
         }
-        localStorage.setItem("cx5_pending_saves", JSON.stringify(remainingCX5));
       }
     } catch (e) { }
 
-    // 5. Đồng bộ Kiểm kê
+    // 5. Đồng bộ Kiểm kê - trừ chính xác danh sách đã gửi thành công
     try {
       const pendingKK = JSON.parse(localStorage.getItem("kk_pending_saves") || "[]");
       if (pendingKK.length > 0 && typeof callAPI === "function") {
         const r = await callAPI({ action: "luuKiemKe", data: pendingKK });
-        if (r && !r.error) localStorage.setItem("kk_pending_saves", "[]");
+        if (r && !r.error) {
+          const sentIds = new Set(pendingKK.map(p => p.id || (p.msp + "_" + p.ngay + "_" + p.viTri)));
+          const curKK = JSON.parse(localStorage.getItem("kk_pending_saves") || "[]");
+          localStorage.setItem("kk_pending_saves", JSON.stringify(
+            curKK.filter(p => !sentIds.has(p.id || (p.msp + "_" + p.ngay + "_" + p.viTri)))
+          ));
+        }
       }
     } catch (e) { }
 
-    // 6. Đồng bộ Quét QR (quetqr.js)
+    // 6. Đồng bộ Quét QR (quetqr.js) - trừ từng item theo ID
     try {
       const pendingQQR = JSON.parse(localStorage.getItem("quetqr_pending_saves") || "[]");
       if (pendingQQR.length > 0 && typeof callAPI === "function") {
-        const remainingQQR = [];
         for (const item of pendingQQR) {
           try {
             const r = await callAPI({
@@ -1614,10 +1665,15 @@ async function dongBoTatCaOfflineApp() {
               loai: item.loai,
               kg: item.kg
             });
-            if (r && r.error) remainingQQR.push(item);
-          } catch (e) { remainingQQR.push(item); }
+            if (r && !r.error) {
+              const itemId = item.id || (item.msp + "_" + item.ngay + "_" + item.kg);
+              const curQQR = JSON.parse(localStorage.getItem("quetqr_pending_saves") || "[]");
+              localStorage.setItem("quetqr_pending_saves", JSON.stringify(
+                curQQR.filter(p => (p.id || (p.msp + "_" + p.ngay + "_" + p.kg)) !== itemId)
+              ));
+            }
+          } catch (e) { }
         }
-        localStorage.setItem("quetqr_pending_saves", JSON.stringify(remainingQQR));
       }
     } catch (e) { }
 
@@ -1684,6 +1740,22 @@ function capNhatTrangThaiMang() {
   }
 }
 
+let timerKiemTraMang = null;
+function batDauTheoDoiMang() {
+  if (timerKiemTraMang) clearInterval(timerKiemTraMang);
+  timerKiemTraMang = setInterval(() => {
+    if (document.visibilityState === "visible") {
+      capNhatTrangThaiMang();
+    }
+  }, 12000);
+}
+function dungTheoDoiMang() {
+  if (timerKiemTraMang) {
+    clearInterval(timerKiemTraMang);
+    timerKiemTraMang = null;
+  }
+}
+
 window.addEventListener("online", () => {
   capNhatTrangThaiMang();
   dongBoTatCaOfflineApp();
@@ -1692,8 +1764,16 @@ window.addEventListener("offline", capNhatTrangThaiMang);
 window.addEventListener("load", () => {
   capNhatTrangThaiMang();
   dongBoTatCaOfflineApp();
+  batDauTheoDoiMang();
 });
-setInterval(capNhatTrangThaiMang, 12000);
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "visible") {
+    capNhatTrangThaiMang();
+    batDauTheoDoiMang();
+  } else {
+    dungTheoDoiMang();
+  }
+});
 window.capNhatTrangThaiMang = capNhatTrangThaiMang;
 
 let _appXacNhanCallbackOk = null;
@@ -1706,7 +1786,14 @@ function moXacNhanApp(noiDung, callbackOk, nhanNutOk, callbackHuy, nhanNutHuy, t
   const elNutHuy = document.getElementById("app-xacnhan-nut-huy");
 
   if (elTieude) elTieude.textContent = tieuDe || "Xác nhận";
-  if (elNoidung) elNoidung.textContent = noiDung || "";
+  if (elNoidung) {
+    if (typeof noiDung === "string" && /<[a-z][\s\S]*>/i.test(noiDung)) {
+      elNoidung.innerHTML = noiDung;
+    } else {
+      elNoidung.textContent = noiDung || "";
+      elNoidung.style.whiteSpace = "pre-line";
+    }
+  }
   if (elNutOk) elNutOk.textContent = nhanNutOk || "Đồng ý";
   if (elNutHuy) elNutHuy.textContent = nhanNutHuy || "Hủy";
 
@@ -1776,22 +1863,35 @@ window.alert = function (msg) {
 // ── Hàm khôi phục sạch luồng camera và khởi động lại vòng lặp quét ──
 async function khoiPhucCamera(videoId, fallbackCb) {
   const videoEl = document.getElementById(videoId);
-  if (!videoEl) return;
+  if (!videoEl) throw new Error("Không tìm thấy thẻ video " + videoId);
   const cb = lastCameraCallbackMap[videoId] || fallbackCb;
-  if (!cb) return;
+  if (!cb) throw new Error("Chưa có hàm callback xử lý mã QR cho camera " + videoId);
 
   // 1. Chỉ dừng luồng cũ nếu nó còn đang chạy (nếu đã sleep thì srcObject đã là null)
   if (videoEl.srcObject) {
     dungCameraFast(videoId, null);
-    await new Promise(r => setTimeout(r, 200));
+    await new Promise(r => setTimeout(r, 150));
   }
 
   // 2. Khởi tạo lại camera và kích hoạt lại vòng lặp quét mới
   const reader = await khoiTaoCameraFast(videoId, cb);
-  if (videoId === 'reader') window.zxingReaderQR = reader;
-  else if (videoId === 'cx1-reader') window.zxingReaderCX1 = reader;
-  else if (videoId === 'btp-reader') window.zxingReaderBTP = reader;
-  else if (videoId === 'kk-reader') window.zxingReaderKK = reader;
+  if (!reader) {
+    throw new Error("Không thể khởi tạo bộ giải mã camera!");
+  }
+  if (videoId === 'reader') {
+    window.zxingReaderQR = reader;
+    window.dangQuetQR = true;
+  } else if (videoId === 'cx1-reader') {
+    window.zxingReaderCX1 = reader;
+    window.dangQuetCX1 = true;
+    if (typeof zxingReaderCX1 !== 'undefined') zxingReaderCX1 = reader;
+  } else if (videoId === 'btp-reader') {
+    window.zxingReaderBTP = reader;
+    window.dangQuetBTP = true;
+    if (typeof zxingReaderBTP !== 'undefined') zxingReaderBTP = reader;
+  } else if (videoId === 'kk-reader') {
+    window.zxingReaderKK = reader;
+  }
   return reader;
 }
 
@@ -2019,24 +2119,99 @@ function xuLyFilePhucHoiDuLieu(event) {
         return;
       }
 
-      let restoredCount = 0;
-      for (const [key, val] of Object.entries(parsed.duLieu)) {
-        if (val !== null && val !== undefined) {
-          const valToStore = typeof val === "string" ? val : JSON.stringify(val);
-          localStorage.setItem(key, valToStore);
-          restoredCount++;
-        }
+      // Danh sách key được phép khôi phục (Whitelist an toàn tuyệt đối)
+      const isAllowedKey = (key) => {
+        if (!key || typeof key !== "string") return false;
+        if (/^(cx1|cx5|btp|qr|kk|app)_/.test(key)) return true;
+        const validExactKeys = [
+          "user_theme", "tenNhanVien", "ten_nguoi_dung", "camera_uu_tien",
+          "kho_tong_hop", "last_auto_backup_hash", "last_auto_backup_time"
+        ];
+        return validExactKeys.includes(key);
+      };
+
+      const soLuongMuc = Object.keys(parsed.duLieu).filter(isAllowedKey).length;
+      if (soLuongMuc === 0) {
+        if (typeof showCanhBao === "function") showCanhBao("Không tìm thấy dữ liệu hợp lệ trong file sao lưu!", "warning");
+        return;
       }
 
-      const thongBao = `Đã phục hồi thành công ${restoredCount} mục dữ liệu từ file (${file.name})! Đang nạp lại dữ liệu...`;
-      if (typeof showCanhBao === "function") showCanhBao(thongBao, "success");
-      setTimeout(() => {
-        if (typeof capNhatTrangChu === "function") capNhatTrangChu();
-        if (typeof chuyenTrangKhongNav === "function") chuyenTrangKhongNav("trangChu");
-      }, 1000);
+      const thoiGianFile = parsed.thoiGianHienThi || parsed.thoiGian || "Không rõ";
+      const xacNhanMsg = `Bạn có chắc chắn muốn khôi phục dữ liệu từ file:<br><b>${escapeHtml(file.name)}</b>?<br><br>` +
+        `• Số mục dữ liệu: <b>${soLuongMuc} mục</b><br>` +
+        `• Thời gian sao lưu: <b>${escapeHtml(thoiGianFile)}</b><br><br>` +
+        `<span style="color:var(--gold,#f59e0b);">Lưu ý: Ứng dụng sẽ nạp lại dữ liệu và tự động khởi động lại (Reload) để đồng bộ hoàn toàn.</span>`;
+
+      moXacNhanApp(
+        xacNhanMsg,
+        () => {
+          try {
+            let restoredCount = 0;
+            const pendingKeys = [
+              "app_pending_saves", "cx1_pending_saves", "cx5_pending_saves",
+              "btp_pending_saves", "qr_pending_saves"
+            ];
+
+            for (const [key, val] of Object.entries(parsed.duLieu)) {
+              if (!isAllowedKey(key) || val === null || val === undefined) continue;
+
+              // BẢO VỆ HÀNG CHỜ OFFLINE CHƯA GỬI: Không bao giờ đè mất dữ liệu pending hiện có
+              if (pendingKeys.includes(key)) {
+                let currentPending = [];
+                try { currentPending = JSON.parse(localStorage.getItem(key)) || []; } catch (e) { currentPending = []; }
+                let backupPending = [];
+                try {
+                  backupPending = typeof val === "string" ? JSON.parse(val) : val;
+                  if (!Array.isArray(backupPending)) backupPending = [];
+                } catch (e) { backupPending = []; }
+
+                if (currentPending.length > 0 && backupPending.length > 0) {
+                  // Hòa trộn theo ID duy nhất hoặc seq để không bị mất dữ liệu chưa kịp gửi
+                  const existingIds = new Set(currentPending.map(item => item.id || item.idPhien || JSON.stringify(item)));
+                  backupPending.forEach(bItem => {
+                    const bId = bItem.id || bItem.idPhien || JSON.stringify(bItem);
+                    if (!existingIds.has(bId)) {
+                      currentPending.push(bItem);
+                    }
+                  });
+                  localStorage.setItem(key, JSON.stringify(currentPending));
+                  restoredCount++;
+                  continue;
+                } else if (currentPending.length > 0) {
+                  // Giữ nguyên pending hiện tại nếu backup không có
+                  restoredCount++;
+                  continue;
+                }
+              }
+
+              const valToStore = typeof val === "string" ? val : JSON.stringify(val);
+              localStorage.setItem(key, valToStore);
+              restoredCount++;
+            }
+
+            if (typeof showCanhBao === "function") {
+              showCanhBao(`Khôi phục thành công ${restoredCount} mục! Đang làm mới ứng dụng...`, "success");
+            }
+
+            // Nạp lại toàn bộ RAM state bằng cách reload trang
+            setTimeout(() => {
+              window.location.reload();
+            }, 1200);
+          } catch (errGhi) {
+            console.error("Lỗi ghi dữ liệu khôi phục:", errGhi);
+            if (typeof showCanhBao === "function") showCanhBao("Lỗi ghi dữ liệu: " + errGhi.message, "error");
+          }
+        },
+        "Khôi phục ngay",
+        () => {
+          if (typeof showCanhBao === "function") showCanhBao("Đã hủy thao tác khôi phục", "info");
+        },
+        "Hủy",
+        "Xác nhận Khôi phục Dữ liệu"
+      );
     } catch (err) {
       console.error("Lỗi phục hồi:", err);
-      if (typeof showCanhBao === "function") showCanhBao("Lỗi khi phục hồi dữ liệu: " + err.message, "error");
+      if (typeof showCanhBao === "function") showCanhBao("Lỗi khi đọc file sao lưu: " + err.message, "error");
     }
   };
   reader.readAsText(file);
@@ -2124,6 +2299,10 @@ function showCanhBao(text, type = "error") {
     el.style.background = "linear-gradient(135deg, #f59e0b, #d97706)";
     el.style.boxShadow = "0 8px 24px rgba(245, 158, 11, .4)";
     el.style.border = "1px solid #fbbf24";
+  } else if (type === "info" || type === "blue") {
+    el.style.background = "linear-gradient(135deg, #3b82f6, #1d4ed8)";
+    el.style.boxShadow = "0 8px 24px rgba(59, 130, 246, .4)";
+    el.style.border = "1px solid #60a5fa";
   } else {
     // Đỏ rực rỡ nổi bật
     el.style.background = "linear-gradient(135deg, #ef4444, #dc2626)";
@@ -2173,6 +2352,8 @@ window.showCanhBao = showCanhBao;
       el.style.color = "var(--success)";
     } else if (loai === "warning") {
       el.style.color = "var(--warning)";
+    } else if (loai === "info") {
+      el.style.color = "var(--accent-blue, #3b82f6)";
     } else {
       el.style.color = "var(--text-muted)";
     }
@@ -2246,16 +2427,28 @@ window.showCanhBao = showCanhBao;
 
       const base64Data = chuoiSangBase64Utf8(JSON.stringify(backupData, null, 2));
 
-      // Ghi đè file cố định vào Download trên Android
+      // 1. Nếu đang trên Android Native: Ghi đè file cố định vào Download
       if (window.AndroidNative && typeof window.AndroidNative.saveFileToDownload === "function") {
-        window.AndroidNative.saveFileToDownload("QuanLyKho_AutoBackup.json", base64Data, "application/json");
+        const res = window.AndroidNative.saveFileToDownload("QuanLyKho_AutoBackup.json", base64Data, "application/json");
+        if (res === false || res === "false") {
+          throw new Error("Không thể ghi file sao lưu vào thư mục Download");
+        }
+        localStorage.setItem("last_auto_backup_hash", currentHash);
+        localStorage.setItem("last_auto_backup_time", thoiGianHienThi);
+        capNhatChiBaoAutoBackup(`💾 Tự động sao lưu: ${thoiGianHienThi} (Máy)`, "success");
+      } else {
+        // 2. Nếu đang chạy trên Web Browser / PWA:
+        // Lưu bản snapshot an toàn vào LocalStorage mà không spam hộp thoại download của trình duyệt
+        try {
+          localStorage.setItem("web_auto_backup_snapshot", JSON.stringify(backupData));
+          localStorage.setItem("last_auto_backup_hash", currentHash);
+          localStorage.setItem("last_auto_backup_time", thoiGianHienThi);
+          capNhatChiBaoAutoBackup(`💾 Snapshot trình duyệt: ${thoiGianHienThi}`, "info");
+        } catch (eWebStore) {
+          console.warn("[AutoBackup] Quá dung lượng lưu snapshot web:", eWebStore);
+          capNhatChiBaoAutoBackup(`💾 Bộ nhớ web đầy, hãy sao lưu ra file`, "warning");
+        }
       }
-
-      // Lưu lại mốc sao lưu thành công
-      localStorage.setItem("last_auto_backup_hash", currentHash);
-      localStorage.setItem("last_auto_backup_time", thoiGianHienThi);
-
-      capNhatChiBaoAutoBackup(`💾 Tự động sao lưu: ${thoiGianHienThi}`, "success");
     } catch (err) {
       console.warn("[AutoBackup] Lỗi tự động sao lưu:", err);
       capNhatChiBaoAutoBackup("💾 Lỗi tự động sao lưu: " + err.message, "warning");

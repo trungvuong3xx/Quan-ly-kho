@@ -138,11 +138,17 @@ function docGiongNoiBTP(msp, kg) {
   msg.rate = 1.5;
   msg.volume = 1.0;
 
-  window.__speechUtterances.push(msg);
-  msg.onend = function () {
+  const cleanUpUtterance = function () {
     const idx = window.__speechUtterances.indexOf(msg);
     if (idx > -1) window.__speechUtterances.splice(idx, 1);
   };
+  msg.onend = cleanUpUtterance;
+  msg.onerror = cleanUpUtterance;
+
+  if (window.__speechUtterances.length > 2) {
+    window.__speechUtterances.splice(0, window.__speechUtterances.length - 2);
+  }
+  window.__speechUtterances.push(msg);
 
   try {
     window.speechSynthesis.cancel();
@@ -327,6 +333,17 @@ function onTapRowBTP(groupKey, event) {
   toggleChiTietBTPGroup(groupKey);
 }
 window.onTapRowBTP = onTapRowBTP;
+
+function onTapRowBTPByB64(keyB64, event) {
+  let targetKey = "";
+  try {
+    targetKey = decodeURIComponent(atob(keyB64));
+  } catch (e) {
+    targetKey = keyB64;
+  }
+  onTapRowBTP(targetKey, event);
+}
+window.onTapRowBTPByB64 = onTapRowBTPByB64;
 
 // Xóa nhóm bằng Base64 key an toàn 100% không sợ dấu nháy trong chuỗi
 function xoaNhomBTPByB64(keyB64, ev) {
@@ -599,7 +616,7 @@ function capNhatLogBTP() {
             <span>Xóa</span>
           </button>
         </div>
-        <div class="btp-swipe-content" onclick="onTapRowBTP('${anToanHtmlBTP(g.key)}', event)">
+        <div class="btp-swipe-content" onclick="onTapRowBTPByB64('${keyB64}', event)">
           <span class="btp-col-dot">${g.dot}</span>
           <div class="btp-col-msp-wrap">
             <span class="btp-col-msp">${safeMsp}</span>
@@ -788,6 +805,10 @@ async function batDauPhienMoiBTP() {
 // ── [TỐI ƯU MỤC 7.1]: Dừng quét & quản lý Camera tiết kiệm pin K20 Pro ──
 function dungBTP() {
   dangQuetBTP = false;
+  window.dangQuetBTP = false;
+  if (typeof dungCameraFast === "function") {
+    dungCameraFast("btp-reader", zxingReaderBTP || window.zxingReaderBTP);
+  }
   const statusEl = document.getElementById("btp-status");
   if (statusEl) statusEl.innerHTML = '<div class="cam-status-dot paused"></div><span>Đợt ' + (demSoDotBTP || 1) + '</span>';
   const btn = document.getElementById("btn-dung-tieptuc-btp");
@@ -804,6 +825,7 @@ async function tiepTucBTP() {
   if (typeof khoaCuonTrangQuet === "function") khoaCuonTrangQuet(true); else document.body.classList.add("cam-active");
   if (demSoDotBTP <= 0) demSoDotBTP = 1;
   dangQuetBTP = true;
+  window.dangQuetBTP = true;
 
   luuPhienDoDangBTPNgay();
   const statusEl = document.getElementById("btp-status");
@@ -1037,74 +1059,231 @@ async function ketThucBTP() {
 }
 
 // ── Xây dựng bảng kết quả (Chi tiết & Tổng hợp gom loại) ──
+// ── Quản lý trạng thái Accordion Bảng Kết Quả BTP ──────────────────
+window.expandedKQBTP = window.expandedKQBTP || new Set();
+
+function toggleChiTietKQBTP(groupKey) {
+  if (window.expandedKQBTP.has(groupKey)) {
+    window.expandedKQBTP.delete(groupKey);
+  } else {
+    window.expandedKQBTP.add(groupKey);
+  }
+  const keyB64 = btoa(encodeURIComponent(groupKey));
+  const safeId = 'btp-kq-grp-' + keyB64.replace(/[^a-zA-Z0-9]/g, '');
+  const detailsEl = document.getElementById('details-' + safeId);
+  const chevEl = document.getElementById('chev-' + safeId);
+  if (detailsEl && chevEl) {
+    const isOpen = window.expandedKQBTP.has(groupKey);
+    detailsEl.style.display = isOpen ? 'block' : 'none';
+    if (isOpen) chevEl.classList.add('open'); else chevEl.classList.remove('open');
+  } else {
+    thucHienLocKetQuaBTP();
+  }
+}
+window.toggleChiTietKQBTP = toggleChiTietKQBTP;
+
+function toggleChiTietKQBTPByB64(keyB64) {
+  let targetKey = "";
+  try {
+    targetKey = decodeURIComponent(atob(keyB64));
+  } catch (e) {
+    targetKey = keyB64;
+  }
+  toggleChiTietKQBTP(targetKey);
+}
+window.toggleChiTietKQBTPByB64 = toggleChiTietKQBTPByB64;
+
+let btpKqSwipeTouchState = null;
+function khoiTaoSwipeKQBTP() {
+  const container = document.getElementById("btp-tbody-dot");
+  if (!container || container.__swipeKqInit) return;
+  container.__swipeKqInit = true;
+
+  container.addEventListener("touchstart", (e) => {
+    const touch = e.touches[0];
+    const content = e.target.closest(".kq-swipe-content");
+    if (!content) return;
+
+    const allSwiped = container.querySelectorAll(".kq-swipe-content.swiped");
+    allSwiped.forEach(el => {
+      if (el !== content) {
+        el.style.transform = "translateX(0px)";
+        el.classList.remove("swiped");
+      }
+    });
+
+    const isAlreadySwiped = content.classList.contains("swiped");
+    btpKqSwipeTouchState = {
+      content: content,
+      startX: touch.clientX,
+      startY: touch.clientY,
+      currentX: touch.clientX,
+      isSwiping: false,
+      isAlreadySwiped: isAlreadySwiped
+    };
+  }, { passive: true });
+
+  container.addEventListener("touchmove", (e) => {
+    if (!btpKqSwipeTouchState) return;
+    const touch = e.touches[0];
+    const dx = touch.clientX - btpKqSwipeTouchState.startX;
+    const dy = touch.clientY - btpKqSwipeTouchState.startY;
+
+    if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 10) {
+      btpKqSwipeTouchState.isSwiping = true;
+      let offset = dx;
+      if (btpKqSwipeTouchState.isAlreadySwiped) {
+        offset = -76 + dx;
+      }
+      if (offset > 0) offset = 0;
+      if (offset < -85) offset = -85;
+      btpKqSwipeTouchState.content.style.transition = "none";
+      btpKqSwipeTouchState.content.style.transform = `translateX(${offset}px)`;
+    }
+  }, { passive: true });
+
+  const ketThucVuot = (e) => {
+    if (!btpKqSwipeTouchState) return;
+    const content = btpKqSwipeTouchState.content;
+    const dx = (e && e.changedTouches ? e.changedTouches[0]?.clientX : btpKqSwipeTouchState.currentX) - btpKqSwipeTouchState.startX;
+
+    content.style.transition = "transform 0.2s cubic-bezier(0.2, 0.9, 0.3, 1)";
+    if (btpKqSwipeTouchState.isSwiping) {
+      if (dx < -35) {
+        content.style.transform = "translateX(-76px)";
+        content.classList.add("swiped");
+      } else {
+        content.style.transform = "translateX(0px)";
+        content.classList.remove("swiped");
+      }
+    } else if (btpKqSwipeTouchState.isAlreadySwiped) {
+      content.style.transform = "translateX(0px)";
+      content.classList.remove("swiped");
+    }
+    btpKqSwipeTouchState = null;
+  };
+
+  container.addEventListener("touchend", ketThucVuot);
+  container.addEventListener("touchcancel", () => {
+    if (btpKqSwipeTouchState) {
+      btpKqSwipeTouchState.content.style.transform = btpKqSwipeTouchState.isAlreadySwiped ? "translateX(-76px)" : "translateX(0px)";
+      btpKqSwipeTouchState = null;
+    }
+  });
+}
+
+// ── Xây dựng bảng kết quả BTP (Accordion Đợt & Tổng hợp gom loại) ──
 function taoHangKetQuaBTP(danhSach, tuKhoa = "") {
   let hangDot = "";
   let tongQRAll = danhSach.length;
-  let tongSoDot = 0;
   let tongGomLoaiMa = {};
-
   tuKhoa = String(tuKhoa || "").trim().toLowerCase();
 
-  const dotGroups = {};
-  danhSach.forEach(r => {
-    const dot = r.dotQuet || 1;
-    if (!dotGroups[dot]) dotGroups[dot] = [];
-    dotGroups[dot].push(r);
-  });
+  // Nhóm theo Đợt + MSP + KG
+  const groupMap = new Map();
+  danhSach.forEach(item => {
+    const dot = item.dotQuet || 1;
+    const msp = (item.msp || item.rawQR || 'KHAC').toUpperCase();
+    const kgVal = (item.kg !== undefined && item.kg !== null) ? item.kg : 0;
+    const key = `${dot}_${msp}_${kgVal}`;
 
-  const sortedDots = Object.keys(dotGroups).map(Number).sort((a, b) => a - b);
-  tongSoDot = sortedDots.length;
-
-  sortedDots.forEach(dot => {
-    const items = dotGroups[dot];
-    const tongQRDot = items.length;
-
-    let rowsHtml = "";
-    items.forEach(r => {
-      const mspStr = String(r.msp || r.rawQR || "").toLowerCase();
-      const kgStr = String(r.kg || "").toLowerCase();
-      const dotStr = String(dot);
-
-      if (!tuKhoa || mspStr.includes(tuKhoa) || kgStr.includes(tuKhoa) || dotStr.includes(tuKhoa)) {
-        const safeMsp = anToanHtmlBTP(r.msp || r.rawQR || "—");
-        const safeKg = (r.kg !== undefined && r.kg !== null && Number(r.kg) > 0) ? anToanHtmlBTP(r.kg) : "—";
-        rowsHtml += `
-        <div style="display:flex; width: 100%; box-sizing: border-box; align-items:center; padding:8px 10px; border-bottom:1px solid var(--line-soft); font-size:13px;">
-          <div style="flex:1; color:var(--text-lighter);">${dot}</div>
-          <div style="flex:2; font-weight:600;">${safeMsp}</div>
-          <div style="flex:1; text-align:right; font-weight:700; color:var(--success);">${safeKg}</div>
-        </div>`;
-      }
-
-      // Gom cho bảng Tổng Hợp
-      const keyGom = (r.msp || r.rawQR || "KHAC").toUpperCase() + "_" + (r.kg || 0);
-      if (!tongGomLoaiMa[keyGom]) {
-        tongGomLoaiMa[keyGom] = {
-          msp: r.msp || r.rawQR || "—",
-          soMat: r.kg || "—",
-          soLuong: 0
-        };
-      }
-      tongGomLoaiMa[keyGom].soLuong++;
-    });
-
-    if (rowsHtml) {
-      hangDot += `
-      <div style="background:var(--card-raised); padding:4px 10px; font-weight:700; font-size:12px; color:var(--primary-text, var(--primary)); border-bottom:1px solid var(--steel); display:flex; justify-content:space-between;">
-        <span>ĐỢT ${dot}</span>
-        <span>${tongQRDot} mã</span>
-      </div>
-      ${rowsHtml}`;
+    if (!groupMap.has(key)) {
+      groupMap.set(key, {
+        key: key,
+        dot: dot,
+        msp: item.msp || item.rawQR || '—',
+        kg: kgVal,
+        items: []
+      });
     }
+    groupMap.get(key).items.push(item);
+
+    // Gom cho bảng Tổng Hợp (theo Đơn + Loại)
+    const keyGom = msp + "_" + kgVal;
+    if (!tongGomLoaiMa[keyGom]) {
+      tongGomLoaiMa[keyGom] = {
+        msp: item.msp || item.rawQR || "—",
+        soMat: kgVal || "—",
+        soLuong: 0
+      };
+    }
+    tongGomLoaiMa[keyGom].soLuong++;
   });
 
-  let footDot = `
-    <div style="display:flex; width: 100%; box-sizing: border-box; align-items:center; padding:10px; background:var(--card-raised); border-top:1px solid var(--steel); font-size:14px;">
-      <div style="flex:1; font-weight:700; color:var(--steel);">TỔNG</div>
-      <div style="flex:2; font-weight:700; color:var(--steel);">${tongSoDot} đợt</div>
-      <div style="flex:1; text-align:right; font-weight:700; color:var(--steel);">${tongQRAll}</div>
-    </div>`;
+  const allGroups = Array.from(groupMap.values());
+  const filteredGroups = allGroups.filter(g => {
+    if (!tuKhoa) return true;
+    const mspStr = String(g.msp || "").toLowerCase();
+    const kgStr = String(g.kg || "").toLowerCase();
+    const dotStr = String(g.dot);
+    return mspStr.includes(tuKhoa) || kgStr.includes(tuKhoa) || dotStr.includes(tuKhoa) ||
+      g.items.some(it => String(it.rawQR || "").toLowerCase().includes(tuKhoa));
+  });
 
+  if (filteredGroups.length === 0) {
+    hangDot = '<div style="text-align:center; padding:24px; color:var(--text-lighter); font-size:13px;">Không tìm thấy dữ liệu phù hợp</div>';
+  } else {
+    hangDot = filteredGroups.map(g => {
+      const safeMsp = anToanHtmlBTP(g.msp);
+      const keyB64 = btoa(encodeURIComponent(g.key));
+      const safeId = 'btp-kq-grp-' + keyB64.replace(/[^a-zA-Z0-9]/g, '');
+      const isOpen = window.expandedKQBTP.has(g.key);
+      const countBadge = g.items.length > 1 ? `<span class="kq-badge-count">×${g.items.length}</span>` : '';
+      const kgText = (g.kg !== undefined && g.kg !== null && Number(g.kg) > 0) ? anToanHtmlBTP(g.kg) : '—';
+
+      let subItemsHtml = g.items.map((it, subIdx) => {
+        const subGio = it.thoiGian ? new Date(it.thoiGian).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit", second: "2-digit" }) : "";
+        const subKg = (it.kg !== undefined && it.kg !== null && Number(it.kg) > 0) ? anToanHtmlBTP(it.kg) : (Number(g.kg) > 0 ? anToanHtmlBTP(g.kg) : '0');
+        const safeSubMsp = anToanHtmlBTP(it.rawQR || it.msp || g.msp);
+        const safeUid = anToanHtmlBTP(it.uid || ("idx_" + subIdx));
+
+        return `<div class="kq-sub-item">
+          <span class="kq-sub-stt">${subIdx + 1}</span>
+          <span class="kq-sub-name" title="${safeSubMsp}">${safeSubMsp}</span>
+          <span class="kq-sub-val">${subKg}</span>
+          <span class="kq-sub-time">${subGio}</span>
+          <button type="button" class="kq-sub-del-btn" onclick="xoaMaBTP('${safeUid}', event)" title="Xóa mã này">
+            <i class="ti ti-trash"></i>
+          </button>
+        </div>`;
+      }).join("");
+
+      return `
+      <div class="kq-swipe-container">
+        <div class="kq-swipe-row-wrap">
+          <div class="kq-swipe-actions">
+            <button type="button" class="kq-swipe-btn-del" onclick="xoaNhomBTPByB64('${keyB64}', event)">
+              <i class="ti ti-trash"></i>
+              <span>Xóa</span>
+            </button>
+          </div>
+          <div class="kq-swipe-content" onclick="toggleChiTietKQBTPByB64('${keyB64}')">
+            <span class="kq-col-dot">Đợt ${g.dot}</span>
+            <div class="kq-col-name">
+              <span>${safeMsp}</span>
+              ${countBadge}
+            </div>
+            <span class="kq-col-count" style="color:var(--success); font-weight:700;">${kgText}</span>
+            <span class="kq-col-kg" style="color:var(--row-text); font-weight:700;">${g.items.length} mã</span>
+            <span class="kq-col-chevron"><i id="chev-${safeId}" class="ti ti-chevron-down ${isOpen ? 'open' : ''}"></i></span>
+          </div>
+        </div>
+        <div id="details-${safeId}" class="kq-group-details" style="display:${isOpen ? 'block' : 'none'};">
+          ${subItemsHtml}
+        </div>
+      </div>`;
+    }).join("");
+  }
+
+  const tongSoDot = new Set(danhSach.map(r => r.dotQuet || 1)).size;
+  let footDot = `
+    <div style="flex:0.8; font-weight:700; color:var(--row-text);">TỔNG</div>
+    <div style="flex:1.8; color:var(--row-muted);">${tongSoDot} đợt</div>
+    <div style="flex:0.7;">&nbsp;</div>
+    <div style="flex:1; text-align:right; font-weight:800; font-family:'IBM Plex Mono', monospace; color:var(--success);">${tongQRAll} mã</div>
+    <div style="width:22px;"></div>`;
+
+  // Render HTML Bảng Tổng Hợp BTP (theo Đơn + Loại)
   let hangGom = "";
   const danhSachGom = Object.values(tongGomLoaiMa).sort((a, b) => {
     const cmpMsp = String(a.msp || "").localeCompare(String(b.msp || ""), undefined, { numeric: true, sensitivity: 'base' });
@@ -1112,25 +1291,28 @@ function taoHangKetQuaBTP(danhSach, tuKhoa = "") {
     return (parseFloat(b.soMat) || 0) - (parseFloat(a.soMat) || 0);
   });
 
-  danhSachGom.forEach(item => {
+  const filteredGom = danhSachGom.filter(item => {
+    if (!tuKhoa) return true;
     const mspStr = String(item.msp || "").toLowerCase();
     const soMatStr = String(item.soMat || "").toLowerCase();
-    if (!tuKhoa || mspStr.includes(tuKhoa) || soMatStr.includes(tuKhoa)) {
-      hangGom += `
-    <div style="display:flex; width: 100%; box-sizing: border-box; align-items:center; padding:10px; border-bottom:1px solid var(--line-soft); font-size:14px;">
-      <div style="flex:1; font-weight:600;">${anToanHtmlBTP(item.msp)}</div>
-      <div style="flex:2; text-align:center; font-weight:700;">${anToanHtmlBTP(item.soMat)}</div>
-      <div style="flex:1; text-align:right; font-weight:700; color:var(--success);">${item.soLuong}</div>
-    </div>`;
-    }
+    return mspStr.includes(tuKhoa) || soMatStr.includes(tuKhoa);
   });
 
+  if (filteredGom.length === 0) {
+    hangGom = '<div style="text-align:center; padding:24px; color:var(--text-lighter); font-size:13px;">Chưa có dữ liệu</div>';
+  } else {
+    hangGom = filteredGom.map(item => `
+      <div class="kq-gom-row">
+        <div style="flex:1.8; font-weight:700; font-family:'IBM Plex Mono', monospace; color:var(--row-text);">${anToanHtmlBTP(item.msp)}</div>
+        <div style="flex:1; text-align:center; font-weight:700; color:var(--row-muted);">${anToanHtmlBTP(item.soMat)}</div>
+        <div style="flex:1; text-align:right; font-weight:800; font-family:'IBM Plex Mono', monospace; color:var(--success);">${item.soLuong}</div>
+      </div>`).join("");
+  }
+
   let footGom = `
-    <div style="display:flex; width: 100%; box-sizing: border-box; align-items:center; padding:10px; background:var(--card-raised); border-top:1px solid var(--steel); font-size:14px;">
-      <div style="flex:1; font-weight:700; color:var(--steel);">TỔNG</div>
-      <div style="flex:2;">&nbsp;</div>
-      <div style="flex:1; text-align:right; font-weight:700; color:var(--steel);">${tongQRAll}</div>
-    </div>`;
+    <div style="flex:1.8; font-weight:700; color:var(--row-text);">TỔNG</div>
+    <div style="flex:1;">&nbsp;</div>
+    <div style="flex:1; text-align:right; font-weight:800; font-family:'IBM Plex Mono', monospace; color:var(--success);">${tongQRAll}</div>`;
 
   return { hangDot, footDot, hangGom, footGom };
 }
@@ -1159,6 +1341,14 @@ function thucHienLocKetQuaBTP() {
   if (elFootDot) elFootDot.innerHTML = footDot;
   if (elGom) elGom.innerHTML = hangGom;
   if (elFootGom) elFootGom.innerHTML = footGom;
+
+  khoiTaoSwipeKQBTP();
+
+  // Cập nhật Khung Tóm Tắt (Đợt / Tổng)
+  const elTongDot = document.getElementById("btp-tong-cuon");
+  const elTongSL = document.getElementById("btp-tong-kg");
+  if (elTongDot) elTongDot.textContent = demSoDotBTP || 1;
+  if (elTongSL) elTongSL.textContent = phienBTP.length;
 }
 
 function hienKetQuaBTP() {
@@ -1791,3 +1981,36 @@ window.tiepTucPhienBTP = tiepTucPhienBTP;
 window.huyPhienBTP = huyPhienBTP;
 window.xuatCSVBTP = xuatCSVBTP;
 window.xuatExcelBTP = xuatExcelBTP;
+
+// Chuyển đổi giữa chế độ xem Chi Tiết và Tổng Hợp trong Lịch Sử BTP
+function toggleLichSuBTPView(cheDo) {
+  const tabChiTiet = document.getElementById("ls-btp-tab-chitiet");
+  const tabTongHop = document.getElementById("ls-btp-tab-tonghop");
+  const wrapChiTiet = document.getElementById("ls-btp-wrap-chitiet");
+  const wrapGom = document.getElementById("ls-btp-wrap-gom");
+
+  if (cheDo === "tonghop") {
+    if (wrapChiTiet) wrapChiTiet.style.display = "none";
+    if (wrapGom) wrapGom.style.display = "block";
+    if (tabChiTiet) {
+      tabChiTiet.className = "btn";
+      tabChiTiet.style.cssText = "flex:1; border-radius:8px; margin:0; padding:8px; font-size:13px; font-weight:700; background:transparent; border:1px solid var(--primary); color:var(--primary);";
+    }
+    if (tabTongHop) {
+      tabTongHop.className = "btn btn-blue";
+      tabTongHop.style.cssText = "flex:1; border-radius:8px; margin:0; padding:8px; font-size:13px; font-weight:700;";
+    }
+  } else {
+    if (wrapChiTiet) wrapChiTiet.style.display = "block";
+    if (wrapGom) wrapGom.style.display = "none";
+    if (tabChiTiet) {
+      tabChiTiet.className = "btn btn-blue";
+      tabChiTiet.style.cssText = "flex:1; border-radius:8px; margin:0; padding:8px; font-size:13px; font-weight:700;";
+    }
+    if (tabTongHop) {
+      tabTongHop.className = "btn";
+      tabTongHop.style.cssText = "flex:1; border-radius:8px; margin:0; padding:8px; font-size:13px; font-weight:700; background:transparent; border:1px solid var(--primary); color:var(--primary);";
+    }
+  }
+}
+window.toggleLichSuBTPView = toggleLichSuBTPView;
