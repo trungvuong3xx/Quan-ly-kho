@@ -1566,15 +1566,11 @@ async function dongBoTatCaOfflineApp() {
       }
     }
 
-    // 3. Đồng bộ BTP
-    if (typeof docPendingBTP === "function" && typeof guiLenSheetBTP === "function") {
-      const pendingBTP = docPendingBTP();
-      if (pendingBTP.length > 0) {
-        try {
-          await guiLenSheetBTP(pendingBTP);
-          if (typeof luuPendingBTP === "function") luuPendingBTP([]);
-        } catch (e) { }
-      }
+    // 3. Đồng bộ BTP an toàn qua hàm tập trung (có khóa mutex và trừ theo recordId)
+    if (typeof dongBoThietBiBTP === "function") {
+      try {
+        await dongBoThietBiBTP(true);
+      } catch (e) { }
     }
 
     // 4. Đồng bộ Chỉ X5 (CX5)

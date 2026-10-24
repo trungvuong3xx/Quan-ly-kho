@@ -2,7 +2,7 @@
 <html lang="vi">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=3.0, user-scalable=yes, viewport-fit=cover">
   <meta name="color-scheme" content="light dark">
   <title>Trung Vương - Kho</title>
   <link rel="manifest" href="manifest.json">
@@ -1025,7 +1025,9 @@
       </div>
     </div>
     <button class="btn btn-blue btn-full" onclick="batDauBTP()">Bắt đầu</button>
-    
+    <button id="btn-dongbo-btp-form" class="btn btn-warning btn-full" style="display:none; margin-top:10px; background:linear-gradient(135deg, #f59e0b, #d97706); color:#1a1a2e; font-weight:700;" onclick="dongBoThietBiBTP()">
+      <i class="ti ti-cloud-upload"></i> Đồng bộ hàng chờ (<span id="btp-pending-count-form">0</span>)
+    </button>
   </div>
 
   <div id="btp-cam" style="display:none; width:100%; max-width:600px; box-sizing:border-box; margin:0 auto; padding:6px 12px 10px 12px; overflow:hidden;">
@@ -1064,8 +1066,12 @@
             <path d="M6 3h12" stroke="#fef08a" stroke-width="1.6" stroke-linecap="round"/>
           </svg>
         </button>
-        <button id="btn-quet-trung-btp" type="button" class="cam-hud-btn" onclick="toggleQuetTrungHUD('btp-cho-phep-trung-cam', this)" title="Bật/Tắt Quét trùng">
+        <button id="btn-quet-trung-btp" type="button" class="cam-hud-btn" onclick="toggleQuetTrungHUD('btp-cho-phep-trung-cam', this)" title="Bật/Tắt Quét trùng" aria-label="Bật/Tắt Quét trùng">
           <i class="ti ti-repeat"></i>
+        </button>
+        <button id="btn-dongbo-btp" type="button" class="cam-hud-btn" onclick="dongBoThietBiBTP()" title="Đồng bộ dữ liệu ngoại tuyến" aria-label="Đồng bộ ngoại tuyến" style="display:none; position:relative;">
+          <i class="ti ti-cloud-upload"></i>
+          <span id="btp-pending-count" class="cam-hud-badge" style="position:absolute; top:-4px; right:-4px; background:#ef4444; color:#fff; font-size:10px; font-weight:700; border-radius:10px; min-width:16px; height:16px; line-height:16px; text-align:center; padding:0 3px;">0</span>
         </button>
       </div>
 
@@ -1146,7 +1152,7 @@
         <button id="btn-btp-view-chitiet" class="btn btn-blue" style="flex:1; margin:0; padding:6px; font-size:13px;" onclick="toggleBTPView('chitiet')">Chi Tiết</button>
         <button id="btn-btp-view-gom" class="btn" style="flex:1; margin:0; padding:6px; font-size:13px; background:transparent; border:1px solid var(--primary); color:var(--primary);" onclick="toggleBTPView('gom')">Tổng Hợp</button>
       </div>
-      <input type="text" id="btp-ketqua-search" placeholder="🔍 Tìm kiếm mã..." autocapitalize="characters" autocorrect="off" spellcheck="false" oninput="hienKetQuaBTP()" style="width:100%; padding:8px 12px; font-size:13px; border-radius:8px; border:1px solid var(--line); margin-bottom:12px; background:var(--bg); box-sizing: border-box;">
+      <input type="text" id="btp-ketqua-search" placeholder="🔍 Tìm kiếm mã..." autocapitalize="characters" autocorrect="off" spellcheck="false" oninput="locKetQuaBTP()" style="width:100%; padding:8px 12px; font-size:13px; border-radius:8px; border:1px solid var(--line); margin-bottom:12px; background:var(--bg); box-sizing: border-box;">
 
       <!-- Khung Bảng Chi Tiết -->
       <div id="btp-wrap-chitiet" class="table-sticky-wrap">
@@ -1530,13 +1536,13 @@
 
 </div><!-- /#app-viewport -->
 
-<script src="app.js?v=20261024-v137" defer></script>
-<script src="quetqr.js?v=20261024-v137" defer></script>
-<script src="kiemke.js?v=20261024-v137" defer></script>
-<script src="cx1.js?v=20261024-v137" defer></script>
-<script src="cx5.js?v=20261024-v137" defer></script>
-<script src="btp.js?v=20261024-v137" defer></script>
-<script src="tonkho.js?v=20261024-v137" defer></script>
+<script src="app.js?v=20261024-v138" defer></script>
+<script src="quetqr.js?v=20261024-v138" defer></script>
+<script src="kiemke.js?v=20261024-v138" defer></script>
+<script src="cx1.js?v=20261024-v138" defer></script>
+<script src="cx5.js?v=20261024-v138" defer></script>
+<script src="btp.js?v=20261024-v138" defer></script>
+<script src="tonkho.js?v=20261024-v138" defer></script>
 
 <!-- BOTTOM SHEET MODAL LỊCH SỬ -->
 <div class="modal-overlay" id="modal-overlay" onclick="closeLichSuModal(event)">
