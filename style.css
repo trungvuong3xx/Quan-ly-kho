@@ -4,8 +4,9 @@
    THEME SYSTEM: Sáng Thanh Lịch (Light) & Tối Hiện Đại (Dark)
    ============================================================ */
 
-:root {
-  color-scheme: light;
+:root,
+[data-theme="light"] {
+  color-scheme: only light;
   /* THEME TOKENS (New Design System) */
   --bg-body: #f9f7f1; 
   --surface: #ffffff;
@@ -15,15 +16,19 @@
   --text-muted: #71717a;
   --text-lighter: #94a3b8;
   --primary: #3b82f6;
+  --primary-solid: #2563eb;
+  --primary-solid-press: #1d4ed8;
   --success: #10b981;
   --danger: #ef4444;
+  --danger-soft: #fee2e2;
+  --danger-border: #fca5a5;
   --red: var(--danger);
   --warning: #f59e0b;
   --border: rgba(0, 0, 0, 0.25);
   --border-card: #d9dfe7;
   --table-header-bg: #e2dfd4;
   --table-row-hover: #efebd8;
-  --shadow-card: 0 4px 16px rgba(0, 0, 0, 0.12);
+  --shadow-card: 0 1px 2px rgba(15, 23, 42, 0.06), 0 4px 12px rgba(15, 23, 42, 0.06);
   --shadow-pressed: 0 4px 12px rgba(0, 0, 0, 0.03);
   --badge-bg: rgba(15, 23, 42, 0.06);
 
@@ -92,6 +97,7 @@
 }
 
 [data-theme="dark"] {
+  color-scheme: only dark;
   --bg-body: #0f172a;
   --bg-scan: #0b1220;
   --surface: #1e293b;
@@ -104,32 +110,27 @@
   --row-text: #e2e8f0;
   --row-muted: #94a3b8;
   --primary: #3b82f6;
+  --primary-solid: #2563eb;
+  --primary-solid-press: #1d4ed8;
   --primary-soft: rgba(59, 130, 246, 0.15);
   --primary-text: #60a5fa;
   --success: #3fb950;
   --danger: #f85149;
+  --danger-soft: rgba(248, 81, 73, 0.15);
+  --danger-border: rgba(248, 81, 73, 0.35);
   --warning: #d29922;
   --border: rgba(255, 255, 255, 0.1);
   --border-card: rgba(255, 255, 255, 0.10);
   --border-strong: rgba(59, 130, 246, 0.35);
   --table-header-bg: #263248;
   --table-row-hover: #334155;
-  --shadow-card: 0 10px 30px rgba(0, 0, 0, 0.4);
+  --shadow-card: 0 4px 20px rgba(0, 0, 0, 0.35);
   --shadow-pressed: 0 4px 15px rgba(0, 0, 0, 0.3);
   --badge-bg: rgba(255, 255, 255, 0.08);
   --neutral-hover: rgba(255, 255, 255, 0.08);
   --neutral-solid: rgba(255, 255, 255, 0.12);
   --overlay-bg: rgba(5, 8, 12, 0.72);
   --glow-color: rgba(59, 130, 246, 0.35);
-}
-
-/* Khóa chặn hoàn toàn thuật toán Force Dark / Tự đảo màu của Android WebView & Chrome */
-[data-theme="light"] {
-  color-scheme: only light;
-}
-
-[data-theme="dark"] {
-  color-scheme: only dark;
 }
 
 /* ============================================================
@@ -556,7 +557,7 @@ select option {
 .stock-row .ivalue { color: var(--steel); }
 .stock-ton .ivalue { color: var(--success); }
 
-/* QR Form � lu�n n?n tr?ng d? in nh�n th?t, kh�ng d?i theo theme app */
+/* QR Form – luôn nền trắng để in nhãn thật, không đổi theo theme app */
 .qr-grid { display: grid; grid-template-columns: 1fr; gap: 6px; }
 
 .qr-item {
@@ -1091,7 +1092,7 @@ table thead th,
 
 @keyframes spin { to { transform: rotate(360deg); } }
 
-/* Icon loading d�ng chung � d?ng b? m�u v?i theme qua CSS variable thay v� m� m�u c?ng */
+/* Icon loading dùng chung – đồng bộ màu với theme qua CSS variable thay vì mã màu cứng */
 .spinner-loading {
   border: 3px solid var(--neutral-solid);
   border-top-color: var(--brass);
@@ -1104,7 +1105,7 @@ table thead th,
 .spinner-loading.lg { width: 40px; height: 40px; }
 
 /* ============================================================
-   CH? X5
+   CHỈ X5
    ============================================================ */
 .cx5-ten-wrap { position: relative; }
 
@@ -1996,8 +1997,8 @@ body.cam-active #qr-log-list {
 
 .toggle-switch input:checked + .toggle-slider:before {
   transform: translateX(18px);
-  background-color: #10b981;
-  box-shadow: 0 0 8px rgba(16, 185, 129, 0.6);
+  background-color: var(--success);
+  box-shadow: 0 0 8px var(--success-bg);
 }
 
 .spin {
@@ -2008,12 +2009,6 @@ body.cam-active #qr-log-list {
 @keyframes spinIcon {
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
-}
-
-.toggle-switch input:checked + .toggle-slider:before {
-  transform: translateX(18px);
-  background-color: #10b981;
-  box-shadow: 0 0 8px rgba(16, 185, 129, 0.7);
 }
 
 /* ============================================================
@@ -2585,8 +2580,8 @@ body { padding: 0 !important; background: var(--bg-body) !important; color: var(
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: #10b981;
-  box-shadow: 0 0 6px #10b981;
+  background: var(--success);
+  box-shadow: 0 0 6px var(--success);
   animation: pulseDot 1.6s infinite;
   display: inline-block;
   vertical-align: middle;
@@ -2594,8 +2589,8 @@ body { padding: 0 !important; background: var(--bg-body) !important; color: var(
 }
 
 .cam-status-dot.paused {
-  background: #ef4444;
-  box-shadow: 0 0 6px #ef4444;
+  background: var(--danger);
+  box-shadow: 0 0 6px var(--danger);
   animation: none;
 }
 
@@ -2678,7 +2673,7 @@ body { padding: 0 !important; background: var(--bg-body) !important; color: var(
   width: 48px;
   height: 48px;
   border-radius: 50%;
-  background: #2563eb;
+  background: var(--primary-solid);
   border: none;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
   color: #ffffff;
@@ -2697,7 +2692,7 @@ body { padding: 0 !important; background: var(--bg-body) !important; color: var(
 
 .cam-shutter-center-btn:active {
   transform: scale(0.92);
-  background: #1d4ed8;
+  background: var(--primary-solid-press);
 }
 
 .cam-shutter-center-btn.paused {
@@ -2869,7 +2864,7 @@ body { padding: 0 !important; background: var(--bg-body) !important; color: var(
   width: 32px;
   height: 32px;
   border-radius: 8px;
-  background: #2563eb;
+  background: var(--primary-solid);
   color: #ffffff;
   border: none;
   display: flex;
@@ -2884,7 +2879,7 @@ body { padding: 0 !important; background: var(--bg-body) !important; color: var(
 
 .btp-input-submit-btn:active {
   transform: scale(0.92);
-  background: #1d4ed8;
+  background: var(--primary-solid-press);
 }
 
 
@@ -3149,22 +3144,22 @@ body.cam-active #chiFor.active {
 .btp-sub-del-btn {
   background: transparent;
   border: none;
-  color: #ef4444;
+  color: var(--danger);
   cursor: pointer;
   padding: 0;
-  font-size: 15px;
+  font-size: 16px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 24px;
-  height: 24px;
+  width: 28px;
+  height: 28px;
   border-radius: 6px;
   transition: transform 0.1s, background-color 0.15s;
 }
 
 .btp-sub-del-btn:active {
   transform: scale(0.9);
-  background: rgba(239, 68, 68, 0.1);
+  background: var(--danger-soft);
 }
 
 /* ── Khối Form Nhập Tay Cố Định Chiều Cao = Cụm Camera + Subcam Bar ── */
@@ -3229,7 +3224,7 @@ body.cam-active #chiFor.active {
 }
 
 .btn-quick-cam:active {
-  background: #2563eb;
+  background: var(--primary-solid);
   color: #ffffff;
   transform: scale(0.95);
 }
@@ -3242,7 +3237,7 @@ body.cam-active #chiFor.active {
   font-weight: 700 !important;
   letter-spacing: 0.5px !important;
   border-radius: 11px !important;
-  background: linear-gradient(135deg, #2563eb, #1d4ed8) !important;
+  background: linear-gradient(135deg, var(--primary-solid), var(--primary-solid-press)) !important;
   box-shadow: 0 2px 6px rgba(37, 99, 235, 0.3) !important;
   margin: 0 !important;
   display: flex !important;
@@ -3284,9 +3279,24 @@ body.cam-active #chiFor.active {
 }
 
 .btn-sub-action.active-pause {
-  background: #fee2e2;
-  color: #ef4444;
-  border-color: #fca5a5;
+  background: var(--danger-soft);
+  color: var(--danger);
+  border-color: var(--danger-border);
+}
+
+/* ============================================================
+   ACCESSIBILITY: Giảm chuyển động khi thiết bị bật chế độ tiết kiệm/nhạy cảm
+   ============================================================ */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  .laser-line, .cam-status-dot, .spin, .spinner-loading {
+    animation: none !important;
+  }
 }
 
 
