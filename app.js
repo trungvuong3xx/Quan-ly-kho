@@ -354,6 +354,11 @@ function layNgayHomNayLocal() {
 window.layNgayHomNayLocal = layNgayHomNayLocal;
 
 function chuyenTrang(id, el) {
+  const header = document.getElementById('header');
+  if (header) {
+    if (id === 'trangChu') header.style.display = 'flex';
+    else header.style.display = 'none';
+  }
   document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
   document.querySelectorAll(".nav-item, .bnav-btn").forEach(b => b.classList.remove("active"));
   const targetPage = document.getElementById(id);
@@ -376,6 +381,7 @@ function chuyenTrang(id, el) {
     if (inputEl && !inputEl.value) inputEl.value = today;
   });
 }
+window.chuyenTrang = chuyenTrang;
 
 // Điều hướng tới 1 tab từ nơi khác ngoài bottom-nav (nút tắt ở Trang chủ, banner tiếp tục...)
 function diToiTab(id) {
@@ -387,6 +393,11 @@ window.diToiTab = diToiTab;
 
 // Điều hướng tới 1 trang KHÔNG có nút riêng trên bottom-nav (vd: Lịch sử, chi tiết lịch sử)
 function chuyenTrangKhongNav(id) {
+  const header = document.getElementById('header');
+  if (header) {
+    if (id === 'trangChu') header.style.display = 'flex';
+    else header.style.display = 'none';
+  }
   document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
   const targetNav = document.querySelector('.nav-item[data-page="' + id + '"], .bnav-btn[data-page="' + id + '"]');
   if (targetNav) {

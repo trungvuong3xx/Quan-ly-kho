@@ -1,10 +1,18 @@
 <!DOCTYPE html>
-<html>
+<html lang="vi">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <meta name="color-scheme" content="light dark">
   <title>Trung Vương - Kho</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" type="image/png" sizes="64x64" href="favicon.png">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="theme-color" id="meta-theme-color" content="#0f172a">
+
   <script>
     // Khôi phục theme người dùng đã chọn trước khi render CSS để không bao giờ bị lóe sáng
     (function() {
@@ -15,144 +23,141 @@
           localStorage.setItem('user_theme', 'dark');
         }
         document.documentElement.setAttribute('data-theme', t);
-        var meta = document.querySelector('meta[name="theme-color"]');
-        if (meta) meta.setAttribute('content', t === 'dark' ? '#0f172a' : '#f9f7f1');
+        var meta = document.getElementById('meta-theme-color') || document.querySelector('meta[name="theme-color"]');
+        if (meta) meta.setAttribute('content', t === 'dark' ? '#0f172a' : '#e8ecf1');
       } catch (e) {}
     })();
   </script>
-  <link rel="stylesheet" href="style.css?v=20260822-v62">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
+  <link rel="stylesheet" href="style.css?v=20261024-v137">
   <link rel="stylesheet" href="lib/tabler-icons.min.css">
   <script src="lib/qrcode.min.js" defer></script>
   <script src="lib/zxing.min.js" defer></script>
-<link rel="manifest" href="manifest.json">
-<link rel="icon" type="image/png" sizes="64x64" href="favicon.png">
-<meta name="theme-color" content="#0f172a">
-<meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="screen-orientation" content="portrait">
-<meta name="x5-orientation" content="portrait">
-<meta name="full-screen" content="yes">
-<meta name="browsermode" content="application">
-<link rel="apple-touch-icon" href="apple-touch-icon.png">
-<script>
-  const laAppCapacitor = window.location.hostname === 'localhost' || window.location.protocol === 'capacitor:';
 
-  if (laAppCapacitor) {
-    // Trong ứng dụng APK: Toàn bộ file đã nằm trực tiếp trong máy (assets/public/)
-    // Hủy bỏ hoàn toàn Service Worker và dọn sạch bộ nhớ Cache cũ để luôn chạy 100% code mới nhất ngay lần đầu mở app!
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.getRegistrations().then(regs => {
-        regs.forEach(r => r.unregister());
-      });
-    }
-    if ('caches' in window) {
-      caches.keys().then(keys => keys.forEach(k => caches.delete(k)));
-    }
-  } else if ('serviceWorker' in navigator) {
-    // Chỉ kích hoạt Service Worker khi chạy trên trình duyệt Web (GitHub Pages) để hỗ trợ Offline PWA
-    window.addEventListener('load', () => {
-      navigator.serviceWorker.register('./sw.js', { updateViaCache: 'none' }).then(reg => {
-        reg.update();
-        reg.addEventListener('updatefound', () => {
-          const newWorker = reg.installing;
-          if (newWorker) {
-            newWorker.addEventListener('statechange', () => {
-              if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                console.log('🔄 Đã phát hiện code mới từ GitHub, đang tự động nạp...');
-                newWorker.postMessage({ action: 'skipWaiting' });
-                const toast = document.getElementById('pwa-update-toast');
-                if (toast) toast.style.display = 'block';
-              }
-            });
+  <script>
+    // Kiểm tra môi trường: Native Capacitor (Android APK) vs Web PWA (GitHub Pages)
+    window.laAppCapacitor = Boolean(
+      (window.Capacitor && typeof window.Capacitor.isNativePlatform === 'function' && window.Capacitor.isNativePlatform()) ||
+      window.location.protocol === 'capacitor:'
+    );
+
+    if (window.laAppCapacitor) {
+      // Trong ứng dụng APK: Toàn bộ file tĩnh đã nằm trực tiếp trong máy (assets/public/)
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.getRegistrations().then(regs => {
+          regs.forEach(r => r.unregister());
+        }).catch(function() {});
+      }
+    } else if ('serviceWorker' in navigator) {
+      // Chỉ kích hoạt Service Worker khi chạy trên trình duyệt Web (GitHub Pages) để hỗ trợ Offline PWA
+      window._pendingWorker = null;
+      window._userRequestedReload = false;
+
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js', { updateViaCache: 'none' }).then(reg => {
+          reg.update();
+          reg.addEventListener('updatefound', () => {
+            const newWorker = reg.installing;
+            if (newWorker) {
+              newWorker.addEventListener('statechange', () => {
+                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                  console.log('🔄 Đã phát hiện code mới từ GitHub');
+                  window._pendingWorker = newWorker;
+                  const toast = document.getElementById('pwa-update-toast');
+                  if (toast) toast.style.display = 'block';
+                }
+              });
+            }
+          });
+        }).catch(err => console.log('SW Reg Error:', err));
+
+        document.addEventListener('visibilitychange', () => {
+          if (document.visibilityState === 'visible') {
+            navigator.serviceWorker.ready.then(reg => reg.update()).catch(() => {});
           }
         });
-      }).catch(err => console.log('SW Reg Error:', err));
+      });
 
-      document.addEventListener('visibilitychange', () => {
-        if (document.visibilityState === 'visible') {
-          navigator.serviceWorker.ready.then(reg => reg.update()).catch(() => {});
+      let refreshing = false;
+      navigator.serviceWorker.addEventListener('controllerchange', () => {
+        // Chỉ reload khi chính người dùng bấm xác nhận cập nhật
+        if (!refreshing && window._userRequestedReload) {
+          refreshing = true;
+          window.location.reload();
         }
       });
-    });
 
-    let refreshing = false;
-    navigator.serviceWorker.addEventListener('controllerchange', () => {
-      if (!refreshing) {
-        refreshing = true;
-        window.location.reload();
+      window.apDungBanCapNhatMoi = function() {
+        window._userRequestedReload = true;
+        if (window._pendingWorker) {
+          window._pendingWorker.postMessage({ action: 'skipWaiting' });
+        } else {
+          window.location.reload();
+        }
+      };
+    }
+
+    let _gocXoayHienTai = -1;
+    function capNhatGocXoayBaoVe() {
+      const el = document.getElementById("app-viewport");
+      if (!el) return;
+      
+      let angle = 0;
+      if (window.screen && window.screen.orientation && typeof window.screen.orientation.angle === "number") {
+        angle = window.screen.orientation.angle;
+      } else if (typeof window.orientation === "number") {
+        angle = window.orientation;
       }
-    });
-  }
-
-  let _gocXoayHienTai = -1;
-  function capNhatGocXoayBaoVe() {
-    const el = document.getElementById("app-viewport");
-    if (!el) return;
-    
-    let angle = 0;
-    if (window.screen && window.screen.orientation && typeof window.screen.orientation.angle === "number") {
-      angle = window.screen.orientation.angle;
-    } else if (typeof window.orientation === "number") {
-      angle = window.orientation;
+      
+      angle = (Number(angle) + 360) % 360;
+      if (angle === _gocXoayHienTai) return;
+      _gocXoayHienTai = angle;
+      
+      if (angle === 0) {
+        el.style.position = "";
+        el.style.top = "";
+        el.style.left = "";
+        el.style.width = "";
+        el.style.height = "";
+        el.style.transform = "";
+        el.style.transformOrigin = "";
+      } else if (angle === 90) {
+        el.style.position = "fixed";
+        el.style.top = "50%";
+        el.style.left = "50%";
+        el.style.width = "100vh";
+        el.style.height = "100vw";
+        el.style.transform = "translate(-50%, -50%) rotate(-90deg)";
+        el.style.transformOrigin = "center center";
+      } else if (angle === 270) {
+        el.style.position = "fixed";
+        el.style.top = "50%";
+        el.style.left = "50%";
+        el.style.width = "100vh";
+        el.style.height = "100vw";
+        el.style.transform = "translate(-50%, -50%) rotate(90deg)";
+        el.style.transformOrigin = "center center";
+      } else if (angle === 180) {
+        el.style.position = "fixed";
+        el.style.top = "50%";
+        el.style.left = "50%";
+        el.style.width = "100vw";
+        el.style.height = "100vh";
+        el.style.transform = "translate(-50%, -50%) rotate(180deg)";
+        el.style.transformOrigin = "center center";
+      }
     }
-    
-    angle = (Number(angle) + 360) % 360;
-    if (angle === _gocXoayHienTai) return;
-    _gocXoayHienTai = angle;
-    
-    if (angle === 0) {
-      el.style.position = "";
-      el.style.top = "";
-      el.style.left = "";
-      el.style.width = "";
-      el.style.height = "";
-      el.style.transform = "";
-      el.style.transformOrigin = "";
-    } else if (angle === 90) {
-      el.style.position = "fixed";
-      el.style.top = "50%";
-      el.style.left = "50%";
-      el.style.width = "100vh";
-      el.style.height = "100vw";
-      el.style.transform = "translate(-50%, -50%) rotate(-90deg)";
-      el.style.transformOrigin = "center center";
-    } else if (angle === 270) {
-      el.style.position = "fixed";
-      el.style.top = "50%";
-      el.style.left = "50%";
-      el.style.width = "100vh";
-      el.style.height = "100vw";
-      el.style.transform = "translate(-50%, -50%) rotate(90deg)";
-      el.style.transformOrigin = "center center";
-    } else if (angle === 180) {
-      el.style.position = "fixed";
-      el.style.top = "50%";
-      el.style.left = "50%";
-      el.style.width = "100vw";
-      el.style.height = "100vh";
-      el.style.transform = "translate(-50%, -50%) rotate(180deg)";
-      el.style.transformOrigin = "center center";
-    }
-  }
 
-  function khoaOrientation() {
-    if (window.screen && window.screen.orientation && typeof window.screen.orientation.lock === "function") {
-      window.screen.orientation.lock("portrait-primary").catch(function() {});
+    if (window.screen && window.screen.orientation) {
+      window.screen.orientation.addEventListener("change", capNhatGocXoayBaoVe);
     }
-    capNhatGocXoayBaoVe();
-  }
-
-  if (window.screen && window.screen.orientation) {
-    window.screen.orientation.addEventListener("change", capNhatGocXoayBaoVe);
-  }
-  window.addEventListener("DOMContentLoaded", khoaOrientation);
-  window.addEventListener("load", khoaOrientation);
-  window.addEventListener("orientationchange", capNhatGocXoayBaoVe);
-  window.addEventListener("resize", capNhatGocXoayBaoVe);
-  window.addEventListener("touchstart", khoaOrientation);
-  window.addEventListener("click", khoaOrientation);
-</script>
+    window.addEventListener("DOMContentLoaded", capNhatGocXoayBaoVe);
+    window.addEventListener("orientationchange", capNhatGocXoayBaoVe);
+    window.addEventListener("resize", capNhatGocXoayBaoVe);
+  </script>
 </head>
 <body>
 
@@ -194,7 +199,7 @@
     <div class="title" id="header-title">Trung Vương</div>
   </div>
   <div class="header-right" style="display:flex; gap:8px; align-items:center;">
-    <button class="theme-toggle" id="btn-theme" title="Chuyển Giao Diện Sáng/Tối" onclick="chuyenThemeSangToi()">
+    <button class="theme-toggle" id="btn-theme" title="Chuyển Giao Diện Sáng/Tối" aria-label="Chuyển đổi giao diện sáng/tối" onclick="chuyenThemeSangToi()">
       <i class="ti ti-moon"></i>
     </button>
   </div>
@@ -562,17 +567,17 @@
     <!-- Hàng mỏng full chiều ngang ngay dưới camera (Toggle Mã vừa quét vs Ô nhập tay) -->
     <div id="qr-subcam-bar" class="btp-subcam-bar">
       <!-- Chế độ 1: Mã vừa quét + Copy (mặc định) -->
-      <div id="qr-chip-mode" class="btp-subcam-chip-mode" onclick="saoChepMaQR(event)" title="Chạm để sao chép mã">
+      <div id="qr-chip-mode" class="btp-subcam-chip-mode" onclick="saoChepMaQR(event)" title="Chạm để sao chép mã" role="button" tabindex="0">
         <span id="qr-lock-status" class="btp-scanned-code">Chờ quét...</span>
-        <button type="button" id="btn-copy-qr" class="btp-copy-btn" onclick="saoChepMaQR(event)" title="Sao chép mã">
+        <button type="button" id="btn-copy-qr" class="btp-copy-btn" onclick="saoChepMaQR(event)" title="Sao chép mã" aria-label="Sao chép mã QR">
           <i id="icon-copy-qr" class="ti ti-copy"></i>
         </button>
       </div>
 
       <!-- Chế độ 2: Ô nhập tay khi mở bàn phím -->
       <div id="qr-input-mode" class="btp-subcam-input-mode" style="display:none;">
-        <input type="text" id="qr-manual-input-cam" placeholder="Nhập tay mã..." onkeydown="if(event.key==='Enter') themMaThuCongQR()">
-        <button type="button" class="btp-input-submit-btn" onclick="themMaThuCongQR()" title="Thêm mã">
+        <input type="text" id="qr-manual-input-cam" placeholder="Nhập tay mã..." autocapitalize="characters" autocorrect="off" spellcheck="false" onkeydown="if(event.key==='Enter') themMaThuCongQR()">
+        <button type="button" class="btp-input-submit-btn" onclick="themMaThuCongQR()" title="Thêm mã" aria-label="Thêm mã thủ công">
           <i class="ti ti-check"></i>
         </button>
       </div>
@@ -740,21 +745,21 @@
     <div id="kk-cam" style="display:none; width:100%; max-width:600px; box-sizing:border-box; margin:0 auto; padding:6px 0;">
       <div class="video-container" style="position:relative; width:100%; height:230px; background:#000; border-radius:16px; overflow:hidden; margin-top:12px; border: 2px solid var(--brass); box-sizing:border-box;">
         <video id="kk-reader" autoplay playsinline muted disablePictureInPicture style="position:absolute; width:100%; height:100%; object-fit:cover; transform:translateZ(0); will-change:transform;"></video>
-        <div class="cam-hud-controls">
-          <button type="button" class="cam-hud-btn" onclick="toggleFlashlightHUD('kk-reader', this)" title="Bật/Tắt Đèn Pin">
+        <div class="cam-hud-top-right">
+          <button type="button" class="cam-hud-btn" onclick="toggleFlashlightHUD('kk-reader', this)" title="Bật/Tắt Đèn Pin" aria-label="Bật/Tắt đèn pin">
             <i class="ti ti-flashlight"></i>
           </button>
         </div>
       </div>
-      <div class="cam-shutter-bar">
-        <div class="cam-dot-badge">
+      <div style="display:flex; justify-content:space-between; align-items:center; padding:10px 0;">
+        <div class="cam-status-pill">
           <span id="kk-dem" style="display:inline-flex; align-items:center; gap:6px; font-size:13px; font-weight:700;">
             <div class="cam-status-dot"></div>
             <span>Đã quét: 0 mã</span>
           </span>
         </div>
         <div id="kk-status" class="scanner-status" style="margin:0; display:none;"></div>
-        <button type="button" class="cam-finish-btn" onclick="dungKiemKe()" title="Dừng & Lưu">
+        <button type="button" class="btn btn-blue" onclick="dungKiemKe()" title="Dừng & Lưu" aria-label="Dừng và lưu kiểm kê" style="height:38px; padding:0 14px;">
           <i class="ti ti-device-floppy"></i>
         </button>
       </div>
@@ -1092,17 +1097,17 @@
     <!-- Hàng mỏng full chiều ngang ngay dưới camera (Toggle Mã vừa quét vs Ô nhập tay) -->
     <div id="btp-subcam-bar" class="btp-subcam-bar">
       <!-- Chế độ 1: Mã vừa quét + Copy (mặc định) -->
-      <div id="btp-chip-mode" class="btp-subcam-chip-mode" onclick="saoChepMaQRBTP(event)" title="Chạm để sao chép mã">
+      <div id="btp-chip-mode" class="btp-subcam-chip-mode" onclick="saoChepMaQRBTP(event)" title="Chạm để sao chép mã" role="button" tabindex="0">
         <span id="btp-lock-status" class="btp-scanned-code">Chờ quét...</span>
-        <button type="button" id="btn-copy-btp" class="btp-copy-btn" onclick="saoChepMaQRBTP(event)" title="Sao chép mã">
+        <button type="button" id="btn-copy-btp" class="btp-copy-btn" onclick="saoChepMaQRBTP(event)" title="Sao chép mã" aria-label="Sao chép mã BTP">
           <i id="icon-copy-btp" class="ti ti-copy"></i>
         </button>
       </div>
 
       <!-- Chế độ 2: Ô nhập tay khi mở bàn phím -->
       <div id="btp-input-mode" class="btp-subcam-input-mode" style="display:none;">
-        <input type="text" id="btp-manual-input-cam" placeholder="Nhập tay mã BTP..." onkeydown="if(event.key==='Enter') nhapThuCongBTP('cam')">
-        <button type="button" class="btp-input-submit-btn" onclick="nhapThuCongBTP('cam')" title="Thêm mã">
+        <input type="text" id="btp-manual-input-cam" placeholder="Nhập tay mã BTP..." autocapitalize="characters" autocorrect="off" spellcheck="false" onkeydown="if(event.key==='Enter') nhapThuCongBTP('cam')">
+        <button type="button" class="btp-input-submit-btn" onclick="nhapThuCongBTP('cam')" title="Thêm mã" aria-label="Thêm mã BTP thủ công">
           <i class="ti ti-check"></i>
         </button>
       </div>
@@ -1141,7 +1146,7 @@
         <button id="btn-btp-view-chitiet" class="btn btn-blue" style="flex:1; margin:0; padding:6px; font-size:13px;" onclick="toggleBTPView('chitiet')">Chi Tiết</button>
         <button id="btn-btp-view-gom" class="btn" style="flex:1; margin:0; padding:6px; font-size:13px; background:transparent; border:1px solid var(--primary); color:var(--primary);" onclick="toggleBTPView('gom')">Tổng Hợp</button>
       </div>
-      <input type="text" id="btp-ketqua-search" placeholder="🔍 Tìm kiếm mã..." oninput="hienKetQuaBTP()" style="width:100%; padding:8px 12px; font-size:13px; border-radius:8px; border:1px solid var(--line); margin-bottom:12px; background:var(--bg); box-sizing: border-box;">
+      <input type="text" id="btp-ketqua-search" placeholder="🔍 Tìm kiếm mã..." autocapitalize="characters" autocorrect="off" spellcheck="false" oninput="hienKetQuaBTP()" style="width:100%; padding:8px 12px; font-size:13px; border-radius:8px; border:1px solid var(--line); margin-bottom:12px; background:var(--bg); box-sizing: border-box;">
 
       <!-- Khung Bảng Chi Tiết -->
       <div id="btp-wrap-chitiet" class="table-sticky-wrap">
@@ -1525,30 +1530,30 @@
 
 </div><!-- /#app-viewport -->
 
-<script src="app.js?v=20260905-v57"></script>
-<script src="quetqr.js?v=20260905-v57"></script>
-<script src="kiemke.js?v=20260905-v57"></script>
-<script src="cx1.js?v=20260905-v57"></script>
-<script src="cx5.js?v=20260905-v57"></script>
-<script src="btp.js?v=20260905-v57"></script>
-<script src="tonkho.js?v=20260905-v57"></script>
+<script src="app.js?v=20261024-v137" defer></script>
+<script src="quetqr.js?v=20261024-v137" defer></script>
+<script src="kiemke.js?v=20261024-v137" defer></script>
+<script src="cx1.js?v=20261024-v137" defer></script>
+<script src="cx5.js?v=20261024-v137" defer></script>
+<script src="btp.js?v=20261024-v137" defer></script>
+<script src="tonkho.js?v=20261024-v137" defer></script>
 
 <!-- BOTTOM SHEET MODAL LỊCH SỬ -->
 <div class="modal-overlay" id="modal-overlay" onclick="closeLichSuModal(event)">
   <div class="modal-sheet" onclick="event.stopPropagation()">
-    <div class="modal-close" onclick="closeLichSuModal()"><i class="ti ti-x"></i></div>
+    <button type="button" class="modal-close" onclick="closeLichSuModal()" aria-label="Đóng bảng lịch sử"><i class="ti ti-x"></i></button>
     <div class="modal-title">Lịch Sử Quét</div>
     <div style="display:flex; flex-direction:column; width:100%; gap:12px;">
-      <div onclick="closeLichSuModal(); moLichSuChon('quetqr')" style="padding:16px; background:var(--bg-body); border-radius:16px; border:1px solid var(--border); font-weight:700; color:var(--text-main); display:flex; align-items:center; gap:12px; cursor: pointer;">
+      <div onclick="closeLichSuModal(); moLichSuChon('quetqr')" role="button" tabindex="0" style="padding:16px; background:var(--bg-body); border-radius:16px; border:1px solid var(--border); font-weight:700; color:var(--text-main); display:flex; align-items:center; gap:12px; cursor: pointer;">
         <i class="ti ti-scan" style="font-size:24px; color:var(--primary)"></i> Lịch sử Quét QR
       </div>
-      <div onclick="closeLichSuModal(); moLichSuChon('btp')" style="padding:16px; background:var(--bg-body); border-radius:16px; border:1px solid var(--border); font-weight:700; color:var(--text-main); display:flex; align-items:center; gap:12px; cursor: pointer;">
+      <div onclick="closeLichSuModal(); moLichSuChon('btp')" role="button" tabindex="0" style="padding:16px; background:var(--bg-body); border-radius:16px; border:1px solid var(--border); font-weight:700; color:var(--text-main); display:flex; align-items:center; gap:12px; cursor: pointer;">
         <i class="ti ti-box" style="font-size:24px; color:var(--primary)"></i> Lịch sử BTP
       </div>
-      <div onclick="closeLichSuModal(); moLichSuChon('for')" style="padding:16px; background:var(--bg-body); border-radius:16px; border:1px solid var(--border); font-weight:700; color:var(--text-main); display:flex; align-items:center; gap:12px; cursor: pointer;">
+      <div onclick="closeLichSuModal(); moLichSuChon('for')" role="button" tabindex="0" style="padding:16px; background:var(--bg-body); border-radius:16px; border:1px solid var(--border); font-weight:700; color:var(--text-main); display:flex; align-items:center; gap:12px; cursor: pointer;">
         <div class="text-icon" style="font-size:20px; color:var(--primary); width:24px; text-align:center">X1</div> Lịch sử Chỉ X1
       </div>
-      <div onclick="closeLichSuModal(); moLichSuChon('x5')" style="padding:16px; background:var(--bg-body); border-radius:16px; border:1px solid var(--border); font-weight:700; color:var(--text-main); display:flex; align-items:center; gap:12px; cursor: pointer;">
+      <div onclick="closeLichSuModal(); moLichSuChon('x5')" role="button" tabindex="0" style="padding:16px; background:var(--bg-body); border-radius:16px; border:1px solid var(--border); font-weight:700; color:var(--text-main); display:flex; align-items:center; gap:12px; cursor: pointer;">
         <div class="text-icon" style="font-size:20px; color:var(--primary); width:24px; text-align:center">X5</div> Lịch sử Chỉ X5
       </div>
     </div>
@@ -1557,13 +1562,14 @@
 
 <script>
   // Dashboard Modal
-  const modalLichSu = document.getElementById('modal-overlay');
   function openLichSuModal() {
-    modalLichSu.classList.add('active');
+    const modal = document.getElementById('modal-overlay');
+    if (modal) modal.classList.add('active');
   }
   function closeLichSuModal(e) {
-    if (e && e.target !== modalLichSu) return;
-    modalLichSu.classList.remove('active');
+    const modal = document.getElementById('modal-overlay');
+    if (e && e.target !== modal && !e.target.closest('.modal-close')) return;
+    if (modal) modal.classList.remove('active');
   }
 
   // Dashboard UX logic
@@ -1573,17 +1579,22 @@
       let greeting = 'Chào buổi tối';
       if (hour >= 5 && hour < 12) greeting = 'Chào buổi sáng';
       else if (hour >= 12 && hour < 18) greeting = 'Chào buổi chiều';
+      const userName = localStorage.getItem('ten_nguoi_dung') || localStorage.getItem('tenNhanVien') || 'Admin';
       const el = document.getElementById('header-greeting');
-      if(el) el.innerText = greeting + ', Nà ná na';
+      if (el) el.textContent = `${greeting}, ${userName}`;
     }
     updateGreeting();
+    setInterval(updateGreeting, 60000);
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') updateGreeting();
+    });
 
     const btnTheme = document.getElementById('btn-theme');
     const htmlEl = document.documentElement;
 
     const danhSachThemes = [
-      { id: 'dark', ten: 'Obsidian Amber (Tối)', moTa: 'Nền than chì & Ánh sáng xanh sang trọng, dịu mắt', bg: '#0f172a', accent: '#3b82f6', icon: 'ti-moon', metaColor: '#0f172a' },
-      { id: 'light', ten: 'Sáng Thanh Lịch (Light)', moTa: 'Nền ngà sáng, tương phản đậm rõ ngoài trời', bg: '#f9f7f1', accent: '#2563eb', icon: 'ti-sun', metaColor: '#f9f7f1' }
+      { id: 'dark', ten: 'Giao diện Tối (Dark)', moTa: 'Nền than chì tối giản & dịu mắt khi quét ca đêm', bg: '#0f172a', accent: '#3b82f6', icon: 'ti-moon', metaColor: '#0f172a' },
+      { id: 'light', ten: 'Giao diện Sáng (Light)', moTa: 'Nền xám sáng đồng bộ, tương phản rõ ngoài trời', bg: '#e8ecf1', accent: '#2563eb', icon: 'ti-sun', metaColor: '#e8ecf1' }
     ];
 
     function layThemeHienTai() {
@@ -1596,8 +1607,9 @@
       if (btnTheme) {
         btnTheme.innerHTML = `<i class="ti ${cur.icon}"></i>`;
         btnTheme.title = `Giao diện: ${cur.ten} - Bấm để chuyển`;
+        btnTheme.setAttribute('aria-label', `Giao diện hiện tại: ${cur.ten}. Bấm để chuyển.`);
       }
-      const metaTheme = document.querySelector('meta[name="theme-color"]');
+      const metaTheme = document.getElementById('meta-theme-color') || document.querySelector('meta[name="theme-color"]');
       if (metaTheme) {
         metaTheme.setAttribute('content', cur.metaColor);
       }
@@ -1623,7 +1635,7 @@
       danhSachThemes.forEach(t => {
         const isActive = t.id === curTheme.id;
         html += `
-          <div class="theme-item-card ${isActive ? 'active' : ''}" data-theme-id="${t.id}" onclick="chonTheme('${t.id}')">
+          <div class="theme-item-card ${isActive ? 'active' : ''}" data-theme-id="${t.id}" onclick="chonTheme('${t.id}')" role="button" tabindex="0">
             <div class="theme-preview-dot" style="background:${t.bg};">
               <div class="theme-preview-accent" style="background:${t.accent};"></div>
             </div>
@@ -1687,75 +1699,112 @@
       btnTheme.addEventListener('click', window.chuyenThemeSangToi);
     }
 
-    let startY = 0;
+    // Pull to refresh (PTR) chuẩn: ngưỡng kéo 60px, touchcancel, không báo giả
+    let ptrStartY = 0;
+    let ptrPulling = false;
+    let ptrTimerId = null;
+    const PULL_THRESHOLD = 60;
     const scrollArea = document.getElementById('scroll-area');
     const ptr = document.getElementById('ptr-indicator');
-    if(scrollArea && ptr) {
+
+    function resetPTR(smooth = true) {
+      ptrStartY = 0;
+      ptrPulling = false;
+      if (ptrTimerId) {
+        clearTimeout(ptrTimerId);
+        ptrTimerId = null;
+      }
+      if (scrollArea) {
+        scrollArea.style.transition = smooth ? 'transform 0.25s ease' : '';
+        scrollArea.style.transform = '';
+      }
+      if (ptr) {
+        ptr.style.transition = smooth ? 'all 0.25s ease' : '';
+        ptr.style.opacity = '0';
+        ptr.style.transform = '';
+        ptr.classList.remove('loading');
+      }
+    }
+
+    if (scrollArea && ptr) {
       scrollArea.addEventListener('touchstart', e => {
-        if (scrollArea.scrollTop === 0) startY = e.touches[0].clientY;
-      });
+        if (ptrTimerId) {
+          clearTimeout(ptrTimerId);
+          ptrTimerId = null;
+        }
+        if (scrollArea.scrollTop <= 0) {
+          ptrStartY = e.touches[0].clientY;
+          ptrPulling = false;
+          scrollArea.style.transition = '';
+          ptr.style.transition = '';
+        } else {
+          ptrStartY = 0;
+        }
+      }, { passive: true });
+
       scrollArea.addEventListener('touchmove', e => {
-        if (startY > 0) {
-          let delta = e.touches[0].clientY - startY;
-          if (delta > 0 && scrollArea.scrollTop === 0) {
-            e.preventDefault();
-            let pull = Math.min(delta / 2, 60);
+        if (ptrStartY > 0 && scrollArea.scrollTop <= 0) {
+          const delta = e.touches[0].clientY - ptrStartY;
+          if (delta > 8) {
+            ptrPulling = true;
+            const pull = Math.min(delta * 0.45, 80);
             scrollArea.style.transform = `translateY(${pull}px)`;
-            ptr.style.opacity = Math.min(pull / 60, 1);
+            const progress = Math.min(pull / PULL_THRESHOLD, 1);
+            ptr.style.opacity = String(progress);
             ptr.style.transform = `translateY(${pull - 20}px)`;
           }
         }
-      });
-      scrollArea.addEventListener('touchend', e => {
-        if (startY > 0 && scrollArea.style.transform !== '') {
-          ptr.classList.add('loading');
-          if (navigator.vibrate) navigator.vibrate(20);
-          setTimeout(() => {
-            scrollArea.style.transform = '';
-            ptr.style.opacity = 0;
-            ptr.style.transform = '';
-            ptr.classList.remove('loading');
-            if(window.thongBao) window.thongBao("Đã đồng bộ dữ liệu mới nhất", "success");
-          }, 1000);
+      }, { passive: true });
+
+      const onTouchEndOrCancel = async () => {
+        if (ptrStartY > 0 && ptrPulling) {
+          const currentTransform = scrollArea.style.transform;
+          const match = currentTransform.match(/translateY\(([\d.]+)px\)/);
+          const currentPull = match ? parseFloat(match[1]) : 0;
+
+          if (currentPull >= PULL_THRESHOLD) {
+            ptr.classList.add('loading');
+            scrollArea.style.transition = 'transform 0.2s ease';
+            scrollArea.style.transform = 'translateY(45px)';
+            if (navigator.vibrate) navigator.vibrate(20);
+
+            try {
+              if (typeof dongBoTatCaOfflineApp === 'function') {
+                await dongBoTatCaOfflineApp();
+              }
+              if (typeof capNhatTrangChu === 'function') {
+                capNhatTrangChu();
+              }
+              if (typeof capNhatTrangThaiMang === 'function') {
+                capNhatTrangThaiMang();
+              }
+              if (window.thongBao) {
+                window.thongBao('Đã cập nhật dữ liệu mới nhất', 'success');
+              }
+            } catch (err) {
+              if (window.thongBao) {
+                window.thongBao('Không thể đồng bộ dữ liệu lúc này', 'warning');
+              }
+            } finally {
+              ptrTimerId = setTimeout(() => {
+                resetPTR(true);
+              }, 400);
+            }
+          } else {
+            resetPTR(true);
+          }
+        } else {
+          resetPTR(false);
         }
-        startY = 0;
-      });
+      };
+
+      scrollArea.addEventListener('touchend', onTouchEndOrCancel);
+      scrollArea.addEventListener('touchcancel', onTouchEndOrCancel);
     }
-
-    // Override chuyenTrang to hide/show header
-    const oldChuyenTrang = window.chuyenTrang;
-    window.chuyenTrang = function(idTab, btn) {
-      const header = document.getElementById('header');
-      if(header) {
-        if(idTab === 'trangChu') header.style.display = 'flex';
-        else header.style.display = 'none';
-      }
-      if(oldChuyenTrang) oldChuyenTrang(idTab, btn);
-      
-      // Fix active state of bottom nav items
-      const targetNav = btn || document.querySelector('.nav-item[data-page="' + idTab + '"], .bnav-btn[data-page="' + idTab + '"]');
-      document.querySelectorAll('.nav-item, .bnav-btn').forEach(el => el.classList.remove('active'));
-      if(targetNav) targetNav.classList.add('active');
-    };
-    
-    const oldChuyenTrangKhongNav = window.chuyenTrangKhongNav;
-    window.chuyenTrangKhongNav = function(idTab) {
-      const header = document.getElementById('header');
-      if(header) {
-        if(idTab === 'trangChu') header.style.display = 'flex';
-        else header.style.display = 'none';
-      }
-      if(oldChuyenTrangKhongNav) oldChuyenTrangKhongNav(idTab);
-
-      const targetNav = document.querySelector('.nav-item[data-page="' + idTab + '"], .bnav-btn[data-page="' + idTab + '"]');
-      if (targetNav) {
-        document.querySelectorAll('.nav-item, .bnav-btn').forEach(el => el.classList.remove('active'));
-        targetNav.classList.add('active');
-      }
-    };
   });
 </script>
-<div id="pwa-update-toast" style="display:none; position:fixed; bottom:80px; left:50%; transform:translateX(-50%); background:var(--brass); color:var(--bg-deep); padding:10px 20px; border-radius:20px; font-weight:700; box-shadow:0 4px 12px rgba(245,158,11,0.5); z-index:9999; cursor:pointer;" onclick="window.location.reload(true);">
+
+<div id="pwa-update-toast" style="display:none; position:fixed; bottom:80px; left:50%; transform:translateX(-50%); background:var(--brass); color:var(--bg-deep); padding:10px 20px; border-radius:20px; font-weight:700; box-shadow:0 4px 12px rgba(245,158,11,0.5); z-index:9999; cursor:pointer;" onclick="apDungBanCapNhatMoi()" role="button" tabindex="0">
   🔄 Có bản cập nhật mới! Bấm để tải lại
 </div>
 
@@ -1767,9 +1816,12 @@
         <div class="modal-theme-title"><i class="ti ti-palette" style="color:var(--primary);"></i> Giao Diện & Màu Sắc</div>
         <div class="modal-theme-subtitle">Tùy biến phong cách hiển thị theo sở thích</div>
       </div>
-      <button class="modal-theme-close" onclick="dongModalTheme()" title="Đóng"><i class="ti ti-x"></i></button>
+      <button type="button" class="modal-theme-close" onclick="dongModalTheme()" title="Đóng" aria-label="Đóng bảng giao diện"><i class="ti ti-x"></i></button>
     </div>
     <div class="modal-theme-list" id="theme-options-list"></div>
   </div>
 </div>
+
+</body>
+</html>
 
