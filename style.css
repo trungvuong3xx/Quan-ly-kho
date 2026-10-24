@@ -1,8 +1,7 @@
 @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap');
 
 /* ============================================================
-   THEME: "Obsidian & Amber Gold" � �en d� Obsidian Slate,
-   ch? b?ch kim nh� nh?n, accent Cam H? Ph�ch Gold hi?n d?i.
+   THEME SYSTEM: Sáng Thanh Lịch (Light) & Tối Hiện Đại (Dark)
    ============================================================ */
 
 :root {
@@ -14,19 +13,28 @@
   --surface-glass: rgba(255, 255, 255, 0.85);
   --text-main: #27272a;
   --text-muted: #71717a;
-  --text-lighter: #a1a1aa;
+  --text-lighter: #94a3b8;
   --primary: #3b82f6;
   --success: #10b981;
   --danger: #ef4444;
   --red: var(--danger);
   --warning: #f59e0b;
   --border: rgba(0, 0, 0, 0.25);
-  --border-card: rgba(0, 0, 0, 0.15);
+  --border-card: #d9dfe7;
   --table-header-bg: #e2dfd4;
   --table-row-hover: #efebd8;
   --shadow-card: 0 4px 16px rgba(0, 0, 0, 0.12);
   --shadow-pressed: 0 4px 12px rgba(0, 0, 0, 0.03);
   --badge-bg: rgba(15, 23, 42, 0.06);
+
+  /* SCANNER & NEW COMPONENT THEME TOKENS (Light) */
+  --bg-scan: #e8ecf1;
+  --surface-2: #f8fafc;
+  --border-strong: #bfdbfe;
+  --primary-soft: #eff6ff;
+  --primary-text: #1e40af;
+  --row-text: #0f172a;
+  --row-muted: #475569;
 
   /* LEGACY THEME (Mapped to Modern Design Tokens) */
   --bg: var(--bg-body);              
@@ -85,170 +93,42 @@
 
 [data-theme="dark"] {
   --bg-body: #0f172a;
+  --bg-scan: #0b1220;
   --surface: #1e293b;
-  --surface-grad: linear-gradient(145deg, #1e293b 0%, #0f172a 100%);
+  --surface-grad: #1e293b;
   --surface-glass: rgba(30, 41, 59, 0.85);
+  --surface-2: #263248;
   --text-main: #e2e8f0;
   --text-muted: #94a3b8;
-  --text-lighter: #64748b;
+  --text-lighter: #7f8ea6;
+  --row-text: #e2e8f0;
+  --row-muted: #94a3b8;
   --primary: #3b82f6;
+  --primary-soft: rgba(59, 130, 246, 0.15);
+  --primary-text: #60a5fa;
   --success: #3fb950;
   --danger: #f85149;
   --warning: #d29922;
   --border: rgba(255, 255, 255, 0.1);
-  --border-card: rgba(255, 255, 255, 0.05);
-  --table-header-bg: #1e293b;
+  --border-card: rgba(255, 255, 255, 0.10);
+  --border-strong: rgba(59, 130, 246, 0.35);
+  --table-header-bg: #263248;
   --table-row-hover: #334155;
   --shadow-card: 0 10px 30px rgba(0, 0, 0, 0.4);
   --shadow-pressed: 0 4px 15px rgba(0, 0, 0, 0.3);
-  --badge-bg: rgba(255, 255, 255, 0.1);
-  --neutral-hover: rgba(255, 255, 255, 0.1);
+  --badge-bg: rgba(255, 255, 255, 0.08);
+  --neutral-hover: rgba(255, 255, 255, 0.08);
   --neutral-solid: rgba(255, 255, 255, 0.12);
   --overlay-bg: rgba(5, 8, 12, 0.72);
-  --glow-color: rgba(245, 158, 11, 0.35);
-}
-
-/* THEME 2: Sổ Giấy Kraft (Vintage Parchment) */
-[data-theme="paper"] {
-  --bg-body: #f4eee3;
-  --surface: #fdfaf4;
-  --surface-grad: linear-gradient(145deg, #fdfaf4 0%, #f6efe2 100%);
-  --surface-glass: rgba(253, 250, 244, 0.9);
-  --text-main: #2b231c;
-  --text-muted: #736456;
-  --text-lighter: #9e8e7e;
-  --primary: #945827;
-  --success: #2e7d32;
-  --danger: #c62828;
-  --warning: #b45309;
-  --border: rgba(100, 75, 50, 0.18);
-  --border-card: rgba(100, 75, 50, 0.1);
-  --table-header-bg: #ece3d3;
-  --table-row-hover: #e4d8c4;
-  --shadow-card: 0 4px 16px rgba(80, 60, 40, 0.08);
-  --shadow-pressed: 0 2px 8px rgba(80, 60, 40, 0.05);
-  --badge-bg: rgba(148, 88, 39, 0.1);
-  --neutral-hover: rgba(100, 75, 50, 0.06);
-  --neutral-solid: rgba(100, 75, 50, 0.12);
-  --overlay-bg: rgba(43, 35, 28, 0.65);
-  --glow-color: rgba(148, 88, 39, 0.2);
-}
-
-/* THEME 3: Warm Vàng Mật Ong (Golden Sand) */
-[data-theme="warm_gold"] {
-  --bg-body: #faf5eb;
-  --surface: #ffffff;
-  --surface-grad: linear-gradient(145deg, #ffffff 0%, #fcf6eb 100%);
-  --surface-glass: rgba(255, 255, 255, 0.92);
-  --text-main: #2e2619;
-  --text-muted: #786850;
-  --text-lighter: #a09075;
-  --primary: #d97706;
-  --success: #15803d;
-  --danger: #dc2626;
-  --warning: #b45309;
-  --border: rgba(180, 130, 40, 0.18);
-  --border-card: rgba(180, 130, 40, 0.1);
-  --table-header-bg: #f4ecd8;
-  --table-row-hover: #ece1c7;
-  --shadow-card: 0 4px 16px rgba(180, 130, 40, 0.08);
-  --shadow-pressed: 0 2px 8px rgba(180, 130, 40, 0.05);
-  --badge-bg: rgba(217, 119, 6, 0.12);
-  --neutral-hover: rgba(217, 119, 6, 0.06);
-  --neutral-solid: rgba(217, 119, 6, 0.12);
-  --overlay-bg: rgba(46, 38, 25, 0.65);
-  --glow-color: rgba(217, 119, 6, 0.25);
-}
-
-/* THEME 4: Cà Phê Espresso (Dark Mocha) */
-[data-theme="coffee"] {
-  --bg-body: #161311;
-  --surface: #221d1a;
-  --surface-grad: linear-gradient(145deg, #28221e 0%, #1c1815 100%);
-  --surface-glass: rgba(34, 29, 26, 0.9);
-  --text-main: #f5eee6;
-  --text-muted: #a89a8f;
-  --text-lighter: #7a6e64;
-  --primary: #c28e5c;
-  --success: #4ade80;
-  --danger: #f87171;
-  --warning: #d97706;
-  --border: rgba(194, 142, 92, 0.18);
-  --border-card: rgba(194, 142, 92, 0.1);
-  --table-header-bg: #2a2420;
-  --table-row-hover: #362e2a;
-  --shadow-card: 0 8px 24px rgba(0, 0, 0, 0.35);
-  --shadow-pressed: 0 4px 12px rgba(0, 0, 0, 0.25);
-  --badge-bg: rgba(194, 142, 92, 0.15);
-  --neutral-hover: rgba(255, 255, 255, 0.06);
-  --neutral-solid: rgba(255, 255, 255, 0.1);
-  --overlay-bg: rgba(10, 8, 7, 0.78);
-  --glow-color: rgba(194, 142, 92, 0.3);
-}
-
-/* THEME 5: Mực E-Ink (Editorial Monochrome) */
-[data-theme="eink"] {
-  --bg-body: #f4f4f4;
-  --surface: #ffffff;
-  --surface-grad: linear-gradient(145deg, #ffffff 0%, #f7f7f7 100%);
-  --surface-glass: rgba(255, 255, 255, 0.95);
-  --text-main: #111111;
-  --text-muted: #555555;
-  --text-lighter: #888888;
-  --primary: #1f2937;
-  --success: #15803d;
-  --danger: #b91c1c;
-  --warning: #4b5563;
-  --border: rgba(0, 0, 0, 0.15);
-  --border-card: rgba(0, 0, 0, 0.08);
-  --table-header-bg: #e8e8e8;
-  --table-row-hover: #dddddd;
-  --shadow-card: 0 2px 12px rgba(0, 0, 0, 0.06);
-  --shadow-pressed: 0 1px 4px rgba(0, 0, 0, 0.04);
-  --badge-bg: rgba(0, 0, 0, 0.08);
-  --neutral-hover: rgba(0, 0, 0, 0.05);
-  --neutral-solid: rgba(0, 0, 0, 0.1);
-  --overlay-bg: rgba(0, 0, 0, 0.6);
-  --glow-color: rgba(31, 41, 55, 0.15);
-}
-
-/* THEME 6: Thảo Mộc Xô Thơm (Sage & Olive) */
-[data-theme="sage"] {
-  --bg-body: #111613;
-  --surface: #1b231e;
-  --surface-grad: linear-gradient(145deg, #212b25 0%, #161d19 100%);
-  --surface-glass: rgba(27, 35, 30, 0.9);
-  --text-main: #e8f0eb;
-  --text-muted: #8fa597;
-  --text-lighter: #657b6d;
-  --primary: #52a373;
-  --success: #4ade80;
-  --danger: #f87171;
-  --warning: #a3e635;
-  --border: rgba(82, 163, 115, 0.2);
-  --border-card: rgba(82, 163, 115, 0.1);
-  --table-header-bg: #222d26;
-  --table-row-hover: #2c3a32;
-  --shadow-card: 0 8px 24px rgba(0, 0, 0, 0.35);
-  --shadow-pressed: 0 4px 12px rgba(0, 0, 0, 0.25);
-  --badge-bg: rgba(82, 163, 115, 0.15);
-  --neutral-hover: rgba(255, 255, 255, 0.06);
-  --neutral-solid: rgba(255, 255, 255, 0.1);
-  --overlay-bg: rgba(6, 10, 8, 0.78);
-  --glow-color: rgba(82, 163, 115, 0.3);
+  --glow-color: rgba(59, 130, 246, 0.35);
 }
 
 /* Khóa chặn hoàn toàn thuật toán Force Dark / Tự đảo màu của Android WebView & Chrome */
-[data-theme="light"],
-[data-theme="paper"],
-[data-theme="warm_gold"],
-[data-theme="eink"] {
+[data-theme="light"] {
   color-scheme: only light;
 }
 
-[data-theme="dark"],
-[data-theme="coffee"],
-[data-theme="sage"] {
+[data-theme="dark"] {
   color-scheme: only dark;
 }
 
@@ -2178,9 +2058,9 @@ body.cam-active #qr-log-list {
 .grid-card.full-width { grid-column: span 2; flex-direction: row; align-items: center; padding: 14px 16px; }
 .grid-card.full-width .grid-icon { margin-bottom: 0; margin-right: 14px; width: 40px; height: 40px; font-size: 20px; }
 .grid-card.full-width .grid-text { flex: 1; }
-.bottom-nav { display: flex; justify-content: space-around; align-items: center; padding: 6px 4px calc(env(safe-area-inset-bottom, 12px) + 6px); position: fixed; bottom: 0; left: 0; right: 0; z-index: 100; background: #ffffff; border-top: 1px solid #e2e8f0; border-radius: 0; box-shadow: none; }
-.nav-item { display: flex; flex-direction: column; align-items: center; justify-content: center; color: #64748b; cursor: pointer; transition: all 0.15s ease; width: auto; min-width: 58px; background: transparent; border: none; padding: 5px 12px; border-radius: 12px; }
-.nav-item.active { background: rgba(37, 99, 235, 0.08); color: #2563eb; }
+.bottom-nav { display: flex; justify-content: space-around; align-items: center; padding: 6px 4px calc(env(safe-area-inset-bottom, 12px) + 6px); position: fixed; bottom: 0; left: 0; right: 0; z-index: 100; background: var(--surface); border-top: 1px solid var(--border-card); border-radius: 0; box-shadow: none; }
+.nav-item { display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--row-muted); cursor: pointer; transition: all 0.15s ease; width: auto; min-width: 58px; background: transparent; border: none; padding: 5px 12px; border-radius: 12px; }
+.nav-item.active { background: var(--primary-soft); color: var(--primary); }
 .nav-icon { font-size: 20px; margin-bottom: 2px; transition: transform 0.15s; }
 .nav-item:active .nav-icon { transform: scale(0.9); }
 .nav-label { font-size: 10px; font-weight: 700; letter-spacing: 0.1px; white-space: nowrap; }
@@ -2893,8 +2773,8 @@ body { padding: 0 !important; background: var(--bg-body) !important; color: var(
   height: 44px;
   min-height: 44px;
   margin: 0;
-  background: #eff6ff;
-  border: 1px solid #bfdbfe;
+  background: var(--primary-soft);
+  border: 1px solid var(--border-strong);
   border-radius: 12px;
   box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05), 0 4px 10px rgba(37, 99, 235, 0.06);
   display: flex;
@@ -2917,14 +2797,14 @@ body { padding: 0 !important; background: var(--bg-body) !important; color: var(
 }
 
 .btp-subcam-chip-mode:active {
-  background: rgba(219, 234, 254, 0.5);
+  background: var(--primary-soft);
 }
 
 .btp-scanned-code {
   font-family: "IBM Plex Mono", monospace;
   font-size: 14px;
   font-weight: 700;
-  color: #1e40af;
+  color: var(--primary-text);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -2971,7 +2851,7 @@ body { padding: 0 !important; background: var(--bg-body) !important; color: var(
   background: transparent !important;
   font-size: 13.5px !important;
   font-weight: 600 !important;
-  color: #0f172a !important;
+  color: var(--row-text) !important;
   padding: 0 !important;
   margin: 0 !important;
   height: auto !important;
@@ -2980,7 +2860,7 @@ body { padding: 0 !important; background: var(--bg-body) !important; color: var(
 }
 
 .btp-subcam-input-mode input::placeholder {
-  color: #94a3b8 !important;
+  color: var(--text-lighter) !important;
   font-weight: 400 !important;
   font-family: inherit;
 }
@@ -3010,10 +2890,10 @@ body { padding: 0 !important; background: var(--bg-body) !important; color: var(
 
 /* ── 3. NHẬT KÝ QUÉT: GỘP MÃ TRÙNG (×3) + ACCORDION + VUỐT TRÁI ĐỂ XÓA ── */
 .btp-log-card {
-  background: #ffffff;
+  background: var(--surface);
   border-radius: 16px;
-  border: 1px solid #d9dfe7 !important;
-  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06), 0 4px 12px rgba(15, 23, 42, 0.06) !important;
+  border: 1px solid var(--border-card) !important;
+  box-shadow: var(--shadow-card) !important;
   padding: 0 !important;
   display: flex;
   flex-direction: column;
@@ -3030,8 +2910,8 @@ body { padding: 0 !important; background: var(--bg-body) !important; color: var(
   align-items: center;
   padding: 10px 14px;
   margin: 0;
-  background: #f8fafc;
-  border-bottom: 1px solid #e2e8f0;
+  background: var(--surface-2);
+  border-bottom: 1px solid var(--border-card);
   border-top-left-radius: 15px;
   border-top-right-radius: 15px;
 }
@@ -3039,7 +2919,7 @@ body { padding: 0 !important; background: var(--bg-body) !important; color: var(
 .btp-log-card-title {
   font-size: 12px;
   font-weight: 700;
-  color: #1e293b;
+  color: var(--row-text);
   letter-spacing: 0.3px;
   display: inline-flex;
   align-items: center;
@@ -3054,8 +2934,8 @@ body { padding: 0 !important; background: var(--bg-body) !important; color: var(
 .btp-log-card-badge {
   font-size: 12px;
   font-weight: 700;
-  color: #64748b;
-  background: #f1f5f9;
+  color: var(--row-muted);
+  background: var(--surface);
   padding: 2px 8px;
   border-radius: 8px;
 }
@@ -3071,7 +2951,7 @@ body { padding: 0 !important; background: var(--bg-body) !important; color: var(
 
 .btp-empty-log {
   text-align: center;
-  color: #94a3b8;
+  color: var(--text-lighter);
   font-size: 13px;
   padding: 32px 10px;
 }
@@ -3080,19 +2960,19 @@ body { padding: 0 !important; background: var(--bg-body) !important; color: var(
 .btp-swipe-container {
   position: relative;
   overflow: hidden;
-  border-bottom: 1px solid #f1f5f9;
-  background: #ffffff;
+  border-bottom: 1px solid var(--border-card);
+  background: var(--surface);
 }
 
 .btp-swipe-container:last-child {
   border-bottom: none;
 }
 
-/* Nền xám xanh nhạt dịu mắt #e8ecf1 CHỈ áp dụng ở trang quét camera, không áp dụng ở trang bắt đầu */
+/* Nền trang quét áp dụng theo biến --bg-scan của từng theme */
 body.cam-active #btpPage.active,
 body.cam-active #quetQR.active,
 body.cam-active #chiFor.active {
-  background: #e8ecf1 !important;
+  background: var(--bg-scan) !important;
 }
 
 .btp-swipe-row-wrap {
@@ -3111,7 +2991,7 @@ body.cam-active #chiFor.active {
   align-items: center;
   gap: 6px;
   padding: 10px 6px;
-  background: #ffffff;
+  background: var(--surface);
   transition: transform 0.2s cubic-bezier(0.2, 0.9, 0.3, 1);
   cursor: pointer;
   user-select: none;
@@ -3121,7 +3001,7 @@ body.cam-active #chiFor.active {
 .btp-col-dot {
   font-size: 12px;
   font-weight: 600;
-  color: #94a3b8;
+  color: var(--text-lighter);
   text-align: left;
 }
 
@@ -3136,7 +3016,7 @@ body.cam-active #chiFor.active {
   font-family: "IBM Plex Mono", monospace;
   font-size: 13px;
   font-weight: 700;
-  color: #0f172a;
+  color: var(--row-text);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -3146,7 +3026,7 @@ body.cam-active #chiFor.active {
   font-size: 11px;
   font-weight: 700;
   color: #2563eb;
-  background: rgba(37, 99, 235, 0.08);
+  background: var(--primary-soft);
   padding: 1px 6px;
   border-radius: 6px;
   flex-shrink: 0;
@@ -3155,7 +3035,7 @@ body.cam-active #chiFor.active {
 .btp-col-kg {
   font-size: 13.5px;
   font-weight: 700;
-  color: #0f172a;
+  color: var(--row-text);
   text-align: right;
   white-space: nowrap;
 }
@@ -3163,13 +3043,13 @@ body.cam-active #chiFor.active {
 .btp-col-gio {
   font-size: 11px;
   font-weight: 600;
-  color: #475569;
+  color: var(--row-muted);
   text-align: right;
   white-space: nowrap;
 }
 
 .btp-chevron {
-  color: #94a3b8;
+  color: var(--text-lighter);
   font-size: 14px;
   transition: transform 0.2s;
   text-align: center;
@@ -3212,11 +3092,11 @@ body.cam-active #chiFor.active {
 
 /* Ngăn chi tiết khi bung mở accordion */
 .btp-group-details {
-  background: #f8fafc;
+  background: var(--surface-2);
   border-radius: 8px;
   padding: 4px 6px;
   margin: 2px 4px 6px 4px;
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--border-card);
 }
 
 .btp-sub-item {
@@ -3225,7 +3105,7 @@ body.cam-active #chiFor.active {
   align-items: center;
   gap: 6px;
   padding: 6px 4px;
-  border-bottom: 1px dashed #e2e8f0;
+  border-bottom: 1px dashed var(--border-card);
   box-sizing: border-box;
 }
 
@@ -3236,7 +3116,7 @@ body.cam-active #chiFor.active {
 .btp-sub-stt {
   font-size: 11px;
   font-weight: 600;
-  color: #94a3b8;
+  color: var(--text-lighter);
   text-align: left;
 }
 
@@ -3244,7 +3124,7 @@ body.cam-active #chiFor.active {
   font-family: "IBM Plex Mono", monospace;
   font-size: 12px;
   font-weight: 700;
-  color: #1e293b;
+  color: var(--row-text);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -3253,7 +3133,7 @@ body.cam-active #chiFor.active {
 .btp-sub-kg {
   font-size: 12.5px;
   font-weight: 700;
-  color: #0f172a;
+  color: var(--row-text);
   text-align: right;
   white-space: nowrap;
 }
@@ -3261,7 +3141,7 @@ body.cam-active #chiFor.active {
 .btp-sub-gio {
   font-size: 11px;
   font-weight: 600;
-  color: #475569;
+  color: var(--row-muted);
   text-align: right;
   white-space: nowrap;
 }
@@ -3291,10 +3171,10 @@ body.cam-active #chiFor.active {
 .manual-input-box {
   width: 100%;
   box-sizing: border-box;
-  background: #ffffff;
-  border: 1px solid #d9dfe7;
+  background: var(--surface);
+  border: 1px solid var(--border-card);
   border-radius: 16px;
-  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06), 0 4px 12px rgba(15, 23, 42, 0.06);
+  box-shadow: var(--shadow-card);
   padding: 10px 14px 12px 14px;
   margin-bottom: 8px;
   height: calc(40vh + 46px);
@@ -3333,9 +3213,9 @@ body.cam-active #chiFor.active {
 }
 
 .btn-quick-cam {
-  background: rgba(37, 99, 235, 0.08);
-  color: #2563eb;
-  border: 1px solid rgba(37, 99, 235, 0.25);
+  background: var(--primary-soft);
+  color: var(--primary);
+  border: 1px solid var(--border-strong);
   border-radius: 20px;
   padding: 4px 12px;
   font-size: 12px;
@@ -3384,9 +3264,9 @@ body.cam-active #chiFor.active {
   flex: 1;
   height: 38px;
   border-radius: 10px;
-  border: 1px solid #d9dfe7;
-  background: #f8fafc;
-  color: #475569;
+  border: 1px solid var(--border-card);
+  background: var(--surface-2);
+  color: var(--row-muted);
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
@@ -3399,7 +3279,7 @@ body.cam-active #chiFor.active {
 }
 
 .btn-sub-action:active {
-  background: #e2e8f0;
+  background: var(--border-card);
   transform: scale(0.97);
 }
 

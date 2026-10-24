@@ -10,17 +10,8 @@
     (function() {
       try {
         var t = localStorage.getItem('user_theme') || 'dark';
-        var legacyMap = {
-          'cyberpunk': 'paper',
-          'matrix': 'warm_gold',
-          'volcano': 'coffee',
-          'ocean': 'eink',
-          'tokyo': 'sage'
-        };
-        if (legacyMap[t]) t = legacyMap[t];
-        var validThemes = ['dark', 'light', 'paper', 'warm_gold', 'coffee', 'eink', 'sage'];
-        if (validThemes.indexOf(t) === -1) {
-          t = (t === 'light' ? 'light' : 'dark');
+        if (t !== 'light' && t !== 'dark') {
+          t = 'dark';
         }
         document.documentElement.setAttribute('data-theme', t);
       } catch (e) {}
@@ -200,7 +191,7 @@
     <div class="title" id="header-title">Trung Vương</div>
   </div>
   <div class="header-right" style="display:flex; gap:8px; align-items:center;">
-    <button class="theme-toggle" id="btn-theme" title="Chọn Giao Diện (Theme)" onclick="moModalTheme()">
+    <button class="theme-toggle" id="btn-theme" title="Chuyển Giao Diện Sáng/Tối" onclick="chuyenThemeSangToi()">
       <i class="ti ti-moon"></i>
     </button>
   </div>
@@ -1588,26 +1579,20 @@
     const htmlEl = document.documentElement;
 
     const danhSachThemes = [
-      { id: 'dark', ten: 'Obsidian Amber (Tối)', moTa: 'Nền than chì & Vàng Hổ Phách sang trọng', bg: '#0f172a', accent: '#f59e0b', icon: 'ti-moon', metaColor: '#0f172a' },
-      { id: 'light', ten: 'Sáng Thanh Lịch (Light)', moTa: 'Nền ngà sáng, tương phản đậm rõ ngoài trời', bg: '#f9f7f1', accent: '#3b82f6', icon: 'ti-sun', metaColor: '#f9f7f1' },
-      { id: 'paper', ten: 'Sổ Giấy Kraft (Parchment)', moTa: 'Giấy mộc ngà vintage, cực kỳ êm mắt', bg: '#f4eee3', accent: '#945827', icon: 'ti-notebook', metaColor: '#f4eee3' },
-      { id: 'warm_gold', ten: 'Warm Vàng Mật Ong', moTa: 'Be ấm & Vàng Hổ Phách thư thái', bg: '#faf5eb', accent: '#d97706', icon: 'ti-sun-high', metaColor: '#faf5eb' },
-      { id: 'coffee', ten: 'Cà Phê Espresso (Mocha)', moTa: 'Nâu hạt cà phê & Caramel ấm cúng ca đêm', bg: '#161311', accent: '#c28e5c', icon: 'ti-coffee', metaColor: '#161311' },
-      { id: 'eink', ten: 'Mực E-Ink (Editorial)', moTa: 'Phong cách máy đọc sách, chống mỏi mắt', bg: '#f4f4f4', accent: '#1f2937', icon: 'ti-file-text', metaColor: '#f4f4f4' },
-      { id: 'sage', ten: 'Thảo Mộc Xô Thơm (Olive)', moTa: 'Rêu rừng trầm & Xanh thảo mộc tự nhiên', bg: '#111613', accent: '#52a373', icon: 'ti-leaf', metaColor: '#111613' }
+      { id: 'dark', ten: 'Obsidian Amber (Tối)', moTa: 'Nền than chì & Ánh sáng xanh sang trọng, dịu mắt', bg: '#0f172a', accent: '#3b82f6', icon: 'ti-moon', metaColor: '#0f172a' },
+      { id: 'light', ten: 'Sáng Thanh Lịch (Light)', moTa: 'Nền ngà sáng, tương phản đậm rõ ngoài trời', bg: '#f9f7f1', accent: '#2563eb', icon: 'ti-sun', metaColor: '#f9f7f1' }
     ];
 
     function layThemeHienTai() {
       const cur = htmlEl.getAttribute('data-theme') || 'dark';
-      const tim = danhSachThemes.find(t => t.id === cur);
-      return tim || danhSachThemes[0];
+      return danhSachThemes.find(t => t.id === cur) || danhSachThemes[0];
     }
     
     function capNhatIconTheme() {
       const cur = layThemeHienTai();
       if (btnTheme) {
         btnTheme.innerHTML = `<i class="ti ${cur.icon}"></i>`;
-        btnTheme.title = `Giao diện: ${cur.ten} - Bấm để đổi`;
+        btnTheme.title = `Giao diện: ${cur.ten} - Bấm để chuyển`;
       }
       const metaTheme = document.querySelector('meta[name="theme-color"]');
       if (metaTheme) {
@@ -1615,6 +1600,17 @@
       }
     }
     capNhatIconTheme();
+
+    window.chuyenThemeSangToi = function() {
+      const cur = htmlEl.getAttribute('data-theme') || 'dark';
+      const nextTheme = (cur === 'dark') ? 'light' : 'dark';
+      htmlEl.setAttribute('data-theme', nextTheme);
+      try {
+        localStorage.setItem('user_theme', nextTheme);
+      } catch (e) {}
+      capNhatIconTheme();
+      if (navigator.vibrate) navigator.vibrate(12);
+    };
 
     function renderDanhSachTheme() {
       const listEl = document.getElementById('theme-options-list');
@@ -1685,7 +1681,7 @@
     };
 
     if (btnTheme) {
-      btnTheme.addEventListener('click', window.moModalTheme);
+      btnTheme.addEventListener('click', window.chuyenThemeSangToi);
     }
 
     let startY = 0;
