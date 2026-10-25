@@ -364,7 +364,7 @@
       </button>
     </div>
 
-    <div style="background:rgba(59, 130, 246, 0.08); border:1px dashed rgba(59, 130, 246, 0.3); border-radius:12px; padding:12px; font-size:12px; color:#93c5fd; line-height:1.4;">
+    <div class="phuchoi-hint-box" style="background:rgba(59, 130, 246, 0.1); border:1px dashed rgba(59, 130, 246, 0.4); border-radius:12px; padding:12px; font-size:12.5px; color:var(--text-main, #e2e8f0); line-height:1.45;">
       💡 <strong>Cách làm:</strong> Bấm nút màu cam ở trên ➔ Chọn thư mục <strong>Download (Tải xuống)</strong> trên điện thoại ➔ Bấm vào file <strong>QuanLyKho_AutoBackup.json</strong> để phục hồi nguyên vẹn kho hàng.
     </div>
 
@@ -404,12 +404,13 @@
       <div class="row">
         <div class="tk-ten-wrap" style="flex:1">
           <input type="text" id="tk-ten" placeholder="Nhập tên để tra tồn" autocomplete="off"
-            oninput="tkOnInputTen()" onkeydown="tkOnKeydownTen(event)">
+            onfocus="tkHienGoiYNhanh()" oninput="tkOnInputTen()" onkeydown="tkOnKeydownTen(event)">
           <button type="button" class="tk-clear-btn" id="tk-clear-btn" onclick="tkXoaOTen()" aria-label="Xoá">✕</button>
           <div id="tk-dropdown" class="tk-dropdown"></div>
         </div>
         <button class="btn btn-blue" onclick="tkTimTonKho()">Tìm</button>
       </div>
+      <div id="tk-freq-chips" class="tk-freq-chips"></div>
     </div>
 
     <div id="tk-loading" style="display:none;justify-content:center;padding:20px;">
@@ -426,33 +427,34 @@
   <div class="card">
     <h3 id="lichsu-chitiet-tieude">Chi tiết phiên</h3>
 
-    <div class="btp-tabs" style="display:flex; gap:8px; margin-bottom:12px;">
-      <button id="ls-cx1-tab-chitiet" class="btn btn-blue" style="flex:1; border-radius:8px; margin:0; padding:8px; font-size:13px; font-weight:700;" onclick="toggleLichSuCX1View('chitiet')">Chi Tiết</button>
-      <button id="ls-cx1-tab-tonghop" class="btn" style="flex:1; border-radius:8px; margin:0; padding:8px; font-size:13px; font-weight:700; background:transparent; border:1px solid var(--primary); color:var(--primary);" onclick="toggleLichSuCX1View('tonghop')">Tổng Hợp</button>
+    <div style="display:flex; background:var(--surface-2); border:1px solid var(--border-card); border-radius:10px; padding:3px; gap:4px; margin-bottom:12px;">
+      <button id="ls-cx1-tab-chitiet" class="btn" style="flex:1; border-radius:8px; margin:0; padding:7px 12px; font-size:13px; font-weight:700; background:var(--surface); color:var(--row-text); border:none; box-shadow:0 2px 6px rgba(0,0,0,0.06);" onclick="toggleLichSuCX1View('chitiet')">Chi Tiết</button>
+      <button id="ls-cx1-tab-tonghop" class="btn" style="flex:1; border-radius:8px; margin:0; padding:7px 12px; font-size:13px; font-weight:700; background:transparent; color:var(--row-muted); border:none;" onclick="toggleLichSuCX1View('tonghop')">Tổng Hợp</button>
     </div>
 
     <div id="ls-cx1-wrap-chitiet" class="table-sticky-wrap">
-      <div class="cx5-list-container">
-        <div class="cx5-list-header" style="display:flex; width: 100%; box-sizing: border-box; padding:10px; background:var(--card-raised); border-bottom:2px solid var(--steel); position:sticky; top:0; z-index:2;">
-          <div style="flex:0.8; font-weight:700; color:var(--cream);">Đợt</div>
-          <div style="flex:1.5; font-weight:700; color:var(--cream);">QC</div>
-          <div style="flex:0.7; font-weight:700; color:var(--cream); text-align:center;">Bao</div>
-          <div style="flex:1; font-weight:700; color:var(--cream); text-align:right;">KG</div>
+      <div class="kq-card-wrap">
+        <div class="kq-table-header">
+          <div style="flex:0.8;">Đợt</div>
+          <div style="flex:1.8;">QC</div>
+          <div style="flex:0.7; text-align:center;">Bao</div>
+          <div style="flex:1; text-align:right;">KG</div>
+          <div style="width:22px;"></div>
         </div>
         <div id="lichsu-tbody-dot" style="display:flex; flex-direction:column; width:100%;"></div>
-        <div id="lichsu-tfoot-dot" class="table-sticky-tfoot"></div>
+        <div id="lichsu-tfoot-dot" class="kq-table-footer"></div>
       </div>
     </div>
 
     <div id="ls-cx1-wrap-gom" class="table-sticky-wrap" style="display:none;">
-      <div class="cx5-list-container">
-        <div class="cx5-list-header" style="display:flex; width: 100%; box-sizing: border-box; padding:10px; background:var(--card-raised); border-bottom:2px solid var(--steel); position:sticky; top:0; z-index:2;">
-          <div style="flex:2.3; font-weight:700; color:var(--cream);">QC</div>
-          <div style="flex:0.7; font-weight:700; color:var(--cream); text-align:center;">Bao</div>
-          <div style="flex:1; font-weight:700; color:var(--cream); text-align:right;">KG</div>
+      <div class="kq-card-wrap">
+        <div class="kq-table-header">
+          <div style="flex:2.3;">QC</div>
+          <div style="flex:0.7; text-align:center;">Bao</div>
+          <div style="flex:1; text-align:right;">KG</div>
         </div>
         <div id="lichsu-tbody-gom" style="display:flex; flex-direction:column; width:100%;"></div>
-        <div id="lichsu-tfoot-gom" class="table-sticky-tfoot"></div>
+        <div id="lichsu-tfoot-gom" class="kq-table-footer"></div>
       </div>
     </div>
 
@@ -472,25 +474,25 @@
     <input type="date" id="chon-ngay" style="margin-bottom:10px;">
 
     <label>Loại giao dịch</label>
-    <div class="custom-select" style="margin-bottom:16px;">
-      <button type="button" id="chon-loai-btn" class="custom-select-btn" onclick="toggleDropdownLoaiQR(event)">
+    <div class="custom-select qr-chip-select-wrap" style="margin-bottom:16px;">
+      <button type="button" id="chon-loai-btn" class="custom-select-btn" style="display:none;" onclick="toggleDropdownLoaiQR(event)">
         Chọn loại
       </button>
 
-      <div id="chon-loai-list" class="custom-select-list">
-        <div class="group-title">Nhập</div>
-        <div class="custom-option" data-value="Nhập SX">Nhập SX</div>
-        <div class="custom-option" data-value="Nhập Trả">Nhập Trả</div>
-        <div class="custom-option" data-value="Nhập For">Nhập For</div>
+      <div id="chon-loai-list" class="custom-select-list qr-loai-chip-grid">
+        <div class="group-title qr-chip-group-nhap"><i class="ti ti-arrow-down-left"></i> Nhập</div>
+        <div class="custom-option qr-chip-nhap" data-value="Nhập SX" onclick="chonLoaiQR('Nhập SX', event)">Nhập SX</div>
+        <div class="custom-option qr-chip-nhap" data-value="Nhập Trả" onclick="chonLoaiQR('Nhập Trả', event)">Nhập Trả</div>
+        <div class="custom-option qr-chip-nhap" data-value="Nhập For" onclick="chonLoaiQR('Nhập For', event)">Nhập For</div>
 
-        <div class="group-title">Xuất</div>
-        <div class="custom-option" data-value="Xuất SX">Xuất SX</div>
-        <div class="custom-option" data-value="Xuất Trả">Xuất Trả</div>
-        <div class="custom-option" data-value="Xuất Gia Công">Xuất Gia Công</div>
-        <div class="custom-option" data-value="Xuất Phế">Xuất Vá</div>
-        <div class="custom-option" data-value="Xuất Bán">Xuất Bán</div>
-        <div class="custom-option" data-value="Bình Thuận">Bình Thuận</div>
-        <div class="custom-option" data-value="Xuất For">Xuất For</div>
+        <div class="group-title qr-chip-group-xuat"><i class="ti ti-arrow-up-right"></i> Xuất</div>
+        <div class="custom-option qr-chip-xuat" data-value="Xuất SX" onclick="chonLoaiQR('Xuất SX', event)">Xuất SX</div>
+        <div class="custom-option qr-chip-xuat" data-value="Xuất Trả" onclick="chonLoaiQR('Xuất Trả', event)">Xuất Trả</div>
+        <div class="custom-option qr-chip-xuat" data-value="Xuất Gia Công" onclick="chonLoaiQR('Xuất Gia Công', event)">Xuất Gia Công</div>
+        <div class="custom-option qr-chip-xuat" data-value="Xuất Phế" onclick="chonLoaiQR('Xuất Phế', event)">Xuất Vá</div>
+        <div class="custom-option qr-chip-xuat" data-value="Xuất Bán" onclick="chonLoaiQR('Xuất Bán', event)">Xuất Bán</div>
+        <div class="custom-option qr-chip-xuat" data-value="Bình Thuận" onclick="chonLoaiQR('Bình Thuận', event)">Bình Thuận</div>
+        <div class="custom-option qr-chip-xuat" data-value="Xuất For" onclick="chonLoaiQR('Xuất For', event)">Xuất For</div>
       </div>
     </div>
 
@@ -516,17 +518,18 @@
         </div>
       </div>
 
-      <!-- Góc trên trái: Đợt -->
-      <div class="cam-hud-top-left">
+      <!-- Góc trên trái: Đợt + Tổng số lượng -->
+      <div class="cam-hud-top-left" style="display:flex; align-items:center; gap:6px;">
         <span id="qr-status" class="cam-status-pill">
           <div class="cam-status-dot"></div>
           <span>Đợt 1</span>
         </span>
+        <span id="qr-hud-count" class="cam-hud-counter-pill">0 bao</span>
       </div>
 
       <!-- Góc trên phải: Đèn pin + Quét trùng -->
       <div class="cam-hud-top-right">
-        <button id="btn-flash-qr" type="button" class="cam-hud-btn" onclick="toggleFlashlightHUD('reader', this)" title="Bật/Tắt Đèn pin">
+        <button id="btn-flash-qr" type="button" class="cam-hud-btn" style="display:none;" onclick="toggleFlashlightHUD('reader', this)" title="Bật/Tắt Đèn pin">
           <svg class="torch-svg" viewBox="0 0 24 24" width="20" height="20" fill="none" style="display:block; transform: rotate(-35deg);">
             <path d="M7 3h10l-2 6H9L7 3z" fill="#f59e0b" stroke="#fbbf24" stroke-width="1.3"/>
             <path d="M9 9v9a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2V9H9z" fill="#334155" stroke="#94a3b8" stroke-width="1.3"/>
@@ -711,12 +714,12 @@
       </div>
     </div>
 
-    <button id="btn-gui-dulieu-qr" class="btn" style="width:100%; height:42px; font-size:14px; font-weight:700; margin:0 0 8px 0; background:linear-gradient(135deg, #f59e0b, #d97706); color:#1a1a2e; border:none; box-shadow:0 4px 12px rgba(245,158,11,0.4);" onclick="guiDuLieuQuetQR()"><i class="ti ti-cloud-upload"></i> Gửi dữ liệu lên Sheet</button>
+    <button id="btn-gui-dulieu-qr" class="btn" style="width:100%; height:44px; font-size:14px; font-weight:700; margin:0 0 8px 0; background:linear-gradient(135deg, #f59e0b, #d97706); color:#1a1a2e; border:none; box-shadow:0 4px 12px rgba(245,158,11,0.4);" onclick="guiDuLieuQuetQR()"><i class="ti ti-cloud-upload"></i> Gửi dữ liệu lên Sheet</button>
     <div style="display:flex; gap:8px; margin-bottom:8px;">
-      <button class="btn btn-green" style="flex:1; height:38px; font-size:13px; margin:0;" onclick="quetTiepQuetQR()">Quét tiếp</button>
-      <button class="btn btn-blue" style="flex:1; height:38px; font-size:13px; margin:0;" onclick="quetMoiQuetQR()">Quét mới</button>
+      <button class="btn btn-green" style="flex:1; height:42px; font-size:13.5px; margin:0;" onclick="quetTiepQuetQR()">Quét tiếp</button>
+      <button class="btn btn-blue" style="flex:1; height:42px; font-size:13.5px; margin:0;" onclick="quetMoiQuetQR()">Quét mới</button>
     </div>
-    <button class="btn btn-excel btn-full" style="height:38px; font-size:13px; margin:0;" onclick="xuatExcelQuetQR()"><i class="ti ti-file-spreadsheet"></i> Xuất Excel</button>
+    <button class="btn btn-excel btn-full" style="height:42px; font-size:13.5px; margin:0;" onclick="xuatExcelQuetQR()"><i class="ti ti-file-spreadsheet"></i> Xuất Excel</button>
   </div>
 </div>
 
@@ -744,25 +747,59 @@
       <button class="btn btn-excel btn-full" style="margin-top:8px" onclick="xuatExcelKiemKe()"><i class="ti ti-file-spreadsheet"></i> Xuất File Excel</button>
     </div>
     <div id="kk-cam" style="display:none; width:100%; max-width:600px; box-sizing:border-box; margin:0 auto; padding:6px 0;">
-      <div class="video-container" style="position:relative; width:100%; height:230px; background:#000; border-radius:16px; overflow:hidden; margin-top:12px; border: 2px solid var(--brass); box-sizing:border-box;">
+      <div id="kk-video-box" class="video-container btp-camera-main" style="margin-top:8px;">
         <video id="kk-reader" autoplay playsinline muted disablePictureInPicture style="position:absolute; width:100%; height:100%; object-fit:cover; transform:translateZ(0); will-change:transform;"></video>
+        <div id="kk-cam-flash-overlay" class="cam-flash-overlay"></div>
+
+        <!-- Khung ngắm Reticle 4 góc bo + laser scan -->
+        <div class="cam-reticle-overlay">
+          <div class="cam-reticle-box">
+            <div class="reticle-corner reticle-tl"></div>
+            <div class="reticle-corner reticle-tr"></div>
+            <div class="reticle-corner reticle-bl"></div>
+            <div class="reticle-corner reticle-br"></div>
+            <div class="reticle-laser-line"></div>
+          </div>
+        </div>
+
+        <div class="cam-hud-top-left" style="display:flex; align-items:center; gap:6px;">
+          <span class="cam-status-pill">
+            <div class="cam-status-dot"></div>
+            <span id="kk-dem">Đã quét: 0 mã</span>
+          </span>
+        </div>
+
         <div class="cam-hud-top-right">
-          <button type="button" class="cam-hud-btn" onclick="toggleFlashlightHUD('kk-reader', this)" title="Bật/Tắt Đèn Pin" aria-label="Bật/Tắt đèn pin">
+          <button type="button" class="cam-hud-btn" style="display:none;" onclick="toggleFlashlightHUD('kk-reader', this)" title="Bật/Tắt Đèn Pin" aria-label="Bật/Tắt đèn pin">
             <i class="ti ti-flashlight"></i>
           </button>
         </div>
-      </div>
-      <div style="display:flex; justify-content:space-between; align-items:center; padding:10px 0;">
-        <div class="cam-status-pill">
-          <span id="kk-dem" style="display:inline-flex; align-items:center; gap:6px; font-size:13px; font-weight:700;">
-            <div class="cam-status-dot"></div>
-            <span>Đã quét: 0 mã</span>
-          </span>
+
+        <div class="cam-hud-bottom-bar" style="justify-content:center;">
+          <button type="button" class="btn btn-blue" onclick="dungKiemKe()" title="Dừng & Lưu" aria-label="Dừng và lưu kiểm kê" style="height:40px; padding:0 20px; border-radius:20px; font-weight:700; display:inline-flex; align-items:center; gap:6px; margin:0;">
+            <i class="ti ti-device-floppy"></i> Hoàn tất & Lưu
+          </button>
         </div>
-        <div id="kk-status" class="scanner-status" style="margin:0; display:none;"></div>
-        <button type="button" class="btn btn-blue" onclick="dungKiemKe()" title="Dừng & Lưu" aria-label="Dừng và lưu kiểm kê" style="height:38px; padding:0 14px;">
-          <i class="ti ti-device-floppy"></i>
-        </button>
+      </div>
+
+      <div id="kk-status" class="scanner-status" style="margin:0; display:none;"></div>
+
+      <!-- Thanh hiển thị mã vừa quét -->
+      <div id="kk-subcam-bar" class="btp-subcam-bar">
+        <div class="btp-subcam-chip-mode">
+          <span id="kk-lock-status" class="btp-scanned-code">Chờ quét...</span>
+        </div>
+      </div>
+
+      <!-- Nhật ký kiểm kê trực tiếp (tối đa 30 mã mới nhất) -->
+      <div id="kk-log-container" class="btp-log-card">
+        <div class="btp-log-card-header">
+          <span class="btp-log-card-title"><i class="ti ti-clipboard-list"></i> NHẬT KÝ KIỂM KÊ</span>
+          <span id="kk-log-count" class="btp-log-card-badge">0 mã</span>
+        </div>
+        <div id="kk-log-list" class="btp-log-list-scroll">
+          <div class="btp-empty-log">Chưa có mã nào được quét</div>
+        </div>
       </div>
     </div>
   </div>
@@ -794,17 +831,18 @@
         </div>
       </div>
 
-      <!-- Góc trên trái: Đợt -->
-      <div class="cam-hud-top-left">
+      <!-- Góc trên trái: Đợt + Tổng số lượng -->
+      <div class="cam-hud-top-left" style="display:flex; align-items:center; gap:6px;">
         <span id="cx1-status" class="cam-status-pill">
           <div class="cam-status-dot"></div>
           <span>Đợt 1</span>
         </span>
+        <span id="cx1-hud-count" class="cam-hud-counter-pill">0 mã</span>
       </div>
 
       <!-- Góc trên phải: Đèn pin + Quét trùng -->
       <div class="cam-hud-top-right">
-        <button id="btn-flash-cx1" type="button" class="cam-hud-btn" onclick="toggleFlashlightHUD('cx1-reader', this)" title="Bật/Tắt Đèn pin">
+        <button id="btn-flash-cx1" type="button" class="cam-hud-btn" style="display:none;" onclick="toggleFlashlightHUD('cx1-reader', this)" title="Bật/Tắt Đèn pin">
           <svg class="torch-svg" viewBox="0 0 24 24" width="20" height="20" fill="none" style="display:block; transform: rotate(-35deg);">
             <path d="M7 3h10l-2 6H9L7 3z" fill="#f59e0b" stroke="#fbbf24" stroke-width="1.3"/>
             <path d="M9 9v9a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2V9H9z" fill="#334155" stroke="#94a3b8" stroke-width="1.3"/>
@@ -980,13 +1018,13 @@
       </div>
     </div>
 
-    <button id="btn-gui-dulieu-cx1" class="btn" style="width:100%; height:42px; font-size:14px; font-weight:700; margin:0 0 8px 0; background:linear-gradient(135deg, #f59e0b, #d97706); color:#1a1a2e; border:none; box-shadow:0 4px 12px rgba(245,158,11,0.4);" onclick="guiDuLieuCX1()"><i class="ti ti-cloud-upload"></i> Gửi dữ liệu lên Sheet</button>
+    <button id="btn-gui-dulieu-cx1" class="btn" style="width:100%; height:44px; font-size:14px; font-weight:700; margin:0 0 8px 0; background:linear-gradient(135deg, #f59e0b, #d97706); color:#1a1a2e; border:none; box-shadow:0 4px 12px rgba(245,158,11,0.4);" onclick="guiDuLieuCX1()"><i class="ti ti-cloud-upload"></i> Gửi dữ liệu lên Sheet</button>
     <div style="display:flex; gap:8px; margin-bottom:8px;">
-      <button class="btn btn-green" style="flex:1; height:38px; font-size:13px; margin:0;" onclick="quetTiepCX1()">Quét tiếp</button>
-      <button class="btn btn-blue" style="flex:1; height:38px; font-size:13px; margin:0;" onclick="quetMoiCX1()">Quét mới</button>
+      <button class="btn btn-green" style="flex:1; height:42px; font-size:13.5px; margin:0;" onclick="quetTiepCX1()">Quét tiếp</button>
+      <button class="btn btn-blue" style="flex:1; height:42px; font-size:13.5px; margin:0;" onclick="quetMoiCX1()">Quét mới</button>
     </div>
     <div style="display:flex; gap:8px;">
-      <button class="btn btn-excel btn-full" style="height:38px; font-size:13px; margin:0;" onclick="xuatExcelCX1()"><i class="ti ti-file-spreadsheet"></i> Xuất Excel</button>
+      <button class="btn btn-excel btn-full" style="height:42px; font-size:13.5px; margin:0;" onclick="xuatExcelCX1()"><i class="ti ti-file-spreadsheet"></i> Xuất Excel</button>
     </div>
   </div>
 </div>
@@ -997,13 +1035,13 @@
     <label>Ngày</label>
     <input type="date" id="btp-ngay" style="margin-bottom:10px;">
     <label>Phiên quét</label>
-    <div class="custom-select-wrap" style="margin-bottom:16px;">
+    <div class="custom-select-wrap btp-phien-chip-wrap" style="margin-bottom:16px;">
       <input type="hidden" id="btp-phien" value="1">
-      <div id="btp-phien-trigger" class="custom-select-trigger" onclick="toggleDropdownPhienBTP(event)">
+      <div id="btp-phien-trigger" class="custom-select-trigger" style="display:none;" onclick="toggleDropdownPhienBTP(event)">
         <span id="btp-phien-label">Phiên 1</span>
         <svg class="select-chevron" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 9l-7 7-7-7"/></svg>
       </div>
-      <div id="btp-phien-menu" class="custom-select-menu">
+      <div id="btp-phien-menu" class="custom-select-menu btp-phien-chip-bar">
         <div class="custom-select-item active" data-val="1" onclick="chonPhienBTP(1)">
           <span>Phiên 1</span>
           <i class="ti ti-check check-icon"></i>
@@ -1050,17 +1088,18 @@
         </div>
       </div>
 
-      <!-- Góc trên trái: Đợt -->
-      <div class="cam-hud-top-left">
+      <!-- Góc trên trái: Đợt + Tổng số lượng -->
+      <div class="cam-hud-top-left" style="display:flex; align-items:center; gap:6px;">
         <span id="btp-status" class="cam-status-pill">
           <div class="cam-status-dot"></div>
           <span>Đợt 1</span>
         </span>
+        <span id="btp-hud-count" class="cam-hud-counter-pill">0 mã</span>
       </div>
 
       <!-- Góc trên phải: Đèn pin + Quét trùng (vùng chạm 44px, kính mờ tối) -->
       <div class="cam-hud-top-right">
-        <button type="button" class="cam-hud-btn" onclick="toggleFlashlightHUD('btp-reader', this)" title="Bật/Tắt Đèn pin">
+        <button type="button" class="cam-hud-btn" style="display:none;" onclick="toggleFlashlightHUD('btp-reader', this)" title="Bật/Tắt Đèn pin">
           <svg class="torch-svg" viewBox="0 0 24 24" width="20" height="20" fill="none" style="display:block; transform: rotate(-35deg);">
             <path d="M7 3h10l-2 6H9L7 3z" fill="#f59e0b" stroke="#fbbf24" stroke-width="1.3"/>
             <path d="M9 9v9a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2V9H9z" fill="#334155" stroke="#94a3b8" stroke-width="1.3"/>
@@ -1222,12 +1261,12 @@
       </script>
     </div>
 
-    <button id="btn-gui-dulieu-btp" class="btn" style="width:100%; height:42px; font-size:14px; font-weight:700; margin:0 0 8px 0; background:linear-gradient(135deg, #f59e0b, #d97706); color:#1a1a2e; border:none; box-shadow:0 4px 12px rgba(245,158,11,0.4);" onclick="guiDuLieuBTP()"><i class="ti ti-cloud-upload"></i> Gửi dữ liệu lên Sheet</button>
+    <button id="btn-gui-dulieu-btp" class="btn" style="width:100%; height:44px; font-size:14px; font-weight:700; margin:0 0 8px 0; background:linear-gradient(135deg, #f59e0b, #d97706); color:#1a1a2e; border:none; box-shadow:0 4px 12px rgba(245,158,11,0.4);" onclick="guiDuLieuBTP()"><i class="ti ti-cloud-upload"></i> Gửi dữ liệu lên Sheet</button>
     <div style="display:flex; gap:8px; margin-bottom:8px;">
-      <button class="btn btn-green" style="flex:1; height:38px; font-size:13px; margin:0;" onclick="quetTiepBTP()">Quét tiếp</button>
-      <button class="btn btn-blue" style="flex:1; height:38px; font-size:13px; margin:0;" onclick="quetMoiBTP()">Quét mới</button>
+      <button class="btn btn-green" style="flex:1; height:42px; font-size:13.5px; margin:0;" onclick="quetTiepBTP()">Quét tiếp</button>
+      <button class="btn btn-blue" style="flex:1; height:42px; font-size:13.5px; margin:0;" onclick="quetMoiBTP()">Quét mới</button>
     </div>
-    <button class="btn btn-excel btn-full" style="height:38px; font-size:13px; margin:0;" onclick="xuatExcelBTP()"><i class="ti ti-file-spreadsheet"></i> Xuất Excel</button>
+    <button class="btn btn-excel btn-full" style="height:42px; font-size:13.5px; margin:0;" onclick="xuatExcelBTP()"><i class="ti ti-file-spreadsheet"></i> Xuất Excel</button>
   </div>
 </div>
 
@@ -1249,32 +1288,34 @@
   <div class="card">
     <h3 id="lichsu-btp-chitiet-tieude">Chi tiết Lịch sử BTP</h3>
 
-    <div class="btp-tabs" style="display:flex; gap:8px; margin-bottom:12px;">
-      <button id="ls-btp-tab-chitiet" class="btn btn-blue" style="flex:1; border-radius:8px; margin:0; padding:8px; font-size:13px; font-weight:700;" onclick="toggleLichSuBTPView('chitiet')">Chi Tiết</button>
-      <button id="ls-btp-tab-tonghop" class="btn" style="flex:1; border-radius:8px; margin:0; padding:8px; font-size:13px; font-weight:700; background:transparent; border:1px solid var(--primary); color:var(--primary);" onclick="toggleLichSuBTPView('tonghop')">Tổng Hợp</button>
+    <div style="display:flex; background:var(--surface-2); border:1px solid var(--border-card); border-radius:10px; padding:3px; gap:4px; margin-bottom:12px;">
+      <button id="ls-btp-tab-chitiet" class="btn" style="flex:1; border-radius:8px; margin:0; padding:7px 12px; font-size:13px; font-weight:700; background:var(--surface); color:var(--row-text); border:none; box-shadow:0 2px 6px rgba(0,0,0,0.06);" onclick="toggleLichSuBTPView('chitiet')">Chi Tiết</button>
+      <button id="ls-btp-tab-tonghop" class="btn" style="flex:1; border-radius:8px; margin:0; padding:7px 12px; font-size:13px; font-weight:700; background:transparent; color:var(--row-muted); border:none;" onclick="toggleLichSuBTPView('tonghop')">Tổng Hợp</button>
     </div>
 
     <div id="ls-btp-wrap-chitiet" class="table-sticky-wrap">
-      <div class="cx5-list-container">
-        <div class="cx5-list-header" style="display:flex; width: 100%; box-sizing: border-box; padding:10px; background:var(--card-raised); border-bottom:2px solid var(--steel); position:sticky; top:0; z-index:2;">
-          <div style="flex:1; font-weight:700; color:var(--cream);">Đợt</div>
-          <div style="flex:2; font-weight:700; color:var(--cream);">Đơn</div>
-          <div style="flex:1; font-weight:700; color:var(--cream); text-align:right;">Loại</div>
+      <div class="kq-card-wrap">
+        <div class="kq-table-header">
+          <div style="flex:0.8;">Đợt</div>
+          <div style="flex:1.8;">Đơn</div>
+          <div style="flex:0.7; text-align:center;">Loại</div>
+          <div style="flex:1; text-align:right;">SL</div>
+          <div style="width:22px;"></div>
         </div>
         <div id="lichsu-btp-tbody-dot" style="display:flex; flex-direction:column; width:100%;"></div>
-        <div id="lichsu-btp-tfoot-dot" class="table-sticky-tfoot"></div>
+        <div id="lichsu-btp-tfoot-dot" class="kq-table-footer"></div>
       </div>
     </div>
 
     <div id="ls-btp-wrap-gom" class="table-sticky-wrap" style="display:none;">
-      <div class="cx5-list-container">
-        <div class="cx5-list-header" style="display:flex; width: 100%; box-sizing: border-box; padding:10px; background:var(--card-raised); border-bottom:2px solid var(--steel); position:sticky; top:0; z-index:2;">
-          <div style="flex:1; font-weight:700; color:var(--cream);">Đơn</div>
-          <div style="flex:2; font-weight:700; color:var(--cream); text-align:center;">Loại</div>
-          <div style="flex:1; font-weight:700; color:var(--cream); text-align:right;">SL</div>
+      <div class="kq-card-wrap">
+        <div class="kq-table-header">
+          <div style="flex:1.8;">Đơn</div>
+          <div style="flex:1; text-align:center;">Loại</div>
+          <div style="flex:1; text-align:right;">SL</div>
         </div>
         <div id="lichsu-btp-tbody-gom" style="display:flex; flex-direction:column; width:100%;"></div>
-        <div id="lichsu-btp-tfoot-gom" class="table-sticky-tfoot"></div>
+        <div id="lichsu-btp-tfoot-gom" class="kq-table-footer"></div>
       </div>
     </div>
 
@@ -1378,10 +1419,10 @@
     </div>
 
     <div id="cx5-dc-filter-tabs" class="cx5-dc-filter-bar">
-      <button class="cx5-dc-tab-btn cx5-tab-khop" id="cx5-tab-KHOP" onclick="datFilterDoiChieuCX5('KHOP')" title="Quy cách Khớp"><i class="ti ti-check"></i><span id="cx5-cnt-KHOP">0</span></button>
-      <button class="cx5-dc-tab-btn cx5-tab-lech" id="cx5-tab-LECH" onclick="datFilterDoiChieuCX5('LECH')" title="Quy cách Lệch"><i class="ti ti-alert-triangle"></i><span id="cx5-cnt-LECH">0</span></button>
-      <button class="cx5-dc-tab-btn cx5-tab-kho" id="cx5-tab-KHO_ONLY" onclick="datFilterDoiChieuCX5('KHO_ONLY')" title="Kho chưa có SX"><i class="ti ti-box"></i><span id="cx5-cnt-KHO_ONLY">0</span></button>
-      <button class="cx5-dc-tab-btn cx5-tab-sx" id="cx5-tab-SX_ONLY" onclick="datFilterDoiChieuCX5('SX_ONLY')" title="SX chưa có Kho"><i class="ti ti-building-factory-2"></i><span id="cx5-cnt-SX_ONLY">0</span></button>
+      <button class="cx5-dc-tab-btn cx5-tab-khop" id="cx5-tab-KHOP" onclick="datFilterDoiChieuCX5('KHOP')" title="Quy cách Khớp"><i class="ti ti-check"></i><span class="cx5-dc-tab-lbl">Khớp</span><span id="cx5-cnt-KHOP">0</span></button>
+      <button class="cx5-dc-tab-btn cx5-tab-lech" id="cx5-tab-LECH" onclick="datFilterDoiChieuCX5('LECH')" title="Quy cách Lệch"><i class="ti ti-alert-triangle"></i><span class="cx5-dc-tab-lbl">Lệch</span><span id="cx5-cnt-LECH">0</span></button>
+      <button class="cx5-dc-tab-btn cx5-tab-kho" id="cx5-tab-KHO_ONLY" onclick="datFilterDoiChieuCX5('KHO_ONLY')" title="Kho chưa có SX"><i class="ti ti-box"></i><span class="cx5-dc-tab-lbl">Kho</span><span id="cx5-cnt-KHO_ONLY">0</span></button>
+      <button class="cx5-dc-tab-btn cx5-tab-sx" id="cx5-tab-SX_ONLY" onclick="datFilterDoiChieuCX5('SX_ONLY')" title="SX chưa có Kho"><i class="ti ti-building-factory-2"></i><span class="cx5-dc-tab-lbl">SX</span><span id="cx5-cnt-SX_ONLY">0</span></button>
     </div>
 
     <div id="cx5-doichieu-list"></div>
@@ -1398,7 +1439,7 @@
     <div class="cx5-box" style="margin-top:16px">
       <div class="cx5-box-top">
         <div class="cx5-box-title" style="color:var(--brass); font-weight:700; font-size:15px; text-transform:uppercase;">Bảng Tổng kết</div>
-        <button class="cx5-xoay-btn" onclick="xoayBangCX5('cx5-bang-tongkg-phien')" title="Xoay ngang">⤢</button>
+        <button class="cx5-xoay-btn" onclick="xoayBangCX5('cx5-bang-tongkg-phien')" title="Xoay ngang"><i class="ti ti-maximize"></i></button>
       </div>
       <div id="cx5-bang-tongkg-phien-wrap" class="cx5-scroll">
         <table id="cx5-bang-tongkg-phien" class="cx5-table">
@@ -1539,14 +1580,14 @@
 
 </div><!-- /#app-viewport -->
 
-<script src="app.js?v=20261025-v140" defer></script>
-<script src="scanner-core.js?v=20261025-v140" defer></script>
-<script src="quetqr.js?v=20261025-v140" defer></script>
-<script src="kiemke.js?v=20261025-v140" defer></script>
-<script src="cx1.js?v=20261025-v140" defer></script>
-<script src="cx5.js?v=20261025-v140" defer></script>
-<script src="btp.js?v=20261025-v140" defer></script>
-<script src="tonkho.js?v=20261025-v140" defer></script>
+<script src="app.js?v=20261025-v141" defer></script>
+<script src="scanner-core.js?v=20261025-v141" defer></script>
+<script src="quetqr.js?v=20261025-v141" defer></script>
+<script src="kiemke.js?v=20261025-v141" defer></script>
+<script src="cx1.js?v=20261025-v141" defer></script>
+<script src="cx5.js?v=20261025-v141" defer></script>
+<script src="btp.js?v=20261025-v141" defer></script>
+<script src="tonkho.js?v=20261025-v141" defer></script>
 
 <!-- BOTTOM SHEET MODAL LỊCH SỬ -->
 <div class="modal-overlay" id="modal-overlay" onclick="closeLichSuModal(event)">

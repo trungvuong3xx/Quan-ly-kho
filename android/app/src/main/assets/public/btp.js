@@ -470,8 +470,10 @@ function khoiTaoSuKienSwipeBTP() {
 function capNhatLogBTP() {
   const container = document.getElementById("btp-log-list");
   const countEl = document.getElementById("btp-log-count");
+  const hudCount = document.getElementById("btp-hud-count");
 
   if (countEl) countEl.textContent = phienBTP.length + " mã";
+  if (hudCount) hudCount.textContent = phienBTP.length + " mã";
   if (!container) return;
   if (phienBTP.length === 0) {
     container.innerHTML = '<div class="btp-empty-log">Chưa có mã nào được quét</div>';
@@ -1559,38 +1561,32 @@ function renderLichSuBTP() {
   }
 
   if (list.length === 0) {
-    container.innerHTML = '<div style="text-align:center; padding:32px 16px; color:var(--text-lighter); font-size:14px;">Chưa có lịch sử phiên quét BTP nào</div>';
+    container.innerHTML = '<div style="text-align:center; padding:32px 16px; color:var(--row-muted); font-size:14px;">Chưa có lịch sử phiên quét BTP nào</div>';
     return;
   }
 
-  let html = "";
-  list.forEach(s => {
+  container.innerHTML = list.map(s => {
     const total = s.phienBTP ? s.phienBTP.length : 0;
     const dotCount = s.demSoDotBTP || (s.phienBTP ? new Set(s.phienBTP.map(r => r.dotQuet || 1)).size : 1);
     const timeStr = s.capNhatLuc ? new Date(s.capNhatLuc).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" }) : "";
-    const ngayStr = s.ngay ? s.ngay.split("-").reverse().join("/") : "—";
+    const parts = s.ngay ? s.ngay.split("-") : [];
+    const ngayNgan = parts.length === 3 ? parts[2] + "/" + parts[1] : (s.ngay || "—");
     const daGui = (s.soLuongDaGui || 0) >= total && total > 0;
-    const trangThaiGui = daGui
-      ? '<span style="color:var(--success); font-size:12px; font-weight:600;"><i class="ti ti-check"></i> Đã gửi Sheet</span>'
-      : '<span style="color:var(--danger); font-size:12px; font-weight:600;"><i class="ti ti-alert-circle"></i> Chưa gửi hết (' + (s.soLuongDaGui || 0) + '/' + total + ')</span>';
+    const trangThai = daGui
+      ? '<i class="ti ti-check cx5-trangthai-ok" title="Đã gửi Sheet"></i>'
+      : '<i class="ti ti-x cx5-trangthai-mot-phan" title="Chưa gửi hết (' + (s.soLuongDaGui || 0) + '/' + total + ')"></i>';
 
-    html += `
-      <div class="card" style="margin-bottom:12px; padding:12px 14px; cursor:pointer;" onclick="xemChiTietLichSuBTP('${s.idPhien}')">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-          <div style="font-weight:700; font-size:15px; color:var(--text-color);">${ngayStr} <span style="font-weight:400; font-size:12px; color:var(--text-lighter);">(${timeStr})</span></div>
-          <button type="button" class="btn" style="background:transparent; border:none; color:var(--text-lighter); padding:4px 6px; margin:0;" onclick="xoaMotPhienLichSuBTP('${s.idPhien}', event)" title="Xóa phiên này">
-            <i class="ti ti-trash"></i>
-          </button>
-        </div>
-        <div style="display:flex; justify-content:space-between; align-items:center; font-size:13px; color:var(--text-lighter);">
-          <span>${dotCount} đợt • <b>${total}</b> mã BTP</span>
-          ${trangThaiGui}
-        </div>
-      </div>
-    `;
-  });
-
-  container.innerHTML = html;
+    return '<div class="irow lichsu-row lichsu-card-row" onclick="xemChiTietLichSuBTP(\'' + s.idPhien + '\')">'
+      + '<div class="ls-col-main">'
+      + '<div class="ls-row-top"><span class="ls-date">' + ngayNgan + '</span><span class="ls-time">' + timeStr + '</span></div>'
+      + '<div class="ls-row-metrics"><span class="ls-metric-pill"><b>' + dotCount + '</b> đợt</span><span class="ls-metric-pill ls-metric-kg"><b>' + total + '</b> mã BTP</span></div>'
+      + '</div>'
+      + '<div class="ls-col-actions">'
+      + trangThai
+      + '<button class="lichsu-del-btn" aria-label="Xóa phiên này" title="Xóa phiên này" onclick="xoaMotPhienLichSuBTP(\'' + s.idPhien + '\', event)"><i class="ti ti-trash"></i></button>'
+      + '</div>'
+      + '</div>';
+  }).join("");
 }
 
 let hienThiPhienLichSuHienTaiBTP = null;
@@ -1829,23 +1825,27 @@ function toggleLichSuBTPView(cheDo) {
     if (wrapChiTiet) wrapChiTiet.style.display = "none";
     if (wrapGom) wrapGom.style.display = "block";
     if (tabChiTiet) {
-      tabChiTiet.className = "btn";
-      tabChiTiet.style.cssText = "flex:1; border-radius:8px; margin:0; padding:8px; font-size:13px; font-weight:700; background:transparent; border:1px solid var(--primary); color:var(--primary);";
+      tabChiTiet.style.background = "transparent";
+      tabChiTiet.style.color = "var(--row-muted)";
+      tabChiTiet.style.boxShadow = "none";
     }
     if (tabTongHop) {
-      tabTongHop.className = "btn btn-blue";
-      tabTongHop.style.cssText = "flex:1; border-radius:8px; margin:0; padding:8px; font-size:13px; font-weight:700;";
+      tabTongHop.style.background = "var(--surface)";
+      tabTongHop.style.color = "var(--row-text)";
+      tabTongHop.style.boxShadow = "0 2px 6px rgba(0,0,0,0.06)";
     }
   } else {
     if (wrapChiTiet) wrapChiTiet.style.display = "block";
     if (wrapGom) wrapGom.style.display = "none";
     if (tabChiTiet) {
-      tabChiTiet.className = "btn btn-blue";
-      tabChiTiet.style.cssText = "flex:1; border-radius:8px; margin:0; padding:8px; font-size:13px; font-weight:700;";
+      tabChiTiet.style.background = "var(--surface)";
+      tabChiTiet.style.color = "var(--row-text)";
+      tabChiTiet.style.boxShadow = "0 2px 6px rgba(0,0,0,0.06)";
     }
     if (tabTongHop) {
-      tabTongHop.className = "btn";
-      tabTongHop.style.cssText = "flex:1; border-radius:8px; margin:0; padding:8px; font-size:13px; font-weight:700; background:transparent; border:1px solid var(--primary); color:var(--primary);";
+      tabTongHop.style.background = "transparent";
+      tabTongHop.style.color = "var(--row-muted)";
+      tabTongHop.style.boxShadow = "none";
     }
   }
 }

@@ -815,8 +815,10 @@ function capNhatLogQR() {
   const containerNhap = document.getElementById("qr-nhap-log-list");
   const countEl = document.getElementById("qr-log-count");
   const countNhap = document.getElementById("qr-nhap-log-count");
+  const hudCount = document.getElementById("qr-hud-count");
   if (countEl) countEl.textContent = phienQuetQR.length + " bao";
   if (countNhap) countNhap.textContent = phienQuetQR.length + " bao";
+  if (hudCount) hudCount.textContent = phienQuetQR.length + " bao";
   if (!container && !containerNhap) return;
 
   if (phienQuetQR.length === 0) {
@@ -1698,19 +1700,25 @@ function renderLichSuQR() {
     const gio = timeObj.toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" });
     const ngayStr = entry.ngay || ((typeof layNgayHomNayLocal === "function") ? layNgayHomNayLocal() : (timeObj.getFullYear() + '-' + String(timeObj.getMonth()+1).padStart(2,'0') + '-' + String(timeObj.getDate()).padStart(2,'0')));
     const parts = ngayStr.split("-");
-    const ngayNgan = parts.length === 3 ? parts[2] + "-" + parts[1] : ngayStr;
+    const ngayNgan = parts.length === 3 ? parts[2] + "/" + parts[1] : ngayStr;
     const tongKg = (entry.tongKG || 0);
     const tongBao = (entry.tongBao || (entry.phienQuetQR ? entry.phienQuetQR.length : 0));
     const trangThai = '<i class="ti ti-check cx5-trangthai-ok"></i>';
+    const loaiStr = entry.loai ? String(entry.loai).replace(/</g, "&lt;") : "";
+    const isNhap = loaiStr.toLowerCase().indexOf("nhập") === 0;
+    const loaiBadge = loaiStr
+      ? '<span class="ls-loai-badge ' + (isNhap ? 'ls-loai-nhap' : 'ls-loai-xuat') + '">' + loaiStr + '</span>'
+      : '';
 
-    return '<div class="irow lichsu-row" style="cursor:pointer;align-items:center" onclick="xemChiTietLichSuQR(\'' + entry.idPhien + '\')">'
-      + '<span style="font-family:\'IBM Plex Sans\',sans-serif;color:var(--cream); flex: 1;">'
-      + ngayNgan + '&nbsp;&nbsp;&nbsp;' + gio + '&nbsp;&nbsp;&nbsp;' + tongBao + 'b&nbsp;&nbsp;&nbsp;' + Math.round(tongKg) + 'kg'
-      + '</span>'
-      + '<span style="display:inline-flex;align-items:center;gap:8px;padding-left:8px;border-left:1px solid var(--line)">'
+    return '<div class="irow lichsu-row lichsu-card-row" onclick="xemChiTietLichSuQR(\'' + entry.idPhien + '\')">'
+      + '<div class="ls-col-main">'
+      + '<div class="ls-row-top"><span class="ls-date">' + ngayNgan + '</span><span class="ls-time">' + gio + '</span>' + loaiBadge + '</div>'
+      + '<div class="ls-row-metrics"><span class="ls-metric-pill"><b>' + tongBao + '</b> bao</span><span class="ls-metric-pill ls-metric-kg"><b>' + Math.round(tongKg) + '</b> kg</span></div>'
+      + '</div>'
+      + '<div class="ls-col-actions">'
       + trangThai
       + '<button class="lichsu-del-btn" aria-label="Xóa phiên này" title="Xóa phiên này" onclick="xoaMotPhienLichSuQR(\'' + entry.idPhien + '\', event)"><i class="ti ti-trash"></i></button>'
-      + '</span>'
+      + '</div>'
       + '</div>';
   }).join("");
 }

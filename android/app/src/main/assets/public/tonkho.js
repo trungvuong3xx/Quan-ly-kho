@@ -33,8 +33,52 @@ function tkGhiNhanTanSuat(ten) {
     const freq = tkLayLichSuTanSuat();
     freq[ten] = (freq[ten] || 0) + 1;
     localStorage.setItem(TK_FREQ_KEY, JSON.stringify(freq));
+    tkRenderFreqChips();
   } catch (e) {}
 }
+
+// Hiển thị chip gợi ý nhanh các mã tra cứu thường xuyên nhất từ tk_search_freq
+function tkRenderFreqChips() {
+  const wrap = document.getElementById("tk-freq-chips");
+  if (!wrap) return;
+  const freq = tkLayLichSuTanSuat();
+  const topKeys = Object.keys(freq)
+    .filter(k => k && freq[k] > 0)
+    .sort((a, b) => freq[b] - freq[a])
+    .slice(0, 6);
+
+  if (topKeys.length === 0) {
+    wrap.style.display = "none";
+    wrap.innerHTML = "";
+    return;
+  }
+
+  const safeEsc = typeof escapeHtml === "function" ? escapeHtml : (s => String(s == null ? "" : s).replace(/[&<>"']/g, ""));
+  wrap.style.display = "flex";
+  wrap.innerHTML = '<span class="tk-freq-label"><i class="ti ti-flame"></i> Hay tra:</span>' + topKeys.map((ten, idx) =>
+    '<button type="button" class="tk-freq-chip" data-idx="' + idx + '">' + safeEsc(ten) + '</button>'
+  ).join("");
+
+  wrap.querySelectorAll(".tk-freq-chip").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const idx = parseInt(btn.getAttribute("data-idx"), 10);
+      const ten = topKeys[idx];
+      if (!ten) return;
+      const input = document.getElementById("tk-ten");
+      if (input) {
+        input.value = ten;
+        tkCapNhatNutXoa();
+        tkDongDropdown();
+        tkTimTonKho();
+      }
+    });
+  });
+}
+
+function tkHienGoiYNhanh() {
+  tkRenderFreqChips();
+}
+window.tkHienGoiYNhanh = tkHienGoiYNhanh;
 
 // Lọc gợi ý tìm kiếm thông minh theo cơ chế chấm điểm ưu tiên (Tier Scoring Engine):
 // 1. Ưu tiên TUYỆT ĐỐI cho TÊN Quy Cách (khớp phân đoạn / bắt đầu từ / chứa từ).
@@ -138,6 +182,7 @@ function tkMoTonKho() {
   if (typeof chuyenTrangKhongNav === "function") {
     chuyenTrangKhongNav("tonKho");
   }
+  tkRenderFreqChips();
   tkTaiDanhSachLIST();
 }
 
@@ -342,20 +387,26 @@ function tkRenderDropdown() {
     return;
   }
 
-  el.innerHTML = tkFilteredList.map((item, idx) =>
-    '<div class="tk-dropdown-item' + (idx === tkActiveIndex ? ' active' : '') + '" data-idx="' + idx + '">' +
-    String(item.ten).replace(/</g, "&lt;") + '</div>'
-  ).join("");
+  el.innerHTML = tkFilteredList.map((item, idx) => {
+    const safeTen = String(item.ten || "").replace(/</g, "&lt;");
+    const safeMsp = item.msp ? String(item.msp).replace(/</g, "&lt;") : "";
+    return '<div class="tk-dropdown-item' + (idx === tkActiveIndex ? ' active' : '') + '" data-idx="' + idx + '" style="display:flex;align-items:center;justify-content:space-between;gap:8px;">'
+      + '<span style="font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + safeTen + '</span>'
+      + (safeMsp ? '<span style="font-size:11px;font-family:\'IBM Plex Mono\',monospace;color:var(--row-muted);flex-shrink:0;">' + safeMsp + '</span>' : '')
+      + '</div>';
+  }).join("");
   el.classList.add("show");
 
   Array.from(el.children).forEach(child => {
-    child.addEventListener("mousedown", e => {
+    const pick = e => {
       e.preventDefault();
       const idx = parseInt(child.getAttribute("data-idx"), 10);
       if (tkFilteredList[idx]) {
         tkChonGoiY(tkFilteredList[idx]);
       }
-    });
+    };
+    child.addEventListener("mousedown", pick);
+    child.addEventListener("click", pick);
   });
 }
 

@@ -1333,11 +1333,13 @@ function capNhatLogCX1() {
   const countNhap = document.getElementById("cx1-nhap-log-count");
   const demQuet = document.getElementById("cx1-dem");
   const demNhap = document.getElementById("cx1-nhap-dem");
+  const hudCount = document.getElementById("cx1-hud-count");
 
   if (demQuet) demQuet.textContent = "Đã quét: " + phienCX1.length + " mã";
   if (demNhap) demNhap.textContent = "Đã nhập/quét: " + phienCX1.length + " mã";
   if (countQuet) countQuet.textContent = phienCX1.length + " mã";
   if (countNhap) countNhap.textContent = phienCX1.length + " mã";
+  if (hudCount) hudCount.textContent = phienCX1.length + " mã";
 
   if (!containerQuet && !containerNhap) return;
 
@@ -2081,7 +2083,7 @@ function renderLichSuCX1() {
 
   container.innerHTML = list.map(function (s) {
     const parts = s.ngay ? s.ngay.split("-") : [];
-    const ngayNgan = parts.length === 3 ? parts[2] + "-" + parts[1] : s.ngay;
+    const ngayNgan = parts.length === 3 ? parts[2] + "/" + parts[1] : s.ngay;
     const tongKg = s.phienCX1.reduce(function (t, r) { return t + (r.kg || 0); }, 0);
     const soBao = s.phienCX1.length;
     const daXongHet = (s.soLuongDaGui || 0) >= s.phienCX1.length && s.phienCX1.length > 0;
@@ -2090,14 +2092,15 @@ function renderLichSuCX1() {
       : '<i class="ti ti-x cx5-trangthai-mot-phan"></i>';
     const gio = new Date(s.capNhatLuc).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" });
 
-    return '<div class="irow lichsu-row" style="cursor:pointer;align-items:center" onclick="xemChiTietLichSuCX1(\'' + s.idPhien + '\')">'
-      + '<span style="font-family:\'IBM Plex Sans\',sans-serif;color:var(--cream); flex: 1;">'
-      + ngayNgan + '&nbsp;&nbsp;&nbsp;' + gio + '&nbsp;&nbsp;&nbsp;' + soBao + 'b&nbsp;&nbsp;&nbsp;' + Math.round(tongKg) + 'kg'
-      + '</span>'
-      + '<span style="display:inline-flex;align-items:center;gap:8px;padding-left:8px;border-left:1px solid var(--line)">'
+    return '<div class="irow lichsu-row lichsu-card-row" onclick="xemChiTietLichSuCX1(\'' + s.idPhien + '\')">'
+      + '<div class="ls-col-main">'
+      + '<div class="ls-row-top"><span class="ls-date">' + ngayNgan + '</span><span class="ls-time">' + gio + '</span></div>'
+      + '<div class="ls-row-metrics"><span class="ls-metric-pill"><b>' + soBao + '</b> bao</span><span class="ls-metric-pill ls-metric-kg"><b>' + Math.round(tongKg) + '</b> kg</span></div>'
+      + '</div>'
+      + '<div class="ls-col-actions">'
       + trangThai
       + '<button class="lichsu-del-btn" aria-label="Xóa phiên này" title="Xóa phiên này" onclick="xoaMotPhienLichSuCX1(\'' + s.idPhien + '\', event)"><i class="ti ti-trash"></i></button>'
-      + '</span>'
+      + '</div>'
       + '</div>';
   }).join("");
 }
@@ -2284,31 +2287,27 @@ function toggleLichSuCX1View(mode) {
       wrapChitiet.style.display = "block";
       wrapGom.style.display = "none";
       if (tabChitiet) {
-        tabChitiet.className = "btn btn-blue";
-        tabChitiet.style.background = "";
-        tabChitiet.style.color = "";
-        tabChitiet.style.border = "none";
+        tabChitiet.style.background = "var(--surface)";
+        tabChitiet.style.color = "var(--row-text)";
+        tabChitiet.style.boxShadow = "0 2px 6px rgba(0,0,0,0.06)";
       }
       if (tabTonghop) {
-        tabTonghop.className = "btn";
         tabTonghop.style.background = "transparent";
-        tabTonghop.style.color = "var(--primary)";
-        tabTonghop.style.border = "1px solid var(--primary)";
+        tabTonghop.style.color = "var(--row-muted)";
+        tabTonghop.style.boxShadow = "none";
       }
     } else {
       wrapChitiet.style.display = "none";
       wrapGom.style.display = "block";
       if (tabTonghop) {
-        tabTonghop.className = "btn btn-blue";
-        tabTonghop.style.background = "";
-        tabTonghop.style.color = "";
-        tabTonghop.style.border = "none";
+        tabTonghop.style.background = "var(--surface)";
+        tabTonghop.style.color = "var(--row-text)";
+        tabTonghop.style.boxShadow = "0 2px 6px rgba(0,0,0,0.06)";
       }
       if (tabChitiet) {
-        tabChitiet.className = "btn";
         tabChitiet.style.background = "transparent";
-        tabChitiet.style.color = "var(--primary)";
-        tabChitiet.style.border = "1px solid var(--primary)";
+        tabChitiet.style.color = "var(--row-muted)";
+        tabChitiet.style.boxShadow = "none";
       }
     }
 }

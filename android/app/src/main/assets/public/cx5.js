@@ -2296,7 +2296,7 @@ function renderLichSuCX5() {
   }
   container.innerHTML = list.map(s => {
     const parts = s.ngay.split("-");
-    const ngayNgan = parts.length === 3 ? parts[2] + "-" + parts[1] : s.ngay;
+    const ngayNgan = parts.length === 3 ? parts[2] + "/" + parts[1] : s.ngay;
     const tongKg = s.phienCX5.reduce((t, r) => t + r.kg, 0);
     const soBao = s.phienCX5.length;
     const soLuot = new Set(s.phienCX5.map(r => r.luot)).size;
@@ -2305,14 +2305,15 @@ function renderLichSuCX5() {
       ? '<i class="ti ti-check cx5-trangthai-ok"></i>'
       : '<i class="ti ti-x cx5-trangthai-mot-phan"></i>';
     const gio = new Date(s.capNhatLuc).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" });
-    return '<div class="irow lichsu-row" style="cursor:pointer;align-items:center" onclick="xemChiTietLichSuCX5(\'' + s.idPhien + '\')">'
-      + '<span style="font-family:\'IBM Plex Sans\',sans-serif;color:var(--cream); flex: 1;">'
-      + ngayNgan + '&nbsp;&nbsp;&nbsp;' + gio + '&nbsp;&nbsp;&nbsp;' + soBao + 'b (' + soLuot + ' lượt)&nbsp;&nbsp;&nbsp;' + Math.round(tongKg) + 'kg'
-      + '</span>'
-      + '<span style="display:inline-flex;align-items:center;gap:8px;padding-left:8px;border-left:1px solid var(--line)">'
+    return '<div class="irow lichsu-row lichsu-card-row" onclick="xemChiTietLichSuCX5(\'' + s.idPhien + '\')">'
+      + '<div class="ls-col-main">'
+      + '<div class="ls-row-top"><span class="ls-date">' + ngayNgan + '</span><span class="ls-time">' + gio + '</span><span class="ls-loai-badge ls-loai-xuat">' + soLuot + ' lượt</span></div>'
+      + '<div class="ls-row-metrics"><span class="ls-metric-pill"><b>' + soBao + '</b> bao</span><span class="ls-metric-pill ls-metric-kg"><b>' + Math.round(tongKg) + '</b> kg</span></div>'
+      + '</div>'
+      + '<div class="ls-col-actions">'
       + trangThai
       + '<button class="lichsu-del-btn" aria-label="Xóa phiên này" title="Xóa phiên này" onclick="xoaMotPhienLichSuCX5(\'' + s.idPhien + '\', event)"><i class="ti ti-trash"></i></button>'
-      + '</span>'
+      + '</div>'
       + '</div>';
   }).join("");
 }

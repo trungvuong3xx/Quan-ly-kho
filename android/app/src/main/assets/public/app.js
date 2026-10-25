@@ -1380,22 +1380,12 @@ function capNhatTrangChu() {
         ? new Date(state.capNhat).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" })
         : "—";
       noidung.innerHTML = `
-        <div class="tk-card-header" style="margin-bottom:10px">
-          <div>
-            <div class="tk-card-ten">Chỉ For</div>
-            <div class="tk-card-msp">Cập nhật: <span>${safeEsc(gioCapNhat)}</span></div>
+        <div class="ps-compact-row">
+          <div class="ps-compact-left">
+            <div class="ps-compact-title"><span class="tk-badge tk-badge-thuong">Dở dang</span> <b>Chỉ For</b></div>
+            <div class="ps-compact-meta">Ngày: <b>${safeEsc(state.ngayCX1 || "—")}</b> • Lúc ${safeEsc(gioCapNhat)}</div>
           </div>
-          <div class="tk-badge tk-badge-thuong">Dở dang</div>
-        </div>
-        <div class="tk-stat-grid">
-          <div class="tk-stat-box">
-            <div class="tk-stat-label">NGÀY</div>
-            <div class="tk-stat-val" style="font-size:14px;color:var(--cream)">${safeEsc(state.ngayCX1 || "—")}</div>
-          </div>
-          <div class="tk-stat-box highlight">
-            <div class="tk-stat-label">ĐÃ QUÉT</div>
-            <div class="tk-stat-val main-ton">${Number(state.phienCX1.length) || 0} <small>mã</small></div>
-          </div>
+          <div class="ps-compact-count">${Number(state.phienCX1.length) || 0} <small>mã</small></div>
         </div>
       `;
       card.style.display = "block";
@@ -1415,22 +1405,12 @@ function capNhatTrangChu() {
         ? new Date(stateX5.capNhat).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" })
         : "—";
       noidungX5.innerHTML = `
-        <div class="tk-card-header" style="margin-bottom:10px">
-          <div>
-            <div class="tk-card-ten">Chỉ X5</div>
-            <div class="tk-card-msp">Cập nhật: <span>${safeEsc(gioCapNhatX5)}</span></div>
+        <div class="ps-compact-row">
+          <div class="ps-compact-left">
+            <div class="ps-compact-title"><span class="tk-badge tk-badge-for">Dở dang</span> <b>Chỉ X5</b></div>
+            <div class="ps-compact-meta">Ngày: <b>${safeEsc(stateX5.ngayCX5 || "—")}</b> • Lúc ${safeEsc(gioCapNhatX5)}</div>
           </div>
-          <div class="tk-badge tk-badge-for">Dở dang</div>
-        </div>
-        <div class="tk-stat-grid">
-          <div class="tk-stat-box">
-            <div class="tk-stat-label">NGÀY</div>
-            <div class="tk-stat-val" style="font-size:14px;color:var(--cream)">${safeEsc(stateX5.ngayCX5 || "—")}</div>
-          </div>
-          <div class="tk-stat-box highlight">
-            <div class="tk-stat-label">ĐÃ NHẬP</div>
-            <div class="tk-stat-val main-ton">${Number(stateX5.phienCX5.length) || 0} <small>dòng</small></div>
-          </div>
+          <div class="ps-compact-count">${Number(stateX5.phienCX5.length) || 0} <small>dòng</small></div>
         </div>
       `;
       cardX5.style.display = "block";
@@ -1451,22 +1431,12 @@ function capNhatTrangChu() {
         ? new Date(stateBTP.capNhat).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" })
         : "—";
       noidungBTP.innerHTML = `
-        <div class="tk-card-header" style="margin-bottom:10px">
-          <div>
-            <div class="tk-card-ten">BTP (Bán Thành Phẩm)</div>
-            <div class="tk-card-msp">Cập nhật: <span>${safeEsc(gioCapNhatBTP)}</span></div>
+        <div class="ps-compact-row">
+          <div class="ps-compact-left">
+            <div class="ps-compact-title"><span class="tk-badge tk-badge-thuong">Dở dang</span> <b>BTP (Bán Thành Phẩm)</b></div>
+            <div class="ps-compact-meta">Ngày: <b>${safeEsc(stateBTP.ngayBTP || "—")}</b> • Lúc ${safeEsc(gioCapNhatBTP)}</div>
           </div>
-          <div class="tk-badge tk-badge-thuong">Dở dang</div>
-        </div>
-        <div class="tk-stat-grid">
-          <div class="tk-stat-box">
-            <div class="tk-stat-label">NGÀY</div>
-            <div class="tk-stat-val" style="font-size:14px;color:var(--cream)">${safeEsc(stateBTP.ngayBTP || "—")}</div>
-          </div>
-          <div class="tk-stat-box highlight">
-            <div class="tk-stat-label">ĐÃ QUÉT</div>
-            <div class="tk-stat-val main-ton">${Number(soMa) || 0} <small>mã</small></div>
-          </div>
+          <div class="ps-compact-count">${Number(soMa) || 0} <small>mã</small></div>
         </div>
       `;
       cardBTP.style.display = "block";
@@ -1487,22 +1457,12 @@ function capNhatTrangChu() {
         : "—";
       const tenLoaiQR = stateQR.loaiQuetQR ? safeEsc(stateQR.loaiQuetQR) : "Giao dịch";
       noidungQR.innerHTML = `
-        <div class="tk-card-header" style="margin-bottom:10px">
-          <div>
-            <div class="tk-card-ten">Quét QR (${tenLoaiQR})</div>
-            <div class="tk-card-msp">Cập nhật: <span>${safeEsc(gioCapNhatQR)}</span></div>
+        <div class="ps-compact-row">
+          <div class="ps-compact-left">
+            <div class="ps-compact-title"><span class="tk-badge tk-badge-thuong">Dở dang</span> <b>Quét QR (${tenLoaiQR})</b></div>
+            <div class="ps-compact-meta">Ngày: <b>${safeEsc(stateQR.ngayQuetQR || "—")}</b> • Lúc ${safeEsc(gioCapNhatQR)}</div>
           </div>
-          <div class="tk-badge tk-badge-thuong">Dở dang</div>
-        </div>
-        <div class="tk-stat-grid">
-          <div class="tk-stat-box">
-            <div class="tk-stat-label">NGÀY</div>
-            <div class="tk-stat-val" style="font-size:14px;color:var(--cream)">${safeEsc(stateQR.ngayQuetQR || "—")}</div>
-          </div>
-          <div class="tk-stat-box highlight">
-            <div class="tk-stat-label">ĐÃ QUÉT</div>
-            <div class="tk-stat-val main-ton">${Number(stateQR.phienQuetQR.length) || 0} <small>bao</small></div>
-          </div>
+          <div class="ps-compact-count">${Number(stateQR.phienQuetQR.length) || 0} <small>bao</small></div>
         </div>
       `;
       cardQR.style.display = "block";
@@ -2568,9 +2528,11 @@ window.khoaCuonTrangQuet = function (isLock) {
 
 // -- Hi?u ?ng Swipe-to-Delete toan c?c -----------------
 let swipeStartX = 0;
+let swipeStartY = 0;
 let swipeCurrentX = 0;
 let swipingRow = null;
 let isSwiping = false;
+let swipeHapticTriggered = false;
 
 document.addEventListener('touchstart', (e) => {
   const row = e.target.closest('.cx5-swipe-row');
@@ -2585,18 +2547,39 @@ document.addEventListener('touchstart', (e) => {
     if (r !== row) r.classList.remove('open');
   });
   swipeStartX = e.touches[0].clientX;
+  swipeStartY = e.touches[0].clientY;
   swipeCurrentX = swipeStartX;
   swipingRow = row;
   isSwiping = true;
+  swipeHapticTriggered = false;
 }, {passive: true});
 
 document.addEventListener('touchmove', (e) => {
   if (!isSwiping || !swipingRow) return;
   swipeCurrentX = e.touches[0].clientX;
+  const deltaX = swipeCurrentX - swipeStartX;
+  const deltaY = Math.abs(e.touches[0].clientY - swipeStartY);
+  if (deltaY > Math.abs(deltaX) && Math.abs(deltaX) < 15) return;
+
+  const contentEl = swipingRow.querySelector('.cx5-swipe-content');
+  if (contentEl && deltaX < 0) {
+    const clamped = Math.max(-68, deltaX);
+    contentEl.style.transition = 'none';
+    contentEl.style.transform = `translateX(${clamped}px)`;
+    if (deltaX < -30 && !swipeHapticTriggered) {
+      swipeHapticTriggered = true;
+      if (navigator.vibrate) { try { navigator.vibrate(10); } catch (err) {} }
+    }
+  }
 }, {passive: true});
 
 document.addEventListener('touchend', (e) => {
   if (!isSwiping || !swipingRow) return;
+  const contentEl = swipingRow.querySelector('.cx5-swipe-content');
+  if (contentEl) {
+    contentEl.style.transition = '';
+    contentEl.style.transform = '';
+  }
   const deltaX = swipeCurrentX - swipeStartX;
   if (Math.abs(deltaX) > 30) {
     if (deltaX < -30) swipingRow.classList.add('open');
