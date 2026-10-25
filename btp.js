@@ -461,92 +461,19 @@ function xoaMaBTP(uid, ev) {
 }
 window.xoaMaBTP = xoaMaBTP;
 
-let btpSwipeTouchState = null;
 function khoiTaoSuKienSwipeBTP() {
-  const container = document.getElementById("btp-log-list");
-  if (!container || container.__swipeInit) return;
-  container.__swipeInit = true;
-
-  container.addEventListener("touchstart", (e) => {
-    const touch = e.touches[0];
-    const content = e.target.closest(".btp-swipe-content");
-    if (!content) return;
-
-    // Đóng hàng khác
-    const allSwiped = container.querySelectorAll(".btp-swipe-content.swiped");
-    allSwiped.forEach(el => {
-      if (el !== content) {
-        el.style.transform = "translateX(0px)";
-        el.classList.remove("swiped");
-      }
-    });
-
-    const isAlreadySwiped = content.classList.contains("swiped");
-    btpSwipeTouchState = {
-      content: content,
-      startX: touch.clientX,
-      startY: touch.clientY,
-      currentX: touch.clientX,
-      isSwiping: false,
-      isAlreadySwiped: isAlreadySwiped
-    };
-  }, { passive: true });
-
-  container.addEventListener("touchmove", (e) => {
-    if (!btpSwipeTouchState) return;
-    const touch = e.touches[0];
-    const dx = touch.clientX - btpSwipeTouchState.startX;
-    const dy = touch.clientY - btpSwipeTouchState.startY;
-
-    if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 10) {
-      btpSwipeTouchState.isSwiping = true;
-      let offset = dx;
-      if (btpSwipeTouchState.isAlreadySwiped) {
-        offset = -76 + dx;
-      }
-      if (offset > 0) offset = 0;
-      if (offset < -85) offset = -85;
-      btpSwipeTouchState.content.style.transition = "none";
-      btpSwipeTouchState.content.style.transform = `translateX(${offset}px)`;
-    }
-  }, { passive: true });
-
-  const ketThucVuot = (e) => {
-    if (!btpSwipeTouchState) return;
-    const content = btpSwipeTouchState.content;
-    const dx = (e && e.changedTouches ? e.changedTouches[0]?.clientX : btpSwipeTouchState.currentX) - btpSwipeTouchState.startX;
-
-    content.style.transition = "transform 0.2s cubic-bezier(0.2, 0.9, 0.3, 1)";
-    if (btpSwipeTouchState.isSwiping) {
-      if (dx < -35) {
-        content.style.transform = "translateX(-76px)";
-        content.classList.add("swiped");
-      } else {
-        content.style.transform = "translateX(0px)";
-        content.classList.remove("swiped");
-      }
-    } else if (btpSwipeTouchState.isAlreadySwiped) {
-      content.style.transform = "translateX(0px)";
-      content.classList.remove("swiped");
-    }
-    btpSwipeTouchState = null;
-  };
-
-  container.addEventListener("touchend", ketThucVuot);
-  // [BẢO VỆ MỤC 7]: Bổ sung touchcancel khi cuộc chạm bị ngắt
-  container.addEventListener("touchcancel", () => {
-    if (btpSwipeTouchState) {
-      btpSwipeTouchState.content.style.transform = btpSwipeTouchState.isAlreadySwiped ? "translateX(-76px)" : "translateX(0px)";
-      btpSwipeTouchState = null;
-    }
-  });
+  if (window.ScannerCore && typeof window.ScannerCore.khoiTaoSwipe === "function") {
+    window.ScannerCore.khoiTaoSwipe("btp-log-list", ".btp-swipe-content", "__swipeInit");
+  }
 }
 
 function capNhatLogBTP() {
   const container = document.getElementById("btp-log-list");
   const countEl = document.getElementById("btp-log-count");
+  const hudCount = document.getElementById("btp-hud-count");
 
   if (countEl) countEl.textContent = phienBTP.length + " mã";
+  if (hudCount) hudCount.textContent = phienBTP.length + " mã";
   if (!container) return;
   if (phienBTP.length === 0) {
     container.innerHTML = '<div class="btp-empty-log">Chưa có mã nào được quét</div>';
@@ -650,15 +577,16 @@ function khiQuetDuocMaBTP(result) {
 
   const elCheck = document.getElementById("btp-cho-phep-trung-cam");
   const choPhepTrung = elCheck ? elCheck.checked : false;
-  const lockMs = choPhepTrung ? 1500 : 500;
-  const now = Date.now();
-
-  // Khóa Per-QR
   const keyQR = (data.id || data.rawQR || "").toLowerCase();
-  if (mapKhoaBTP.has(keyQR) && (now - mapKhoaBTP.get(keyQR)) < lockMs) {
-    return;
+
+  if (window.ScannerCore && typeof window.ScannerCore.kiemTraKhoaMa === "function") {
+    if (window.ScannerCore.kiemTraKhoaMa(mapKhoaBTP, keyQR, choPhepTrung)) return;
+  } else {
+    const lockMs = choPhepTrung ? 1500 : 500;
+    const now = Date.now();
+    if (mapKhoaBTP.has(keyQR) && (now - mapKhoaBTP.get(keyQR)) < lockMs) return;
+    mapKhoaBTP.set(keyQR, now);
   }
-  mapKhoaBTP.set(keyQR, now);
 
   themMaVaoPhienBTP(data, rawText, 'cam_auto');
 }
@@ -673,6 +601,9 @@ function luuPhienDoDangBTP() {
 }
 
 function luuPhienDoDangBTPNgay() {
+  if (phienBTP.some(r => r.daGui !== undefined)) {
+    soLuongDaGuiHienTaiBTP = phienBTP.filter(r => r.daGui).length;
+  }
   try {
     localStorage.setItem(BTP_DODANG_KEY, JSON.stringify({
       phienBTP,
@@ -852,6 +783,9 @@ function toggleDungTiepTucBTP() {
 
 // ── Hàng chờ ngoại tuyến & Đồng bộ an toàn (Mục 6.2 & 6.5) ──
 function docPendingBTP() {
+  if (window.ScannerCore && typeof window.ScannerCore.docPending === "function") {
+    return window.ScannerCore.docPending(BTP_PENDING_KEY);
+  }
   try {
     const raw = localStorage.getItem(BTP_PENDING_KEY);
     return raw ? JSON.parse(raw) : [];
@@ -859,7 +793,11 @@ function docPendingBTP() {
 }
 
 function luuPendingBTP(list) {
-  try { localStorage.setItem(BTP_PENDING_KEY, JSON.stringify(list)); } catch (e) { }
+  if (window.ScannerCore && typeof window.ScannerCore.luuPending === "function") {
+    window.ScannerCore.luuPending(BTP_PENDING_KEY, list);
+  } else {
+    try { localStorage.setItem(BTP_PENDING_KEY, JSON.stringify(list)); } catch (e) { }
+  }
   capNhatBadgePendingBTP();
 }
 
@@ -975,8 +913,13 @@ window.xemKetQuaBTP = xemKetQuaBTP;
 async function guiDuLieuBTP() {
   if (dangGuiDuLieuBTP) return;
 
-  const mocBatDau = soLuongDaGuiHienTaiBTP;
-  const moiBoSung = phienBTP.slice(mocBatDau);
+  if (soLuongDaGuiHienTaiBTP > 0 && !phienBTP.some(r => r.daGui !== undefined)) {
+    for (let i = 0; i < Math.min(soLuongDaGuiHienTaiBTP, phienBTP.length); i++) {
+      phienBTP[i].daGui = true;
+    }
+  }
+
+  const moiBoSung = phienBTP.filter(r => !r.daGui);
   if (moiBoSung.length === 0) {
     showCanhBaoBTP("Không có dữ liệu mới để gửi!", "info");
     return;
@@ -1007,8 +950,8 @@ async function guiDuLieuBTP() {
   try {
     await guiLenSheetBTP(rows);
 
-    // [BẢO VỆ MỤC 6.1]: Chỉ cộng đúng số lượng đã gửi thành công, không dùng phienBTP.length
-    soLuongDaGuiHienTaiBTP = mocBatDau + rows.length;
+    moiBoSung.forEach(r => { r.daGui = true; });
+    soLuongDaGuiHienTaiBTP = phienBTP.filter(r => r.daGui).length;
 
     luuPhienDoDangBTPNgay();
     luuVaoLichSuBTP();
@@ -1022,8 +965,8 @@ async function guiDuLieuBTP() {
       btnGui.style.opacity = "1";
     }
   } catch (err) {
-    // [BẢO VỆ MỤC 6.1]: Khi lỗi, GIỮ NGUYÊN soLuongDaGuiHienTaiBTP = mocBatDau, KHÔNG ĐƯỢC TĂNG LÊN!
-    soLuongDaGuiHienTaiBTP = mocBatDau;
+    // [BẢO VỆ MỤC 6.1]: Khi lỗi, giữ nguyên trạng thái chưa đánh dấu daGui = true và đồng bộ lại bộ đếm
+    soLuongDaGuiHienTaiBTP = phienBTP.filter(r => r.daGui).length;
 
     // Lưu vào pending chờ gửi bù
     const pending = docPendingBTP();
@@ -1093,83 +1036,10 @@ function toggleChiTietKQBTPByB64(keyB64) {
 }
 window.toggleChiTietKQBTPByB64 = toggleChiTietKQBTPByB64;
 
-let btpKqSwipeTouchState = null;
 function khoiTaoSwipeKQBTP() {
-  const container = document.getElementById("btp-tbody-dot");
-  if (!container || container.__swipeKqInit) return;
-  container.__swipeKqInit = true;
-
-  container.addEventListener("touchstart", (e) => {
-    const touch = e.touches[0];
-    const content = e.target.closest(".kq-swipe-content");
-    if (!content) return;
-
-    const allSwiped = container.querySelectorAll(".kq-swipe-content.swiped");
-    allSwiped.forEach(el => {
-      if (el !== content) {
-        el.style.transform = "translateX(0px)";
-        el.classList.remove("swiped");
-      }
-    });
-
-    const isAlreadySwiped = content.classList.contains("swiped");
-    btpKqSwipeTouchState = {
-      content: content,
-      startX: touch.clientX,
-      startY: touch.clientY,
-      currentX: touch.clientX,
-      isSwiping: false,
-      isAlreadySwiped: isAlreadySwiped
-    };
-  }, { passive: true });
-
-  container.addEventListener("touchmove", (e) => {
-    if (!btpKqSwipeTouchState) return;
-    const touch = e.touches[0];
-    const dx = touch.clientX - btpKqSwipeTouchState.startX;
-    const dy = touch.clientY - btpKqSwipeTouchState.startY;
-
-    if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 10) {
-      btpKqSwipeTouchState.isSwiping = true;
-      let offset = dx;
-      if (btpKqSwipeTouchState.isAlreadySwiped) {
-        offset = -76 + dx;
-      }
-      if (offset > 0) offset = 0;
-      if (offset < -85) offset = -85;
-      btpKqSwipeTouchState.content.style.transition = "none";
-      btpKqSwipeTouchState.content.style.transform = `translateX(${offset}px)`;
-    }
-  }, { passive: true });
-
-  const ketThucVuot = (e) => {
-    if (!btpKqSwipeTouchState) return;
-    const content = btpKqSwipeTouchState.content;
-    const dx = (e && e.changedTouches ? e.changedTouches[0]?.clientX : btpKqSwipeTouchState.currentX) - btpKqSwipeTouchState.startX;
-
-    content.style.transition = "transform 0.2s cubic-bezier(0.2, 0.9, 0.3, 1)";
-    if (btpKqSwipeTouchState.isSwiping) {
-      if (dx < -35) {
-        content.style.transform = "translateX(-76px)";
-        content.classList.add("swiped");
-      } else {
-        content.style.transform = "translateX(0px)";
-        content.classList.remove("swiped");
-      }
-    } else if (btpKqSwipeTouchState.isAlreadySwiped) {
-      content.style.transform = "translateX(0px)";
-      content.classList.remove("swiped");
-    }
-    btpKqSwipeTouchState = null;
-  };
-
-  container.addEventListener("touchend", ketThucVuot);
-  container.addEventListener("touchcancel", () => {
-    if (btpKqSwipeTouchState) {
-      btpKqSwipeTouchState.content.style.transform = btpKqSwipeTouchState.isAlreadySwiped ? "translateX(-76px)" : "translateX(0px)";
-      btpKqSwipeTouchState = null;
-    }
-  });
+  if (window.ScannerCore && typeof window.ScannerCore.khoiTaoSwipe === "function") {
+    window.ScannerCore.khoiTaoSwipe("btp-tbody-dot", ".kq-swipe-content", "__swipeKqInit");
+  }
 }
 
 // ── Xây dựng bảng kết quả BTP (Accordion Đợt & Tổng hợp gom loại) ──
@@ -1443,47 +1313,8 @@ async function quetMoiBTP() {
 
 async function saoChepMaQRBTP(e) {
   if (e) e.stopPropagation();
-  if (!maQRVuaQuetBTP || maQRVuaQuetBTP === "Chờ quét...") return;
-
-  const btnCopy = document.getElementById("btn-copy-btp");
-  const iconCopy = document.getElementById("icon-copy-btp");
-
-  let copyOk = false;
-  if (navigator.clipboard && navigator.clipboard.writeText) {
-    try {
-      await navigator.clipboard.writeText(maQRVuaQuetBTP);
-      copyOk = true;
-    } catch (err) { }
-  }
-
-  if (!copyOk) {
-    try {
-      const tempInput = document.createElement("input");
-      tempInput.style.position = "fixed";
-      tempInput.style.left = "-9999px";
-      tempInput.value = maQRVuaQuetBTP;
-      document.body.appendChild(tempInput);
-      tempInput.focus();
-      tempInput.select();
-      copyOk = document.execCommand("copy");
-      document.body.removeChild(tempInput);
-    } catch (err) { }
-  }
-
-  if (copyOk) {
-    if (btnCopy) btnCopy.classList.add("copied");
-    if (iconCopy) {
-      iconCopy.classList.remove("ti-copy");
-      iconCopy.classList.add("ti-check");
-    }
-    showCanhBaoBTP("Đã sao chép: " + maQRVuaQuetBTP, "success");
-    setTimeout(() => {
-      if (btnCopy) btnCopy.classList.remove("copied");
-      if (iconCopy) {
-        iconCopy.classList.remove("ti-check");
-        iconCopy.classList.add("ti-copy");
-      }
-    }, 1500);
+  if (window.ScannerCore && typeof window.ScannerCore.saoChepMaQR === "function") {
+    await window.ScannerCore.saoChepMaQR(maQRVuaQuetBTP, "icon-copy-btp", "btn-copy-btp", showCanhBaoBTP);
   }
 }
 window.saoChepMaQRBTP = saoChepMaQRBTP;
@@ -1622,22 +1453,29 @@ function huyPhienBTP() {
 
 // ── Lịch sử quét BTP (30 ngày) ──
 function docLichSuBTP() {
-  let list = [];
-  try { list = JSON.parse(localStorage.getItem(BTP_LICHSU_KEY)) || []; } catch (e) { list = []; }
   const homNay = new Date();
   homNay.setHours(0, 0, 0, 0);
-
-  // [BẢO VỆ MỤC 7]: Giữ lại phiên chưa gửi xong dù có thể bị lệch ngày
-  return list.filter(s => {
+  const filterFn = s => {
+    if (!s) return false;
     if (!s.ngay) return true;
     const ngayPhien = new Date(s.ngay + "T00:00:00");
     const soNgayCach = Math.floor((homNay - ngayPhien) / 86400000);
     const chuaGuiXong = (s.soLuongDaGui || 0) < (s.phienBTP ? s.phienBTP.length : 0);
     return chuaGuiXong || (soNgayCach >= 0 && soNgayCach < BTP_LICHSU_SO_NGAY_GIU);
-  });
+  };
+  if (window.ScannerCore && typeof window.ScannerCore.docLichSu === "function") {
+    return window.ScannerCore.docLichSu(BTP_LICHSU_KEY, filterFn);
+  }
+  let list = [];
+  try { list = JSON.parse(localStorage.getItem(BTP_LICHSU_KEY)) || []; } catch (e) { list = []; }
+  return list.filter(filterFn);
 }
 
 function luuLichSuBTP(list) {
+  if (window.ScannerCore && typeof window.ScannerCore.luuLichSu === "function") {
+    window.ScannerCore.luuLichSu(BTP_LICHSU_KEY, list);
+    return;
+  }
   try { localStorage.setItem(BTP_LICHSU_KEY, JSON.stringify(list)); } catch (e) { }
 }
 
@@ -1723,38 +1561,32 @@ function renderLichSuBTP() {
   }
 
   if (list.length === 0) {
-    container.innerHTML = '<div style="text-align:center; padding:32px 16px; color:var(--text-lighter); font-size:14px;">Chưa có lịch sử phiên quét BTP nào</div>';
+    container.innerHTML = '<div style="text-align:center; padding:32px 16px; color:var(--row-muted); font-size:14px;">Chưa có lịch sử phiên quét BTP nào</div>';
     return;
   }
 
-  let html = "";
-  list.forEach(s => {
+  container.innerHTML = list.map(s => {
     const total = s.phienBTP ? s.phienBTP.length : 0;
     const dotCount = s.demSoDotBTP || (s.phienBTP ? new Set(s.phienBTP.map(r => r.dotQuet || 1)).size : 1);
     const timeStr = s.capNhatLuc ? new Date(s.capNhatLuc).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" }) : "";
-    const ngayStr = s.ngay ? s.ngay.split("-").reverse().join("/") : "—";
+    const parts = s.ngay ? s.ngay.split("-") : [];
+    const ngayNgan = parts.length === 3 ? parts[2] + "/" + parts[1] : (s.ngay || "—");
     const daGui = (s.soLuongDaGui || 0) >= total && total > 0;
-    const trangThaiGui = daGui
-      ? '<span style="color:var(--success); font-size:12px; font-weight:600;"><i class="ti ti-check"></i> Đã gửi Sheet</span>'
-      : '<span style="color:var(--danger); font-size:12px; font-weight:600;"><i class="ti ti-alert-circle"></i> Chưa gửi hết (' + (s.soLuongDaGui || 0) + '/' + total + ')</span>';
+    const trangThai = daGui
+      ? '<i class="ti ti-check cx5-trangthai-ok" title="Đã gửi Sheet"></i>'
+      : '<i class="ti ti-x cx5-trangthai-mot-phan" title="Chưa gửi hết (' + (s.soLuongDaGui || 0) + '/' + total + ')"></i>';
 
-    html += `
-      <div class="card" style="margin-bottom:12px; padding:12px 14px; cursor:pointer;" onclick="xemChiTietLichSuBTP('${s.idPhien}')">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-          <div style="font-weight:700; font-size:15px; color:var(--text-color);">${ngayStr} <span style="font-weight:400; font-size:12px; color:var(--text-lighter);">(${timeStr})</span></div>
-          <button type="button" class="btn" style="background:transparent; border:none; color:var(--text-lighter); padding:4px 6px; margin:0;" onclick="xoaMotPhienLichSuBTP('${s.idPhien}', event)" title="Xóa phiên này">
-            <i class="ti ti-trash"></i>
-          </button>
-        </div>
-        <div style="display:flex; justify-content:space-between; align-items:center; font-size:13px; color:var(--text-lighter);">
-          <span>${dotCount} đợt • <b>${total}</b> mã BTP</span>
-          ${trangThaiGui}
-        </div>
-      </div>
-    `;
-  });
-
-  container.innerHTML = html;
+    return '<div class="irow lichsu-row lichsu-card-row" onclick="xemChiTietLichSuBTP(\'' + s.idPhien + '\')">'
+      + '<div class="ls-col-main">'
+      + '<div class="ls-row-top"><span class="ls-date">' + ngayNgan + '</span><span class="ls-time">' + timeStr + '</span></div>'
+      + '<div class="ls-row-metrics"><span class="ls-metric-pill"><b>' + dotCount + '</b> đợt</span><span class="ls-metric-pill ls-metric-kg"><b>' + total + '</b> mã BTP</span></div>'
+      + '</div>'
+      + '<div class="ls-col-actions">'
+      + trangThai
+      + '<button class="lichsu-del-btn" aria-label="Xóa phiên này" title="Xóa phiên này" onclick="xoaMotPhienLichSuBTP(\'' + s.idPhien + '\', event)"><i class="ti ti-trash"></i></button>'
+      + '</div>'
+      + '</div>';
+  }).join("");
 }
 
 let hienThiPhienLichSuHienTaiBTP = null;
@@ -1993,23 +1825,27 @@ function toggleLichSuBTPView(cheDo) {
     if (wrapChiTiet) wrapChiTiet.style.display = "none";
     if (wrapGom) wrapGom.style.display = "block";
     if (tabChiTiet) {
-      tabChiTiet.className = "btn";
-      tabChiTiet.style.cssText = "flex:1; border-radius:8px; margin:0; padding:8px; font-size:13px; font-weight:700; background:transparent; border:1px solid var(--primary); color:var(--primary);";
+      tabChiTiet.style.background = "transparent";
+      tabChiTiet.style.color = "var(--row-muted)";
+      tabChiTiet.style.boxShadow = "none";
     }
     if (tabTongHop) {
-      tabTongHop.className = "btn btn-blue";
-      tabTongHop.style.cssText = "flex:1; border-radius:8px; margin:0; padding:8px; font-size:13px; font-weight:700;";
+      tabTongHop.style.background = "var(--surface)";
+      tabTongHop.style.color = "var(--row-text)";
+      tabTongHop.style.boxShadow = "0 2px 6px rgba(0,0,0,0.06)";
     }
   } else {
     if (wrapChiTiet) wrapChiTiet.style.display = "block";
     if (wrapGom) wrapGom.style.display = "none";
     if (tabChiTiet) {
-      tabChiTiet.className = "btn btn-blue";
-      tabChiTiet.style.cssText = "flex:1; border-radius:8px; margin:0; padding:8px; font-size:13px; font-weight:700;";
+      tabChiTiet.style.background = "var(--surface)";
+      tabChiTiet.style.color = "var(--row-text)";
+      tabChiTiet.style.boxShadow = "0 2px 6px rgba(0,0,0,0.06)";
     }
     if (tabTongHop) {
-      tabTongHop.className = "btn";
-      tabTongHop.style.cssText = "flex:1; border-radius:8px; margin:0; padding:8px; font-size:13px; font-weight:700; background:transparent; border:1px solid var(--primary); color:var(--primary);";
+      tabTongHop.style.background = "transparent";
+      tabTongHop.style.color = "var(--row-muted)";
+      tabTongHop.style.boxShadow = "none";
     }
   }
 }

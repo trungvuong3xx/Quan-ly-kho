@@ -14,12 +14,13 @@ Project-level behavioral and tooling guidelines.
 | `codebase-memory` | MCP graph: search_graph, trace_path, detect_changes, index_repository |
 | `erp-igp-automation` | Quy trình tự động hóa nhập liệu chứng từ WorkFlow ERP iGP từ Google Sheets (Chỉ & Nhựa) |
 | `karpathy-guidelines` | Behavioral guidelines derived from Andrej Karpathy to reduce common LLM coding mistakes |
+| `anti-hallucination` | Quy tắc chống bịa code (Strict Restrictions): cấm tự sáng tác hàm/props/API/giá trị không có thật, chỉ dùng hàm sẵn có hoặc tự triển khai đầy đủ, không thêm tính năng ngoài yêu cầu, dừng lại hỏi nếu chưa rõ |
 
 ## Quick Reference
 
 **Before any task:**
 
-1. Invoke `brainstorming` skill — no exceptions
+1. Invoke `brainstorming` and `anti-hallucination` skills — no exceptions
 2. **[REAL ENGINEERING]** Consider invoking Matt Pocock skills like `grill-with-docs` for clarifying requirements, `to-spec` for creating specifications, or `wayfinder` for huge chunks of work.
 
 **Before editing code:**
@@ -64,3 +65,9 @@ Project-level behavioral and tooling guidelines.
 ### 4. Kiểm tra Cú pháp (Syntax Check) TRƯỚC KHI DEPLOY:
 - **BẮT BUỘC CHẠY KIỂM TRA CÚ PHÁP**: Tuyệt đối không được Deploy hay Push lên git nếu chưa kiểm tra cú pháp của file JavaScript vừa sửa. Việc dùng Regex để thay thế text rất dễ gây ra các lỗi thiếu ngoặc nhọn `}` hoặc dư `else`.
 - **LỆNH KIỂM TRA**: Luôn chạy lệnh `node -c <ten_file.js>` (ví dụ: `node -c quetqr.js`) để đảm bảo không bị lỗi SyntaxError ngớ ngẩn làm trắng trang ứng dụng. Nếu có lỗi phải sửa ngay.
+
+### 5. ⛔ QUY TẮC CHỐNG BỊA CODE (STRICT RESTRICTIONS):
+1. Tuyệt đối KHÔNG tự sáng tác ra hàm (functions), thuộc tính (props), giá trị dữ liệu hoặc API endpoints không có thật.
+2. Chỉ sử dụng những hàm/thư viện đã có trong code được cung cấp. Nếu cần một chức năng chưa có, PHẢI tự viết code triển khai chi tiết hàm đó hoặc báo người dùng cài thêm package.
+3. Không tự tiện thêm các tính năng nằm ngoài phạm vi yêu cầu.
+4. Nếu có chỗ nào chưa rõ về cấu trúc dự án, HÃY DỪNG LẠI VÀ ĐẶT CÂU HỎI CHO NGƯỜI DÙNG thay vì tự suy đoán.

@@ -144,7 +144,17 @@ function xuLyTaoThangMoi(tenCu, tenMoi) {
   if (!shCu) throw new Error("Làm gì có cái sheet nào như thế??? " + tenCu);
 
   var shMoiCheck = ss.getSheetByName(tenMoi);
-  if (shMoiCheck) ss.deleteSheet(shMoiCheck);
+  if (shMoiCheck) {
+    var confirmDel = ui.alert(
+      "Cảnh báo trùng Sheet tháng",
+      "Sheet '" + tenMoi + "' đã tồn tại! Bạn có chắc chắn muốn XÓA và tạo lại không?",
+      ui.ButtonSet.YES_NO
+    );
+    if (confirmDel !== ui.Button.YES) {
+      return;
+    }
+    ss.deleteSheet(shMoiCheck);
+  }
 
   var shMoi = shCu.copyTo(ss).setName(tenMoi);
   ss.setActiveSheet(shMoi);

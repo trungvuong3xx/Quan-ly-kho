@@ -10,15 +10,34 @@ const COL_THOIGIAN = 8;
 
 function getInfo(msp) {
   try {
-    const ss = SpreadsheetApp.getActiveSpreadsheet();
-    const sh = ss.getSheetByName("DanhMuc");
-    if (!sh) return { error: "Không tìm thấy sheet 'DanhMuc'" };
+    const cleanMsp = String(msp || "").trim();
+    if (!cleanMsp) return { success: false, message: "Thiếu MSP" };
 
-    const data = sh.getDataRange().getValues();
-    for (let i = 3; i < data.length; i++) {
-      if (String(data[i][0]).trim() === String(msp).trim()) {
-        return { success: true, ten: data[i][1], mau: data[i][2] };
+    let map = null;
+    const cache = CacheService.getScriptCache();
+    try {
+      const cached = cache.get("DANHMUC_MSP_MAP_V1");
+      if (cached) map = JSON.parse(cached);
+    } catch (eCache) {}
+
+    if (!map) {
+      const ss = SpreadsheetApp.getActiveSpreadsheet();
+      const sh = ss.getSheetByName("DanhMuc");
+      if (!sh) return { error: "Không tìm thấy sheet 'DanhMuc'" };
+
+      const data = sh.getDataRange().getValues();
+      map = {};
+      for (let i = 3; i < data.length; i++) {
+        const k = String(data[i][0] || "").trim();
+        if (k) {
+          map[k] = { ten: data[i][1], mau: data[i][2] };
+        }
       }
+      try { cache.put("DANHMUC_MSP_MAP_V1", JSON.stringify(map), 600); } catch (ePut) {}
+    }
+
+    if (map[cleanMsp]) {
+      return { success: true, ten: map[cleanMsp].ten, mau: map[cleanMsp].mau };
     }
 
     return { success: false, message: "Không tìm thấy MSP: " + msp };
@@ -29,14 +48,30 @@ function getInfo(msp) {
 
 function taoNhieuID(soLuong) {
   try {
+    const existingIds = new Set();
+    try {
+      const ss = SpreadsheetApp.getActiveSpreadsheet();
+      const shNhap = ss.getSheetByName("NHẬP");
+      if (shNhap && shNhap.getLastRow() >= DATA_START_ROW) {
+        const colIds = shNhap.getRange(DATA_START_ROW, COL_ID, shNhap.getLastRow() - DATA_START_ROW + 1, 1).getValues();
+        for (let i = 0; i < colIds.length; i++) {
+          const v = String(colIds[i][0] || "").trim();
+          if (v) existingIds.add(v);
+        }
+      }
+    } catch (eRead) {}
+
     const ids = [];
     for (let i = 0; i < soLuong; i++) {
       let id;
+      let attempts = 0;
       do {
         const so = Math.floor(Math.random() * 90000) + 10000;
         id = "5C" + so;
-      } while (ids.includes(id));
+        attempts++;
+      } while ((ids.includes(id) || existingIds.has(id)) && attempts < 100000);
       ids.push(id);
+      existingIds.add(id);
     }
     return ids;
   } catch(e) {
@@ -94,6 +129,27 @@ function getDataRows(sheet) {
     .filter(item => String(item.values[COL_ID - 1]).trim() !== "");
 }
 
+function timRowsTheoIdNhanh_(sheet, targetId) {
+  if (!sheet) return [];
+  const cleanId = String(targetId || "").trim();
+  if (!cleanId) return [];
+  const lastRow = sheet.getLastRow();
+  if (lastRow < DATA_START_ROW) return [];
+
+  try {
+    const range = sheet.getRange(DATA_START_ROW, COL_ID, lastRow - DATA_START_ROW + 1, 1);
+    const matches = range.createTextFinder(cleanId).matchEntireCell(true).findAll();
+    if (!matches || matches.length === 0) return [];
+    return matches.map(cell => {
+      const rNum = cell.getRow();
+      const rowVals = sheet.getRange(rNum, 1, 1, COL_THOIGIAN).getValues()[0];
+      return { rowNumber: rNum, values: rowVals };
+    });
+  } catch (e) {
+    return getDataRows(sheet).filter(row => rowId(row) === cleanId);
+  }
+}
+
 function rowId(row) {
   return String(row.values[COL_ID - 1]).trim();
 }
@@ -110,12 +166,11 @@ function thongTinTon(id) {
   const shBinhThuan = ss.getSheetByName("BÌNH THUẬN");
   const shFor = ss.getSheetByName("FOR");
 
-  const nhapRows = getDataRows(shNhap).filter(row => rowId(row) === String(id).trim());
+  const nhapRows = timRowsTheoIdNhanh_(shNhap, id);
   const xuatRows = []
-    .concat(getDataRows(shXuat))
-    .concat(getDataRows(shBinhThuan))
-    .concat(getDataRows(shFor))
-    .filter(row => rowId(row) === String(id).trim());
+    .concat(timRowsTheoIdNhanh_(shXuat, id))
+    .concat(timRowsTheoIdNhanh_(shBinhThuan, id))
+    .concat(timRowsTheoIdNhanh_(shFor, id));
 
   const tongNhap = lamTronKg(nhapRows.reduce((sum, row) => sum + rowKg(row), 0));
   const tongXuat = lamTronKg(xuatRows.reduce((sum, row) => sum + rowKg(row), 0));
@@ -182,7 +237,9 @@ function ghiDong(sheet, id, msp, qc, bao, kg, loai, ngay, thoiGian) {
 }
 
 function luuGiaoDich(id, msp, ten, mau, ngay, loai, kg, thoiGian) {
+  const lock = LockService.getDocumentLock();
   try {
+    lock.waitLock(30000);
     const ss = SpreadsheetApp.getActiveSpreadsheet();
     const tenSheet = layTenSheet(loai);
     if (!tenSheet) return { error: "Không xác định loại" };
@@ -229,29 +286,41 @@ function luuGiaoDich(id, msp, ten, mau, ngay, loai, kg, thoiGian) {
     return { error: "Không xác định loại" };
   } catch (e) {
     return { error: e.message };
+  } finally {
+    try { lock.releaseLock(); } catch (eLock) {}
   }
 }
 
 // ─── Lưu kiểm kê batch ─────────────────────────────────────
 function luuKiemKe(data) {
+  const lock = LockService.getDocumentLock();
   try {
+    lock.waitLock(30000);
     const ss = SpreadsheetApp.getActiveSpreadsheet();
     const sh = ss.getSheetByName("KIỂM KÊ");
     if (!sh) return { error: "Không tìm thấy sheet 'KIỂM KÊ'" };
 
-    data.forEach(row => {
-      const dNgay = formatNgay(row.ngay);
-      const dGio = formatGio(row.thoiGian ? row.thoiGian : new Date());
-      sh.appendRow([row.id, row.msp, row.ten, 1, "", "Kiểm Kê", dNgay, dGio]);
-    });
+    if (data && Array.isArray(data) && data.length > 0) {
+      const rowsToInsert = data.map(row => {
+        const dNgay = formatNgay(row.ngay);
+        const dGio = formatGio(row.thoiGian ? row.thoiGian : new Date());
+        return [row.id, row.msp, row.ten, 1, "", "Kiểm Kê", dNgay, dGio];
+      });
+      const startRow = Math.max(sh.getLastRow() + 1, DATA_START_ROW);
+      sh.getRange(startRow, 1, rowsToInsert.length, 8).setValues(rowsToInsert);
+    }
     return { success: true };
   } catch(e) {
     return { error: e.message };
+  } finally {
+    try { lock.releaseLock(); } catch (eLock) {}
   }
 }
 
 function luuCX1(data) {
+  const lock = LockService.getDocumentLock();
   try {
+    lock.waitLock(30000);
     const ss = SpreadsheetApp.getActiveSpreadsheet();
     let sh = ss.getSheetByName("CX1");
     if (!sh) return { error: "Không tìm thấy sheet 'CX1'" };
@@ -291,6 +360,8 @@ function luuCX1(data) {
     return { success: true };
   } catch(e) {
     return { error: "Lỗi ghi Sheet: " + e.message };
+  } finally {
+    try { lock.releaseLock(); } catch (eLock) {}
   }
 }
 
@@ -320,30 +391,37 @@ function layDanhSachQC() {
 }
 
 function doPost(e) {
-  const body = JSON.parse(e.postData.contents);
-  const action = body.action;
+  try {
+    if (!e || !e.postData || !e.postData.contents) {
+      return reply({ error: "Dữ liệu gửi lên trống" });
+    }
+    const body = JSON.parse(e.postData.contents);
+    const action = body.action;
 
-  if (action === "layDanhSachQC") return reply(layDanhSachQC());
-  if (action === "getInfo") return reply(getInfo(body.msp));
-  if (action === "taoNhieuID") return reply(taoNhieuID(body.soLuong));
-  if (action === "kiemTraQR") return reply(kiemTraQR(body.id, body.msp, body.loai));
-  if (action === "luuKiemKe") return reply(luuKiemKe(body.data));
-  if (action === "luuCX1") return reply(luuCX1(body.data));
+    if (action === "layDanhSachQC") return reply(layDanhSachQC());
+    if (action === "getInfo") return reply(getInfo(body.msp));
+    if (action === "taoNhieuID") return reply(taoNhieuID(body.soLuong));
+    if (action === "kiemTraQR") return reply(kiemTraQR(body.id, body.msp, body.loai));
+    if (action === "luuKiemKe") return reply(luuKiemKe(body.data));
+    if (action === "luuCX1") return reply(luuCX1(body.data));
 
-  if (action === "luuGiaoDich") {
-    return reply(luuGiaoDich(
-      body.id,
-      body.msp,
-      body.ten,
-      body.mau,
-      body.ngay,
-      body.loai,
-      body.kg,
-      body.thoiGian // Nhận thêm thời gian truyền từ app
-    ));
+    if (action === "luuGiaoDich") {
+      return reply(luuGiaoDich(
+        body.id,
+        body.msp,
+        body.ten,
+        body.mau,
+        body.ngay,
+        body.loai,
+        body.kg,
+        body.thoiGian // Nhận thêm thời gian truyền từ app
+      ));
+    }
+
+    return reply({ error: "Không rõ action" });
+  } catch (err) {
+    return reply({ error: "Lỗi xử lý request: " + err.message });
   }
-
-  return reply({ error: "Không rõ action" });
 }
 
 function reply(data) {

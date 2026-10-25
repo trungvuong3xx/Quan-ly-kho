@@ -72,18 +72,38 @@ function layTonKhoCX5(payload) {
     const sheet = ss.getSheetByName(sheetName);
     if (!sheet) return { error: 'Chưa có sheet tháng "' + sheetName + '"' };
 
+    const data = sheet.getRange(6, 7, 639, 5).getValues();
+
+    const mspMapThuong = {};
+    const mspMapFor = {};
+
+    for (let i = 0; i < data.length; i++) {
+      const rowNum = 6 + i;
+      const m = String(data[i][0]).trim();
+      if (!m) continue;
+      const rowInfo = {
+        baoDau: data[i][1] || 0,
+        kgDau: data[i][2] || 0,
+        baoCuoi: data[i][3] || 0,
+        kgCuoi: data[i][4] || 0
+      };
+      if ((rowNum >= 6 && rowNum <= 543) || (rowNum >= 637 && rowNum <= 644)) {
+        if (!mspMapThuong[m]) mspMapThuong[m] = rowInfo;
+      } else if (rowNum >= 544 && rowNum <= 630) {
+        if (!mspMapFor[m]) mspMapFor[m] = rowInfo;
+      }
+    }
+
     const ketQua = [];
     msps.forEach(function (msp) {
-      const rowThuong = findRowByMspTonKho_(sheet, msp, VUNG_THUONG_TK_RANGES);
-      const rowFor = findRowByMspTonKho_(sheet, msp, VUNG_FOR_TK_RANGES);
-
-      if (rowThuong !== -1) {
-        const v = sheet.getRange(rowThuong, 8, 1, 4).getValues()[0];
-        ketQua.push({ msp: msp, kho: "Thường", baoDau: v[0] || 0, kgDau: v[1] || 0, baoCuoi: v[2] || 0, kgCuoi: v[3] || 0 });
+      const m = String(msp).trim();
+      if (mspMapThuong[m]) {
+        const v = mspMapThuong[m];
+        ketQua.push({ msp: m, kho: "Thường", baoDau: v.baoDau, kgDau: v.kgDau, baoCuoi: v.baoCuoi, kgCuoi: v.kgCuoi });
       }
-      if (rowFor !== -1) {
-        const v = sheet.getRange(rowFor, 8, 1, 4).getValues()[0];
-        ketQua.push({ msp: msp, kho: "FOR", baoDau: v[0] || 0, kgDau: v[1] || 0, baoCuoi: v[2] || 0, kgCuoi: v[3] || 0 });
+      if (mspMapFor[m]) {
+        const v = mspMapFor[m];
+        ketQua.push({ msp: m, kho: "FOR", baoDau: v.baoDau, kgDau: v.kgDau, baoCuoi: v.baoCuoi, kgCuoi: v.kgCuoi });
       }
     });
 

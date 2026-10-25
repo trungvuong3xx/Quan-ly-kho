@@ -53,8 +53,10 @@ function tkLocDanhSach(list, query, gioiHan = 30, isLoaiXuat = false) {
 
   for (let i = 0; i < list.length; i++) {
     const item = list[i];
-    const { norm: tenNorm, clean: tenClean } = tkChuanHoaTimKiem(item.ten);
-    const { norm: mspNorm, clean: mspClean } = tkChuanHoaTimKiem(item.msp);
+    const tenNormObj = item._tenNorm ? { norm: item._tenNorm, clean: item._tenClean } : tkChuanHoaTimKiem(item.ten);
+    const mspNormObj = item._mspNorm ? { norm: item._mspNorm, clean: item._mspClean } : tkChuanHoaTimKiem(item.msp);
+    const tenNorm = tenNormObj.norm, tenClean = tenNormObj.clean;
+    const mspNorm = mspNormObj.norm, mspClean = mspNormObj.clean;
 
     let score = 0;
 
@@ -155,7 +157,11 @@ async function tkTaiDanhSachLIST(forceRefresh = false) {
       });
 
       if (res && res.list && Array.isArray(res.list)) {
-        tkListCache = res.list;
+        tkListCache = res.list.map(it => {
+          const t = tkChuanHoaTimKiem(it.ten);
+          const m = tkChuanHoaTimKiem(it.msp);
+          return { ...it, _tenNorm: t.norm, _tenClean: t.clean, _mspNorm: m.norm, _mspClean: m.clean };
+        });
       } else {
         tkListCache = [];
       }
@@ -178,6 +184,12 @@ function tkBaoLoi(text) {
   const el = document.getElementById("tk-ket-qua");
   const msg = typeof rutGonThongBaoLoi === "function" ? rutGonThongBaoLoi(text) : text;
   if (el) el.innerHTML = '<div class="tk-loi">' + String(msg).replace(/</g, "&lt;") + "</div>";
+}
+
+function tkLayNgayLocal_() {
+  if (typeof layNgayHomNayLocal === "function") return layNgayHomNayLocal();
+  const d = new Date();
+  return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
 }
 
 async function tkTimTonKho() {
@@ -205,7 +217,7 @@ async function tkTimTonKho() {
     tkGhiNhanTanSuat(ungVien[0].ten);
 
     const dateVal = document.getElementById("tk-ngay") ? document.getElementById("tk-ngay").value : "";
-    const dateStr = dateVal || new Date().toISOString().split("T")[0];
+    const dateStr = dateVal || tkLayNgayLocal_();
 
     const tenTheoMsp = {};
     const msps = [];
@@ -248,7 +260,7 @@ function xuatExcelTonKho() {
     return;
   }
   const dateVal = document.getElementById("tk-ngay") ? document.getElementById("tk-ngay").value : "";
-  const dateStr = dateVal || new Date().toISOString().split("T")[0];
+  const dateStr = dateVal || tkLayNgayLocal_();
   const exportData = tkKetQuaTimKiemHienTai.map((item, idx) => ({
     "STT": idx + 1,
     "Ngày tra cứu": dateStr,
@@ -281,12 +293,14 @@ function tkHienKetQua(ketQua) {
 
   const cardsHtml = ketQua.map(k => {
     const isFor = k.kho === "FOR";
+    const safeTen = typeof escapeHtml === "function" ? escapeHtml(k.ten) : String(k.ten || "").replace(/</g, "&lt;");
+    const safeMsp = typeof escapeHtml === "function" ? escapeHtml(k.msp) : String(k.msp || "").replace(/</g, "&lt;");
     return `
       <div class="tk-card">
         <div class="tk-card-header">
           <div>
-            <div class="tk-card-ten">${String(k.ten).replace(/</g, "&lt;")}</div>
-            <div class="tk-card-msp">MSP: <span>${k.msp}</span></div>
+            <div class="tk-card-ten">${safeTen}</div>
+            <div class="tk-card-msp">MSP: <span>${safeMsp}</span></div>
           </div>
           <div class="tk-badge ${isFor ? "tk-badge-for" : "tk-badge-thuong"}">${isFor ? "FOR" : "Thường"}</div>
         </div>

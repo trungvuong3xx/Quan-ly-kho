@@ -33,8 +33,52 @@ function tkGhiNhanTanSuat(ten) {
     const freq = tkLayLichSuTanSuat();
     freq[ten] = (freq[ten] || 0) + 1;
     localStorage.setItem(TK_FREQ_KEY, JSON.stringify(freq));
+    tkRenderFreqChips();
   } catch (e) {}
 }
+
+// Hiển thị chip gợi ý nhanh các mã tra cứu thường xuyên nhất từ tk_search_freq
+function tkRenderFreqChips() {
+  const wrap = document.getElementById("tk-freq-chips");
+  if (!wrap) return;
+  const freq = tkLayLichSuTanSuat();
+  const topKeys = Object.keys(freq)
+    .filter(k => k && freq[k] > 0)
+    .sort((a, b) => freq[b] - freq[a])
+    .slice(0, 6);
+
+  if (topKeys.length === 0) {
+    wrap.style.display = "none";
+    wrap.innerHTML = "";
+    return;
+  }
+
+  const safeEsc = typeof escapeHtml === "function" ? escapeHtml : (s => String(s == null ? "" : s).replace(/[&<>"']/g, ""));
+  wrap.style.display = "flex";
+  wrap.innerHTML = '<span class="tk-freq-label"><i class="ti ti-flame"></i> Hay tra:</span>' + topKeys.map((ten, idx) =>
+    '<button type="button" class="tk-freq-chip" data-idx="' + idx + '">' + safeEsc(ten) + '</button>'
+  ).join("");
+
+  wrap.querySelectorAll(".tk-freq-chip").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const idx = parseInt(btn.getAttribute("data-idx"), 10);
+      const ten = topKeys[idx];
+      if (!ten) return;
+      const input = document.getElementById("tk-ten");
+      if (input) {
+        input.value = ten;
+        tkCapNhatNutXoa();
+        tkDongDropdown();
+        tkTimTonKho();
+      }
+    });
+  });
+}
+
+function tkHienGoiYNhanh() {
+  tkRenderFreqChips();
+}
+window.tkHienGoiYNhanh = tkHienGoiYNhanh;
 
 // Lọc gợi ý tìm kiếm thông minh theo cơ chế chấm điểm ưu tiên (Tier Scoring Engine):
 // 1. Ưu tiên TUYỆT ĐỐI cho TÊN Quy Cách (khớp phân đoạn / bắt đầu từ / chứa từ).
@@ -53,8 +97,10 @@ function tkLocDanhSach(list, query, gioiHan = 30, isLoaiXuat = false) {
 
   for (let i = 0; i < list.length; i++) {
     const item = list[i];
-    const { norm: tenNorm, clean: tenClean } = tkChuanHoaTimKiem(item.ten);
-    const { norm: mspNorm, clean: mspClean } = tkChuanHoaTimKiem(item.msp);
+    const tenNormObj = item._tenNorm ? { norm: item._tenNorm, clean: item._tenClean } : tkChuanHoaTimKiem(item.ten);
+    const mspNormObj = item._mspNorm ? { norm: item._mspNorm, clean: item._mspClean } : tkChuanHoaTimKiem(item.msp);
+    const tenNorm = tenNormObj.norm, tenClean = tenNormObj.clean;
+    const mspNorm = mspNormObj.norm, mspClean = mspNormObj.clean;
 
     let score = 0;
 
@@ -136,6 +182,7 @@ function tkMoTonKho() {
   if (typeof chuyenTrangKhongNav === "function") {
     chuyenTrangKhongNav("tonKho");
   }
+  tkRenderFreqChips();
   tkTaiDanhSachLIST();
 }
 
@@ -155,7 +202,11 @@ async function tkTaiDanhSachLIST(forceRefresh = false) {
       });
 
       if (res && res.list && Array.isArray(res.list)) {
-        tkListCache = res.list;
+        tkListCache = res.list.map(it => {
+          const t = tkChuanHoaTimKiem(it.ten);
+          const m = tkChuanHoaTimKiem(it.msp);
+          return { ...it, _tenNorm: t.norm, _tenClean: t.clean, _mspNorm: m.norm, _mspClean: m.clean };
+        });
       } else {
         tkListCache = [];
       }
@@ -178,6 +229,12 @@ function tkBaoLoi(text) {
   const el = document.getElementById("tk-ket-qua");
   const msg = typeof rutGonThongBaoLoi === "function" ? rutGonThongBaoLoi(text) : text;
   if (el) el.innerHTML = '<div class="tk-loi">' + String(msg).replace(/</g, "&lt;") + "</div>";
+}
+
+function tkLayNgayLocal_() {
+  if (typeof layNgayHomNayLocal === "function") return layNgayHomNayLocal();
+  const d = new Date();
+  return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
 }
 
 async function tkTimTonKho() {
@@ -205,7 +262,7 @@ async function tkTimTonKho() {
     tkGhiNhanTanSuat(ungVien[0].ten);
 
     const dateVal = document.getElementById("tk-ngay") ? document.getElementById("tk-ngay").value : "";
-    const dateStr = dateVal || new Date().toISOString().split("T")[0];
+    const dateStr = dateVal || tkLayNgayLocal_();
 
     const tenTheoMsp = {};
     const msps = [];
@@ -248,7 +305,7 @@ function xuatExcelTonKho() {
     return;
   }
   const dateVal = document.getElementById("tk-ngay") ? document.getElementById("tk-ngay").value : "";
-  const dateStr = dateVal || new Date().toISOString().split("T")[0];
+  const dateStr = dateVal || tkLayNgayLocal_();
   const exportData = tkKetQuaTimKiemHienTai.map((item, idx) => ({
     "STT": idx + 1,
     "Ngày tra cứu": dateStr,
@@ -281,12 +338,14 @@ function tkHienKetQua(ketQua) {
 
   const cardsHtml = ketQua.map(k => {
     const isFor = k.kho === "FOR";
+    const safeTen = typeof escapeHtml === "function" ? escapeHtml(k.ten) : String(k.ten || "").replace(/</g, "&lt;");
+    const safeMsp = typeof escapeHtml === "function" ? escapeHtml(k.msp) : String(k.msp || "").replace(/</g, "&lt;");
     return `
       <div class="tk-card">
         <div class="tk-card-header">
           <div>
-            <div class="tk-card-ten">${String(k.ten).replace(/</g, "&lt;")}</div>
-            <div class="tk-card-msp">MSP: <span>${k.msp}</span></div>
+            <div class="tk-card-ten">${safeTen}</div>
+            <div class="tk-card-msp">MSP: <span>${safeMsp}</span></div>
           </div>
           <div class="tk-badge ${isFor ? "tk-badge-for" : "tk-badge-thuong"}">${isFor ? "FOR" : "Thường"}</div>
         </div>
@@ -328,20 +387,26 @@ function tkRenderDropdown() {
     return;
   }
 
-  el.innerHTML = tkFilteredList.map((item, idx) =>
-    '<div class="tk-dropdown-item' + (idx === tkActiveIndex ? ' active' : '') + '" data-idx="' + idx + '">' +
-    String(item.ten).replace(/</g, "&lt;") + '</div>'
-  ).join("");
+  el.innerHTML = tkFilteredList.map((item, idx) => {
+    const safeTen = String(item.ten || "").replace(/</g, "&lt;");
+    const safeMsp = item.msp ? String(item.msp).replace(/</g, "&lt;") : "";
+    return '<div class="tk-dropdown-item' + (idx === tkActiveIndex ? ' active' : '') + '" data-idx="' + idx + '" style="display:flex;align-items:center;justify-content:space-between;gap:8px;">'
+      + '<span style="font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + safeTen + '</span>'
+      + (safeMsp ? '<span style="font-size:11px;font-family:\'IBM Plex Mono\',monospace;color:var(--row-muted);flex-shrink:0;">' + safeMsp + '</span>' : '')
+      + '</div>';
+  }).join("");
   el.classList.add("show");
 
   Array.from(el.children).forEach(child => {
-    child.addEventListener("mousedown", e => {
+    const pick = e => {
       e.preventDefault();
       const idx = parseInt(child.getAttribute("data-idx"), 10);
       if (tkFilteredList[idx]) {
         tkChonGoiY(tkFilteredList[idx]);
       }
-    });
+    };
+    child.addEventListener("mousedown", pick);
+    child.addEventListener("click", pick);
   });
 }
 

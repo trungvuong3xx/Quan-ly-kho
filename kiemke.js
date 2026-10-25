@@ -18,6 +18,9 @@ async function batDauKiemKe() {
   document.getElementById("kk-cam").style.display = "block";
   document.getElementById("kk-dem").textContent = "Đã quét: 0 mã";
   document.getElementById("kk-status").textContent = "Đang quét...";
+  const lockElInit = document.getElementById("kk-lock-status");
+  if (lockElInit) lockElInit.textContent = "Chờ quét...";
+  capNhatLogKK();
 
   try {
     zxingReaderKK = await khoiTaoCameraFast("kk-reader", async (text) => {
@@ -53,10 +56,14 @@ async function batDauKiemKe() {
         showCanhBaoKK("Đã quét " + gioQuet, "error");
         if (typeof phatVibrateError === "function") phatVibrateError();
         else if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
-        const v = document.getElementById("kk-reader");
-        if (v) {
-          v.classList.add("canh-bao-trung");
-          setTimeout(() => v.classList.remove("canh-bao-trung"), 500);
+        if (window.ScannerCore && typeof window.ScannerCore.hienVienFeedback === "function") {
+          window.ScannerCore.hienVienFeedback("kk-cam-flash-overlay", "kk-video-box", "error", 500);
+        } else {
+          const v = document.getElementById("kk-reader");
+          if (v) {
+            v.classList.add("canh-bao-trung");
+            setTimeout(() => v.classList.remove("canh-bao-trung"), 500);
+          }
         }
         return;
       }
@@ -65,23 +72,33 @@ async function batDauKiemKe() {
       if (typeof phatVibrateSuccess === "function") phatVibrateSuccess();
       dsQuetKiemKe.push(id);
 
-      const vEl = document.getElementById("kk-reader");
-      if (vEl) {
-        vEl.classList.add("flash-thanh-cong");
-        setTimeout(() => vEl.classList.remove("flash-thanh-cong"), 400);
+      if (window.ScannerCore && typeof window.ScannerCore.hienVienFeedback === "function") {
+        window.ScannerCore.hienVienFeedback("kk-cam-flash-overlay", "kk-video-box", "ok", 400);
+      } else {
+        const vEl = document.getElementById("kk-reader");
+        if (vEl) {
+          vEl.classList.add("flash-thanh-cong");
+          setTimeout(() => vEl.classList.remove("flash-thanh-cong"), 400);
+        }
       }
 
-      // Lấy thông tin từ DanhMuc
-      const info = await callAPI({ action: "getInfo", msp });
-      const ten = info.success ? info.ten : "—";
-      const mau = info.success ? (info.mau || "—") : "—";
-
-      const itemRec = { id, msp, ten, mau, ngay: ngayKiemKe, thoiGian: new Date() };
+      const itemRec = { id, msp, ten: "—", mau: "—", ngay: ngayKiemKe, thoiGian: new Date() };
       batch.push(itemRec);
       dsChiTietQuetKK.push(itemRec);
 
-      // Cập nhật đếm
+      // Cập nhật đếm và subcam bar ngay lập tức
       document.getElementById("kk-dem").textContent = "Đã quét: " + dsQuetKiemKe.length + " mã";
+      const lockEl = document.getElementById("kk-lock-status");
+      if (lockEl) lockEl.textContent = (msp ? msp + " • " : "") + id;
+      capNhatLogKK();
+
+      // Lấy thông tin từ DanhMuc
+      const info = await callAPI({ action: "getInfo", msp });
+      if (info && info.success) {
+        itemRec.ten = info.ten || "—";
+        itemRec.mau = info.mau || "—";
+        capNhatLogKK();
+      }
 
       // Ghi sheet mỗi 10 dòng
       if (batch.length >= 10) {
@@ -92,6 +109,36 @@ async function batDauKiemKe() {
     showCanhBaoKK("Lỗi camera: " + e, "error");
     dungKiemKe();
   }
+}
+
+function capNhatLogKK() {
+  const countEl = document.getElementById("kk-log-count");
+  const listEl = document.getElementById("kk-log-list");
+  if (countEl) countEl.textContent = dsChiTietQuetKK.length + " mã";
+  if (!listEl) return;
+
+  if (dsChiTietQuetKK.length === 0) {
+    listEl.innerHTML = '<div class="btp-empty-log">Chưa có mã nào được quét</div>';
+    return;
+  }
+
+  // Chỉ render tối đa 30 mã mới nhất theo quy tắc dự án chống giật lag DOM
+  const latest = dsChiTietQuetKK.slice(-30).reverse();
+  const safeEsc = typeof escapeHtml === "function" ? escapeHtml : (s => String(s == null ? "" : s).replace(/[&<>"']/g, ""));
+
+  listEl.innerHTML = latest.map((item, idx) => {
+    const stt = dsChiTietQuetKK.length - idx;
+    const gio = item.thoiGian ? new Date(item.thoiGian).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit", second: "2-digit" }) : "";
+    const tenHienThi = (item.ten && item.ten !== "—") ? item.ten : (item.msp || item.id);
+    const mauHienThi = (item.mau && item.mau !== "—") ? (' • ' + item.mau) : '';
+    return '<div class="btp-log-item" style="padding: 8px 12px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-card);">'
+      + '<div style="min-width: 0; flex: 1;">'
+      + '<div style="font-weight: 700; font-size: 13px; color: var(--row-text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">#' + stt + ' • ' + safeEsc(tenHienThi) + safeEsc(mauHienThi) + '</div>'
+      + '<div style="font-size: 11.5px; color: var(--row-muted); font-family: \'IBM Plex Mono\', monospace;">ID: ' + safeEsc(item.id) + (item.msp ? ' | MSP: ' + safeEsc(item.msp) : '') + '</div>'
+      + '</div>'
+      + '<div style="font-size: 11px; font-weight: 600; color: var(--row-muted); margin-left: 8px; flex-shrink: 0;">' + safeEsc(gio) + '</div>'
+      + '</div>';
+  }).join("");
 }
 
 async function dungKiemKe() {
@@ -110,6 +157,7 @@ async function dungKiemKe() {
   document.getElementById("kk-cam").style.display = "none";
 }
 
+let dangDongBoKK = false;
 async function ghiBatch() {
   if (batch.length === 0) return;
   const data = [...batch];
@@ -132,21 +180,33 @@ function luuPendingKK(list) {
 }
 
 async function thuLaiPendingKK() {
+  if (dangDongBoKK) return;
   const pending = docPendingKK();
   if (pending.length === 0) return;
-  const r = await callAPI({ action: "luuKiemKe", data: pending });
-  if (r && !r.error) luuPendingKK([]);
-  if (typeof capNhatTrangThaiMang === "function") capNhatTrangThaiMang();
+  dangDongBoKK = true;
+  try {
+    const r = await callAPI({ action: "luuKiemKe", data: pending });
+    if (r && !r.error) luuPendingKK([]);
+  } finally {
+    dangDongBoKK = false;
+    if (typeof capNhatTrangThaiMang === "function") capNhatTrangThaiMang();
+  }
 }
 
 let dsChiTietQuetKK = []; // Lưu chi tiết để xuất Excel
+
+function layNgayLocalKK_() {
+  if (typeof layNgayHomNayLocal === "function") return layNgayHomNayLocal();
+  const d = new Date();
+  return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+}
 
 function xuatExcelKiemKe() {
   if (!dsChiTietQuetKK || dsChiTietQuetKK.length === 0) {
     showCanhBaoKK("Chưa có dữ liệu kiểm kê để xuất Excel!", "warning");
     return;
   }
-  const dateStr = ngayKiemKe || new Date().toISOString().split("T")[0];
+  const dateStr = ngayKiemKe || layNgayLocalKK_();
   const exportData = dsChiTietQuetKK.map((item, idx) => ({
     "STT": idx + 1,
     "Ngày kiểm kê": item.ngay,
@@ -208,8 +268,7 @@ function showCanhBaoKK(text, type = "error") {
 window.addEventListener("load", function() {
   const kkNgay = document.getElementById("kk-ngay");
   if (kkNgay) {
-    const today = new Date().toISOString().split('T')[0];
-    kkNgay.value = today;
+    kkNgay.value = layNgayLocalKK_();
   }
 });
 

@@ -1204,8 +1204,9 @@ async function khoiTaoCameraFast(videoId, onDecodedCallback) {
           nativeDetector = null; // Nếu phần cứng gặp lỗi thì mới cho fallback sang ZXing
         }
 
-        // Tăng cường chống chóa: nếu quét thẳng luồng video chưa dính, thử qua bộ lọc tương phản canvas
-        if (!qrText && nativeDetector && videoEl.readyState >= 2) {
+        // Tăng cường chống chóa: chỉ chạy mỗi 4 frame khi quét thẳng luồng video chưa dính để giảm tải CPU
+        window.__glareFrameCounter = ((window.__glareFrameCounter || 0) + 1) % 4;
+        if (!qrText && nativeDetector && videoEl.readyState >= 2 && window.__glareFrameCounter === 0) {
           try {
             if (!zxCanvas) {
               zxCanvas = document.createElement('canvas');
@@ -1578,10 +1579,20 @@ async function dongBoTatCaOfflineApp() {
               const itemId = item.id || (item.msp + "_" + item.ngay + "_" + item.kg);
               const curPending = docPendingApp();
               luuPendingApp(curPending.filter(p => (p.id || (p.msp + "_" + p.ngay + "_" + p.kg)) !== itemId));
+              try {
+                const curQrPending = JSON.parse(localStorage.getItem("qr_pending_saves") || "[]");
+                if (Array.isArray(curQrPending) && curQrPending.length > 0) {
+                  const nextQrPending = curQrPending.filter(p => (p.id || (p.msp + "_" + p.ngay + "_" + p.kg)) !== itemId);
+                  if (nextQrPending.length > 0) {
+                    localStorage.setItem("qr_pending_saves", JSON.stringify(nextQrPending));
+                  } else {
+                    localStorage.removeItem("qr_pending_saves");
+                  }
+                }
+              } catch (e) { }
             }
           } catch (e) { }
         }
-        try { localStorage.removeItem("qr_pending_saves"); } catch (e) { }
       }
     } catch (e) { }
 
@@ -1687,10 +1698,12 @@ window.dongBoTatCaOfflineApp = dongBoTatCaOfflineApp;
 function xoaSachPendingApp() {
   try { localStorage.removeItem(APP_PENDING_KEY); } catch (e) { }
   try { localStorage.removeItem("qr_pending_saves"); } catch (e) { }
+  try { localStorage.removeItem("quetqr_pending_saves"); } catch (e) { }
   try { localStorage.removeItem("cx1_pending_saves"); } catch (e) { }
   try { localStorage.removeItem("btp_pending_saves"); } catch (e) { }
   try { localStorage.removeItem("cx5_pending_saves"); } catch (e) { }
   try { localStorage.removeItem("kk_pending_saves"); } catch (e) { }
+  if (typeof luuPendingQuetQR === "function") luuPendingQuetQR([]);
   if (typeof luuPendingBTP === "function") luuPendingBTP([]);
   if (typeof luuPendingCX1 === "function") luuPendingCX1([]);
   if (typeof luuPendingCX5 === "function") luuPendingCX5([]);
@@ -1901,7 +1914,7 @@ function triggerResumeCamera() {
   clearTimeout(resumeCameraTimer);
   resumeCameraTimer = setTimeout(async () => {
     const camBoxes = [
-      { pageId: 'quetQR', vid: 'reader', box: 'cam-box', fallback: (txt) => { if (txt && window.dangQuetQR && typeof window.khiQuetDuocMaQR === 'function') window.khiQuetDuocMaQR({ getText: () => txt }); } },
+      { pageId: 'quetQR', vid: 'reader', box: 'qr-cam', fallback: (txt) => { if (txt && window.dangQuetQR && typeof window.khiQuetDuocMaQR === 'function') window.khiQuetDuocMaQR({ getText: () => txt }); } },
       { pageId: 'kiemKe', vid: 'kk-reader', box: 'kk-cam', fallback: (txt) => { if (typeof xuLyMaKiemKe === 'function') xuLyMaKiemKe(txt); } },
       { pageId: 'chiFor', vid: 'cx1-reader', box: 'cx1-cam', fallback: (txt) => { if (txt && window.dangQuetCX1 && typeof window.khiQuetDuocMa === 'function') window.khiQuetDuocMa({ getText: () => txt }); } },
       { pageId: 'btpPage', vid: 'btp-reader', box: 'btp-cam', fallback: (txt) => { if (txt && window.dangQuetBTP && typeof window.khiQuetDuocMaBTP === 'function') window.khiQuetDuocMaBTP({ getText: () => txt }); } }
@@ -2024,6 +2037,14 @@ async function saoLuuDuLieuToanBo() {
       }
     }
 
+    if (window.ScannerCore && typeof window.ScannerCore.exportHistoryForBackup === "function") {
+      const idbHist = window.ScannerCore.exportHistoryForBackup();
+      for (const [hKey, hVal] of Object.entries(idbHist)) {
+        if (!backupData.duLieu[hKey]) count++;
+        backupData.duLieu[hKey] = hVal;
+      }
+    }
+
     if (count === 0) {
       if (typeof showCanhBao === "function") showCanhBao("Chưa có dữ liệu nào để sao lưu!", "warning");
       return;
@@ -2122,7 +2143,7 @@ function xuLyFilePhucHoiDuLieu(event) {
       // Danh sách key được phép khôi phục (Whitelist an toàn tuyệt đối)
       const isAllowedKey = (key) => {
         if (!key || typeof key !== "string") return false;
-        if (/^(cx1|cx5|btp|qr|kk|app)_/.test(key)) return true;
+        if (/^(cx1|cx5|btp|qr|quetqr|kk|app)_/.test(key)) return true;
         const validExactKeys = [
           "user_theme", "tenNhanVien", "ten_nguoi_dung", "camera_uu_tien",
           "kho_tong_hop", "last_auto_backup_hash", "last_auto_backup_time"
@@ -2149,7 +2170,7 @@ function xuLyFilePhucHoiDuLieu(event) {
             let restoredCount = 0;
             const pendingKeys = [
               "app_pending_saves", "cx1_pending_saves", "cx5_pending_saves",
-              "btp_pending_saves", "qr_pending_saves"
+              "btp_pending_saves", "qr_pending_saves", "quetqr_pending_saves", "kk_pending_saves"
             ];
 
             for (const [key, val] of Object.entries(parsed.duLieu)) {
@@ -2179,6 +2200,13 @@ function xuLyFilePhucHoiDuLieu(event) {
                   continue;
                 } else if (currentPending.length > 0) {
                   // Giữ nguyên pending hiện tại nếu backup không có
+                  restoredCount++;
+                  continue;
+                }
+              }
+
+              if (window.ScannerCore && Array.isArray(window.ScannerCore.HISTORY_KEYS) && window.ScannerCore.HISTORY_KEYS.includes(key)) {
+                if (window.ScannerCore.importHistoryFromBackup(key, val)) {
                   restoredCount++;
                   continue;
                 }
@@ -2372,6 +2400,13 @@ window.showCanhBao = showCanhBao;
         count++;
       }
     }
+    if (window.ScannerCore && typeof window.ScannerCore.exportHistoryForBackup === "function") {
+      const idbHist = window.ScannerCore.exportHistoryForBackup();
+      for (const [hKey, hVal] of Object.entries(idbHist)) {
+        if (!duLieu[hKey]) count++;
+        duLieu[hKey] = hVal;
+      }
+    }
     return { duLieu, count };
   }
 
@@ -2492,30 +2527,12 @@ window.batTatDenPinCamera = async function (videoId, btnId, currentState) {
   const track = videoEl.srcObject.getVideoTracks()[0];
   if (!track) return currentState;
 
-  const capabilities = track.getCapabilities();
-  if (!capabilities.torch) {
-    if (typeof showCanhBao === "function") showCanhBao("Thiết bị không hỗ trợ đèn pin.", "warning");
-    return currentState;
+  // TUÂN THỦ BỘ QUY TẮC CỐ ĐỊNH #2 (AGENTS.md):
+  // KHÔNG gọi track.applyConstraints() để tránh gây crash / deadlock Camera HAL trên Snapdragon 855 (Redmi K20 Pro)
+  if (typeof showCanhBao === "function") {
+    showCanhBao("Đã khóa điều khiển đèn pin trực tiếp để bảo vệ phần cứng Camera.", "info");
   }
-
-  const btnFlash = document.getElementById(btnId);
-  if (btnFlash) btnFlash.disabled = true;
-
-  const newState = !currentState;
-  try {
-    await track.applyConstraints({ advanced: [{ torch: newState }] });
-    if (btnFlash) {
-      btnFlash.classList.toggle("active-flash", newState);
-      btnFlash.title = newState ? "Tắt đèn pin" : "Bật đèn pin";
-      btnFlash.disabled = false;
-    }
-    return newState;
-  } catch (err) {
-    console.warn("Lỗi bật/tắt đèn pin:", err);
-    if (typeof showCanhBao === "function") showCanhBao("Không thể bật/tắt đèn pin.", "error");
-    if (btnFlash) btnFlash.disabled = false;
-    return currentState;
-  }
+  return currentState;
 };
 
 window.hienVienFeedbackCamera = function (containerSelector, loai) {

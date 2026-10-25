@@ -1054,7 +1054,7 @@ async function dongBoMotQC_(key) {
   const lots = lotOrder.map(lid => ({ kgList: lotMap.get(lid) }));
 
   const cleanTen = String(dc.ten || "").replace(/[^a-zA-Z0-9]/g, "");
-  const idQC = "CX5_" + (idPhienHienTaiCX5 || "P") + "_" + (dc.msp || "") + "_" + cleanTen + "_" + bao;
+  const idQC = "CX5_" + (idPhienHienTaiC5 || "P") + "_" + (dc.msp || "") + "_" + cleanTen + "_" + bao;
 
   const payload = {
     id: idQC,
@@ -1117,29 +1117,30 @@ async function dongBoTatCaCX5() {
   if (btn) { btn.disabled = true; btn.innerHTML = '<i class="ti ti-refresh spin"></i> Đang đồng bộ...'; }
   showLoading(true);
 
-  const itemsToSubmit = dsCanDongBo.map(key => {
-    const kho = gom[key];
-    const dc = doiChieuCX5[key];
-    const chuaDongBo = phienCX5.filter(r => keyQCX5(r.msp, r.ten) === key && !r.daDongBo);
-    const bao = chuaDongBo.length;
-    const kg = chuaDongBo.reduce((s, r) => s + r.kg, 0);
-    const tenQC = dc ? dc.ten : kho.ten;
-    const mspQC = dc ? dc.msp : kho.msp;
-    const cleanTen = String(tenQC || "").replace(/[^a-zA-Z0-9]/g, "");
-    const idItem = "CX5_" + (idPhienHienTaiCX5 || "P") + "_" + mspQC + "_" + cleanTen + "_" + bao;
-    return {
-      id: idItem,
-      key: key,
-      dateStr: ngayCX5,
-      msp: mspQC,
-      ten: tenQC,
-      bao: Math.round(bao * 100) / 100,
-      kg: Math.round(kg * 100) / 100
-    };
-  });
-
   let thanhCong = 0, thatBai = 0;
+  let itemsToSubmit = [];
   try {
+    itemsToSubmit = dsCanDongBo.map(key => {
+      const kho = gom[key];
+      const dc = doiChieuCX5[key];
+      const chuaDongBo = phienCX5.filter(r => keyQCX5(r.msp, r.ten) === key && !r.daDongBo);
+      const bao = chuaDongBo.length;
+      const kg = chuaDongBo.reduce((s, r) => s + r.kg, 0);
+      const tenQC = dc ? dc.ten : kho.ten;
+      const mspQC = dc ? dc.msp : kho.msp;
+      const cleanTen = String(tenQC || "").replace(/[^a-zA-Z0-9]/g, "");
+      const idItem = "CX5_" + (idPhienHienTaiC5 || "P") + "_" + mspQC + "_" + cleanTen + "_" + bao;
+      return {
+        id: idItem,
+        key: key,
+        dateStr: ngayCX5,
+        msp: mspQC,
+        ten: tenQC,
+        bao: Math.round(bao * 100) / 100,
+        kg: Math.round(kg * 100) / 100
+      };
+    });
+
     const res = await callApiCX5({ action: "batchSubmitEntryX5", payload: { items: itemsToSubmit } });
     if (res && res.results && Array.isArray(res.results)) {
       res.results.forEach(r => {
@@ -1161,11 +1162,20 @@ async function dongBoTatCaCX5() {
     }
   } catch (e) {
     thatBai = itemsToSubmit.length;
+    try {
+      const pending = docPendingCX5();
+      itemsToSubmit.forEach(payload => {
+        if (!pending.some(p => p.id === payload.id || (p.dateStr === payload.dateStr && p.msp === payload.msp && p.ten === payload.ten))) {
+          pending.push(payload);
+        }
+      });
+      luuPendingCX5(pending);
+    } catch (ePend) {}
     const errMsg = String(e.message || "");
     if (errMsg.includes("TIMEOUT_ERR") || errMsg.includes("Timeout")) {
-      showCanhBaoCX5("Máy chủ phản hồi chậm hoặc gián đoạn (Timeout)! Dữ liệu được bảo toàn, vui lòng thử lại.", "warning");
+      showCanhBaoCX5("Máy chủ phản hồi chậm hoặc gián đoạn (Timeout)! Dữ liệu đã lưu hàng chờ, vui lòng thử lại.", "warning");
     } else if (errMsg.includes("NETWORK_ERR") || errMsg.includes("Mất kết nối")) {
-      showCanhBaoCX5("Lỗi mạng! Đang ngoại tuyến. Dữ liệu được giữ nguyên để gửi lại.", "warning");
+      showCanhBaoCX5("Lỗi mạng! Đang ngoại tuyến. Đã lưu vào hàng chờ để tự gửi lại.", "warning");
     } else {
       showCanhBaoCX5("Lỗi đồng bộ: " + errMsg, "error");
     }
@@ -2141,31 +2151,37 @@ window.xuatExcelLichSuCX5 = xuatExcelLichSuCX5;
 window.xuatExcelCX5 = xuatExcelLichSuCX5;
 
 function docLichSuCX5() {
-  let list = [];
-  try { list = JSON.parse(localStorage.getItem(CX5_LICHSU_KEY)) || []; } catch (e) { list = []; }
   const homNay = new Date();
   homNay.setHours(0, 0, 0, 0);
-  return list.filter(s => {
-    if (!s.ngay || !Array.isArray(s.phienCX5)) return false;
+  const filterFn = s => {
+    if (!s || !s.ngay || !Array.isArray(s.phienCX5)) return false;
     // BẢO VỆ PHIÊN CHƯA GỬI XONG: Không bao giờ xóa phiên còn dữ liệu chưa đồng bộ
     const chuaGuiXong = s.phienCX5.some(r => !r.daDongBo && !r.daDongBoLSC5);
     if (chuaGuiXong) return true;
     const ngayPhien = new Date(s.ngay + "T00:00:00");
     const soNgayCach = Math.floor((homNay - ngayPhien) / 86400000);
     return soNgayCach >= 0 && soNgayCach < CX5_LICHSU_SO_NGAY_GIU;
-  });
+  };
+  if (window.ScannerCore && typeof window.ScannerCore.docLichSu === "function") {
+    return window.ScannerCore.docLichSu(CX5_LICHSU_KEY, filterFn);
+  }
+  let list = [];
+  try { list = JSON.parse(localStorage.getItem(CX5_LICHSU_KEY)) || []; } catch (e) { list = []; }
+  return list.filter(filterFn);
 }
 
 function luuLichSuCX5(list) {
-  try { 
-    localStorage.setItem(CX5_LICHSU_KEY, JSON.stringify(list)); 
-  } catch (e) {
-    if (e && (e.name === "QuotaExceededError" || e.code === 22)) {
+  if (window.ScannerCore && typeof window.ScannerCore.luuLichSu === "function") {
+    window.ScannerCore.luuLichSu(CX5_LICHSU_KEY, list, () => {
       if (typeof showCanhBaoCX5 === "function") {
         showCanhBaoCX5("Bộ nhớ trình duyệt bị đầy! Hãy xóa bớt lịch sử cũ.", "error");
       }
-    }
+    });
+    return;
   }
+  try { 
+    localStorage.setItem(CX5_LICHSU_KEY, JSON.stringify(list)); 
+  } catch (e) {}
 }
 
 let _cx5XacNhanCallback = null;
@@ -2280,7 +2296,7 @@ function renderLichSuCX5() {
   }
   container.innerHTML = list.map(s => {
     const parts = s.ngay.split("-");
-    const ngayNgan = parts.length === 3 ? parts[2] + "-" + parts[1] : s.ngay;
+    const ngayNgan = parts.length === 3 ? parts[2] + "/" + parts[1] : s.ngay;
     const tongKg = s.phienCX5.reduce((t, r) => t + r.kg, 0);
     const soBao = s.phienCX5.length;
     const soLuot = new Set(s.phienCX5.map(r => r.luot)).size;
@@ -2289,14 +2305,15 @@ function renderLichSuCX5() {
       ? '<i class="ti ti-check cx5-trangthai-ok"></i>'
       : '<i class="ti ti-x cx5-trangthai-mot-phan"></i>';
     const gio = new Date(s.capNhatLuc).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" });
-    return '<div class="irow lichsu-row" style="cursor:pointer;align-items:center" onclick="xemChiTietLichSuCX5(\'' + s.idPhien + '\')">'
-      + '<span style="font-family:\'IBM Plex Sans\',sans-serif;color:var(--cream); flex: 1;">'
-      + ngayNgan + '&nbsp;&nbsp;&nbsp;' + gio + '&nbsp;&nbsp;&nbsp;' + soBao + 'b (' + soLuot + ' lượt)&nbsp;&nbsp;&nbsp;' + Math.round(tongKg) + 'kg'
-      + '</span>'
-      + '<span style="display:inline-flex;align-items:center;gap:8px;padding-left:8px;border-left:1px solid var(--line)">'
+    return '<div class="irow lichsu-row lichsu-card-row" onclick="xemChiTietLichSuCX5(\'' + s.idPhien + '\')">'
+      + '<div class="ls-col-main">'
+      + '<div class="ls-row-top"><span class="ls-date">' + ngayNgan + '</span><span class="ls-time">' + gio + '</span><span class="ls-loai-badge ls-loai-xuat">' + soLuot + ' lượt</span></div>'
+      + '<div class="ls-row-metrics"><span class="ls-metric-pill"><b>' + soBao + '</b> bao</span><span class="ls-metric-pill ls-metric-kg"><b>' + Math.round(tongKg) + '</b> kg</span></div>'
+      + '</div>'
+      + '<div class="ls-col-actions">'
       + trangThai
       + '<button class="lichsu-del-btn" aria-label="Xóa phiên này" title="Xóa phiên này" onclick="xoaMotPhienLichSuCX5(\'' + s.idPhien + '\', event)"><i class="ti ti-trash"></i></button>'
-      + '</span>'
+      + '</div>'
       + '</div>';
   }).join("");
 }

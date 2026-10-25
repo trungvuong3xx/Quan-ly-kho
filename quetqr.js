@@ -22,20 +22,9 @@ var SVG_SHUTTER_PAUSE = window.SVG_SHUTTER_PAUSE = window.SVG_SHUTTER_PAUSE || '
 var SVG_SHUTTER_PLAY = window.SVG_SHUTTER_PLAY = window.SVG_SHUTTER_PLAY || '<svg viewBox="0 0 24 24" width="22" height="22" fill="#ffffff" style="margin-left:2px;"><path d="M8 5v14l11-7z" /></svg>';
 
 function hienVienFeedbackQR(loai) {
-  const overlay = document.getElementById("qr-cam-flash-overlay");
-  if (overlay) {
-    overlay.classList.remove("flash-success", "flash-duplicate");
-    void overlay.offsetWidth;
-    if (loai === "success") {
-      overlay.classList.add("flash-success");
-      setTimeout(() => overlay.classList.remove("flash-success"), 300);
-    } else {
-      overlay.classList.add("flash-duplicate");
-      setTimeout(() => overlay.classList.remove("flash-duplicate"), 450);
-    }
-  }
-  if (typeof hienVienFeedbackCamera === "function") {
-    try { hienVienFeedbackCamera("qr-video-box", loai); } catch (e) { }
+  if (window.ScannerCore && typeof window.ScannerCore.hienVienFeedback === "function") {
+    window.ScannerCore.hienVienFeedback("qr-cam-flash-overlay", "qr-video-box", loai);
+    return;
   }
 }
 window.hienVienFeedbackQR = hienVienFeedbackQR;
@@ -75,7 +64,7 @@ function napDuLieuQCQRLocal() {
   }
 
   try {
-    const hist = typeof docLichSuQuetQR === "function" ? docLichSuQuetQR() : [];
+    const hist = typeof docLichSuQR === "function" ? docLichSuQR() : [];
     if (Array.isArray(hist)) {
       hist.forEach(h => {
         (h.phienQuetQR || []).forEach(i => {
@@ -559,26 +548,23 @@ function khiQuetDuocMaQR(result) {
   const keyQR = (data.id || "").toLowerCase();
   const elCheck = document.getElementById("qr-cho-phep-trung-cam");
   const choPhepTrung = elCheck ? elCheck.checked : false;
-  const lockMs = choPhepTrung ? 1500 : 500;
-  const now = Date.now();
 
-  // Khóa Per-QR chống quét dính liên tục cùng 1 mã
-  if (mapKhoaQR.has(keyQR) && (now - mapKhoaQR.get(keyQR)) < lockMs) {
-    return;
-  }
-  mapKhoaQR.set(keyQR, now);
-
-  // Dọn dẹp bộ nhớ mapKhoaQR khi quét số lượng lớn
-  if (mapKhoaQR.size > 200) {
-    const expireBefore = now - 5000;
-    for (const [k, t] of mapKhoaQR.entries()) {
-      if (t < expireBefore) mapKhoaQR.delete(k);
-    }
+  if (window.ScannerCore && typeof window.ScannerCore.kiemTraKhoaMa === "function") {
+    if (window.ScannerCore.kiemTraKhoaMa(mapKhoaQR, keyQR, choPhepTrung)) return;
+  } else {
+    const lockMs = choPhepTrung ? 1500 : 500;
+    const now = Date.now();
+    if (mapKhoaQR.has(keyQR) && (now - mapKhoaQR.get(keyQR)) < lockMs) return;
+    mapKhoaQR.set(keyQR, now);
   }
 
   const trung = phienQuetQR.find(r => r.id === data.id);
   if (!choPhepTrung && trung) {
-    mapKhoaQR.set(keyQR, Date.now() + 1500); // Khóa 1.5s để không nháy cảnh báo liên tục
+    if (window.ScannerCore && typeof window.ScannerCore.khoaCanhBaoTrung === "function") {
+      window.ScannerCore.khoaCanhBaoTrung(mapKhoaQR, keyQR, 1500);
+    } else {
+      mapKhoaQR.set(keyQR, Date.now() + 1500);
+    }
     if (typeof hienVienFeedbackQR === "function") hienVienFeedbackQR("duplicate");
     if (typeof phatVibrateError === "function") phatVibrateError();
     else if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
@@ -624,42 +610,8 @@ window.khiQuetDuocMaQR = khiQuetDuocMaQR;
 let maQRVuaQuetQR = "";
 function saoChepMaQR(ev) {
   if (ev) ev.stopPropagation();
-  const textToCopy = (maQRVuaQuetQR || "").trim();
-  if (!textToCopy) {
-    if (typeof showCanhBaoQR === "function") showCanhBaoQR("Chưa có mã QR nào để sao chép!", "warning");
-    return;
-  }
-  const copySuccess = () => {
-    const iconEl = document.getElementById("icon-copy-qr");
-    if (iconEl) {
-      iconEl.className = "ti ti-check";
-      iconEl.style.color = "var(--success)";
-      setTimeout(() => {
-        iconEl.className = "ti ti-copy";
-        iconEl.style.color = "";
-      }, 1500);
-    }
-    if (typeof showCanhBaoQR === "function") showCanhBaoQR("Đã sao chép: " + textToCopy, "success");
-  };
-  if (navigator.clipboard && navigator.clipboard.writeText) {
-    navigator.clipboard.writeText(textToCopy).then(copySuccess).catch(() => fallbackCopy(textToCopy));
-  } else {
-    fallbackCopy(textToCopy);
-  }
-  function fallbackCopy(str) {
-    try {
-      const textarea = document.createElement("textarea");
-      textarea.value = str;
-      textarea.style.position = "fixed";
-      textarea.style.opacity = "0";
-      document.body.appendChild(textarea);
-      textarea.select();
-      document.execCommand("copy");
-      document.body.removeChild(textarea);
-      copySuccess();
-    } catch (e) {
-      if (typeof showCanhBaoQR === "function") showCanhBaoQR("Lỗi sao chép: " + (e.message || e), "error");
-    }
+  if (window.ScannerCore && typeof window.ScannerCore.saoChepMaQR === "function") {
+    window.ScannerCore.saoChepMaQR(maQRVuaQuetQR, "icon-copy-qr", null, showCanhBaoQR);
   }
 }
 window.saoChepMaQR = saoChepMaQR;
@@ -852,75 +804,10 @@ function xoaMaTrongLiveLogQR(originalIndex, event) {
 }
 window.xoaMaTrongLiveLogQR = xoaMaTrongLiveLogQR;
 
-let qrSwipeTouchState = null;
 function khoiTaoSuKienSwipeQR(containerId) {
-  const container = document.getElementById(containerId);
-  if (!container || container.__swipeInit) return;
-  container.__swipeInit = true;
-
-  container.addEventListener("touchstart", (e) => {
-    const touch = e.touches[0];
-    const content = e.target.closest(".btp-swipe-content");
-    if (!content) return;
-
-    const allSwiped = container.querySelectorAll(".btp-swipe-content.swiped");
-    allSwiped.forEach(el => {
-      if (el !== content) {
-        el.style.transform = "translateX(0px)";
-        el.classList.remove("swiped");
-      }
-    });
-
-    const isAlreadySwiped = content.classList.contains("swiped");
-    qrSwipeTouchState = {
-      content: content,
-      startX: touch.clientX,
-      startY: touch.clientY,
-      currentX: touch.clientX,
-      isSwiping: false,
-      isAlreadySwiped: isAlreadySwiped
-    };
-  }, { passive: true });
-
-  container.addEventListener("touchmove", (e) => {
-    if (!qrSwipeTouchState) return;
-    const touch = e.touches[0];
-    const dx = touch.clientX - qrSwipeTouchState.startX;
-    const dy = touch.clientY - qrSwipeTouchState.startY;
-
-    if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 10) {
-      qrSwipeTouchState.isSwiping = true;
-      let offset = dx;
-      if (qrSwipeTouchState.isAlreadySwiped) {
-        offset = -76 + dx;
-      }
-      if (offset > 0) offset = 0;
-      if (offset < -85) offset = -85;
-      qrSwipeTouchState.content.style.transition = "none";
-      qrSwipeTouchState.content.style.transform = `translateX(${offset}px)`;
-    }
-  }, { passive: true });
-
-  container.addEventListener("touchend", (e) => {
-    if (!qrSwipeTouchState) return;
-    const content = qrSwipeTouchState.content;
-    const dx = (e.changedTouches[0]?.clientX || qrSwipeTouchState.currentX) - qrSwipeTouchState.startX;
-    
-    content.style.transition = "transform 0.2s cubic-bezier(0.2, 0.9, 0.3, 1)";
-    if (qrSwipeTouchState.isSwiping) {
-      if (dx < -35) {
-        content.style.transform = "translateX(-76px)";
-        content.classList.add("swiped");
-      } else {
-        content.style.transform = "translateX(0px)";
-        content.classList.remove("swiped");
-      }
-    } else if (qrSwipeTouchState.isAlreadySwiped) {
-      content.style.transform = "translateX(0px)";
-      content.classList.remove("swiped");
-    }
-    qrSwipeTouchState = null;
-  });
+  if (window.ScannerCore && typeof window.ScannerCore.khoiTaoSwipe === "function") {
+    window.ScannerCore.khoiTaoSwipe(containerId, ".btp-swipe-content", "__swipeInit");
+  }
 }
 
 function capNhatLogQR() {
@@ -928,8 +815,10 @@ function capNhatLogQR() {
   const containerNhap = document.getElementById("qr-nhap-log-list");
   const countEl = document.getElementById("qr-log-count");
   const countNhap = document.getElementById("qr-nhap-log-count");
+  const hudCount = document.getElementById("qr-hud-count");
   if (countEl) countEl.textContent = phienQuetQR.length + " bao";
   if (countNhap) countNhap.textContent = phienQuetQR.length + " bao";
+  if (hudCount) hudCount.textContent = phienQuetQR.length + " bao";
   if (!container && !containerNhap) return;
 
   if (phienQuetQR.length === 0) {
@@ -975,7 +864,7 @@ function capNhatLogQR() {
 
     const tongKgNhom = g.items.reduce((sum, it) => sum + (Number(it.item.kg) || 0), 0);
     const kgText = tongKgNhom > 0 ? (Number.isInteger(tongKgNhom) ? tongKgNhom : tongKgNhom.toFixed(1)) : '—';
-    const escapedKeyJs = g.key.replace(/'/g, "\\'");
+    const escapedKeyJs = String(g.key || "").replace(/\\/g, "\\\\").replace(/'/g, "\\'").replace(/"/g, "&quot;");
 
     let subItemsHtml = g.items.map((it, subIdx) => {
       const subGio = it.item.thoiGian ? new Date(it.item.thoiGian).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit", second: "2-digit" }) : "";
@@ -1072,83 +961,10 @@ function xoaItemKqQR(originalIndex, ev) {
 }
 window.xoaItemKqQR = xoaItemKqQR;
 
-let qrKqSwipeTouchState = null;
 function khoiTaoSwipeKQQR() {
-  const container = document.getElementById("qr-tbody-dot");
-  if (!container || container.__swipeKqInit) return;
-  container.__swipeKqInit = true;
-
-  container.addEventListener("touchstart", (e) => {
-    const touch = e.touches[0];
-    const content = e.target.closest(".kq-swipe-content");
-    if (!content) return;
-
-    const allSwiped = container.querySelectorAll(".kq-swipe-content.swiped");
-    allSwiped.forEach(el => {
-      if (el !== content) {
-        el.style.transform = "translateX(0px)";
-        el.classList.remove("swiped");
-      }
-    });
-
-    const isAlreadySwiped = content.classList.contains("swiped");
-    qrKqSwipeTouchState = {
-      content: content,
-      startX: touch.clientX,
-      startY: touch.clientY,
-      currentX: touch.clientX,
-      isSwiping: false,
-      isAlreadySwiped: isAlreadySwiped
-    };
-  }, { passive: true });
-
-  container.addEventListener("touchmove", (e) => {
-    if (!qrKqSwipeTouchState) return;
-    const touch = e.touches[0];
-    const dx = touch.clientX - qrKqSwipeTouchState.startX;
-    const dy = touch.clientY - qrKqSwipeTouchState.startY;
-
-    if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 10) {
-      qrKqSwipeTouchState.isSwiping = true;
-      let offset = dx;
-      if (qrKqSwipeTouchState.isAlreadySwiped) {
-        offset = -76 + dx;
-      }
-      if (offset > 0) offset = 0;
-      if (offset < -85) offset = -85;
-      qrKqSwipeTouchState.content.style.transition = "none";
-      qrKqSwipeTouchState.content.style.transform = `translateX(${offset}px)`;
-    }
-  }, { passive: true });
-
-  const ketThucVuot = (e) => {
-    if (!qrKqSwipeTouchState) return;
-    const content = qrKqSwipeTouchState.content;
-    const dx = (e && e.changedTouches ? e.changedTouches[0]?.clientX : qrKqSwipeTouchState.currentX) - qrKqSwipeTouchState.startX;
-
-    content.style.transition = "transform 0.2s cubic-bezier(0.2, 0.9, 0.3, 1)";
-    if (qrKqSwipeTouchState.isSwiping) {
-      if (dx < -35) {
-        content.style.transform = "translateX(-76px)";
-        content.classList.add("swiped");
-      } else {
-        content.style.transform = "translateX(0px)";
-        content.classList.remove("swiped");
-      }
-    } else if (qrKqSwipeTouchState.isAlreadySwiped) {
-      content.style.transform = "translateX(0px)";
-      content.classList.remove("swiped");
-    }
-    qrKqSwipeTouchState = null;
-  };
-
-  container.addEventListener("touchend", ketThucVuot);
-  container.addEventListener("touchcancel", () => {
-    if (qrKqSwipeTouchState) {
-      qrKqSwipeTouchState.content.style.transform = qrKqSwipeTouchState.isAlreadySwiped ? "translateX(-76px)" : "translateX(0px)";
-      qrKqSwipeTouchState = null;
-    }
-  });
+  if (window.ScannerCore && typeof window.ScannerCore.khoiTaoSwipe === "function") {
+    window.ScannerCore.khoiTaoSwipe("qr-tbody-dot", ".kq-swipe-content", "__swipeKqInit");
+  }
 }
 
 // ── Tính toán 2 Bảng Kết Quả Chuẩn Accordion (Đợt, QC, Bao, KG) ───────────
@@ -1199,7 +1015,7 @@ function taoHangKetQuaQuetQR(danhSach) {
       const isOpen = window.expandedKQQR.has(safeKey);
       const safeQc = typeof escapeHtml === "function" ? escapeHtml(g.qc) : g.qc;
       const countBadge = soBaoNhom > 1 ? `<span class="kq-badge-count">×${soBaoNhom}</span>` : '';
-      const escapedQcParam = g.qc.replace(/'/g, "\\'");
+      const escapedQcParam = String(g.qc || "").replace(/\\/g, "\\\\").replace(/'/g, "\\'").replace(/"/g, "&quot;");
 
       let subItemsHtml = g.items.map((it, subIdx) => {
         const subGio = it.item.thoiGian ? new Date(it.item.thoiGian).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit", second: "2-digit" }) : "";
@@ -1402,7 +1218,7 @@ function nhapTayKGQR(dot, qc) {
           <input type="text" id="qr-them-kg" inputmode="none" placeholder="Nhập tổng số kg..." onkeydown="if(event.key==='Enter'){event.preventDefault();themKgVaoDotQR()}">
           <button class="btn btn-green" style="width:56px;flex-shrink:0" onclick="themKgVaoDotQR()"><i class="ti ti-check"></i></button>
         </div>
-        <button class="btn btn-full" style="background:var(--neutral-solid);color:var(--cream);margin-top:12px" onclick="dongNhapTayQR()">Đóng</button>
+        <button class="btn btn-full" style="background:var(--neutral-solid);color:var(--cream);margin-top:12px" onclick="dongModalSuaKGQR()">Đóng</button>
       </div>
     `;
     document.body.appendChild(modal);
@@ -1417,11 +1233,12 @@ function nhapTayKGQR(dot, qc) {
   modal.classList.add("show");
 }
 
-function dongNhapTayQR() {
+function dongModalSuaKGQR() {
   const modal = document.getElementById("qr-nhap-tay-modal");
   if (modal) modal.classList.remove("show");
   if (typeof dongBanPhimCX5 === "function") dongBanPhimCX5();
 }
+window.dongModalSuaKGQR = dongModalSuaKGQR;
 
 function renderSuaChiTietQR() {
   const container = document.getElementById("qr-sua-chitiet-container");
@@ -1473,7 +1290,7 @@ function themKgVaoDotQR() {
   hienKetQuaQuetQR();
   renderSuaChiTietQR();
   capNhatLogQR();
-  dongNhapTayQR();
+  dongModalSuaKGQR();
 }
 
 function xoaMaQRTrongSua(index, ev) {
@@ -1595,7 +1412,13 @@ window.quetMoiQuetQR = quetMoiQuetQR;
 
 // ── Gửi Dữ Liệu Lên Sheet ──────────────────────────────────────────
 async function guiDuLieuQuetQR() {
-  const moiBoSung = phienQuetQR.slice(soLuongDaGuiHienTaiQR);
+  if (soLuongDaGuiHienTaiQR > 0 && !phienQuetQR.some(r => r.daGui !== undefined)) {
+    for (let i = 0; i < Math.min(soLuongDaGuiHienTaiQR, phienQuetQR.length); i++) {
+      phienQuetQR[i].daGui = true;
+    }
+  }
+
+  const moiBoSung = phienQuetQR.filter(r => !r.daGui);
   if (moiBoSung.length === 0) {
     showCanhBaoQR("Không có dữ liệu mới để gửi!", "error");
     return;
@@ -1620,7 +1443,8 @@ async function guiDuLieuQuetQR() {
 
   try {
     await guiLenSheetQuetQR(rows);
-    soLuongDaGuiHienTaiQR = phienQuetQR.length;
+    moiBoSung.forEach(r => { r.daGui = true; });
+    soLuongDaGuiHienTaiQR = phienQuetQR.filter(r => r.daGui).length;
     xoaPhienDoDangQR();
     luuVaoLichSuQR();
     showCanhBaoQR("✅ Đã gửi thành công " + rows.length + " bao lên Sheet!", "success");
@@ -1641,7 +1465,8 @@ async function guiDuLieuQuetQR() {
     luuPendingQuetQR(pending);
     if (typeof kichHoatKiemTraAutoBackup === "function") kichHoatKiemTraAutoBackup(2000);
     showCanhBaoQR("Mất mạng — đã lưu tạm " + rows.length + " bao trên máy, sẽ tự gửi lại sau", "error");
-    soLuongDaGuiHienTaiQR = phienQuetQR.length;
+    moiBoSung.forEach(r => { r.daGui = true; });
+    soLuongDaGuiHienTaiQR = phienQuetQR.filter(r => r.daGui).length;
     luuVaoLichSuQR();
 
     if (btnGui) {
@@ -1691,6 +1516,9 @@ async function guiLenSheetQuetQR(rows) {
 
 // ── Quản lý Hàng Đợi Offline ───────────────────────────────────────
 function docPendingQuetQR() {
+  if (window.ScannerCore && typeof window.ScannerCore.docPending === "function") {
+    return window.ScannerCore.docPending(QUETQR_PENDING_KEY);
+  }
   try {
     const raw = localStorage.getItem(QUETQR_PENDING_KEY);
     return raw ? JSON.parse(raw) : [];
@@ -1699,6 +1527,10 @@ function docPendingQuetQR() {
 window.docPendingQuetQR = docPendingQuetQR;
 
 function luuPendingQuetQR(list) {
+  if (window.ScannerCore && typeof window.ScannerCore.luuPending === "function") {
+    window.ScannerCore.luuPending(QUETQR_PENDING_KEY, list);
+    return;
+  }
   try {
     localStorage.setItem(QUETQR_PENDING_KEY, JSON.stringify(list));
   } catch (e) {}
@@ -1707,6 +1539,9 @@ window.luuPendingQuetQR = luuPendingQuetQR;
 
 // ── Quản lý Phiên Dở Dang ──────────────────────────────────────────
 function luuPhienDoDangQR() {
+  if (phienQuetQR.some(r => r.daGui !== undefined)) {
+    soLuongDaGuiHienTaiQR = phienQuetQR.filter(r => r.daGui).length;
+  }
   try {
     localStorage.setItem(QUETQR_DODANG_KEY, JSON.stringify({
       phienQuetQR,
@@ -1774,31 +1609,37 @@ function huyPhienQuetQR() {
 window.huyPhienQuetQR = huyPhienQuetQR;
 
 function docLichSuQR() {
-  let list = [];
-  try { list = JSON.parse(localStorage.getItem(QUETQR_LICHSU_KEY)) || []; } catch (e) { list = []; }
   const homNay = new Date();
   homNay.setHours(0, 0, 0, 0);
-  return list.filter(s => {
-    if (!s.ngay) return false;
+  const filterFn = s => {
+    if (!s || !s.ngay) return false;
     // BẢO VỆ PHIÊN CHƯA GỬI XONG: Không xóa phiên còn dữ liệu chưa đồng bộ
     const chuaGuiHet = s.phienQuetQR && s.phienQuetQR.some(r => !r.daDongBo && !r.daGui);
     if (chuaGuiHet) return true;
     const ngayPhien = new Date(s.ngay + "T00:00:00");
     const soNgayCach = Math.floor((homNay - ngayPhien) / 86400000);
     return soNgayCach >= 0 && soNgayCach < QUETQR_LICHSU_SO_NGAY_GIU;
-  });
+  };
+  if (window.ScannerCore && typeof window.ScannerCore.docLichSu === "function") {
+    return window.ScannerCore.docLichSu(QUETQR_LICHSU_KEY, filterFn);
+  }
+  let list = [];
+  try { list = JSON.parse(localStorage.getItem(QUETQR_LICHSU_KEY)) || []; } catch (e) { list = []; }
+  return list.filter(filterFn);
 }
 
 function luuLichSuQR(list) {
-  try { 
-    localStorage.setItem(QUETQR_LICHSU_KEY, JSON.stringify(list)); 
-  } catch (e) {
-    if (e && (e.name === "QuotaExceededError" || e.code === 22)) {
+  if (window.ScannerCore && typeof window.ScannerCore.luuLichSu === "function") {
+    window.ScannerCore.luuLichSu(QUETQR_LICHSU_KEY, list, () => {
       if (typeof showCanhBaoQR === "function") {
         showCanhBaoQR("Bộ nhớ trình duyệt bị đầy! Hãy xóa bớt lịch sử cũ.", "error");
       }
-    }
+    });
+    return;
   }
+  try { 
+    localStorage.setItem(QUETQR_LICHSU_KEY, JSON.stringify(list)); 
+  } catch (e) {}
 }
 
 function luuVaoLichSuQR() {
@@ -1856,21 +1697,28 @@ function renderLichSuQR() {
 
   container.innerHTML = filtered.map((entry) => {
     const timeObj = entry.thoiGian ? new Date(entry.thoiGian) : new Date();
+    const gio = timeObj.toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" });
     const ngayStr = entry.ngay || ((typeof layNgayHomNayLocal === "function") ? layNgayHomNayLocal() : (timeObj.getFullYear() + '-' + String(timeObj.getMonth()+1).padStart(2,'0') + '-' + String(timeObj.getDate()).padStart(2,'0')));
     const parts = ngayStr.split("-");
-    const ngayNgan = parts.length === 3 ? parts[2] + "-" + parts[1] : ngayStr;
+    const ngayNgan = parts.length === 3 ? parts[2] + "/" + parts[1] : ngayStr;
     const tongKg = (entry.tongKG || 0);
     const tongBao = (entry.tongBao || (entry.phienQuetQR ? entry.phienQuetQR.length : 0));
     const trangThai = '<i class="ti ti-check cx5-trangthai-ok"></i>';
+    const loaiStr = entry.loai ? String(entry.loai).replace(/</g, "&lt;") : "";
+    const isNhap = loaiStr.toLowerCase().indexOf("nhập") === 0;
+    const loaiBadge = loaiStr
+      ? '<span class="ls-loai-badge ' + (isNhap ? 'ls-loai-nhap' : 'ls-loai-xuat') + '">' + loaiStr + '</span>'
+      : '';
 
-    return '<div class="irow lichsu-row" style="cursor:pointer;align-items:center" onclick="xemChiTietLichSuQR(\'' + entry.idPhien + '\')">'
-      + '<span style="font-family:\'IBM Plex Sans\',sans-serif;color:var(--cream); flex: 1;">'
-      + ngayNgan + '&nbsp;&nbsp;&nbsp;' + gio + '&nbsp;&nbsp;&nbsp;' + tongBao + 'b&nbsp;&nbsp;&nbsp;' + Math.round(tongKg) + 'kg'
-      + '</span>'
-      + '<span style="display:inline-flex;align-items:center;gap:8px;padding-left:8px;border-left:1px solid var(--line)">'
+    return '<div class="irow lichsu-row lichsu-card-row" onclick="xemChiTietLichSuQR(\'' + entry.idPhien + '\')">'
+      + '<div class="ls-col-main">'
+      + '<div class="ls-row-top"><span class="ls-date">' + ngayNgan + '</span><span class="ls-time">' + gio + '</span>' + loaiBadge + '</div>'
+      + '<div class="ls-row-metrics"><span class="ls-metric-pill"><b>' + tongBao + '</b> bao</span><span class="ls-metric-pill ls-metric-kg"><b>' + Math.round(tongKg) + '</b> kg</span></div>'
+      + '</div>'
+      + '<div class="ls-col-actions">'
       + trangThai
       + '<button class="lichsu-del-btn" aria-label="Xóa phiên này" title="Xóa phiên này" onclick="xoaMotPhienLichSuQR(\'' + entry.idPhien + '\', event)"><i class="ti ti-trash"></i></button>'
-      + '</span>'
+      + '</div>'
       + '</div>';
   }).join("");
 }
@@ -1921,8 +1769,7 @@ function xoaMotPhienLichSuQR(idPhien, ev) {
 window.xoaMotPhienLichSuQR = xoaMotPhienLichSuQR;
 
 function xoaTatCaLichSuQR() {
-  const raw = localStorage.getItem(QUETQR_LICHSU_KEY);
-  const list = raw ? JSON.parse(raw) : [];
+  const list = docLichSuQR();
   if (list.length === 0) {
     showCanhBaoQR("Không có lịch sử để xóa");
     return;
@@ -1931,7 +1778,11 @@ function xoaTatCaLichSuQR() {
     moXacNhanApp(
       "Xóa toàn bộ " + list.length + " phiên lịch sử Quét QR? Không thể hoàn tác.",
       () => {
-        localStorage.removeItem(QUETQR_LICHSU_KEY);
+        if (window.ScannerCore && typeof window.ScannerCore.xoaLichSu === "function") {
+          window.ScannerCore.xoaLichSu(QUETQR_LICHSU_KEY);
+        } else {
+          localStorage.removeItem(QUETQR_LICHSU_KEY);
+        }
         renderLichSuQR();
       },
       "Xóa tất cả",

@@ -71,17 +71,19 @@ async function batDauKiemKe() {
         setTimeout(() => vEl.classList.remove("flash-thanh-cong"), 400);
       }
 
-      // Lấy thông tin từ DanhMuc
-      const info = await callAPI({ action: "getInfo", msp });
-      const ten = info.success ? info.ten : "—";
-      const mau = info.success ? (info.mau || "—") : "—";
-
-      const itemRec = { id, msp, ten, mau, ngay: ngayKiemKe, thoiGian: new Date() };
+      const itemRec = { id, msp, ten: "—", mau: "—", ngay: ngayKiemKe, thoiGian: new Date() };
       batch.push(itemRec);
       dsChiTietQuetKK.push(itemRec);
 
-      // Cập nhật đếm
+      // Cập nhật đếm ngay lập tức
       document.getElementById("kk-dem").textContent = "Đã quét: " + dsQuetKiemKe.length + " mã";
+
+      // Lấy thông tin từ DanhMuc
+      const info = await callAPI({ action: "getInfo", msp });
+      if (info && info.success) {
+        itemRec.ten = info.ten || "—";
+        itemRec.mau = info.mau || "—";
+      }
 
       // Ghi sheet mỗi 10 dòng
       if (batch.length >= 10) {
@@ -110,6 +112,7 @@ async function dungKiemKe() {
   document.getElementById("kk-cam").style.display = "none";
 }
 
+let dangDongBoKK = false;
 async function ghiBatch() {
   if (batch.length === 0) return;
   const data = [...batch];
@@ -132,21 +135,33 @@ function luuPendingKK(list) {
 }
 
 async function thuLaiPendingKK() {
+  if (dangDongBoKK) return;
   const pending = docPendingKK();
   if (pending.length === 0) return;
-  const r = await callAPI({ action: "luuKiemKe", data: pending });
-  if (r && !r.error) luuPendingKK([]);
-  if (typeof capNhatTrangThaiMang === "function") capNhatTrangThaiMang();
+  dangDongBoKK = true;
+  try {
+    const r = await callAPI({ action: "luuKiemKe", data: pending });
+    if (r && !r.error) luuPendingKK([]);
+  } finally {
+    dangDongBoKK = false;
+    if (typeof capNhatTrangThaiMang === "function") capNhatTrangThaiMang();
+  }
 }
 
 let dsChiTietQuetKK = []; // Lưu chi tiết để xuất Excel
+
+function layNgayLocalKK_() {
+  if (typeof layNgayHomNayLocal === "function") return layNgayHomNayLocal();
+  const d = new Date();
+  return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+}
 
 function xuatExcelKiemKe() {
   if (!dsChiTietQuetKK || dsChiTietQuetKK.length === 0) {
     showCanhBaoKK("Chưa có dữ liệu kiểm kê để xuất Excel!", "warning");
     return;
   }
-  const dateStr = ngayKiemKe || new Date().toISOString().split("T")[0];
+  const dateStr = ngayKiemKe || layNgayLocalKK_();
   const exportData = dsChiTietQuetKK.map((item, idx) => ({
     "STT": idx + 1,
     "Ngày kiểm kê": item.ngay,
@@ -208,8 +223,7 @@ function showCanhBaoKK(text, type = "error") {
 window.addEventListener("load", function() {
   const kkNgay = document.getElementById("kk-ngay");
   if (kkNgay) {
-    const today = new Date().toISOString().split('T')[0];
-    kkNgay.value = today;
+    kkNgay.value = layNgayLocalKK_();
   }
 });
 
