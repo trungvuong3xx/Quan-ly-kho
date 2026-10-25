@@ -3621,114 +3621,43 @@ body.cam-active #chiFor.active {
    UI/UX UPGRADE SUITE (11 HẠNG MỤC CHUẨN DỰ ÁN)
 ═══════════════════════════════════════════════════════════════════════════ */
 
-/* 1. Chip chọn Loại Giao Dịch (#quetQR) & Chip chọn Phiên (#btpPage) */
-.qr-loai-chip-grid {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  padding: 10px;
-  border-radius: 14px;
-  background: var(--bg-soft, rgba(148, 163, 184, 0.08));
-  border: 1px solid var(--border-card);
-}
-
-.qr-loai-group {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.qr-loai-group-title {
-  font-size: 11px;
-  font-weight: 800;
-  letter-spacing: 0.4px;
-  text-transform: uppercase;
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.qr-loai-nhap-title {
-  color: #10b981;
-}
-
-.qr-loai-xuat-title {
-  color: #3b82f6;
-}
-
-.qr-loai-chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-}
-
-.qr-loai-chips .loai-option {
-  margin: 0 !important;
-  padding: 8px 12px !important;
-  border-radius: 10px !important;
-  font-size: 12.5px !important;
-  font-weight: 700 !important;
-  line-height: 1.2;
-  cursor: pointer;
-  border: 1.5px solid var(--border-card) !important;
-  background: var(--surface) !important;
-  color: var(--row-text) !important;
-  transition: all 0.16s ease;
-  flex: 1 1 calc(33.333% - 6px);
-  min-width: 86px;
-  text-align: center;
-  justify-content: center;
-  display: inline-flex;
-  align-items: center;
-}
-
-.qr-loai-chips .loai-option.qr-chip-nhap.selected,
-.qr-loai-chips .loai-option.qr-chip-nhap.active {
-  background: linear-gradient(135deg, #10b981, #059669) !important;
-  color: #ffffff !important;
-  border-color: #059669 !important;
-  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3) !important;
-}
-
-.qr-loai-chips .loai-option.qr-chip-xuat.selected,
-.qr-loai-chips .loai-option.qr-chip-xuat.active {
-  background: linear-gradient(135deg, #3b82f6, #2563eb) !important;
-  color: #ffffff !important;
-  border-color: #2563eb !important;
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3) !important;
-}
-
-.btp-phien-chip-bar {
+/* 1. Chip chọn Phiên (#btpPage) — nằm trong luồng trang, không còn dropdown nổi */
+.custom-select-menu.btp-phien-chip-bar {
   display: grid;
+  position: static;
+  top: auto;
   grid-template-columns: repeat(5, 1fr);
   gap: 6px;
-  background: var(--bg-soft, rgba(148, 163, 184, 0.1));
+  max-height: none;
+  overflow: visible;
+  animation: none;
+  box-shadow: none;
+  background: var(--card-raised);
   padding: 5px;
   border-radius: 12px;
-  border: 1px solid var(--border-card);
+  border: 1px solid var(--line);
+  margin-top: 4px;
 }
 
-.btp-phien-chip-bar .btp-phien-chip {
-  padding: 9px 4px !important;
-  border-radius: 8px !important;
-  font-size: 12.5px !important;
-  font-weight: 700 !important;
-  text-align: center;
+.btp-phien-chip-bar .custom-select-item {
+  padding: 10px 2px;
+  border-radius: 8px;
+  font-size: 12.5px;
+  font-weight: 700;
   justify-content: center;
-  cursor: pointer;
-  color: var(--row-muted);
+  text-align: center;
+  color: var(--cream-soft);
   background: transparent;
-  border: none;
-  transition: all 0.15s ease;
+  white-space: nowrap;
 }
 
-.btp-phien-chip-bar .btp-phien-chip .check-icon {
-  display: none !important;
+.btp-phien-chip-bar .custom-select-item .check-icon {
+  display: none;
 }
 
-.btp-phien-chip-bar .btp-phien-chip.active {
-  background: var(--primary-solid, #2563eb) !important;
-  color: #ffffff !important;
+.btp-phien-chip-bar .custom-select-item.active {
+  background: var(--primary);
+  color: #ffffff;
   box-shadow: 0 3px 10px rgba(37, 99, 235, 0.28);
 }
 
