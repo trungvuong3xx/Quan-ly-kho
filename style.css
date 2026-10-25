@@ -2167,16 +2167,14 @@ body { padding: 0 !important; background: var(--bg-body) !important; color: var(
 }
 
 .table-sticky-wrap {
-  border-radius: 12px;
-  border: 1px solid var(--steel);
-  overflow-x: hidden !important;
-  overflow-y: auto !important;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-  max-height: 280px;
-  margin-bottom: 20px;
+  /* Chỉ là khung chứa: KHÔNG cuộn. Phần cuộn nằm ở thân bảng bên trong .kq-card-wrap
+     để hàng tiêu đề và hàng TỔNG luôn cố định. */
+  border: none;
+  overflow: visible !important;
+  max-height: none;
+  margin-bottom: 8px;
   position: relative;
-  background: var(--card-raised);
-  -webkit-overflow-scrolling: touch;
+  background: transparent;
 }
 
 .table-sticky-wrap .cx5-list-header {
@@ -3368,6 +3366,10 @@ body.cam-active #chiFor.active {
   overflow: hidden;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
   margin-bottom: 12px;
+  /* Hàng tiêu đề + hàng TỔNG cố định, chỉ thân bảng (giữa) cuộn */
+  display: flex;
+  flex-direction: column;
+  max-height: min(340px, 46vh);
 }
 
 .kq-table-header {
@@ -3381,8 +3383,7 @@ body.cam-active #chiFor.active {
   color: var(--row-muted);
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  position: sticky;
-  top: 0;
+  flex: 0 0 auto;
   z-index: 3;
 }
 
@@ -3395,6 +3396,22 @@ body.cam-active #chiFor.active {
   font-size: 13.5px;
   font-weight: 700;
   color: var(--row-text);
+  flex: 0 0 auto;
+  z-index: 3;
+}
+
+/* Thân bảng (#...-tbody-dot / #...-tbody-gom): vùng cuộn duy nhất */
+.kq-card-wrap > div:not(.kq-table-header):not(.kq-table-footer) {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+}
+
+.kq-card-wrap > div:not(.kq-table-header):not(.kq-table-footer) > * {
+  flex-shrink: 0;
 }
 
 .kq-swipe-container {
