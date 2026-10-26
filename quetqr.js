@@ -815,10 +815,8 @@ function capNhatLogQR() {
   const containerNhap = document.getElementById("qr-nhap-log-list");
   const countEl = document.getElementById("qr-log-count");
   const countNhap = document.getElementById("qr-nhap-log-count");
-  const hudCount = document.getElementById("qr-hud-count");
   if (countEl) countEl.textContent = phienQuetQR.length + " bao";
   if (countNhap) countNhap.textContent = phienQuetQR.length + " bao";
-  if (hudCount) hudCount.textContent = phienQuetQR.length + " bao";
   if (!container && !containerNhap) return;
 
   if (phienQuetQR.length === 0) {

@@ -948,9 +948,25 @@ const layCameraStream = moLuongCameraDungHuong;
 
 // Bật chế độ tự động lấy nét liên tục (Continuous Autofocus)
 async function batContinuousAutofocus(stream) {
-  // Không gọi track.applyConstraints() vì gây xung đột và crash Camera HAL trên Snapdragon 855
-  // Android Camera2 đã tự động kích hoạt Continuous Picture AF ở tầng phần cứng
-  return;
+  if (!stream) return;
+  try {
+    const track = stream.getVideoTracks()[0];
+    if (track && track.getCapabilities) {
+      const caps = track.getCapabilities();
+      const adv = [];
+      if (caps.focusMode && caps.focusMode.includes('continuous')) {
+        adv.push({ focusMode: 'continuous' });
+      }
+      if (caps.exposureMode && caps.exposureMode.includes('continuous')) {
+        adv.push({ exposureMode: 'continuous' });
+      }
+      if (adv.length > 0 && track.applyConstraints) {
+        await track.applyConstraints({ advanced: adv });
+      }
+    }
+  } catch (e) {
+    console.warn("Lấy nét tự động không được hỗ trợ bởi ống kính này:", e);
+  }
 }
 
 // Tự động ẩn hoàn toàn nút đổi camera (Camera 0 Sony 48MP AF là tối ưu duy nhất để quét mã)
@@ -2487,12 +2503,30 @@ window.batTatDenPinCamera = async function (videoId, btnId, currentState) {
   const track = videoEl.srcObject.getVideoTracks()[0];
   if (!track) return currentState;
 
-  // TUÂN THỦ BỘ QUY TẮC CỐ ĐỊNH #2 (AGENTS.md):
-  // KHÔNG gọi track.applyConstraints() để tránh gây crash / deadlock Camera HAL trên Snapdragon 855 (Redmi K20 Pro)
-  if (typeof showCanhBao === "function") {
-    showCanhBao("Đã khóa điều khiển đèn pin trực tiếp để bảo vệ phần cứng Camera.", "info");
+  const capabilities = (typeof track.getCapabilities === "function") ? track.getCapabilities() : {};
+  if (!capabilities.torch) {
+    if (typeof showCanhBao === "function") showCanhBao("Thiết bị không hỗ trợ đèn pin.", "warning");
+    return currentState;
   }
-  return currentState;
+
+  const btnFlash = btnId ? document.getElementById(btnId) : null;
+  if (btnFlash) btnFlash.disabled = true;
+
+  const newState = !currentState;
+  try {
+    await track.applyConstraints({ advanced: [{ torch: newState }] });
+    if (btnFlash) {
+      btnFlash.classList.toggle("active-flash", newState);
+      btnFlash.title = newState ? "Tắt đèn pin" : "Bật đèn pin";
+      btnFlash.disabled = false;
+    }
+    return newState;
+  } catch (err) {
+    console.warn("Lỗi bật/tắt đèn pin:", err);
+    if (typeof showCanhBao === "function") showCanhBao("Không thể bật/tắt đèn pin.", "error");
+    if (btnFlash) btnFlash.disabled = false;
+    return currentState;
+  }
 };
 
 window.hienVienFeedbackCamera = function (containerSelector, loai) {

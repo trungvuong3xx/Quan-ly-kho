@@ -470,10 +470,8 @@ function khoiTaoSuKienSwipeBTP() {
 function capNhatLogBTP() {
   const container = document.getElementById("btp-log-list");
   const countEl = document.getElementById("btp-log-count");
-  const hudCount = document.getElementById("btp-hud-count");
 
   if (countEl) countEl.textContent = phienBTP.length + " mã";
-  if (hudCount) hudCount.textContent = phienBTP.length + " mã";
   if (!container) return;
   if (phienBTP.length === 0) {
     container.innerHTML = '<div class="btp-empty-log">Chưa có mã nào được quét</div>';
@@ -1217,7 +1215,7 @@ function thucHienLocKetQuaBTP() {
   // Cập nhật Khung Tóm Tắt (Đợt / Tổng)
   const elTongDot = document.getElementById("btp-tong-cuon");
   const elTongSL = document.getElementById("btp-tong-kg");
-  if (elTongDot) elTongDot.textContent = demSoDotBTP || 1;
+  if (elTongDot) elTongDot.textContent = phienBTP.length > 0 ? new Set(phienBTP.map(r => r.dotQuet || 1)).size : 0;
   if (elTongSL) elTongSL.textContent = phienBTP.length;
 }
 
@@ -1229,7 +1227,7 @@ function hienKetQuaBTP() {
   // Cập nhật Khung Tóm Tắt (Đợt / Tổng)
   const elTongDot = document.getElementById("btp-tong-cuon");
   const elTongSL = document.getElementById("btp-tong-kg");
-  if (elTongDot) elTongDot.textContent = demSoDotBTP || 1;
+  if (elTongDot) elTongDot.textContent = phienBTP.length > 0 ? new Set(phienBTP.map(r => r.dotQuet || 1)).size : 0;
   if (elTongSL) elTongSL.textContent = phienBTP.length;
 
   document.getElementById("btp-cam").style.display = "none";
@@ -1567,7 +1565,7 @@ function renderLichSuBTP() {
 
   container.innerHTML = list.map(s => {
     const total = s.phienBTP ? s.phienBTP.length : 0;
-    const dotCount = s.demSoDotBTP || (s.phienBTP ? new Set(s.phienBTP.map(r => r.dotQuet || 1)).size : 1);
+    const dotCount = s.phienBTP ? new Set(s.phienBTP.map(r => r.dotQuet || 1)).size : (s.demSoDotBTP || 1);
     const timeStr = s.capNhatLuc ? new Date(s.capNhatLuc).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" }) : "";
     const parts = s.ngay ? s.ngay.split("-") : [];
     const ngayNgan = parts.length === 3 ? parts[2] + "/" + parts[1] : (s.ngay || "—");

@@ -1333,13 +1333,11 @@ function capNhatLogCX1() {
   const countNhap = document.getElementById("cx1-nhap-log-count");
   const demQuet = document.getElementById("cx1-dem");
   const demNhap = document.getElementById("cx1-nhap-dem");
-  const hudCount = document.getElementById("cx1-hud-count");
 
   if (demQuet) demQuet.textContent = "Đã quét: " + phienCX1.length + " mã";
   if (demNhap) demNhap.textContent = "Đã nhập/quét: " + phienCX1.length + " mã";
   if (countQuet) countQuet.textContent = phienCX1.length + " mã";
   if (countNhap) countNhap.textContent = phienCX1.length + " mã";
-  if (hudCount) hudCount.textContent = phienCX1.length + " mã";
 
   if (!containerQuet && !containerNhap) return;
 

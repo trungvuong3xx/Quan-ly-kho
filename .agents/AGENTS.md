@@ -50,7 +50,7 @@ Project-level behavioral and tooling guidelines.
 
 ### 2. Camera & Cảm biến (K20 Pro & Snapdragon 855):
 - **KHÔNG mở camera trước**: Luôn lọc và mở Camera 0 (Sony 48MP AF). Cấm dùng fallback `{ video: true }` để motor thò thụt không bao giờ nhảy lên gây lỗi Calibrate.
-- **KHÔNG gọi `track.applyConstraints()`**: Gây crash / deadlock Camera HAL của Snapdragon 855.
+- **`track.applyConstraints()`**: CHỈ dùng cho đèn pin (`torch`) và lấy nét/phơi sáng liên tục (`batTatDenPinCamera`, `batContinuousAutofocus`) — các chức năng này đã chạy ổn định trên K20 Pro. Không dùng để đổi độ phân giải/camera khi đang quét.
 - **KHÔNG addEventListener lặp lại trong `khoiTaoCameraFast`**: Lắng nghe tương tác chạm ở cấp `document` 1 lần duy nhất, tránh rò rỉ listener khi camera ngủ/thức.
 - **KHÔNG chạy kép decoder**: Khi có phần cứng `BarcodeDetector`, cấm khởi tạo hoặc chạy song song `ZXing`.
 - **KHÔNG render lại toàn bộ DOM live log**: Live log tối đa 30 mã mới nhất để chống giật lag khi quét hàng trăm bao.
