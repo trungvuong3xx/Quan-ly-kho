@@ -34,8 +34,9 @@
 
   /* SCANNER & NEW COMPONENT THEME TOKENS (Light) */
   --bg-scan: #e8ecf1;
-  --surface-2: #f8fafc;
+  --surface-2: #f1f5f9;
   --border-strong: #bfdbfe;
+  --border-card: #cbd5e1;
   --primary-soft: #eff6ff;
   --primary-text: #1e40af;
   --row-text: #0f172a;
@@ -289,9 +290,9 @@ input[type=text], input[type=number] {
   height: 40px;
   padding: 0 14px;
   border-radius: 10px;
-  border: 1px solid var(--line);
-  background: var(--card-raised);
-  color: var(--cream);
+  border: 1px solid var(--border-card);
+  background-color: var(--surface-2);
+  color: var(--text-main);
   font-size: 14px;
   font-family: 'IBM Plex Mono', monospace;
   transition: border-color 0.18s ease, box-shadow 0.18s ease, background-color 0.18s ease;
@@ -312,9 +313,9 @@ input[type=date] {
   height: 40px;
   padding: 0 44px 0 14px;
   border-radius: 10px;
-  border: 1px solid var(--line);
-  background-color: var(--card-raised);
-  color: var(--cream);
+  border: 1px solid var(--border-card);
+  background-color: var(--surface-2);
+  color: var(--text-main);
   font-size: 14px;
   font-family: 'IBM Plex Mono', monospace;
   transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
@@ -324,7 +325,7 @@ input[type=date] {
   -webkit-appearance: none;
   -moz-appearance: none;
 
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='rgba(244,243,246,0.45)' stroke-width='2'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M6 5V3m12 2V3M4 11h16M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z' /%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='rgba(100,116,139,0.7)' stroke-width='2'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M6 5V3m12 2V3M4 11h16M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z' /%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: right 14px center;
   background-size: 18px 18px;
@@ -1045,16 +1046,24 @@ table thead th,
 #overlay-loai .overlay-card { max-height: 80vh; overflow-y: auto; }
 
 /* Custom Select */
-.custom-select { position: relative; width: 100%; margin-top: 4px; }
+.custom-select { position: relative; width: 100%; margin-top: 0; }
 
 .custom-select-btn {
-  width: 100%; height: 52px; padding: 0 16px;
-  border-radius: 14px;
-  border: 1px solid var(--line);
-  background: var(--card-raised);
-  color: var(--cream); font-size: 15px;
+  width: 100%; height: 40px; padding: 0 14px;
+  border-radius: 10px;
+  border: 1px solid var(--border-card);
+  background-color: var(--surface-2);
+  color: var(--text-main); font-size: 14px;
+  font-family: inherit;
   text-align: left; cursor: pointer;
   display: flex; align-items: center; justify-content: space-between;
+  box-sizing: border-box;
+  transition: border-color 0.18s ease, box-shadow 0.18s ease, background-color 0.18s ease;
+}
+.custom-select-btn:hover,
+.custom-select-btn:focus {
+  border-color: var(--brass);
+  outline: none;
 }
 
 .custom-select-list {
@@ -1774,14 +1783,24 @@ body.cam-active {
   height: 100dvh !important;
   overflow: hidden !important;
   touch-action: none !important;
+  background: var(--bg-scan) !important;
 }
 
+body.cam-active #app-viewport {
+  background: var(--bg-scan) !important;
+}
+
+body.cam-active .page,
+body.cam-active .page:not(#trangChu),
+body.cam-active .page:not(#trangChu).active,
 body.cam-active #btpPage.active,
 body.cam-active #chiFor.active,
 body.cam-active #quetQR.active {
-  background: var(--bg-deep) !important;
+  background: var(--bg-scan) !important;
   height: calc(100dvh - 65px) !important;
   padding: 0 !important;
+  padding-top: 0 !important;
+  margin-top: 0 !important;
   display: flex !important;
   flex-direction: column !important;
   box-sizing: border-box !important;
@@ -1817,7 +1836,7 @@ body.cam-active #qr-cam:not([style*="display: none"]):not([style*="display:none"
   flex-direction: column !important;
   flex: 1 1 auto !important;
   height: 100% !important;
-  padding: 6px 12px 10px 12px !important;
+  padding: 4px 12px 10px 12px !important;
   margin: 0 auto !important;
   box-sizing: border-box !important;
   justify-content: flex-start !important;
