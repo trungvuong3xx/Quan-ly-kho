@@ -598,7 +598,7 @@ function khiQuetDuocMaQR(result) {
   luuPhienDoDangQR();
   capNhatLogQR();
 
-  maQRVuaQuetQR = rawText || data.id || "";
+  maQRVuaQuetQR = data.id || rawText || "";
   const lockStatusEl = document.getElementById("qr-lock-status");
   if (lockStatusEl) {
     lockStatusEl.textContent = maQRVuaQuetQR;
@@ -763,6 +763,13 @@ function xoaNhomQR(groupKey, event) {
     phienQuetQR = phienQuetQR.filter(item => !((item.dotQuet || 1) === dotNum && String(item.qc || item.msp || '—') === qcVal));
     const maxDot = phienQuetQR.length > 0 ? Math.max(0, ...phienQuetQR.map(r => r.dotQuet || 1)) : 0;
     demSoDotQR = maxDot > 0 ? maxDot : 1;
+    const lastItem = phienQuetQR.length > 0 ? phienQuetQR[phienQuetQR.length - 1] : null;
+    maQRVuaQuetQR = lastItem ? (lastItem.id || "") : "";
+    const lockStatusEl = document.getElementById("qr-lock-status");
+    if (lockStatusEl) {
+      lockStatusEl.textContent = maQRVuaQuetQR || "Chờ quét...";
+      lockStatusEl.title = maQRVuaQuetQR || "";
+    }
     luuPhienDoDangQR();
     capNhatLogQR();
     if (typeof showCanhBaoQR === "function") showCanhBaoQR("Đã xóa nhóm " + qcVal);
@@ -790,6 +797,13 @@ function xoaMaTrongLiveLogQR(originalIndex, event) {
       const statusEl = document.getElementById("qr-status");
       if (statusEl && !dangQuetQR) {
         statusEl.innerHTML = '<div class="cam-status-dot paused"></div><span>Đợt ' + demSoDotQR + '</span>';
+      }
+      const lastItem = phienQuetQR.length > 0 ? phienQuetQR[phienQuetQR.length - 1] : null;
+      maQRVuaQuetQR = lastItem ? (lastItem.id || "") : "";
+      const lockStatusEl = document.getElementById("qr-lock-status");
+      if (lockStatusEl) {
+        lockStatusEl.textContent = maQRVuaQuetQR || "Chờ quét...";
+        lockStatusEl.title = maQRVuaQuetQR || "";
       }
       luuPhienDoDangQR();
       capNhatLogQR();
@@ -945,6 +959,13 @@ function xoaItemKqQR(originalIndex, ev) {
     const tenMa = item ? (item.qc || item.msp || "bao này") : "bao này";
     const doXoa = () => {
       phienQuetQR.splice(originalIndex, 1);
+      const lastItem = phienQuetQR.length > 0 ? phienQuetQR[phienQuetQR.length - 1] : null;
+      maQRVuaQuetQR = lastItem ? (lastItem.id || "") : "";
+      const lockStatusEl = document.getElementById("qr-lock-status");
+      if (lockStatusEl) {
+        lockStatusEl.textContent = maQRVuaQuetQR || "Chờ quét...";
+        lockStatusEl.title = maQRVuaQuetQR || "";
+      }
       luuPhienDoDangQR();
       hienKetQuaQuetQR();
       capNhatLogQR();
@@ -1595,6 +1616,12 @@ function huyPhienQuetQR() {
         demSoDotQR = 1;
         idPhienHienTaiQR = null;
         soLuongDaGuiHienTaiQR = 0;
+        maQRVuaQuetQR = "";
+        const lockStatusEl = document.getElementById("qr-lock-status");
+        if (lockStatusEl) {
+          lockStatusEl.textContent = "Chờ quét...";
+          lockStatusEl.title = "";
+        }
         showCanhBaoQR("Đã hủy phiên quét dở dang");
       },
       "Hủy phiên",

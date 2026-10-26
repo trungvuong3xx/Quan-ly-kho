@@ -158,7 +158,7 @@ function khiQuetDuocMa(result) {
   if (typeof phatVibrateSuccess === "function") phatVibrateSuccess();
   hienVienFeedbackCX1("success");
 
-  maQRVuaQuetCX1 = rawText || data.id || "";
+  maQRVuaQuetCX1 = data.id || rawText || "";
   const lockStatusEl = document.getElementById("cx1-lock-status");
   if (lockStatusEl) {
     lockStatusEl.textContent = maQRVuaQuetCX1;
@@ -232,6 +232,9 @@ async function tiepTucKhoiTaoCX1(cheDo = "quet") {
   qcKhoaCX1 = null;
   mspKhoaCX1 = null;
   moKhoaQCCX1();
+  maQRVuaQuetCX1 = "";
+  const lockStatusEl = document.getElementById("cx1-lock-status");
+  if (lockStatusEl) lockStatusEl.textContent = "Chờ quét...";
 
   if (cheDo === "nhap") {
     chuyenSangNhapTayCX1();
@@ -1279,6 +1282,10 @@ function xoaNhomCX1(groupKey, event) {
     phienCX1 = phienCX1.filter(item => !((item.dotQuet || 1) === dotNum && String(item.qc || item.msp || '—') === qcVal));
     const maxDot = phienCX1.length > 0 ? Math.max(0, ...phienCX1.map(r => r.dotQuet || 1)) : 0;
     demSoDot = maxDot > 0 ? maxDot : 1;
+    const lastItem = phienCX1.length > 0 ? phienCX1[phienCX1.length - 1] : null;
+    maQRVuaQuetCX1 = lastItem ? lastItem.id : "";
+    const lockStatusEl = document.getElementById("cx1-lock-status");
+    if (lockStatusEl) lockStatusEl.textContent = maQRVuaQuetCX1 || "Chờ quét...";
     luuPhienDoDangCX1();
     capNhatLogCX1();
     if (typeof showCanhBaoCX1 === "function") showCanhBaoCX1("Đã xóa nhóm " + qcVal, "success");
@@ -1307,6 +1314,10 @@ function xoaMaTrongLiveLogCX1(originalIndex, event) {
       if (statusEl && !dangQuetCX1) {
         statusEl.textContent = "Đã dừng Đợt " + demSoDot;
       }
+      const lastItem = phienCX1.length > 0 ? phienCX1[phienCX1.length - 1] : null;
+      maQRVuaQuetCX1 = lastItem ? lastItem.id : "";
+      const lockStatusEl = document.getElementById("cx1-lock-status");
+      if (lockStatusEl) lockStatusEl.textContent = maQRVuaQuetCX1 || "Chờ quét...";
       luuPhienDoDangCX1();
       capNhatLogCX1();
       if (typeof showCanhBaoCX1 === "function") showCanhBaoCX1("Đã xóa " + tenMa);
@@ -1797,6 +1808,9 @@ function quetMoiCX1() {
   qcKhoaCX1 = null;
   mspKhoaCX1 = null;
   moKhoaQCCX1();
+  maQRVuaQuetCX1 = "";
+  const lockStatusEl = document.getElementById("cx1-lock-status");
+  if (lockStatusEl) lockStatusEl.textContent = "Chờ quét...";
   xoaPhienDoDangCX1();
   document.getElementById("cx1-ketqua").style.display = "none";
   if (document.getElementById("cx1-nhap")) document.getElementById("cx1-nhap").style.display = "none";
