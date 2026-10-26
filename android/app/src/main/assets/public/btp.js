@@ -752,7 +752,8 @@ function dungBTP() {
 
 async function tiepTucBTP() {
   if (typeof khoaCuonTrangQuet === "function") khoaCuonTrangQuet(true); else document.body.classList.add("cam-active");
-  if (demSoDotBTP <= 0) demSoDotBTP = 1;
+  const maxDot = phienBTP.length > 0 ? Math.max(0, ...phienBTP.map(r => r.dotQuet || 1)) : 0;
+  demSoDotBTP = maxDot > 0 ? maxDot + 1 : 1;
   dangQuetBTP = true;
   window.dangQuetBTP = true;
 

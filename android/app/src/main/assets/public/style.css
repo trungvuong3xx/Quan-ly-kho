@@ -1790,8 +1790,6 @@ body.cam-active #app-viewport {
   background: var(--bg-scan) !important;
 }
 
-body.cam-active .page,
-body.cam-active .page:not(#trangChu),
 body.cam-active .page:not(#trangChu).active,
 body.cam-active #btpPage.active,
 body.cam-active #chiFor.active,
