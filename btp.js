@@ -1380,12 +1380,17 @@ async function khoiPhucBTP(state) {
   }));
 
   demSoDotBTP = parseInt(state.demSoDotBTP, 10) || 1;
-  ngayBTP = state.ngayBTP || layNgayHomNayBTP();
-  phienSoBTP = parseInt(state.phienSoBTP, 10) || 1;
+  ngayBTP = state.ngayBTP || state.ngay || layNgayHomNayBTP();
+  const ngayEl = document.getElementById("btp-ngay");
+  if (ngayEl && ngayBTP) ngayEl.value = ngayBTP;
+
+  phienSoBTP = parseInt(state.phienSoBTP || state.phienSo || state.phien, 10) || 1;
   if (typeof chonPhienBTP === "function") chonPhienBTP(phienSoBTP);
 
-  idPhienHienTaiBTP = state.idPhienHienTaiBTP || (Date.now() + "-" + Math.random().toString(36).slice(2));
-  soLuongDaGuiHienTaiBTP = typeof state.soLuongDaGuiHienTaiBTP === "number" ? state.soLuongDaGuiHienTaiBTP : 0;
+  idPhienHienTaiBTP = state.idPhienHienTaiBTP || state.idPhien || (Date.now() + "-" + Math.random().toString(36).slice(2));
+  soLuongDaGuiHienTaiBTP = typeof state.soLuongDaGuiHienTaiBTP === "number"
+    ? state.soLuongDaGuiHienTaiBTP
+    : (typeof state.soLuongDaGui === "number" ? state.soLuongDaGui : 0);
   dangQuetBTP = true;
   denPinBatBTP = false;
 
@@ -1526,6 +1531,7 @@ function luuVaoLichSuBTP() {
   const banGhi = {
     idPhien: idPhienHienTaiBTP,
     ngay: ngayBTP || layNgayHomNayBTP(),
+    phienSo: phienSoBTP || 1,
     capNhatLuc: new Date().toISOString(),
     phienBTP: phienBTP,
     demSoDotBTP: demSoDotBTP,
@@ -1620,9 +1626,17 @@ window.xemChiTietLichSuBTP = xemChiTietLichSuBTP;
 
 function tiepTucTuChiTietLichSuBTP() {
   if (!hienThiPhienLichSuHienTaiBTP) return;
+  const entry = hienThiPhienLichSuHienTaiBTP;
   if (typeof diToiTab === "function") diToiTab("btpPage");
   else if (typeof chuyenTrang === "function") chuyenTrang("btpPage");
-  khoiPhucBTP(hienThiPhienLichSuHienTaiBTP);
+  khoiPhucBTP({
+    phienBTP: entry.phienBTP,
+    demSoDotBTP: entry.demSoDotBTP,
+    ngayBTP: entry.ngay,
+    phienSoBTP: entry.phienSoBTP || entry.phienSo || entry.phien || 1,
+    idPhienHienTaiBTP: entry.idPhien,
+    soLuongDaGuiHienTaiBTP: entry.soLuongDaGui
+  });
 }
 window.tiepTucTuChiTietLichSuBTP = tiepTucTuChiTietLichSuBTP;
 
