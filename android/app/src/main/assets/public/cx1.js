@@ -2052,8 +2052,23 @@ function luuLichSuCX1(list) {
   } catch (e) {}
 }
 
+// Dọn phiên hết hạn. AN TOÀN: chỉ chạy SAU KHI lịch sử đã nạp xong từ IndexedDB và chỉ ghi khi
+// thật sự có phiên bị loại (trước đây luôn ghi đè -> có thể ghi danh sách rỗng đè mất lịch sử).
 function donDepLichSuCX1() {
-  luuLichSuCX1(docLichSuCX1());
+  const sc = window.ScannerCore;
+  const chay = () => {
+    let tatCa = [];
+    if (sc && typeof sc.docLichSu === "function") {
+      if (typeof sc.isLoaded === "function" && !sc.isLoaded()) return; // chưa nạp xong -> bỏ qua lần dọn này
+      tatCa = sc.docLichSu(CX1_LICHSU_KEY);
+    } else {
+      try { tatCa = JSON.parse(localStorage.getItem(CX1_LICHSU_KEY)) || []; } catch (e) { tatCa = []; }
+    }
+    const giuLai = docLichSuCX1();
+    if (giuLai.length !== tatCa.length) luuLichSuCX1(giuLai);
+  };
+  if (sc && typeof sc.whenReady === "function") sc.whenReady().then(chay);
+  else chay();
 }
 
 function luuVaoLichSuCX1() {

@@ -2125,6 +2125,13 @@ window.tinhMaBam = tinhMaBam;
 
 async function saoLuuDuLieuToanBo() {
   try {
+    if (window.ScannerCore && typeof window.ScannerCore.isLoaded === "function" && !window.ScannerCore.isLoaded()) {
+      if (typeof window.ScannerCore.whenReady === "function") await window.ScannerCore.whenReady();
+      if (!window.ScannerCore.isLoaded()) {
+        if (typeof showCanhBao === "function") showCanhBao("Lịch sử chưa nạp xong, vui lòng thử lại sau vài giây để tránh sao lưu thiếu dữ liệu.", "warning");
+        return;
+      }
+    }
     const backupData = {
       phienBan: "1.0",
       loai: "auto_backup",
@@ -2327,9 +2334,13 @@ function xuLyFilePhucHoiDuLieu(event) {
             }
 
             // Nạp lại toàn bộ RAM state bằng cách reload trang
-            setTimeout(() => {
-              window.location.reload();
-            }, 1200);
+            // Chờ mọi lần ghi IndexedDB hoàn tất rồi mới reload (tránh reload khi dữ liệu khôi phục chưa xuống đĩa)
+            const choGhiXong = (window.ScannerCore && typeof window.ScannerCore.whenIdle === "function")
+              ? window.ScannerCore.whenIdle().catch(() => { })
+              : Promise.resolve();
+            choGhiXong.then(() => {
+              setTimeout(() => { window.location.reload(); }, 800);
+            });
           } catch (errGhi) {
             console.error("Lỗi ghi dữ liệu khôi phục:", errGhi);
             if (typeof showCanhBao === "function") showCanhBao("Lỗi ghi dữ liệu: " + errGhi.message, "error");
@@ -2476,6 +2487,7 @@ window.showCanhBao = showCanhBao;
   let dangSaoLuuAuto = false;
   let timerDebounceAutoBackup = null;
   let lastAutoBackupRunTs = 0;
+let soLanBoQuaSaoLuuGiam = 0; // số lần liên tiếp bỏ qua sao lưu vì lịch sử giảm bất thường
   const AUTO_BACKUP_MIN_INTERVAL_MS = 180000; // Gộp tối đa 1 lần mỗi 3 phút
 
   // Dọn bỏ bản chụp web_auto_backup_snapshot cũ nếu có để giải phóng bộ nhớ localStorage trên Web
@@ -2544,12 +2556,38 @@ window.showCanhBao = showCanhBao;
       return;
     }
 
+    // [AN TOÀN] Lịch sử (IndexedDB) chưa nạp xong -> dữ liệu trên RAM có thể thiếu, KHÔNG được ghi đè bản sao lưu tốt
+    const scAB = window.ScannerCore;
+    if (scAB && typeof scAB.isLoaded === "function" && !scAB.isLoaded() && !isForce) {
+      if (lyDo === "app_launch") kichHoatKiemTraAutoBackup(5000);
+      return;
+    }
+
     try {
       dangSaoLuuAuto = true;
 
       const { duLieu, count } = thuThapGoiDuLieuSaoLuu();
       if (count === 0) {
         dangSaoLuuAuto = false;
+        return;
+      }
+
+      // [AN TOÀN] Không sao lưu khi không có gì đáng giữ (tránh ghi đè bản tốt bằng bản gần như rỗng)
+      const soPhienLichSu = (scAB && typeof scAB.getHistoryCount === "function") ? scAB.getHistoryCount() : 0;
+      const coDuLieuLamDo = Object.keys(duLieu).some((k) => {
+        if (!(k.includes("pending") || k.includes("phien_dodang"))) return false;
+        const v = duLieu[k];
+        return v && v !== "[]" && v !== "{}" && v !== "null";
+      });
+      if (!isForce && soPhienLichSu === 0 && !coDuLieuLamDo) {
+        return;
+      }
+
+      // [AN TOÀN] Lịch sử tụt > 50% so với lần sao lưu trước -> giữ nguyên bản cũ (tối đa 3 lần bỏ qua liên tiếp)
+      const moc = parseInt(localStorage.getItem("last_auto_backup_hist_count") || "0", 10) || 0;
+      if (!isForce && moc >= 5 && soPhienLichSu < moc * 0.5 && soLanBoQuaSaoLuuGiam < 3) {
+        soLanBoQuaSaoLuuGiam++;
+        capNhatChiBaoAutoBackup("⚠️ Lịch sử giảm bất thường, giữ nguyên bản sao lưu cũ", "warning");
         return;
       }
 
@@ -2589,7 +2627,22 @@ window.showCanhBao = showCanhBao;
         }
         localStorage.setItem("last_auto_backup_hash", currentHash);
         localStorage.setItem("last_auto_backup_time", thoiGianHienThi);
+        localStorage.setItem("last_auto_backup_hist_count", String(soPhienLichSu));
+        soLanBoQuaSaoLuuGiam = 0;
         lastAutoBackupRunTs = nowTs;
+
+        // Bản luân phiên theo ngày chẵn/lẻ (tối đa 1 lần/giờ): luôn còn lại 1 bản của ngày trước,
+        // phòng khi bản mới nhất bị ghi hỏng.
+        try {
+          const tsLuanPhien = parseInt(localStorage.getItem("last_parity_backup_ts") || "0", 10) || 0;
+          if (nowTs - tsLuanPhien > 3600000) {
+            const ngayLocal = Math.floor((nowTs - now.getTimezoneOffset() * 60000) / 86400000);
+            const slot = (ngayLocal % 2) + 1;
+            const r2 = window.AndroidNative.saveFileToDownload(`QuanLyKho_AutoBackup_Ngay${slot}.json`, base64Data, "application/json");
+            if (!(r2 === false || r2 === "false")) localStorage.setItem("last_parity_backup_ts", String(nowTs));
+          }
+        } catch (e2) { }
+
         capNhatChiBaoAutoBackup(`💾 Tự động sao lưu: ${thoiGianHienThi} (Máy)`, "success");
       } else {
         // 2. Trên Web Browser / PWA: Không lưu bản chụp đầy đủ vào localStorage để tránh nhân đôi dung lượng & tràn bộ nhớ
