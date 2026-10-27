@@ -425,14 +425,6 @@ function ketThucCX1() {
 
   // Hiện màn hình kết quả để user kiểm tra, sửa, xóa
   hienKetQuaCX1();
-
-  const btnGui = document.getElementById("btn-gui-dulieu-cx1");
-  if (btnGui) {
-    btnGui.disabled = false;
-    btnGui.innerHTML = '<i class="ti ti-cloud-upload"></i> Gửi dữ liệu lên Sheet';
-    btnGui.style.background = "linear-gradient(135deg, #f59e0b, #d97706)";
-    btnGui.style.color = "#1a1a2e";
-  }
 }
 
 // ── Nhập thủ công Chỉ For (CX1) ── Bê nguyên bản cơ chế CX5 ──
@@ -1017,9 +1009,11 @@ async function guiDuLieuCX1() {
     luuVaoLichSuCX1();
     showCanhBaoCX1("✅ Đã gửi thành công " + rows.length + " dòng lên Sheet!", "success");
     if (btnGui) {
-      btnGui.innerHTML = '<i class="ti ti-circle-check"></i> Đã gửi thành công';
-      btnGui.style.background = "linear-gradient(135deg, #10b981, #059669)";
-      btnGui.style.color = "#fff";
+      btnGui.disabled = false;
+      const daGuiHet = phienCX1.length > 0 && phienCX1.every(r => r.daGui || r.daDongBo);
+      btnGui.classList.toggle("is-done", daGuiHet);
+      btnGui.classList.toggle("is-pending", !daGuiHet && phienCX1.length > 0);
+      btnGui.innerHTML = '<i class="ti ti-circle-check"></i> Đã gửi đủ dữ liệu (' + soLuongDaGuiHienTai + '/' + phienCX1.length + ')';
     }
   } catch (err) {
     const pending = docPendingCX1();
@@ -1034,9 +1028,9 @@ async function guiDuLieuCX1() {
     luuVaoLichSuCX1();
     if (btnGui) {
       btnGui.disabled = false;
+      btnGui.classList.remove("is-done");
+      btnGui.classList.toggle("is-pending", phienCX1.length > 0);
       btnGui.innerHTML = '<i class="ti ti-cloud-upload"></i> Gửi dữ liệu lên Sheet';
-      btnGui.style.background = "linear-gradient(135deg, #f59e0b, #d97706)";
-      btnGui.style.color = "#1a1a2e";
     }
   } finally {
     dangGuiDuLieuCX1 = false;
@@ -1745,6 +1739,22 @@ function hienKetQuaCX1() {
   
   // Mặc định hiện Chi Tiết
   toggleCX1View("chitiet");
+
+  if (!dangGuiDuLieuCX1) {
+    const btnGui = document.getElementById("btn-gui-dulieu-cx1");
+    if (btnGui) {
+      const daGuiCount = phienCX1.filter(r => r.daGui || r.daDongBo).length;
+      const daGuiHet = phienCX1.length > 0 && daGuiCount >= phienCX1.length;
+      btnGui.disabled = false;
+      btnGui.classList.toggle("is-done", daGuiHet);
+      btnGui.classList.toggle("is-pending", !daGuiHet && phienCX1.length > 0);
+      if (daGuiHet) {
+        btnGui.innerHTML = '<i class="ti ti-circle-check"></i> Đã gửi đủ dữ liệu (' + daGuiCount + '/' + phienCX1.length + ')';
+      } else {
+        btnGui.innerHTML = '<i class="ti ti-cloud-upload"></i> Gửi dữ liệu lên Sheet';
+      }
+    }
+  }
 }
 
 async function quetTiepCX1() {

@@ -1220,18 +1220,24 @@ async function khoiTaoCameraFast(videoId, onDecodedCallback) {
           nativeDetector = null; // Nếu phần cứng gặp lỗi thì mới cho fallback sang ZXing
         }
 
-        // Tăng cường chống chóa: chỉ chạy mỗi 4 frame khi quét thẳng luồng video chưa dính để giảm tải CPU
-        window.__glareFrameCounter = ((window.__glareFrameCounter || 0) + 1) % 4;
+        // Tăng cường chống chóa bằng bộ lọc GPU: chạy mỗi 10 frame khi quét thẳng luồng video chưa dính để tiết kiệm pin & giảm tải CPU
+        window.__glareFrameCounter = ((window.__glareFrameCounter || 0) + 1) % 10;
         if (!qrText && nativeDetector && videoEl.readyState >= 2 && window.__glareFrameCounter === 0) {
           try {
             if (!zxCanvas) {
               zxCanvas = document.createElement('canvas');
               zxCanvas.width = 480;
               zxCanvas.height = 360;
-              zxCtx = zxCanvas.getContext('2d', { willReadFrequently: true });
+              zxCtx = zxCanvas.getContext('2d');
             }
-            zxCtx.drawImage(videoEl, 0, 0, 480, 360);
-            locChongChoaCanvas(zxCtx, 480, 360);
+            if (typeof zxCtx.filter === 'string') {
+              zxCtx.filter = 'contrast(1.25) brightness(0.92)';
+              zxCtx.drawImage(videoEl, 0, 0, 480, 360);
+              zxCtx.filter = 'none';
+            } else {
+              zxCtx.drawImage(videoEl, 0, 0, 480, 360);
+              locChongChoaCanvas(zxCtx, 480, 360);
+            }
             const codesCanvas = await nativeDetector.detect(zxCanvas);
             if (codesCanvas && codesCanvas.length > 0 && codesCanvas[0].rawValue) {
               qrText = codesCanvas[0].rawValue;
@@ -1904,11 +1910,14 @@ function triggerResumeCamera() {
       // CHỈ khôi phục camera KHI VÀ CHỈ KHI:
       // 1. Trang chứa camera đó đang thực sự hiển thị (.active)
       // 2. Khung ngắm camera đang mở (style.display !== 'none')
-      // 3. Phần tử video tồn tại
+      // 3. Phần tử video tồn tại và phiên quét đang hoạt động (không bị tạm dừng hoặc đang ngủ)
       const isPageActive = pageEl && pageEl.classList.contains('active');
       const isBoxVisible = boxEl && boxEl.style.display !== 'none' && window.getComputedStyle(boxEl).display !== 'none';
+      const isPausedByUser = (item.vid === 'btp-reader' && window.dangQuetBTP === false) ||
+        (item.vid === 'reader' && window.dangQuetQR === false) ||
+        (item.vid === 'cx1-reader' && window.dangQuetCX1 === false);
 
-      if (isPageActive && isBoxVisible && videoEl) {
+      if (isPageActive && isBoxVisible && videoEl && !isPausedByUser && !cameraSleepingMap[item.vid]) {
         // Luôn khôi phục lại luồng camera mới tinh để không bao giờ bị đứng hình sau khi ẩn app
         await khoiPhucCamera(item.vid, item.fallback);
       }
@@ -1919,6 +1928,10 @@ function triggerResumeCamera() {
 function ngatTatCaCamera() {
   const vids = ['reader', 'kk-reader', 'cx1-reader', 'btp-reader'];
   for (const id of vids) {
+    if (animFrameMap[id]) {
+      clearTimeout(animFrameMap[id]);
+      animFrameMap[id] = null;
+    }
     if (cameraSleepTimerMap[id]) {
       clearTimeout(cameraSleepTimerMap[id]);
       cameraSleepTimerMap[id] = null;
@@ -1933,6 +1946,9 @@ function ngatTatCaCamera() {
         videoEl.srcObject = null;
       } catch (e) { }
     }
+  }
+  if (window.AndroidNative && typeof window.AndroidNative.setKeepScreenOn === "function") {
+    try { window.AndroidNative.setKeepScreenOn(false); } catch (e) { }
   }
 }
 window.ngatTatCaCamera = ngatTatCaCamera;

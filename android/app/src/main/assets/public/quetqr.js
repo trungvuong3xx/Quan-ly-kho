@@ -1198,16 +1198,14 @@ function hienKetQuaQuetQR() {
   // Cập nhật trạng thái nút gửi
   const btnGui = document.getElementById("btn-gui-dulieu-qr");
   if (btnGui) {
-    if (phienQuetQR.length > soLuongDaGuiHienTaiQR) {
-      btnGui.disabled = false;
+    const daGuiHet = phienQuetQR.length > 0 && soLuongDaGuiHienTaiQR >= phienQuetQR.length;
+    btnGui.disabled = false;
+    btnGui.classList.toggle("is-done", daGuiHet);
+    btnGui.classList.toggle("is-pending", !daGuiHet && phienQuetQR.length > 0);
+    if (daGuiHet) {
+      btnGui.innerHTML = '<i class="ti ti-circle-check"></i> Đã gửi đủ dữ liệu (' + soLuongDaGuiHienTaiQR + '/' + phienQuetQR.length + ')';
+    } else {
       btnGui.innerHTML = '<i class="ti ti-cloud-upload"></i> Gửi dữ liệu lên Sheet';
-      btnGui.style.background = "linear-gradient(135deg, #f59e0b, #d97706)";
-      btnGui.style.color = "#1a1a2e";
-    } else if (phienQuetQR.length > 0 && phienQuetQR.length === soLuongDaGuiHienTaiQR) {
-      btnGui.disabled = true;
-      btnGui.innerHTML = '<i class="ti ti-circle-check"></i> Đã gửi thành công';
-      btnGui.style.background = "linear-gradient(135deg, #10b981, #059669)";
-      btnGui.style.color = "#fff";
     }
   }
 }
@@ -1470,9 +1468,11 @@ async function guiDuLieuQuetQR() {
     if (typeof kichHoatKiemTraAutoBackup === "function") kichHoatKiemTraAutoBackup(1000);
 
     if (btnGui) {
-      btnGui.innerHTML = '<i class="ti ti-circle-check"></i> Đã gửi thành công';
-      btnGui.style.background = "linear-gradient(135deg, #10b981, #059669)";
-      btnGui.style.color = "#fff";
+      btnGui.disabled = false;
+      const daGuiHet = phienQuetQR.length > 0 && soLuongDaGuiHienTaiQR >= phienQuetQR.length;
+      btnGui.classList.toggle("is-done", daGuiHet);
+      btnGui.classList.toggle("is-pending", !daGuiHet && phienQuetQR.length > 0);
+      btnGui.innerHTML = '<i class="ti ti-circle-check"></i> Đã gửi đủ dữ liệu (' + soLuongDaGuiHienTaiQR + '/' + phienQuetQR.length + ')';
     }
   } catch (err) {
     const pending = docPendingQuetQR();
@@ -1490,9 +1490,9 @@ async function guiDuLieuQuetQR() {
 
     if (btnGui) {
       btnGui.disabled = false;
+      btnGui.classList.remove("is-done");
+      btnGui.classList.toggle("is-pending", phienQuetQR.length > 0);
       btnGui.innerHTML = '<i class="ti ti-cloud-upload"></i> Gửi dữ liệu lên Sheet';
-      btnGui.style.background = "linear-gradient(135deg, #f59e0b, #d97706)";
-      btnGui.style.color = "#1a1a2e";
     }
   }
 

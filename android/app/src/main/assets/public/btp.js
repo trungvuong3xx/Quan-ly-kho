@@ -313,8 +313,8 @@ function toggleChiTietBTPGroup(groupKey) {
   const safeId = 'btp-grp-' + btoa(encodeURIComponent(groupKey)).replace(/[^a-zA-Z0-9]/g, '');
   const detailsEl = document.getElementById('details-' + safeId);
   const chevEl = document.getElementById('chev-' + safeId);
-  if (detailsEl && chevEl) {
-    const isOpen = window.expandedBTPGroups.has(groupKey);
+  const isOpen = window.expandedBTPGroups.has(groupKey);
+  if (detailsEl && chevEl && (!isOpen || detailsEl.innerHTML.trim() !== "")) {
     detailsEl.style.display = isOpen ? 'block' : 'none';
     chevEl.style.transform = isOpen ? 'rotate(180deg)' : 'none';
   } else {
@@ -516,7 +516,7 @@ function capNhatLogBTP() {
     const flashClass = idx === 0 ? ' scan-flash-new' : '';
     const kgText = (g.kg !== undefined && g.kg !== null && Number(g.kg) > 0) ? anToanHtmlBTP(g.kg) : '—';
 
-    let subItemsHtml = g.items.map((it, subIdx) => {
+    let subItemsHtml = isExpanded ? g.items.map((it, subIdx) => {
       const subGio = it.thoiGian ? new Date(it.thoiGian).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit", second: "2-digit" }) : "";
       const subKg = (it.kg !== undefined && it.kg !== null && Number(it.kg) > 0) ? anToanHtmlBTP(it.kg) : (Number(g.kg) > 0 ? anToanHtmlBTP(g.kg) : '0');
       const safeSubMsp = anToanHtmlBTP(it.msp || g.msp);
@@ -531,7 +531,7 @@ function capNhatLogBTP() {
           <i class="ti ti-trash"></i>
         </button>
       </div>`;
-    }).join("");
+    }).join("") : "";
 
     return `<div class="btp-swipe-container${flashClass}">
       <div class="btp-swipe-row-wrap">
@@ -618,7 +618,10 @@ function luuPhienDoDangBTPNgay() {
       showCanhBaoBTP("Bộ nhớ trình duyệt bị đầy! Vui lòng xóa bớt lịch sử cũ", "error");
     }
   }
-  if (typeof capNhatTrangChu === "function") capNhatTrangChu();
+  const trangChuEl = document.getElementById("trangChu");
+  if (trangChuEl && trangChuEl.classList.contains("active") && typeof capNhatTrangChu === "function") {
+    capNhatTrangChu();
+  }
 }
 
 function xoaPhienDoDangBTP() {
@@ -627,7 +630,10 @@ function xoaPhienDoDangBTP() {
     debounceTimerLuuPhienBTP = null;
   }
   try { localStorage.removeItem(BTP_DODANG_KEY); } catch (e) { }
-  if (typeof capNhatTrangChu === "function") capNhatTrangChu();
+  const trangChuEl = document.getElementById("trangChu");
+  if (trangChuEl && trangChuEl.classList.contains("active") && typeof capNhatTrangChu === "function") {
+    capNhatTrangChu();
+  }
 }
 
 // ── [TỐI ƯU MỤC 7.7]: Hàm duy nhất khởi động Camera có cờ khóa Mutex ──
@@ -694,6 +700,7 @@ async function batDauPhienMoiBTP() {
   phienBTP = [];
   demSoDotBTP = 1;
   dangQuetBTP = true;
+  window.dangQuetBTP = true;
   denPinBatBTP = false;
   idPhienHienTaiBTP = Date.now() + "-" + Math.random().toString(36).slice(2);
   soLuongDaGuiHienTaiBTP = 0;
@@ -930,7 +937,6 @@ async function guiDuLieuBTP() {
   if (btnGui) {
     btnGui.disabled = true;
     btnGui.innerHTML = '<i class="ti ti-loader spin"></i> Đang gửi ' + moiBoSung.length + ' mã...';
-    btnGui.style.opacity = "0.7";
   }
 
   const rows = moiBoSung.map(r => ({
@@ -958,10 +964,10 @@ async function guiDuLieuBTP() {
     showCanhBaoBTP("Đã gửi thành công " + rows.length + " mã lên Sheet!", "success");
     if (btnGui) {
       btnGui.disabled = false;
-      btnGui.innerHTML = '<i class="ti ti-circle-check"></i> Đã gửi thành công (' + soLuongDaGuiHienTaiBTP + '/' + phienBTP.length + ')';
-      btnGui.style.background = "linear-gradient(135deg, #10b981, #059669)";
-      btnGui.style.color = "#fff";
-      btnGui.style.opacity = "1";
+      const daGuiHet = soLuongDaGuiHienTaiBTP >= phienBTP.length && phienBTP.length > 0;
+      btnGui.classList.toggle("is-done", daGuiHet);
+      btnGui.classList.toggle("is-pending", !daGuiHet && phienBTP.length > 0);
+      btnGui.innerHTML = '<i class="ti ti-circle-check"></i> Đã gửi đủ dữ liệu (' + soLuongDaGuiHienTaiBTP + '/' + phienBTP.length + ')';
     }
   } catch (err) {
     // [BẢO VỆ MỤC 6.1]: Khi lỗi, giữ nguyên trạng thái chưa đánh dấu daGui = true và đồng bộ lại bộ đếm
@@ -984,10 +990,9 @@ async function guiDuLieuBTP() {
 
     if (btnGui) {
       btnGui.disabled = false;
+      btnGui.classList.remove("is-done");
+      btnGui.classList.toggle("is-pending", phienBTP.length > 0);
       btnGui.innerHTML = '<i class="ti ti-cloud-upload"></i> Thử gửi lại lên Sheet';
-      btnGui.style.background = "linear-gradient(135deg, #f59e0b, #d97706)";
-      btnGui.style.color = "#1a1a2e";
-      btnGui.style.opacity = "1";
     }
   } finally {
     dangGuiDuLieuBTP = false;
@@ -1243,14 +1248,12 @@ function hienKetQuaBTP() {
     if (btnGui) {
       btnGui.disabled = false;
       const daGuiHet = soLuongDaGuiHienTaiBTP >= phienBTP.length && phienBTP.length > 0;
+      btnGui.classList.toggle("is-done", daGuiHet);
+      btnGui.classList.toggle("is-pending", !daGuiHet && phienBTP.length > 0);
       if (daGuiHet) {
         btnGui.innerHTML = '<i class="ti ti-circle-check"></i> Đã gửi đủ dữ liệu (' + soLuongDaGuiHienTaiBTP + '/' + phienBTP.length + ')';
-        btnGui.style.background = "linear-gradient(135deg, #10b981, #059669)";
-        btnGui.style.color = "#fff";
       } else {
         btnGui.innerHTML = '<i class="ti ti-cloud-upload"></i> Gửi dữ liệu lên Sheet';
-        btnGui.style.background = "linear-gradient(135deg, #f59e0b, #d97706)";
-        btnGui.style.color = "#1a1a2e";
       }
     }
   }
@@ -1261,6 +1264,7 @@ async function quetTiepBTP() {
   const maxDot = phienBTP.length > 0 ? Math.max(0, ...phienBTP.map(r => r.dotQuet || 1)) : 0;
   demSoDotBTP = maxDot > 0 ? maxDot + 1 : 1;
   dangQuetBTP = true;
+  window.dangQuetBTP = true;
   denPinBatBTP = false;
 
   document.getElementById("btp-ketqua").style.display = "none";
@@ -1393,6 +1397,7 @@ async function khoiPhucBTP(state) {
     ? state.soLuongDaGuiHienTaiBTP
     : (typeof state.soLuongDaGui === "number" ? state.soLuongDaGui : 0);
   dangQuetBTP = true;
+  window.dangQuetBTP = true;
   denPinBatBTP = false;
 
   luuPhienDoDangBTPNgay();
@@ -1452,7 +1457,10 @@ function tiepTucPhienBTP() {
 
 function huyPhienBTP() {
   xoaPhienDoDangBTP();
-  if (typeof capNhatTrangChu === "function") capNhatTrangChu();
+  const trangChuEl = document.getElementById("trangChu");
+  if (trangChuEl && trangChuEl.classList.contains("active") && typeof capNhatTrangChu === "function") {
+    capNhatTrangChu();
+  }
 }
 
 // ── Lịch sử quét BTP (30 ngày) ──

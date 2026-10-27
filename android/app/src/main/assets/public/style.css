@@ -24,6 +24,7 @@
   --danger-border: #fca5a5;
   --red: var(--danger);
   --warning: #f59e0b;
+  --warning-text: #b45309;
   --border: rgba(0, 0, 0, 0.25);
   --border-card: #d9dfe7;
   --table-header-bg: #e2dfd4;
@@ -124,6 +125,7 @@
   --danger-soft: rgba(248, 81, 73, 0.15);
   --danger-border: rgba(248, 81, 73, 0.35);
   --warning: #d29922;
+  --warning-text: #fbbf24;
   --border: rgba(255, 255, 255, 0.1);
   --border-card: rgba(255, 255, 255, 0.10);
   --border-strong: rgba(59, 130, 246, 0.35);
@@ -2518,6 +2520,7 @@ body { padding: 0 !important; background: var(--bg-body) !important; color: var(
   max-width: 280px;
   max-height: 200px;
   position: relative;
+  container-type: size;
 }
 
 .reticle-corner {
@@ -2564,14 +2567,21 @@ body { padding: 0 !important; background: var(--bg-body) !important; color: var(
   height: 2px;
   background: linear-gradient(90deg, transparent, #3b82f6 30%, #93c5fd 50%, #3b82f6 70%, transparent);
   box-shadow: 0 0 8px rgba(59, 130, 246, 0.7);
+  will-change: transform, opacity;
   animation: laserScan 2.4s ease-in-out infinite alternate;
 }
 
+.video-container:has(.cam-pause-overlay[style*="flex"]) .reticle-laser-line,
+.video-container:has(.cam-sleep-overlay[style*="flex"]) .reticle-laser-line {
+  animation-play-state: paused;
+  opacity: 0;
+}
+
 @keyframes laserScan {
-  0% { top: 6%; opacity: 0.4; }
+  0% { transform: translate3d(0, 6cqh, 0); opacity: 0.4; }
   15% { opacity: 1; }
   85% { opacity: 1; }
-  100% { top: 94%; opacity: 0.4; }
+  100% { transform: translate3d(0, 92cqh, 0); opacity: 0.4; }
 }
 
 /* ── 1. HUD NỔI TRÊN CAMERA BTP (GÓC TRÁI: ĐỢT, GÓC PHẢI: ĐÈN PIN + ĐẢO CAM, ĐÁY: BÀN PHÍM + PAUSE + HOÀN TẤT) ── */
@@ -3331,7 +3341,7 @@ body.cam-active #chiFor.active {
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
   }
-  .laser-line, .cam-status-dot {
+  .laser-line, .reticle-laser-line, .cam-status-dot {
     animation: none !important;
   }
   .spin, .spinner-loading {
@@ -3916,3 +3926,74 @@ body.cam-active #chiFor.active {
   border-radius: 9px !important;
 }
 
+
+/* ============================================================
+   CỤM NÚT MÀN HÌNH KẾT QUẢ (BTP, QUÉT QR, CX1)
+   ============================================================ */
+.kq-actions {
+  display: grid;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.kq-actions .row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.kq-btn {
+  --accent: var(--row-muted);
+  min-height: 44px;
+  padding: 0 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: var(--surface-2);
+  border: 1px solid var(--border-card);
+  border-radius: 12px;
+  color: var(--accent);
+  font-size: 14px;
+  font-weight: 700;
+  box-shadow: none;
+  cursor: pointer;
+  outline: none;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+  transition: background .15s, border-color .15s, transform .1s, opacity .15s;
+}
+
+.kq-btn i {
+  font-size: 18px;
+  line-height: 1;
+}
+
+.kq-btn:active {
+  transform: scale(.98);
+  background: color-mix(in srgb, var(--accent) 10%, var(--surface-2));
+}
+
+.kq-btn:disabled {
+  opacity: 0.65;
+  pointer-events: none;
+}
+
+.kq-btn--send  { --accent: var(--warning-text, #b45309); }
+.kq-btn--next  { --accent: var(--primary-text, var(--primary)); }
+.kq-btn--new   { --accent: var(--row-muted); }
+.kq-btn--excel { --accent: var(--success); }
+
+/* còn dữ liệu chưa gửi: nhấn nhẹ để không bị bỏ sót */
+.kq-btn--send.is-pending {
+  border-color: color-mix(in srgb, #f59e0b 55%, transparent);
+  background: color-mix(in srgb, #f59e0b 10%, var(--surface-2));
+}
+
+/* đã gửi đủ */
+.kq-btn--send.is-done {
+  --accent: var(--success);
+  border-color: color-mix(in srgb, var(--success) 40%, transparent);
+  background: color-mix(in srgb, var(--success) 8%, var(--surface-2));
+  pointer-events: none;
+}
