@@ -111,51 +111,6 @@ function donDepMapKhoaBTP() {
   }
 }
 
-// Lưu trữ global để tránh bị Garbage Collection dọn rác giữa chừng (Bug Chrome Android)
-window.__speechUtterances = window.__speechUtterances || [];
-
-function docGiongNoiBTP(msp, kg) {
-  if (!('speechSynthesis' in window)) return;
-
-  let docMsp = String(msp || '').trim();
-  if (docMsp.length >= 3) {
-    docMsp = docMsp.slice(-3);
-  }
-  let arrMsp = docMsp.split('').join(' ');
-
-  // Kiểm tra số hợp lệ, chống phát âm NaN hoặc 1e+21
-  let numKg = parseFloat(kg);
-  let strKg = "0";
-  if (!isNaN(numKg) && isFinite(numKg)) {
-    strKg = String(numKg).trim();
-  }
-  let arrKg = strKg.split('').map(char => char === '.' ? 'phẩy' : char).join(' ');
-
-  const text = arrMsp + " " + arrKg;
-
-  const msg = new SpeechSynthesisUtterance(text);
-  msg.lang = 'vi-VN';
-  msg.rate = 1.5;
-  msg.volume = 1.0;
-
-  const cleanUpUtterance = function () {
-    const idx = window.__speechUtterances.indexOf(msg);
-    if (idx > -1) window.__speechUtterances.splice(idx, 1);
-  };
-  msg.onend = cleanUpUtterance;
-  msg.onerror = cleanUpUtterance;
-
-  if (window.__speechUtterances.length > 2) {
-    window.__speechUtterances.splice(0, window.__speechUtterances.length - 2);
-  }
-  window.__speechUtterances.push(msg);
-
-  try {
-    window.speechSynthesis.cancel();
-    window.speechSynthesis.speak(msg);
-  } catch (e) { }
-}
-
 function hienVienFeedbackBTP(loai) {
   const overlay = document.getElementById("btp-cam-flash-overlay");
   if (overlay) {
@@ -238,14 +193,11 @@ function themMaVaoPhienBTP(data, rawText, src) {
     try { navigator.vibrate(70); } catch (e) { }
   }
 
-  // Đọc TTS giọng nói
-  docGiongNoiBTP(data.msp, data.kg);
-
   // Tạo UID duy nhất cho mỗi dòng quét (phục vụ xóa lẻ chính xác 100%)
   const uid = "btp_item_" + Date.now() + "_" + Math.random().toString(36).slice(2, 9);
   const recordId = "btp_rec_" + Date.now() + "_" + Math.random().toString(36).slice(2, 9);
 
-  phienBTP.push({
+  const newItem = {
     uid: uid,
     recordId: recordId,
     rawQR: data.rawQR || rawText,
@@ -255,13 +207,14 @@ function themMaVaoPhienBTP(data, rawText, src) {
     kg: data.kg,
     thoiGian: new Date(),
     dotQuet: demSoDotBTP || 1
-  });
+  };
+  phienBTP.push(newItem);
 
   const demEl = document.getElementById("btp-dem");
   if (demEl) demEl.textContent = "Đã quét: " + phienBTP.length + " mã";
 
   luuPhienDoDangBTP();
-  capNhatLogBTP();
+  capNhatLogBTPThemMoi(newItem);
 
   maQRVuaQuetBTP = data.rawQR || rawText || data.id || data.msp || "";
   const lockStatusEl = document.getElementById("btp-lock-status");
@@ -467,6 +420,138 @@ function khoiTaoSuKienSwipeBTP() {
   }
 }
 
+function taoHtmlNhomLogBTP(g, isFirst) {
+  const safeMsp = anToanHtmlBTP(g.msp);
+  const keyB64 = btoa(encodeURIComponent(g.key));
+  const safeId = 'btp-grp-' + keyB64.replace(/[^a-zA-Z0-9]/g, '');
+  const isExpanded = window.expandedBTPGroups.has(g.key);
+  const countBadge = g.items.length > 1 ? `<span class="btp-badge-count">×${g.items.length}</span>` : '';
+  const gio = g.lastThoiGian ? new Date(g.lastThoiGian).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit", second: "2-digit" }) : "";
+  const flashClass = isFirst ? ' scan-flash-new' : '';
+  const kgText = (g.kg !== undefined && g.kg !== null && Number(g.kg) > 0) ? anToanHtmlBTP(g.kg) : '—';
+
+  let subItemsHtml = isExpanded ? g.items.map((it, subIdx) => {
+    const subGio = it.thoiGian ? new Date(it.thoiGian).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit", second: "2-digit" }) : "";
+    const subKg = (it.kg !== undefined && it.kg !== null && Number(it.kg) > 0) ? anToanHtmlBTP(it.kg) : (Number(g.kg) > 0 ? anToanHtmlBTP(g.kg) : '0');
+    const safeSubMsp = anToanHtmlBTP(it.msp || g.msp);
+    const safeUid = anToanHtmlBTP(it.uid || ("idx_" + subIdx));
+
+    return `<div class="btp-sub-item">
+        <span class="btp-sub-stt">${subIdx + 1}</span>
+        <span class="btp-sub-msp">${safeSubMsp}</span>
+        <span class="btp-sub-kg">${subKg}</span>
+        <span class="btp-sub-gio">${subGio}</span>
+        <button type="button" class="btp-sub-del-btn" onclick="xoaMaBTP('${safeUid}', event)" title="Xóa lần quét này">
+          <i class="ti ti-trash"></i>
+        </button>
+      </div>`;
+  }).join("") : "";
+
+  return `<div class="btp-swipe-container${flashClass}" data-group-key="${keyB64}">
+      <div class="btp-swipe-row-wrap">
+        <div class="btp-swipe-actions">
+          <button type="button" class="btp-swipe-btn-del" onclick="xoaNhomBTPByB64('${keyB64}', event)">
+            <i class="ti ti-trash"></i>
+            <span>Xóa</span>
+          </button>
+        </div>
+        <div class="btp-swipe-content" onclick="onTapRowBTPByB64('${keyB64}', event)">
+          <span class="btp-col-dot">${g.dot}</span>
+          <div class="btp-col-msp-wrap">
+            <span class="btp-col-msp">${safeMsp}</span>
+            ${countBadge}
+          </div>
+          <span class="btp-col-kg">${kgText}</span>
+          <span class="btp-col-gio">${gio}</span>
+          <i id="chev-${safeId}" class="ti ti-chevron-down btp-chevron" style="transform:${isExpanded ? 'rotate(180deg)' : 'none'};"></i>
+        </div>
+      </div>
+      <div id="details-${safeId}" class="btp-group-details" style="display:${isExpanded ? 'block' : 'none'};">
+        ${subItemsHtml}
+      </div>
+    </div>`;
+}
+
+function capNhatLogBTPThemMoi(newItem) {
+  const container = document.getElementById("btp-log-list");
+  const countEl = document.getElementById("btp-log-count");
+  if (countEl) countEl.textContent = phienBTP.length + " mã";
+  if (!container || !newItem) return;
+
+  const emptyEl = container.querySelector(".btp-empty-log");
+  if (emptyEl) {
+    capNhatLogBTP();
+    return;
+  }
+
+  const dot = newItem.dotQuet || 1;
+  const mspUpper = (newItem.msp || newItem.rawQR || 'KHAC').toUpperCase();
+  const kgVal = (newItem.kg !== undefined && newItem.kg !== null) ? newItem.kg : 0;
+  const key = `${dot}_${mspUpper}_${kgVal}`;
+  const keyB64 = btoa(encodeURIComponent(key));
+
+  const groupItems = [];
+  for (let i = 0; i < phienBTP.length; i++) {
+    const it = phienBTP[i];
+    const itDot = it.dotQuet || 1;
+    const itMsp = (it.msp || it.rawQR || 'KHAC').toUpperCase();
+    const itKg = (it.kg !== undefined && it.kg !== null) ? it.kg : 0;
+    if (`${itDot}_${itMsp}_${itKg}` === key) {
+      groupItems.push(it);
+    }
+  }
+
+  const g = {
+    key: key,
+    dot: dot,
+    msp: newItem.msp || newItem.rawQR || '—',
+    kg: kgVal,
+    items: groupItems,
+    lastThoiGian: newItem.thoiGian
+  };
+
+  const firstRow = container.querySelector(".btp-swipe-container");
+  if (firstRow && firstRow.getAttribute("data-group-key") === keyB64 && !window.expandedBTPGroups.has(key)) {
+    // Cùng nhóm đang ở đầu danh sách: chỉ cập nhật badge số lượng và giờ tại chỗ (0ms reflow)
+    const mspWrap = firstRow.querySelector(".btp-col-msp-wrap");
+    if (mspWrap) {
+      let badgeEl = mspWrap.querySelector(".btp-badge-count");
+      if (groupItems.length > 1) {
+        if (!badgeEl) {
+          badgeEl = document.createElement("span");
+          badgeEl.className = "btp-badge-count";
+          mspWrap.appendChild(badgeEl);
+        }
+        badgeEl.textContent = "×" + groupItems.length;
+      }
+    }
+    const gioEl = firstRow.querySelector(".btp-col-gio");
+    if (gioEl && newItem.thoiGian) {
+      gioEl.textContent = new Date(newItem.thoiGian).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+    }
+    return;
+  }
+
+  // Nếu nhóm đã tồn tại ở vị trí thấp hơn thì gỡ vị trí cũ để đưa lên đầu
+  const existingRow = container.querySelector(`.btp-swipe-container[data-group-key="${keyB64}"]`);
+  if (existingRow) {
+    existingRow.remove();
+  }
+  if (firstRow) {
+    firstRow.classList.remove("scan-flash-new");
+  }
+
+  container.insertAdjacentHTML("afterbegin", taoHtmlNhomLogBTP(g, true));
+
+  const allRows = container.querySelectorAll(".btp-swipe-container");
+  if (allRows.length > 30) {
+    for (let i = 30; i < allRows.length; i++) {
+      allRows[i].remove();
+    }
+  }
+  khoiTaoSuKienSwipeBTP();
+}
+
 function capNhatLogBTP() {
   const container = document.getElementById("btp-log-list");
   const countEl = document.getElementById("btp-log-count");
@@ -506,57 +591,7 @@ function capNhatLogBTP() {
   const groups = Array.from(groupMap.values()).reverse();
   const displayedGroups = groups.slice(0, MAX_LIVE_LOG);
 
-  let html = displayedGroups.map((g, idx) => {
-    const safeMsp = anToanHtmlBTP(g.msp);
-    const keyB64 = btoa(encodeURIComponent(g.key));
-    const safeId = 'btp-grp-' + keyB64.replace(/[^a-zA-Z0-9]/g, '');
-    const isExpanded = window.expandedBTPGroups.has(g.key);
-    const countBadge = g.items.length > 1 ? `<span class="btp-badge-count">×${g.items.length}</span>` : '';
-    const gio = g.lastThoiGian ? new Date(g.lastThoiGian).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit", second: "2-digit" }) : "";
-    const flashClass = idx === 0 ? ' scan-flash-new' : '';
-    const kgText = (g.kg !== undefined && g.kg !== null && Number(g.kg) > 0) ? anToanHtmlBTP(g.kg) : '—';
-
-    let subItemsHtml = isExpanded ? g.items.map((it, subIdx) => {
-      const subGio = it.thoiGian ? new Date(it.thoiGian).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit", second: "2-digit" }) : "";
-      const subKg = (it.kg !== undefined && it.kg !== null && Number(it.kg) > 0) ? anToanHtmlBTP(it.kg) : (Number(g.kg) > 0 ? anToanHtmlBTP(g.kg) : '0');
-      const safeSubMsp = anToanHtmlBTP(it.msp || g.msp);
-      const safeUid = anToanHtmlBTP(it.uid || ("idx_" + subIdx));
-
-      return `<div class="btp-sub-item">
-        <span class="btp-sub-stt">${subIdx + 1}</span>
-        <span class="btp-sub-msp">${safeSubMsp}</span>
-        <span class="btp-sub-kg">${subKg}</span>
-        <span class="btp-sub-gio">${subGio}</span>
-        <button type="button" class="btp-sub-del-btn" onclick="xoaMaBTP('${safeUid}', event)" title="Xóa lần quét này">
-          <i class="ti ti-trash"></i>
-        </button>
-      </div>`;
-    }).join("") : "";
-
-    return `<div class="btp-swipe-container${flashClass}">
-      <div class="btp-swipe-row-wrap">
-        <div class="btp-swipe-actions">
-          <button type="button" class="btp-swipe-btn-del" onclick="xoaNhomBTPByB64('${keyB64}', event)">
-            <i class="ti ti-trash"></i>
-            <span>Xóa</span>
-          </button>
-        </div>
-        <div class="btp-swipe-content" onclick="onTapRowBTPByB64('${keyB64}', event)">
-          <span class="btp-col-dot">${g.dot}</span>
-          <div class="btp-col-msp-wrap">
-            <span class="btp-col-msp">${safeMsp}</span>
-            ${countBadge}
-          </div>
-          <span class="btp-col-kg">${kgText}</span>
-          <span class="btp-col-gio">${gio}</span>
-          <i id="chev-${safeId}" class="ti ti-chevron-down btp-chevron" style="transform:${isExpanded ? 'rotate(180deg)' : 'none'};"></i>
-        </div>
-      </div>
-      <div id="details-${safeId}" class="btp-group-details" style="display:${isExpanded ? 'block' : 'none'};">
-        ${subItemsHtml}
-      </div>
-    </div>`;
-  }).join("");
+  let html = displayedGroups.map((g, idx) => taoHtmlNhomLogBTP(g, idx === 0)).join("");
 
   if (groups.length > MAX_LIVE_LOG) {
     const conLai = groups.length - MAX_LIVE_LOG;
@@ -594,11 +629,16 @@ let debounceTimerLuuPhienBTP = null;
 function luuPhienDoDangBTP() {
   if (debounceTimerLuuPhienBTP) clearTimeout(debounceTimerLuuPhienBTP);
   debounceTimerLuuPhienBTP = setTimeout(() => {
+    debounceTimerLuuPhienBTP = null;
     luuPhienDoDangBTPNgay();
-  }, 300);
+  }, 800);
 }
 
 function luuPhienDoDangBTPNgay() {
+  if (debounceTimerLuuPhienBTP) {
+    clearTimeout(debounceTimerLuuPhienBTP);
+    debounceTimerLuuPhienBTP = null;
+  }
   if (phienBTP.some(r => r.daGui !== undefined)) {
     soLuongDaGuiHienTaiBTP = phienBTP.filter(r => r.daGui).length;
   }
@@ -612,7 +652,6 @@ function luuPhienDoDangBTPNgay() {
       soLuongDaGuiHienTaiBTP,
       demSoDotBTP
     }));
-    if (typeof kichHoatKiemTraAutoBackup === "function") kichHoatKiemTraAutoBackup(4000);
   } catch (e) {
     if (e && (e.name === "QuotaExceededError" || e.code === 22)) {
       showCanhBaoBTP("Bộ nhớ trình duyệt bị đầy! Vui lòng xóa bớt lịch sử cũ", "error");
@@ -742,6 +781,9 @@ async function batDauPhienMoiBTP() {
 function dungBTP() {
   dangQuetBTP = false;
   window.dangQuetBTP = false;
+  if (debounceTimerLuuPhienBTP) {
+    luuPhienDoDangBTPNgay();
+  }
   if (typeof dungCameraFast === "function") {
     dungCameraFast("btp-reader", zxingReaderBTP || window.zxingReaderBTP);
   }
@@ -912,6 +954,7 @@ function xemKetQuaBTP() {
   hienKetQuaBTP();
   luuPhienDoDangBTPNgay();
   luuVaoLichSuBTP();
+  if (typeof kichHoatKiemTraAutoBackup === "function") kichHoatKiemTraAutoBackup(2000);
 }
 window.xemKetQuaBTP = xemKetQuaBTP;
 

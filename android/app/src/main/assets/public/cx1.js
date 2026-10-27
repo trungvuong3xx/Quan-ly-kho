@@ -183,7 +183,10 @@ function luuPhienDoDangCX1() {
     if (typeof kichHoatKiemTraAutoBackup === "function") kichHoatKiemTraAutoBackup(4000);
   } catch (e) { }
   luuVaoLichSuCX1();
-  if (typeof capNhatTrangChu === "function") capNhatTrangChu();
+  const trangChuEl = document.getElementById("trangChu");
+  if (trangChuEl && trangChuEl.classList.contains("active") && typeof capNhatTrangChu === "function") {
+    capNhatTrangChu();
+  }
 }
 
 function xoaPhienDoDangCX1() {

@@ -140,6 +140,16 @@ const FAST_MP3_BASE64 = "data:audio/mp3;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2Z
 let fastAudioCtx = null;
 let fastAudioBuffer = null;
 let fastBeepAudio = null;
+let fastAudioUnlocked = false;
+
+function goBoListenerAudioUnlock() {
+  if (fastAudioUnlocked) return;
+  fastAudioUnlocked = true;
+  window.removeEventListener("touchstart", unlockFastAudioEngine, { capture: true });
+  window.removeEventListener("click", unlockFastAudioEngine, { capture: true });
+  window.removeEventListener("pointerdown", unlockFastAudioEngine, { capture: true });
+  window.removeEventListener("keydown", unlockFastAudioEngine, { capture: true });
+}
 
 function unlockFastAudioEngine() {
   try {
@@ -159,7 +169,12 @@ function unlockFastAudioEngine() {
       }
       fastAudioCtx.decodeAudioData(bytes.buffer, (buffer) => {
         fastAudioBuffer = buffer;
+        if (fastAudioCtx && fastAudioCtx.state === "running") {
+          goBoListenerAudioUnlock();
+        }
       }, (err) => { });
+    } else if (fastAudioBuffer && fastAudioCtx && fastAudioCtx.state === "running") {
+      goBoListenerAudioUnlock();
     }
     if (!fastBeepAudio) {
       fastBeepAudio = new Audio(FAST_MP3_BASE64);
@@ -548,7 +563,7 @@ const lastCameraCallbackMap = {};
 const cameraSleepTimerMap = {};
 const cameraSleepingMap = {};
 const cameraWakingUpMap = {};
-const CAMERA_IDLE_TIMEOUT_MS = 30000; // 30 giây không quét & không chạm -> tự ngủ để máy mát và tiết kiệm pin
+const CAMERA_IDLE_TIMEOUT_MS = 18000; // 18 giây không quét & không chạm -> tự ngủ để máy mát và tiết kiệm pin
 
 // Lắng nghe tương tác người dùng 1 lần duy nhất ở cấp document (ngăn rò rỉ listener khi camera ngủ/thức nhiều lần)
 function onGlobalCameraInteraction() {
@@ -811,9 +826,9 @@ async function moLuongCameraDungHuong() {
       const fastStream = await navigator.mediaDevices.getUserMedia({
         video: {
           deviceId: { exact: idCameraUuTien },
-          width: { ideal: 1280 },
-          height: { ideal: 960 },
-          frameRate: { ideal: 24, max: 30 }
+          width: { ideal: 800 },
+          height: { ideal: 600 },
+          frameRate: { ideal: 15, max: 20 }
         }
       });
       const track = fastStream.getVideoTracks()[0];
@@ -839,9 +854,9 @@ async function moLuongCameraDungHuong() {
       const constraints = {
         video: {
           facingMode: { ideal: "environment" },
-          width: { ideal: 1280 },
-          height: { ideal: 960 },
-          frameRate: { ideal: 24, max: 30 }
+          width: { ideal: 800 },
+          height: { ideal: 600 },
+          frameRate: { ideal: 15, max: 20 }
         }
       };
       if (videoInputs.length > 0 && videoInputs[0] && videoInputs[0].deviceId) {
@@ -896,9 +911,9 @@ async function moLuongCameraDungHuong() {
       const stream = await navigator.mediaDevices.getUserMedia({
         video: {
           deviceId: { exact: id },
-          width: { ideal: 1280 },
-          height: { ideal: 960 },
-          frameRate: { ideal: 24, max: 30 }
+          width: { ideal: 800 },
+          height: { ideal: 600 },
+          frameRate: { ideal: 15, max: 20 }
         }
       });
       const track = stream.getVideoTracks()[0];
@@ -932,9 +947,9 @@ async function moLuongCameraDungHuong() {
       video: {
         deviceId: (cam0 && cam0.deviceId) ? { ideal: cam0.deviceId } : undefined,
         facingMode: { ideal: "environment" },
-        width: { ideal: 1280 },
-        height: { ideal: 960 },
-        frameRate: { ideal: 24, max: 30 }
+        width: { ideal: 800 },
+        height: { ideal: 600 },
+        frameRate: { ideal: 15, max: 20 }
       }
     });
     const track = stream.getVideoTracks()[0];
@@ -1008,15 +1023,13 @@ function veKhungBoundingBoxQR(videoId, codeObj, srcW, srcH) {
   const ctx = canvas.getContext('2d');
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-  const vw = srcW || videoEl.videoWidth || 1280;
-  const vh = srcH || videoEl.videoHeight || 960;
+  const vw = srcW || videoEl.videoWidth || 800;
+  const vh = srcH || videoEl.videoHeight || 600;
   const scaleX = rect.width / vw;
   const scaleY = rect.height / vh;
 
   ctx.strokeStyle = '#22c55e';
   ctx.lineWidth = 3;
-  ctx.shadowColor = '#22c55e';
-  ctx.shadowBlur = 12;
   ctx.fillStyle = 'rgba(34, 197, 94, 0.15)';
 
   if (codeObj.cornerPoints && codeObj.cornerPoints.length >= 4) {
@@ -1186,25 +1199,90 @@ async function khoiTaoCameraFast(videoId, onDecodedCallback) {
   let zxingReader = null;
   let zxCanvas = null;
   let zxCtx = null;
+  let motionCanvas = null;
+  let motionCtx = null;
+  let lastMotionSamples = null;
 
   let isScanning = true;
   let isDecoding = false;
   let lastScanSuccessTime = Date.now();
+  let lastVideoTime = -1;
+  let consecutiveMisses = 0;
+  let staticSkipCount = 0;
+  let videoFrameCbId = null;
+
+  const kiemTraKhungHinhTinh = () => {
+    try {
+      if (!motionCanvas) {
+        motionCanvas = document.createElement('canvas');
+        motionCanvas.width = 16;
+        motionCanvas.height = 12;
+        motionCtx = motionCanvas.getContext('2d', { willReadFrequently: true });
+      }
+      motionCtx.drawImage(videoEl, 0, 0, 16, 12);
+      const data = motionCtx.getImageData(0, 0, 16, 12).data;
+      const samples = new Uint8Array(16);
+      let diffSum = 0;
+      for (let i = 0; i < 16; i++) {
+        const idx = i * 12 * 4;
+        const lum = (data[idx] + (data[idx + 1] << 1) + data[idx + 2]) >> 2;
+        samples[i] = lum;
+        if (lastMotionSamples) {
+          diffSum += Math.abs(lum - lastMotionSamples[i]);
+        }
+      }
+      const isStatic = lastMotionSamples !== null && (diffSum / 16) < 2.2;
+      lastMotionSamples = samples;
+      return isStatic;
+    } catch (e) {
+      return false;
+    }
+  };
+
+  const lenLichQuetTiep = (delayMs) => {
+    if (!isScanning || !videoEl.srcObject) return;
+    animFrameMap[videoId] = setTimeout(() => {
+      if (!isScanning || !videoEl.srcObject) return;
+      if (typeof videoEl.requestVideoFrameCallback === 'function') {
+        videoFrameCbId = videoEl.requestVideoFrameCallback(() => {
+          videoFrameCbId = null;
+          quetKhungHinh();
+        });
+      } else {
+        quetKhungHinh();
+      }
+    }, delayMs);
+  };
 
   const quetKhungHinh = async () => {
-    if (!isScanning || !videoEl.srcObject || videoEl.ended) return;
+    if (!isScanning || !videoEl.srcObject || videoEl.ended || document.visibilityState === 'hidden') return;
 
     if (videoEl.paused) {
       try { videoEl.play().catch(() => { }); } catch (e) { }
       if (videoEl.paused) {
-        if (isScanning && videoEl.srcObject) {
-          animFrameMap[videoId] = setTimeout(quetKhungHinh, 200);
-        }
+        lenLichQuetTiep(220);
         return;
       }
     }
 
-    if (!isDecoding && videoEl.readyState >= 2 && videoEl.videoWidth > 0) {
+    const curVidTime = videoEl.currentTime;
+    const hasNewFrame = curVidTime !== lastVideoTime;
+
+    if (!isDecoding && hasNewFrame && videoEl.readyState >= 2 && videoEl.videoWidth > 0) {
+      lastVideoTime = curVidTime;
+
+      // Bỏ qua bớt nhịp giải mã khi hình ảnh gần như đứng yên nhưng vẫn giữ nhịp chậm (mỗi 3 frame) khi QR đặt tĩnh
+      const isStaticFrame = kiemTraKhungHinhTinh();
+      if (isStaticFrame) {
+        staticSkipCount = (staticSkipCount + 1) % 3;
+        if (staticSkipCount !== 0) {
+          lenLichQuetTiep(160);
+          return;
+        }
+      } else {
+        staticSkipCount = 0;
+      }
+
       isDecoding = true;
       let qrText = null;
 
@@ -1220,34 +1298,33 @@ async function khoiTaoCameraFast(videoId, onDecodedCallback) {
           nativeDetector = null; // Nếu phần cứng gặp lỗi thì mới cho fallback sang ZXing
         }
 
-        // Tăng cường chống chóa bằng bộ lọc GPU: chạy mỗi 10 frame khi quét thẳng luồng video chưa dính để tiết kiệm pin & giảm tải CPU
-        window.__glareFrameCounter = ((window.__glareFrameCounter || 0) + 1) % 10;
-        if (!qrText && nativeDetector && videoEl.readyState >= 2 && window.__glareFrameCounter === 0) {
+        // Chống chóa theo nhu cầu: chỉ kích hoạt sau ít nhất 6 nhịp thất bại liên tiếp (và mỗi 8 nhịp 1 lần)
+        if (!qrText && nativeDetector && consecutiveMisses >= 6 && (consecutiveMisses % 8 === 0)) {
           try {
             if (!zxCanvas) {
               zxCanvas = document.createElement('canvas');
-              zxCanvas.width = 480;
-              zxCanvas.height = 360;
+              zxCanvas.width = 360;
+              zxCanvas.height = 270;
               zxCtx = zxCanvas.getContext('2d');
             }
             if (typeof zxCtx.filter === 'string') {
               zxCtx.filter = 'contrast(1.25) brightness(0.92)';
-              zxCtx.drawImage(videoEl, 0, 0, 480, 360);
+              zxCtx.drawImage(videoEl, 0, 0, 360, 270);
               zxCtx.filter = 'none';
             } else {
-              zxCtx.drawImage(videoEl, 0, 0, 480, 360);
-              locChongChoaCanvas(zxCtx, 480, 360);
+              zxCtx.drawImage(videoEl, 0, 0, 360, 270);
+              locChongChoaCanvas(zxCtx, 360, 270);
             }
             const codesCanvas = await nativeDetector.detect(zxCanvas);
             if (codesCanvas && codesCanvas.length > 0 && codesCanvas[0].rawValue) {
               qrText = codesCanvas[0].rawValue;
-              veKhungBoundingBoxQR(videoId, codesCanvas[0], 480, 360);
+              veKhungBoundingBoxQR(videoId, codesCanvas[0], 360, 270);
             }
           } catch (eGlare) {}
         }
       }
 
-      // ── ƯU TIÊN 2: CHỈ CHẠY ZXING KHI MÁY HOÀN TOÀN KHÔNG CÓ BarcodeDetector ──
+      // ── ƯU TIÊN 2: CHỈ CHẠY ZXING KHI MÁY HOÀN TOÀN KHÔNG CÓ BarcodeDetector (APK WebView) ──
       if (!qrText && !nativeDetector && videoEl.readyState >= 2) {
         try {
           if (!zxingReader) {
@@ -1255,12 +1332,31 @@ async function khoiTaoCameraFast(videoId, onDecodedCallback) {
           }
           if (!zxCanvas) {
             zxCanvas = document.createElement('canvas');
-            zxCanvas.width = 480;
-            zxCanvas.height = 360;
+            zxCanvas.width = 360;
+            zxCanvas.height = 270;
             zxCtx = zxCanvas.getContext('2d', { willReadFrequently: true });
           }
-          zxCtx.drawImage(videoEl, 0, 0, 480, 360);
-          locChongChoaCanvas(zxCtx, 480, 360);
+          const vw = videoEl.videoWidth;
+          const vh = videoEl.videoHeight;
+          // Xen kẽ cắt vùng trung tâm khung ngắm (ROI 75%) và toàn khung để giảm tải điểm ảnh & tăng tốc giải mã
+          const useRoi = (consecutiveMisses % 3 !== 2) && vw > 0 && vh > 0;
+          const sx = useRoi ? Math.floor(vw * 0.125) : 0;
+          const sy = useRoi ? Math.floor(vh * 0.125) : 0;
+          const sw = useRoi ? Math.floor(vw * 0.75) : vw;
+          const sh = useRoi ? Math.floor(vh * 0.75) : vh;
+
+          // Chỉ bật lọc chống chóa sau 4 lần đọc thất bại liên tiếp thay vì mọi nhịp
+          const applyGlareFilter = consecutiveMisses >= 4 && (consecutiveMisses % 4 === 0);
+          if (applyGlareFilter && typeof zxCtx.filter === 'string') {
+            zxCtx.filter = 'contrast(1.25) brightness(0.92)';
+            zxCtx.drawImage(videoEl, sx, sy, sw, sh, 0, 0, 360, 270);
+            zxCtx.filter = 'none';
+          } else {
+            zxCtx.drawImage(videoEl, sx, sy, sw, sh, 0, 0, 360, 270);
+            if (applyGlareFilter) {
+              locChongChoaCanvas(zxCtx, 360, 270);
+            }
+          }
           const res = zxingReader.decodeFromCanvas(zxCanvas);
           if (res && res.getText()) {
             qrText = res.getText();
@@ -1269,30 +1365,30 @@ async function khoiTaoCameraFast(videoId, onDecodedCallback) {
       }
 
       if (qrText) {
+        consecutiveMisses = 0;
         try {
           lastScanSuccessTime = Date.now();
-          resetSleepTimerCamera(videoId); // Reset timer 30s khi quét thành công
+          resetSleepTimerCamera(videoId); // Reset timer 18s khi quét thành công
           onDecodedCallback(qrText);
         } catch (eCb) {
           console.warn("Callback error:", eCb);
         }
+      } else {
+        consecutiveMisses++;
       }
 
       isDecoding = false;
     }
 
     if (isScanning && videoEl.srcObject) {
-      // Nhịp quét thích ứng (Adaptive Turbo Scan):
-      // - Khi vừa quét trúng hoặc đang tương tác dồn dập (< 4s): quét siêu tốc 65ms (~15 fps) để bắt mã tức thì.
-      // - Khi để máy chờ quá 4s: tự động hạ nhịp về 150ms để CPU nghỉ ngơi, máy mát rượi và tiết kiệm pin.
-      const isTurbo = (Date.now() - lastScanSuccessTime) < 4000;
-      const nextInterval = isTurbo ? 65 : 150;
-      animFrameMap[videoId] = setTimeout(quetKhungHinh, nextInterval);
+      const idleElapsed = Date.now() - lastScanSuccessTime;
+      const nextInterval = idleElapsed < 4000 ? 70 : (idleElapsed < 10000 ? 150 : 220);
+      lenLichQuetTiep(nextInterval);
     }
   };
 
-  animFrameMap[videoId] = setTimeout(quetKhungHinh, 125);
-  resetSleepTimerCamera(videoId); // Kích hoạt bộ đếm 60s khi bắt đầu phiên quét
+  lenLichQuetTiep(120);
+  resetSleepTimerCamera(videoId); // Kích hoạt bộ đếm 18s khi bắt đầu phiên quét
 
   return {
     reset: () => {
@@ -1300,6 +1396,10 @@ async function khoiTaoCameraFast(videoId, onDecodedCallback) {
       if (animFrameMap[videoId]) {
         clearTimeout(animFrameMap[videoId]);
         animFrameMap[videoId] = null;
+      }
+      if (videoFrameCbId !== null && typeof videoEl.cancelVideoFrameCallback === 'function') {
+        try { videoEl.cancelVideoFrameCallback(videoFrameCbId); } catch (e) { }
+        videoFrameCbId = null;
       }
       if (cameraSleepTimerMap[videoId]) {
         clearTimeout(cameraSleepTimerMap[videoId]);
@@ -1311,6 +1411,9 @@ async function khoiTaoCameraFast(videoId, onDecodedCallback) {
       }
       zxCanvas = null;
       zxCtx = null;
+      motionCanvas = null;
+      motionCtx = null;
+      lastMotionSamples = null;
     }
   };
 }
@@ -1335,6 +1438,13 @@ function dungCameraFast(videoId, zxingReaderObj) {
   if (videoEl && videoEl.srcObject) {
     videoEl.srcObject.getTracks().forEach(t => t.stop());
     videoEl.srcObject = null;
+  }
+  if (fastAudioCtx && fastAudioCtx.state === "running") {
+    setTimeout(() => {
+      if (!document.body.classList.contains("cam-active") && fastAudioCtx && fastAudioCtx.state === "running") {
+        try { fastAudioCtx.suspend(); } catch (e) { }
+      }
+    }, 600);
   }
   if (window.AndroidNative && typeof window.AndroidNative.setKeepScreenOn === "function") {
     try { window.AndroidNative.setKeepScreenOn(false); } catch (e) { }
@@ -1533,13 +1643,16 @@ window.chuyenTrangKhongNav = chuyenTrangKhongNav;
 // ── Trạng thái mạng & Bộ máy đồng bộ tập trung toàn bộ module ──────
 function demPendingMang() {
   let tong = 0;
-  try { tong += JSON.parse(localStorage.getItem(APP_PENDING_KEY) || "[]").length; } catch (e) { }
-  try { tong += JSON.parse(localStorage.getItem("quetqr_pending_saves") || "[]").length; } catch (e) { }
-  try { tong += JSON.parse(localStorage.getItem("qr_pending_saves") || "[]").length; } catch (e) { }
-  try { tong += JSON.parse(localStorage.getItem("cx1_pending_saves") || "[]").length; } catch (e) { }
-  try { tong += JSON.parse(localStorage.getItem("kk_pending_saves") || "[]").length; } catch (e) { }
-  try { tong += JSON.parse(localStorage.getItem("cx5_pending_saves") || "[]").length; } catch (e) { }
-  try { tong += JSON.parse(localStorage.getItem("btp_pending_saves") || "[]").length; } catch (e) { }
+  const keys = [APP_PENDING_KEY, "quetqr_pending_saves", "qr_pending_saves", "cx1_pending_saves", "kk_pending_saves", "cx5_pending_saves", "btp_pending_saves"];
+  for (let i = 0; i < keys.length; i++) {
+    try {
+      const raw = localStorage.getItem(keys[i]);
+      if (raw && raw.length > 2) {
+        const arr = JSON.parse(raw);
+        if (Array.isArray(arr)) tong += arr.length;
+      }
+    } catch (e) { }
+  }
   return tong;
 }
 
@@ -1739,10 +1852,10 @@ let timerKiemTraMang = null;
 function batDauTheoDoiMang() {
   if (timerKiemTraMang) clearInterval(timerKiemTraMang);
   timerKiemTraMang = setInterval(() => {
-    if (document.visibilityState === "visible") {
+    if (document.visibilityState === "visible" && !document.body.classList.contains("cam-active")) {
       capNhatTrangThaiMang();
     }
-  }, 12000);
+  }, 45000);
 }
 function dungTheoDoiMang() {
   if (timerKiemTraMang) {
@@ -2362,6 +2475,11 @@ window.showCanhBao = showCanhBao;
 (function () {
   let dangSaoLuuAuto = false;
   let timerDebounceAutoBackup = null;
+  let lastAutoBackupRunTs = 0;
+  const AUTO_BACKUP_MIN_INTERVAL_MS = 180000; // Gộp tối đa 1 lần mỗi 3 phút
+
+  // Dọn bỏ bản chụp web_auto_backup_snapshot cũ nếu có để giải phóng bộ nhớ localStorage trên Web
+  try { localStorage.removeItem("web_auto_backup_snapshot"); } catch (e) { }
 
   // Cập nhật nhãn trạng thái hiển thị trên giao diện
   function capNhatChiBaoAutoBackup(text, loai = "normal") {
@@ -2386,7 +2504,7 @@ window.showCanhBao = showCanhBao;
     let count = 0;
     for (let i = 0; i < localStorage.length; i++) {
       const k = localStorage.key(i);
-      if (!k) continue;
+      if (!k || k === "web_auto_backup_snapshot") continue;
       if (typeof BACKUP_KEYS !== "undefined" && (BACKUP_KEYS.includes(k) || k.includes('pending') || k.includes('phien_dodang') || k.includes('lich_su') || k.includes('msp_cache') || k.includes('cx1') || k.includes('cx5') || k.includes('btp') || k.includes('kk'))) {
         duLieu[k] = localStorage.getItem(k);
         count++;
@@ -2412,9 +2530,19 @@ window.showCanhBao = showCanhBao;
     return String(hash);
   }
 
-  // Hàm chính: Thực hiện Auto-Backup thông minh ghi đè máy
+  // Hàm chính: Thực hiện Auto-Backup thông minh ghi đè máy (chỉ khi không quét camera)
   async function thucHienAutoBackup(lyDo = "auto") {
     if (dangSaoLuuAuto) return;
+    const isForce = lyDo === "force" || lyDo === "app_exit";
+    // Không sao lưu khi đang mở camera quét liên tục
+    if (!isForce && lyDo !== "app_hidden" && document.body.classList.contains("cam-active")) {
+      return;
+    }
+    // Giới hạn tần suất tối đa 1 lần / 3 phút cho các sự kiện tự động
+    const nowTs = Date.now();
+    if (!isForce && lastAutoBackupRunTs > 0 && (nowTs - lastAutoBackupRunTs) < AUTO_BACKUP_MIN_INTERVAL_MS) {
+      return;
+    }
 
     try {
       dangSaoLuuAuto = true;
@@ -2433,6 +2561,7 @@ window.showCanhBao = showCanhBao;
       if (currentHash === lastHash && lyDo !== "force") {
         const lastTime = localStorage.getItem("last_auto_backup_time") || "Gần đây";
         capNhatChiBaoAutoBackup(`💾 Tự động sao lưu: ${lastTime} (Toàn vẹn)`, "success");
+        lastAutoBackupRunTs = nowTs;
         dangSaoLuuAuto = false;
         return;
       }
@@ -2443,38 +2572,31 @@ window.showCanhBao = showCanhBao;
       const ngayStr = `${pad(now.getDate())}/${pad(now.getMonth() + 1)}/${now.getFullYear()}`;
       const thoiGianHienThi = `${thoiGianStr} ${ngayStr}`;
 
-      const backupData = {
-        phienBan: "1.0",
-        loai: "auto_backup",
-        thoiGian: now.toISOString(),
-        thoiGianHienThi: thoiGianHienThi,
-        soLuongMuc: count,
-        duLieu: duLieu
-      };
-
-      const base64Data = chuoiSangBase64Utf8(JSON.stringify(backupData, null, 2));
-
-      // 1. Nếu đang trên Android Native: Ghi đè file cố định vào Download
+      // 1. Chỉ tạo chuỗi Base64 và ghi file khi chạy trên Android Native APK
       if (window.AndroidNative && typeof window.AndroidNative.saveFileToDownload === "function") {
+        const backupData = {
+          phienBan: "1.0",
+          loai: "auto_backup",
+          thoiGian: now.toISOString(),
+          thoiGianHienThi: thoiGianHienThi,
+          soLuongMuc: count,
+          duLieu: duLieu
+        };
+        const base64Data = chuoiSangBase64Utf8(JSON.stringify(backupData, null, 2));
         const res = window.AndroidNative.saveFileToDownload("QuanLyKho_AutoBackup.json", base64Data, "application/json");
         if (res === false || res === "false") {
           throw new Error("Không thể ghi file sao lưu vào thư mục Download");
         }
         localStorage.setItem("last_auto_backup_hash", currentHash);
         localStorage.setItem("last_auto_backup_time", thoiGianHienThi);
+        lastAutoBackupRunTs = nowTs;
         capNhatChiBaoAutoBackup(`💾 Tự động sao lưu: ${thoiGianHienThi} (Máy)`, "success");
       } else {
-        // 2. Nếu đang chạy trên Web Browser / PWA:
-        // Lưu bản snapshot an toàn vào LocalStorage mà không spam hộp thoại download của trình duyệt
-        try {
-          localStorage.setItem("web_auto_backup_snapshot", JSON.stringify(backupData));
-          localStorage.setItem("last_auto_backup_hash", currentHash);
-          localStorage.setItem("last_auto_backup_time", thoiGianHienThi);
-          capNhatChiBaoAutoBackup(`💾 Snapshot trình duyệt: ${thoiGianHienThi}`, "info");
-        } catch (eWebStore) {
-          console.warn("[AutoBackup] Quá dung lượng lưu snapshot web:", eWebStore);
-          capNhatChiBaoAutoBackup(`💾 Bộ nhớ web đầy, hãy sao lưu ra file`, "warning");
-        }
+        // 2. Trên Web Browser / PWA: Không lưu bản chụp đầy đủ vào localStorage để tránh nhân đôi dung lượng & tràn bộ nhớ
+        localStorage.setItem("last_auto_backup_hash", currentHash);
+        localStorage.setItem("last_auto_backup_time", thoiGianHienThi);
+        lastAutoBackupRunTs = nowTs;
+        capNhatChiBaoAutoBackup(`💾 Đã lưu cục bộ: ${thoiGianHienThi}`, "info");
       }
     } catch (err) {
       console.warn("[AutoBackup] Lỗi tự động sao lưu:", err);
@@ -2485,14 +2607,24 @@ window.showCanhBao = showCanhBao;
   }
   window.thucHienAutoBackup = thucHienAutoBackup;
 
-  // Hàm kích hoạt có trễ (debounce) sau khi hoàn thành 1 đợt quét
+  // Hàm kích hoạt có trễ khi kết thúc phiên hoặc dừng quét (bỏ qua nếu đang mở camera quét)
   function kichHoatKiemTraAutoBackup(delayMs = 4000) {
+    if (document.body.classList.contains("cam-active")) return;
     if (timerDebounceAutoBackup) clearTimeout(timerDebounceAutoBackup);
     timerDebounceAutoBackup = setTimeout(() => {
-      thucHienAutoBackup("after_scan");
+      if (!document.body.classList.contains("cam-active")) {
+        thucHienAutoBackup("after_scan");
+      }
     }, delayMs);
   }
   window.kichHoatKiemTraAutoBackup = kichHoatKiemTraAutoBackup;
+
+  // Tự động sao lưu khi ứng dụng chuyển sang chạy nền
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "hidden") {
+      thucHienAutoBackup("app_hidden");
+    }
+  });
 
   // Tự động kiểm tra sao lưu sau khi app khởi động 3.5 giây
   setTimeout(() => {
@@ -2548,17 +2680,10 @@ window.batTatDenPinCamera = async function (videoId, btnId, currentState) {
 window.hienVienFeedbackCamera = function (containerSelector, loai) {
   const element = document.querySelector(containerSelector) || document.getElementById(containerSelector);
   if (!element) return;
-  if (loai === "success") {
-    element.style.borderColor = "#22c55e";
-    element.style.boxShadow = "0 0 16px rgba(34, 197, 94, 0.75)";
-  } else {
-    element.style.borderColor = "#ef4444";
-    element.style.boxShadow = "0 0 16px rgba(239, 68, 68, 0.75)";
-  }
+  element.style.borderColor = loai === "success" ? "#22c55e" : "#ef4444";
   setTimeout(() => {
     element.style.borderColor = "";
-    element.style.boxShadow = "none";
-  }, 800);
+  }, 600);
 };
 
 window.khoaCuonTrangQuet = function (isLock) {

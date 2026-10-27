@@ -2148,9 +2148,7 @@ body { padding: 0 !important; background: var(--bg-body) !important; color: var(
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(10, 15, 29, 0.88);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
+  background: rgba(10, 15, 29, 0.94);
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -2161,6 +2159,14 @@ body { padding: 0 !important; background: var(--bg-body) !important; color: var(
   padding: 16px;
   box-sizing: border-box;
   animation: fadeIn 0.3s ease;
+}
+
+/* Tắt toàn bộ backdrop-filter khi camera đang bật để giải phóng GPU khỏi việc blur luồng video live */
+body.cam-active *,
+body.cam-active *::before,
+body.cam-active *::after {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
 }
 
 .cam-sleep-card {
@@ -2566,7 +2572,6 @@ body { padding: 0 !important; background: var(--bg-body) !important; color: var(
   right: 5%;
   height: 2px;
   background: linear-gradient(90deg, transparent, #3b82f6 30%, #93c5fd 50%, #3b82f6 70%, transparent);
-  box-shadow: 0 0 8px rgba(59, 130, 246, 0.7);
   will-change: transform, opacity;
   animation: laserScan 2.4s ease-in-out infinite alternate;
 }
@@ -2632,8 +2637,6 @@ body { padding: 0 !important; background: var(--bg-body) !important; color: var(
   height: 8px;
   border-radius: 50%;
   background: var(--status-live);
-  box-shadow: 0 0 6px var(--status-live);
-  animation: pulseDot 1.6s infinite;
   display: inline-block;
   vertical-align: middle;
   flex-shrink: 0;
@@ -2641,8 +2644,6 @@ body { padding: 0 !important; background: var(--bg-body) !important; color: var(
 
 .cam-status-dot.paused {
   background: var(--status-paused);
-  box-shadow: 0 0 6px var(--status-paused);
-  animation: none;
 }
 
 .cam-hud-top-right {
