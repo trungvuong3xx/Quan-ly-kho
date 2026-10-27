@@ -9,3 +9,4 @@ android/.idea/
 www/
 .playwright-mcp/
 *.xapk
+*.apk
