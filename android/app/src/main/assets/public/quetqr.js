@@ -417,7 +417,7 @@ function chonLoaiQR(loai, event) {
   loaiQuetQR = loai;
   const btn = document.getElementById("chon-loai-btn");
   const inputHidden = document.getElementById("chon-loai");
-  if (btn) btn.innerHTML = '<span>' + loai + '</span><i class="ti ti-chevron-down" style="font-size:16px;color:var(--cream-soft);flex-shrink:0;"></i>';
+  if (btn) btn.innerHTML = '<span>' + loai + '</span><i class="ti ti-chevron-down" style="font-size:18px;color:var(--row-muted);flex-shrink:0;"></i>';
   if (inputHidden) inputHidden.value = loai;
 
   document.querySelectorAll("#chon-loai-list .custom-option").forEach(opt => {
@@ -1621,7 +1621,7 @@ function huyPhienQuetQR() {
         soLuongDaGuiHienTaiQR = 0;
         maQRVuaQuetQR = "";
         const btnLoai = document.getElementById("chon-loai-btn");
-        if (btnLoai) btnLoai.innerHTML = '<span>Chọn loại</span><i class="ti ti-chevron-down" style="font-size:16px;color:var(--cream-soft);flex-shrink:0;"></i>';
+        if (btnLoai) btnLoai.innerHTML = '<span>Chọn loại</span><i class="ti ti-chevron-down" style="font-size:18px;color:var(--row-muted);flex-shrink:0;"></i>';
         const inputLoai = document.getElementById("chon-loai");
         if (inputLoai) inputLoai.value = "";
         loaiQuetQR = "";

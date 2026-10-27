@@ -32,7 +32,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
-  <link rel="stylesheet" href="style.css?v=20261027-v151">
+  <link rel="stylesheet" href="style.css?v=20261027-v152">
   <link rel="stylesheet" href="lib/tabler-icons.min.css">
   <script src="lib/qrcode.min.js" defer></script>
   <script src="lib/zxing.min.js" defer></script>
@@ -492,13 +492,13 @@
     <h3>Quét QR (Nhập/Xuất Kho)</h3>
 
     <label>Ngày</label>
-    <input type="date" id="chon-ngay" style="margin-bottom:10px;">
+    <input type="date" id="chon-ngay" style="margin-bottom:14px;">
 
     <label>Loại giao dịch</label>
-    <div class="custom-select" style="margin-bottom:16px;">
+    <div class="custom-select" style="margin-bottom:20px;">
       <button type="button" id="chon-loai-btn" class="custom-select-btn" onclick="toggleDropdownLoaiQR(event)">
         <span>Chọn loại</span>
-        <i class="ti ti-chevron-down" style="font-size:16px;color:var(--cream-soft);flex-shrink:0;"></i>
+        <i class="ti ti-chevron-down" style="font-size:18px;color:var(--row-muted);flex-shrink:0;"></i>
       </button>
 
       <div id="chon-loai-list" class="custom-select-list">
@@ -519,7 +519,7 @@
     </div>
 
     <input type="hidden" id="chon-loai">
-    <button class="kq-btn kq-btn--primary" style="width:100%;" onclick="batDauQuetQR()"><i class="ti ti-scan"></i> Bắt đầu</button>
+    <button class="kq-btn kq-btn--primary" style="width:100%; margin-top:8px;" onclick="batDauQuetQR()"><i class="ti ti-scan"></i> Bắt đầu</button>
   </div>
 
   <div id="qr-cam" style="display:none; width:100%; max-width:600px; box-sizing:border-box; margin:0 auto; padding:6px 12px 10px 12px; overflow:hidden;">
@@ -769,8 +769,8 @@
     <h3> Kiểm Kê</h3>
     <div id="kk-form">
       <label>Ngày</label>
-      <input type="date" id="kk-ngay">
-      <div class="kq-actions">
+      <input type="date" id="kk-ngay" style="margin-bottom:16px;">
+      <div class="kq-actions" style="margin-top:8px;">
         <button class="kq-btn kq-btn--primary" onclick="batDauKiemKe()"><i class="ti ti-scan"></i> Bắt đầu quét</button>
         <button class="kq-btn kq-btn--excel" onclick="xuatExcelKiemKe()"><i class="ti ti-file-spreadsheet"></i> Xuất File Excel</button>
       </div>
@@ -838,8 +838,8 @@
   <div id="cx1-form" class="card">
     <h3>Chỉ For</h3>
     <label>Ngày</label>
-    <input type="date" id="cx1-ngay">
-    <button class="kq-btn kq-btn--primary" style="width:100%;" onclick="batDauCX1('quet')"><i class="ti ti-scan"></i> Bắt đầu</button>
+    <input type="date" id="cx1-ngay" style="margin-bottom:16px;">
+    <button class="kq-btn kq-btn--primary" style="width:100%; margin-top:8px;" onclick="batDauCX1('quet')"><i class="ti ti-scan"></i> Bắt đầu</button>
   </div>
 
   <div id="cx1-cam" style="display:none; width:100%; max-width:600px; box-sizing:border-box; margin:0 auto; padding:6px 12px 10px 12px; overflow:hidden;">
@@ -1061,9 +1061,9 @@
   <div id="btp-form" class="card">
     <h3>Quét BTP (Bán Thành Phẩm)</h3>
     <label>Ngày</label>
-    <input type="date" id="btp-ngay" style="margin-bottom:10px;">
+    <input type="date" id="btp-ngay" style="margin-bottom:14px;">
     <label>Phiên quét</label>
-    <div class="custom-select-wrap btp-phien-chip-wrap" style="margin-bottom:16px;">
+    <div class="custom-select-wrap btp-phien-chip-wrap" style="margin-bottom:20px;">
       <input type="hidden" id="btp-phien" value="1">
       <div id="btp-phien-trigger" class="custom-select-trigger" style="display:none;" onclick="toggleDropdownPhienBTP(event)">
         <span id="btp-phien-label">Phiên 1</span>
@@ -1092,7 +1092,7 @@
         </div>
       </div>
     </div>
-    <div class="kq-actions" style="margin-top:4px;">
+    <div class="kq-actions" style="margin-top:8px;">
       <button class="kq-btn kq-btn--primary" onclick="batDauBTP()"><i class="ti ti-scan"></i> Bắt đầu</button>
       <button id="btn-dongbo-btp-form" class="kq-btn kq-btn--send is-pending" style="display:none;" onclick="dongBoThietBiBTP()">
         <i class="ti ti-cloud-upload"></i> Đồng bộ hàng chờ (<span id="btp-pending-count-form">0</span>)
@@ -1375,8 +1375,8 @@
   <div id="cx5-form" class="card">
     <h3>Chỉ X5</h3>
     <label>Ngày</label>
-    <input type="date" id="cx5-ngay">
-    <button class="kq-btn kq-btn--primary" style="width:100%;" onclick="batDauCX5()"><i class="ti ti-pencil-plus"></i> Bắt đầu</button>
+    <input type="date" id="cx5-ngay" style="margin-bottom:16px;">
+    <button class="kq-btn kq-btn--primary" style="width:100%; margin-top:8px;" onclick="batDauCX5()"><i class="ti ti-pencil-plus"></i> Bắt đầu</button>
   </div>
 
   <div id="cx5-nhap" class="card" style="display:none">
@@ -1671,14 +1671,14 @@
 
 </div><!-- /#app-viewport -->
 
-<script src="app.js?v=20261027-v151" defer></script>
-<script src="scanner-core.js?v=20261027-v151" defer></script>
-<script src="quetqr.js?v=20261027-v151" defer></script>
-<script src="kiemke.js?v=20261027-v151" defer></script>
-<script src="cx1.js?v=20261027-v151" defer></script>
-<script src="cx5.js?v=20261027-v151" defer></script>
-<script src="btp.js?v=20261027-v151" defer></script>
-<script src="tonkho.js?v=20261027-v151" defer></script>
+<script src="app.js?v=20261027-v152" defer></script>
+<script src="scanner-core.js?v=20261027-v152" defer></script>
+<script src="quetqr.js?v=20261027-v152" defer></script>
+<script src="kiemke.js?v=20261027-v152" defer></script>
+<script src="cx1.js?v=20261027-v152" defer></script>
+<script src="cx5.js?v=20261027-v152" defer></script>
+<script src="btp.js?v=20261027-v152" defer></script>
+<script src="tonkho.js?v=20261027-v152" defer></script>
 
 <!-- BOTTOM SHEET MODAL LỊCH SỬ -->
 <div class="modal-overlay" id="modal-overlay" onclick="closeLichSuModal(event)">
