@@ -1090,7 +1090,7 @@ function khoiTaoSwipeKQBTP() {
 }
 
 // ── Xây dựng bảng kết quả BTP (Accordion Đợt & Tổng hợp gom loại) ──
-function taoHangKetQuaBTP(danhSach, tuKhoa = "") {
+function taoHangKetQuaBTP(danhSach, tuKhoa = "", isReadonly = false) {
   let hangDot = "";
   let tongQRAll = danhSach.length;
   let tongGomLoaiMa = {};
@@ -1159,21 +1159,21 @@ function taoHangKetQuaBTP(danhSach, tuKhoa = "") {
           <span class="kq-sub-name" title="${safeSubMsp}">${safeSubMsp}</span>
           <span class="kq-sub-val">${subKg}</span>
           <span class="kq-sub-time">${subGio}</span>
-          <button type="button" class="kq-sub-del-btn" onclick="xoaMaBTP('${safeUid}', event)" title="Xóa mã này">
+          ${isReadonly ? '' : `<button type="button" class="kq-sub-del-btn" onclick="xoaMaBTP('${safeUid}', event)" title="Xóa mã này">
             <i class="ti ti-trash"></i>
-          </button>
+          </button>`}
         </div>`;
       }).join("");
 
       return `
       <div class="kq-swipe-container">
         <div class="kq-swipe-row-wrap">
-          <div class="kq-swipe-actions">
+          ${isReadonly ? '' : `<div class="kq-swipe-actions">
             <button type="button" class="kq-swipe-btn-del" onclick="xoaNhomBTPByB64('${keyB64}', event)">
               <i class="ti ti-trash"></i>
               <span>Xóa</span>
             </button>
-          </div>
+          </div>`}
           <div class="kq-swipe-content" onclick="toggleChiTietKQBTPByB64('${keyB64}')">
             <span class="kq-col-dot">Đợt ${g.dot}</span>
             <div class="kq-col-name">
@@ -1231,7 +1231,7 @@ function taoHangKetQuaBTP(danhSach, tuKhoa = "") {
     <div style="flex:1;">&nbsp;</div>
     <div style="flex:1; text-align:right; font-weight:800; font-family:'IBM Plex Mono', monospace; color:var(--success);">${tongQRAll}</div>`;
 
-  return { hangDot, footDot, hangGom, footGom };
+  return { hangDot, footDot, hangGom, footGom, tongSoDot, tongQRAll };
 }
 
 // ── [TỐI ƯU MỤC 6.3]: Tách riêng hàm lọc kết quả có Debounce, không đụng nút Gửi ──
@@ -1661,7 +1661,7 @@ function xemChiTietLichSuBTP(idPhien) {
     tieuDe.textContent = "Chi tiết BTP (" + ngayStr + ")";
   }
 
-  const { hangDot, footDot, hangGom, footGom } = taoHangKetQuaBTP(session.phienBTP || []);
+  const { hangDot, footDot, hangGom, footGom, tongSoDot, tongQRAll } = taoHangKetQuaBTP(session.phienBTP || [], "", true);
   const elDot = document.getElementById("lichsu-btp-tbody-dot");
   const elFootDot = document.getElementById("lichsu-btp-tfoot-dot");
   const elGom = document.getElementById("lichsu-btp-tbody-gom");
@@ -1671,6 +1671,13 @@ function xemChiTietLichSuBTP(idPhien) {
   if (elFootDot) elFootDot.innerHTML = footDot;
   if (elGom) elGom.innerHTML = hangGom;
   if (elFootGom) elFootGom.innerHTML = footGom;
+
+  const elTongDot = document.getElementById("ls-btp-tong-dot");
+  const elTongMa = document.getElementById("ls-btp-tong-ma");
+  if (elTongDot) elTongDot.textContent = (tongSoDot || 0).toLocaleString("vi-VN");
+  if (elTongMa) elTongMa.textContent = (tongQRAll || 0).toLocaleString("vi-VN");
+
+  if (typeof toggleLichSuBTPView === "function") toggleLichSuBTPView("chitiet");
 
   if (typeof chuyenTrangKhongNav === "function") chuyenTrangKhongNav("lichSuBTPChiTiet");
 }

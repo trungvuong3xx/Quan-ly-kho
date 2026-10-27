@@ -456,11 +456,61 @@ function xoaDongCX5(seq) {
   renderBangTongHopCX5();
 }
 
+function toggleCX5NhapView(mode) {
+  const tabChitiet = document.getElementById("cx5-tab-chitiet");
+  const tabTonghop = document.getElementById("cx5-tab-tonghop");
+  const boxChitiet = document.getElementById("cx5-box-chitiet");
+  const boxTonghop = document.getElementById("cx5-box-tonghop");
+
+  if (!boxChitiet || !boxTonghop) return;
+
+  if (mode === "chitiet") {
+    boxChitiet.style.display = "block";
+    boxTonghop.style.display = "none";
+    if (tabChitiet) {
+      tabChitiet.style.background = "var(--surface)";
+      tabChitiet.style.color = "var(--row-text)";
+      tabChitiet.style.boxShadow = "0 2px 6px rgba(0,0,0,0.06)";
+    }
+    if (tabTonghop) {
+      tabTonghop.style.background = "transparent";
+      tabTonghop.style.color = "var(--row-muted)";
+      tabTonghop.style.boxShadow = "none";
+    }
+  } else {
+    boxChitiet.style.display = "none";
+    boxTonghop.style.display = "block";
+    if (tabTonghop) {
+      tabTonghop.style.background = "var(--surface)";
+      tabTonghop.style.color = "var(--row-text)";
+      tabTonghop.style.boxShadow = "0 2px 6px rgba(0,0,0,0.06)";
+    }
+    if (tabChitiet) {
+      tabChitiet.style.background = "transparent";
+      tabChitiet.style.color = "var(--row-muted)";
+      tabChitiet.style.boxShadow = "none";
+    }
+  }
+}
+window.toggleCX5NhapView = toggleCX5NhapView;
+
 function renderBangChiTietCX5() {
-  document.getElementById("cx5-dem").textContent = "Đã nhập: " + phienCX5.length + " dòng";
+  const elDem = document.getElementById("cx5-dem");
+  if (elDem) elDem.textContent = "Đã nhập: " + phienCX5.length + " dòng";
   const tbody = document.getElementById("cx5-tbody-chitiet");
+  const tfoot = document.getElementById("cx5-tfoot-chitiet");
+  const elTongBao = document.getElementById("cx5-tong-bao");
+  const elTongKg = document.getElementById("cx5-tong-kg");
+
+  const tongBao = phienCX5.length;
+  const tongKg = phienCX5.reduce((s, r) => s + (Number(r.kg) || 0), 0);
+
+  if (elTongBao) elTongBao.textContent = tongBao.toLocaleString("vi-VN");
+  if (elTongKg) elTongKg.textContent = tongKg.toLocaleString("vi-VN", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+
   if (phienCX5.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--cream-soft);font-style:italic">Chưa có dòng nào</td></tr>';
+    if (tbody) tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--row-muted);font-style:italic">Chưa có dòng nào</td></tr>';
+    if (tfoot) tfoot.innerHTML = '';
     return;
   }
 
@@ -471,20 +521,32 @@ function renderBangChiTietCX5() {
     luotMap.get(r.luot).push(r);
   });
 
-  tbody.innerHTML = thuTuLuot.slice().reverse().map((lid, idx) => {
-    const flashClass = idx === 0 ? ' class="scan-flash-new"' : '';
-    const rows = luotMap.get(lid);
-    const first = rows[0];
-    const bao = rows.length;
-    const kg = Math.round(rows.reduce((s, r) => s + r.kg, 0) * 100) / 100;
-    return "<tr" + flashClass + ">" +
-      "<td>" + lid + "</td>" +
-      "<td>" + escHtmlCX5(first.ten) + "</td>" +
-      "<td>" + bao + "</td>" +
-      "<td>" + kg + "</td>" +
-      '<td class="cx5-sua-luot" onclick="moSuaLuotCX5(' + lid + ')"><i class="ti ti-pencil"></i></td>' +
-      "</tr>";
-  }).join("");
+  if (tbody) {
+    tbody.innerHTML = thuTuLuot.slice().reverse().map((lid, idx) => {
+      const flashClass = idx === 0 ? ' class="scan-flash-new"' : '';
+      const rows = luotMap.get(lid);
+      const first = rows[0];
+      const bao = rows.length;
+      const kg = Math.round(rows.reduce((s, r) => s + r.kg, 0) * 100) / 100;
+      return "<tr" + flashClass + ">" +
+        "<td>" + lid + "</td>" +
+        "<td>" + escHtmlCX5(first.ten) + "</td>" +
+        '<td style="text-align:center;">' + bao + "</td>" +
+        '<td style="text-align:right;">' + kg.toFixed(1) + "</td>" +
+        '<td class="cx5-sua-luot" onclick="moSuaLuotCX5(' + lid + ')"><i class="ti ti-pencil"></i></td>' +
+        "</tr>";
+    }).join("");
+  }
+
+  if (tfoot) {
+    tfoot.innerHTML = '<tr>' +
+      '<td style="font-weight:700;">TỔNG</td>' +
+      '<td>' + thuTuLuot.length + ' lượt</td>' +
+      '<td style="text-align:center;font-weight:800;font-family:var(--font-mono);">' + tongBao + '</td>' +
+      '<td style="text-align:right;font-weight:800;font-family:var(--font-mono);color:var(--success);">' + tongKg.toFixed(1) + '</td>' +
+      '<td></td>' +
+      '</tr>';
+  }
 }
 
 // ── Sửa các số kg lẻ trong 1 lượt (mở overlay) ──
@@ -556,24 +618,40 @@ function tomTatCX5() {
 function renderBangTongHopCX5() {
   const gom = tomTatCX5();
   const tbody = document.getElementById("cx5-tbody-tonghop");
+  const tfoot = document.getElementById("cx5-tfoot-tonghop");
   const keys = Object.keys(gom);
   if (keys.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--cream-soft);font-style:italic">Chưa có dữ liệu</td></tr>';
+    if (tbody) tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--row-muted);font-style:italic">Chưa có dữ liệu</td></tr>';
+    if (tfoot) tfoot.innerHTML = '';
     return;
   }
-  tbody.innerHTML = keys.map(key => {
-    const item = gom[key];
-    let trangThai;
-    if (item.baoDaDongBo === 0) trangThai = '<i class="ti ti-x cx5-trangthai-mot-phan"></i>';
-    else if (item.baoDaDongBo === item.bao) trangThai = '<i class="ti ti-check cx5-trangthai-ok"></i>';
-    else trangThai = '<i class="ti ti-x cx5-trangthai-mot-phan"></i>';
-    return "<tr>" +
-      "<td>" + escHtmlCX5(item.ten) + "</td>" +
-      "<td>" + item.bao + "</td>" +
-      "<td>" + item.kg.toFixed(1) + "</td>" +
-      "<td>" + trangThai + "</td>" +
-      "</tr>";
-  }).join("");
+  let tongBaoGom = 0;
+  let tongKgGom = 0;
+  if (tbody) {
+    tbody.innerHTML = keys.map(key => {
+      const item = gom[key];
+      tongBaoGom += item.bao;
+      tongKgGom += item.kg;
+      let trangThai;
+      if (item.baoDaDongBo === 0) trangThai = '<i class="ti ti-x cx5-trangthai-mot-phan"></i>';
+      else if (item.baoDaDongBo === item.bao) trangThai = '<i class="ti ti-check cx5-trangthai-ok"></i>';
+      else trangThai = '<i class="ti ti-x cx5-trangthai-mot-phan"></i>';
+      return "<tr>" +
+        "<td>" + escHtmlCX5(item.ten) + "</td>" +
+        '<td style="text-align:center;">' + item.bao + "</td>" +
+        '<td style="text-align:right;">' + item.kg.toFixed(1) + "</td>" +
+        '<td style="text-align:center;">' + trangThai + "</td>" +
+        "</tr>";
+    }).join("");
+  }
+  if (tfoot) {
+    tfoot.innerHTML = '<tr>' +
+      '<td style="font-weight:700;">TỔNG</td>' +
+      '<td style="text-align:center;font-weight:800;font-family:var(--font-mono);">' + tongBaoGom + '</td>' +
+      '<td style="text-align:right;font-weight:800;font-family:var(--font-mono);color:var(--success);">' + tongKgGom.toFixed(1) + '</td>' +
+      '<td></td>' +
+      '</tr>';
+  }
 }
 
 // ── Xem rộng (xoay ngang): chuyển hẳn bảng vào overlay toàn màn hình,
@@ -833,8 +911,8 @@ function renderDoiChieuCX5() {
   if (filteredItems.length === 0) {
     html += '<div style="text-align:center;color:var(--cream-soft);padding:16px 0">Không có quy cách nào trong mục này</div>';
   } else {
-    html += '<div class="cx5-scroll" style="max-height: 380px;"><table class="cx5-table cx5-dc-table">' +
-      '<thead><tr><th>QC</th><th>Kho</th><th>SX</th><th>Loại</th></tr></thead><tbody>';
+    html += '<div class="kq-card-wrap"><div class="cx5-scroll" style="max-height: 380px;"><table class="cx5-kq-table cx5-dc-table">' +
+      '<thead><tr><th>QC</th><th style="text-align:right;">Kho</th><th style="text-align:right;">SX</th><th style="text-align:center;">Loại</th></tr></thead><tbody>';
     html += filteredItems.map(it => {
       const { key, kho, dc, sxTong, khoKgNorm, khop, conDeDongBo, loaiTrangThai } = it;
       const ten = escHtmlCX5(dc.ten || kho.ten);
@@ -859,8 +937,8 @@ function renderDoiChieuCX5() {
       const keyB64 = btoa(encodeURIComponent(key));
       return '<tr class="cx5-dc-row" onclick="moDcChiTietCX5ByB64(\'' + keyB64 + '\')">' +
         '<td>' + ten + '</td>' +
-        '<td>' + khoKgNorm.toFixed(1) + '</td>' +
-        '<td>' + sxTong.toFixed(1) + '</td>' +
+        '<td style="text-align:right;">' + khoKgNorm.toFixed(1) + '</td>' +
+        '<td style="text-align:right;">' + sxTong.toFixed(1) + '</td>' +
         '<td style="text-align:center">' + iconHtml + '</td>' +
         '</tr>';
     }).join("");
@@ -872,16 +950,16 @@ function renderDoiChieuCX5() {
       sumSx += it.sxTong;
     });
 
-    let tfootHtml = '<tfoot style="position: sticky; bottom: 0; background: var(--card-raised); z-index: 2; border-top: 2px solid var(--line); font-weight: bold;">' +
+    let tfootHtml = '<tfoot>' +
       '<tr>' +
-      '<td style="text-align: right; color: var(--steel);">Tổng:</td>' +
-      '<td style="color: var(--success);">' + sumKho.toFixed(1) + '</td>' +
-      '<td style="color: var(--brass);">' + sumSx.toFixed(1) + '</td>' +
+      '<td style="font-weight:700;">TỔNG</td>' +
+      '<td style="text-align:right;font-weight:800;font-family:var(--font-mono);color:var(--success);">' + sumKho.toFixed(1) + '</td>' +
+      '<td style="text-align:right;font-weight:800;font-family:var(--font-mono);color:var(--brass);">' + sumSx.toFixed(1) + '</td>' +
       '<td></td>' +
       '</tr>' +
       '</tfoot>';
 
-    html += '</tbody>' + tfootHtml + '</table></div>';
+    html += '</tbody>' + tfootHtml + '</table></div></div>';
   }
 
   container.innerHTML = html;
@@ -889,6 +967,13 @@ function renderDoiChieuCX5() {
   const btnDongBo = document.getElementById("cx5-btn-dongbo-tatca");
   if (btnDongBo) {
     btnDongBo.disabled = !coTheDongBo;
+    btnDongBo.classList.toggle("is-pending", coTheDongBo);
+    btnDongBo.classList.toggle("is-done", !coTheDongBo && phienCX5.length > 0);
+    if (!coTheDongBo && phienCX5.length > 0) {
+      btnDongBo.innerHTML = '<i class="ti ti-check"></i> Đã đồng bộ đủ';
+    } else {
+      btnDongBo.innerHTML = '<i class="ti ti-cloud-upload"></i> Đồng bộ lên Sheet';
+    }
   }
 }
 
@@ -963,24 +1048,25 @@ function moDcChiTietCX5(key) {
   const nd = document.getElementById("cx5-dcc-noidung");
   nd.innerHTML =
     // Thông tin bên KHO
-    '<div style="background:var(--card-raised);border:1px solid var(--line);padding:10px 12px;border-radius:10px;margin-bottom:8px">' +
-    '<div style="font-size:13px;font-weight:600;color:var(--cream);display:flex;align-items:center;gap:6px"><i class="ti ti-box" style="color:#3b82f6;font-size:16px"></i> <b>KHO</b> — Bao: <b>' + kho.bao + '</b> · Kg: <b>' + khoKgNorm.toFixed(1) + '</b></div>' +
+    '<div style="background:var(--surface-2);border:1px solid var(--border-card);padding:10px 12px;border-radius:12px;margin-bottom:8px">' +
+    '<div style="font-size:13px;font-weight:600;color:var(--row-text);display:flex;align-items:center;gap:6px"><i class="ti ti-box" style="color:#3b82f6;font-size:16px"></i> <b>KHO</b> — Bao: <b>' + kho.bao + '</b> · Kg: <b>' + khoKgNorm.toFixed(1) + '</b></div>' +
     '</div>' +
     // Thông tin bên SX
-    '<div style="background:var(--card-raised);border:1px solid var(--line);padding:10px 12px;border-radius:10px;margin-bottom:8px">' +
-    '<div style="font-size:13px;font-weight:600;color:var(--cream);display:flex;align-items:center;gap:6px"><i class="ti ti-building-factory-2" style="color:#a855f7;font-size:16px"></i> <b>SẢN XUẤT (SX)</b></div>' +
-    '<div style="margin-top:6px">' + (dsSo || '<span style="color:var(--cream-soft);font-style:italic">Chưa có số SX</span>') + '</div>' +
+    '<div style="background:var(--surface-2);border:1px solid var(--border-card);padding:10px 12px;border-radius:12px;margin-bottom:8px">' +
+    '<div style="font-size:13px;font-weight:600;color:var(--row-text);display:flex;align-items:center;gap:6px"><i class="ti ti-building-factory-2" style="color:#a855f7;font-size:16px"></i> <b>SẢN XUẤT (SX)</b></div>' +
+    '<div style="margin-top:6px">' + (dsSo || '<span style="color:var(--row-muted);font-style:italic">Chưa có số SX</span>') + '</div>' +
     '<div style="margin-top:10px;padding:8px 12px;background:rgba(168,85,247,0.12);border:1px solid rgba(168,85,247,0.3);border-radius:8px;display:flex;justify-content:space-between;align-items:center;">' +
-    '<span style="font-size:13px;color:var(--cream);font-weight:600;">Tổng SX:</span>' +
-    '<span style="font-size:16px;font-weight:700;color:#c084fc;font-family:\'IBM Plex Mono\',monospace;">' + sxTong.toFixed(1) + ' kg</span>' +
+    '<span style="font-size:13px;color:var(--row-text);font-weight:600;">Tổng SX:</span>' +
+    '<span style="font-size:16px;font-weight:700;color:#c084fc;font-family:var(--font-mono);">' + sxTong.toFixed(1) + ' kg</span>' +
     '</div>' +
     '</div>' +
     ketQuaHtml +
     // Nút hành động
-    '<div style="display:flex;gap:8px;margin-top:14px">' +
-    '<button class="btn btn-red btn-sm" style="flex:1" onclick="xoaHangDoiChieuCX5ByB64(\'' + keyB64 + '\')"><i class="ti ti-trash"></i> Xóa dữ liệu SX</button>' +
-    '<button class="btn btn-sm" style="flex:1;background:var(--neutral-solid);color:var(--cream)" onclick="dongDcChiTietCX5()">Đóng</button>' +
-    '</div>';
+    '<div class="kq-actions" style="margin-top:14px">' +
+    '<div class="row">' +
+    '<button class="kq-btn kq-btn--new" onclick="dongDcChiTietCX5()">Đóng</button>' +
+    '<button class="kq-btn kq-btn--danger" onclick="xoaHangDoiChieuCX5ByB64(\'' + keyB64 + '\')"><i class="ti ti-trash"></i> Xóa SX</button>' +
+    '</div></div>';
 
   document.getElementById("cx5-overlay-dc-chitiet").classList.add("show");
 }
@@ -1776,23 +1862,43 @@ function renderTongKetPhienTongKgCX5() {
     });
   });
 
+  const tfoot = document.getElementById("cx5-tfoot-tongkg-phien");
   if (danhSach.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--cream-soft);font-style:italic">Chưa có dữ liệu</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--row-muted);font-style:italic">Chưa có dữ liệu</td></tr>';
+    if (tfoot) tfoot.innerHTML = '';
     return;
   }
 
+  let sumBao = 0;
+  let sumKg = 0;
   tbody.innerHTML = danhSach.map(function (item) {
+    sumBao += Number(item.bao) || 0;
+    sumKg += Number(item.kg) || 0;
     let tenHtml = escHtmlCX5(item.ten);
     if (item.bagInfo) {
-      tenHtml += '<br><span style="font-size:11px;color:var(--cream-soft)">' + item.bagInfo + '</span>';
+      tenHtml += '<br><span style="font-size:11px;color:var(--row-muted)">' + item.bagInfo + '</span>';
     }
     return "<tr>" +
       "<td>" + tenHtml + "</td>" +
-      "<td>" + item.bao + "</td>" +
-      "<td>" + item.kg.toFixed(1) + "</td>" +
-      '<td style="text-align:center">' + item.trangThaiHtml + "</td>" +
+      '<td style="text-align:center;">' + item.bao + "</td>" +
+      '<td style="text-align:right;">' + item.kg.toFixed(1) + "</td>" +
+      '<td style="text-align:center;">' + item.trangThaiHtml + "</td>" +
       "</tr>";
   }).join("");
+
+  if (tfoot) {
+    tfoot.innerHTML = '<tr>' +
+      '<td style="font-weight:700;">TỔNG</td>' +
+      '<td style="text-align:center;font-weight:800;font-family:var(--font-mono);">' + sumBao + '</td>' +
+      '<td style="text-align:right;font-weight:800;font-family:var(--font-mono);color:var(--success);">' + sumKg.toFixed(1) + '</td>' +
+      '<td></td>' +
+      '</tr>';
+  }
+
+  const btnGhep = document.getElementById("cx5-btn-ghep");
+  if (btnGhep) {
+    btnGhep.classList.toggle("is-pending", danhSach.length > 0);
+  }
 }
 
 function toggleGhepCX5(key, idx) {
@@ -2334,9 +2440,7 @@ function xemChiTietLichSuCX5(idPhien) {
   const soLuot = entry.phienCX5 ? new Set(entry.phienCX5.map(r => r.luot)).size : 0;
 
   if (tieudeEl) {
-    tieudeEl.innerHTML = '<div style="display:flex;align-items:center;justify-content:space-between;width:100%">' +
-      '<span style="font-size:15px;font-weight:700;color:var(--cream)">' + ngayNgan + ' (' + soLuot + ' bao · ' + Math.round(tongKg) + 'kg)</span>' +
-      '</div>';
+    tieudeEl.textContent = "Chi tiết Lịch sử X5 — " + ngayNgan;
   }
 
   // Tái tạo BẢNG TỔNG KẾT của trang Tổng kg pallet chuẩn 100% theo logic renderTongKetPhienTongKgCX5
@@ -2357,7 +2461,7 @@ function xemChiTietLichSuCX5(idPhien) {
     const first = rows[0];
     let bao = rows.length;
     let kg = rows.reduce((s, r) => s + r.kg, 0);
-    let trangThaiHtml = '<i class="ti ti-minus" style="color:var(--cream-soft);font-size:18px" title="Chưa ghép"></i>';
+    let trangThaiHtml = '<i class="ti ti-minus" style="color:var(--row-muted);font-size:18px" title="Chưa ghép"></i>';
 
     const expectedLotId = (idPhien || '') + '_' + lid;
 
@@ -2446,7 +2550,7 @@ function xemChiTietLichSuCX5(idPhien) {
     if (bao <= 0 && homNay.bao > 0) { bao = homNay.bao; kg = homNay.kg; }
     if (bao === 0 && (!card.cu || card.cu.length === 0)) return;
 
-    let trangThaiHtml = '<i class="ti ti-minus" style="color:var(--cream-soft);font-size:18px"></i>';
+    let trangThaiHtml = '<i class="ti ti-minus" style="color:var(--row-muted);font-size:18px"></i>';
     const chosen = (card.cu || []).filter(function (c) { return c.checked; });
     let extraBao = 0, extraKg = 0;
     if (chosen.length > 0) {
@@ -2482,36 +2586,67 @@ function xemChiTietLichSuCX5(idPhien) {
     });
   });
 
-  let html = '';
+  let sumBao = 0;
+  let sumKg = 0;
+  danhSach.forEach(item => {
+    sumBao += Number(item.bao) || 0;
+    sumKg += Number(item.kg) || 0;
+  });
+
+  let statGridHtml = '<div class="kq-stat-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:12px;">' +
+    '<div style="background:var(--surface-2); border:1px solid var(--border-card); border-radius:12px; padding:10px; text-align:center;">' +
+      '<div style="font-size:11px; color:var(--row-muted); font-weight:700; text-transform:uppercase; margin-bottom:2px;">Bao</div>' +
+      '<div style="font-family:var(--font-mono); font-size:22px; font-weight:800; color:var(--brass);">' + sumBao.toLocaleString("vi-VN") + '</div>' +
+    '</div>' +
+    '<div style="background:var(--surface-2); border:1px solid var(--border-card); border-radius:12px; padding:10px; text-align:center;">' +
+      '<div style="font-size:11px; color:var(--row-muted); font-weight:700; text-transform:uppercase; margin-bottom:2px;">KG</div>' +
+      '<div style="font-family:var(--font-mono); font-size:22px; font-weight:800; color:var(--success);">' + sumKg.toLocaleString("vi-VN", { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + '</div>' +
+    '</div>' +
+  '</div>';
+
+  let html = statGridHtml;
   if (danhSach.length === 0) {
-    html = '<div style="text-align:center;color:var(--cream-soft);padding:16px 0">Chưa có dữ liệu chi tiết</div>';
+    html += '<div style="text-align:center;color:var(--row-muted);padding:16px 0">Chưa có dữ liệu chi tiết</div>';
   } else {
-    html += '<div style="margin-bottom:8px;font-size:13px;font-weight:700;color:var(--brass);text-transform:uppercase;letter-spacing:0.5px;">BẢNG TỔNG KẾT</div>';
-    html += '<div class="cx5-scroll" style="max-height:52vh;overflow:auto;border-radius:10px;border:1px solid var(--line-soft);">';
-    html += '<table class="cx5-table" style="width:100%;font-size:13px;margin:0;">';
-    html += '<thead><tr><th style="text-align:left">QC</th><th style="text-align:center">BAO</th><th style="text-align:right">KG</th><th style="text-align:center">TRẠNG THÁI</th></tr></thead><tbody>';
+    html += '<div class="kq-card-wrap">';
+    html += '<div class="cx5-scroll" style="max-height:42vh;">';
+    html += '<table class="cx5-kq-table">';
+    html += '<thead><tr><th>QC</th><th style="text-align:center;">Bao</th><th style="text-align:right;">Kg</th><th style="text-align:center;">Trạng thái</th></tr></thead><tbody>';
     html += danhSach.map(function (item) {
       let tenHtml = escHtmlCX5(item.ten);
       if (item.bagInfo) {
-        tenHtml += '<br><span style="font-size:11px;color:var(--accent-2);font-weight:600">' + item.bagInfo + '</span>';
+        tenHtml += '<br><span style="font-size:11px;color:var(--row-muted)">' + item.bagInfo + '</span>';
       }
       return '<tr>' +
         '<td>' + tenHtml + '</td>' +
-        '<td style="text-align:center;font-weight:700">' + item.bao + '</td>' +
-        '<td style="text-align:right;font-weight:700;color:var(--cream)">' + item.kg.toFixed(1) + '</td>' +
-        '<td style="text-align:center">' + item.trangThaiHtml + '</td>' +
+        '<td style="text-align:center;font-weight:700;">' + item.bao + '</td>' +
+        '<td style="text-align:right;font-weight:700;color:var(--row-text);">' + item.kg.toFixed(1) + '</td>' +
+        '<td style="text-align:center;">' + item.trangThaiHtml + '</td>' +
         '</tr>';
     }).join('');
-    html += '</tbody></table></div>';
+    html += '</tbody>';
+    html += '<tfoot><tr>' +
+      '<td style="font-weight:700;">TỔNG</td>' +
+      '<td style="text-align:center;font-weight:800;font-family:var(--font-mono);">' + sumBao + '</td>' +
+      '<td style="text-align:right;font-weight:800;font-family:var(--font-mono);color:var(--success);">' + sumKg.toFixed(1) + '</td>' +
+      '<td></td>' +
+      '</tr></tfoot>';
+    html += '</table></div></div>';
   }
 
   if (noidungEl) noidungEl.innerHTML = html;
 
   if (btnTiepTuc) {
-    btnTiepTuc.textContent = "Tiếp tục sửa phiên này";
     btnTiepTuc.onclick = function() {
       dongChiTietLichSuCX5();
       tiepTucLichSuCX5(idPhien);
+    };
+  }
+
+  const btnExcel = document.getElementById("cx5-ctls-excel");
+  if (btnExcel) {
+    btnExcel.onclick = function() {
+      xuatExcelLichSuCX5(idPhien);
     };
   }
 

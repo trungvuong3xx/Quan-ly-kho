@@ -32,7 +32,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
-  <link rel="stylesheet" href="style.css?v=20261027-v150">
+  <link rel="stylesheet" href="style.css?v=20261027-v151">
   <link rel="stylesheet" href="lib/tabler-icons.min.css">
   <script src="lib/qrcode.min.js" defer></script>
   <script src="lib/zxing.min.js" defer></script>
@@ -339,38 +339,40 @@
       <h3 style="margin:0; display:flex; align-items:center; gap:8px;">
         <i class="ti ti-upload" style="color:var(--primary)"></i> Phục Hồi Dữ Liệu
       </h3>
-      <button class="btn btn-blue" style="padding:4px 12px; font-size:13px; margin:0;" onclick="chuyenTrangKhongNav('trangChu')">
+      <button class="kq-btn kq-btn--new kq-btn--sm" onclick="chuyenTrangKhongNav('trangChu')">
         <i class="ti ti-arrow-left"></i> Trang chủ
       </button>
     </div>
 
-    <div style="background:var(--card-raised, #1c2128); border:1px solid var(--line, rgba(255,255,255,0.1)); border-radius:14px; padding:16px; margin-bottom:16px;">
+    <div style="background:var(--surface); border:1px solid var(--border-card); border-radius:14px; padding:16px; margin-bottom:16px;">
       <div style="display:flex; align-items:center; gap:10px; margin-bottom:8px;">
-        <div style="width:36px; height:36px; border-radius:10px; background:linear-gradient(135deg, #f59e0b, #d97706); display:flex; align-items:center; justify-content:center; color:#fff; font-size:18px;">
+        <div style="width:36px; height:36px; border-radius:10px; background:color-mix(in srgb, #f59e0b 14%, var(--surface-2)); border:1px solid color-mix(in srgb, #f59e0b 45%, transparent); display:flex; align-items:center; justify-content:center; color:var(--warning-text, #b45309); font-size:18px;">
           <i class="ti ti-file-code"></i>
         </div>
         <div>
-          <div style="font-weight:700; font-size:15px; color:var(--cream, #fff);">Bản Sao Lưu Cố Định</div>
-          <div style="font-size:12px; color:var(--text-muted, #8b949e);">Tự động ghi đè tại thư mục Download</div>
+          <div style="font-weight:700; font-size:15px; color:var(--row-text);">Bản Sao Lưu Cố Định</div>
+          <div style="font-size:12px; color:var(--row-muted);">Tự động ghi đè tại thư mục Download</div>
         </div>
       </div>
-      <p style="font-size:12.5px; line-height:1.5; color:var(--text-muted, #c9d1d9); margin:0 0 14px 0;">
+      <p style="font-size:12.5px; line-height:1.5; color:var(--row-muted); margin:0 0 14px 0;">
         Dữ liệu quét kho luôn được hệ thống tự động ghi đè vào duy nhất một file:
-        <br><strong style="color:var(--brass, #eab308);">Download / QuanLyKho_AutoBackup.json</strong>
+        <br><strong style="color:var(--warning-text, #b45309);">Download / QuanLyKho_AutoBackup.json</strong>
         <br>Kể cả khi bạn đã xóa app hoặc cài đặt app mới, file này vẫn nằm an toàn trong bộ nhớ máy.
       </p>
-      <button class="btn btn-full" style="background:linear-gradient(135deg, #f59e0b, #d97706); color:#fff; font-weight:700; font-size:14px; padding:12px; border-radius:10px; border:none; display:flex; align-items:center; justify-content:center; gap:8px;" onclick="kichHoatChonFilePhucHoi()">
-        <i class="ti ti-folder-open"></i> CHỌN FILE PHỤC HỒI (.JSON)
+      <button class="kq-btn kq-btn--send is-pending" style="width:100%;" onclick="kichHoatChonFilePhucHoi()">
+        <i class="ti ti-folder-open"></i> Chọn file phục hồi (.json)
       </button>
     </div>
 
-    <div class="phuchoi-hint-box" style="background:rgba(59, 130, 246, 0.1); border:1px dashed rgba(59, 130, 246, 0.4); border-radius:12px; padding:12px; font-size:12.5px; color:var(--text-main, #e2e8f0); line-height:1.45;">
+    <div class="phuchoi-hint-box" style="background:var(--surface-2); border:1px dashed var(--border-card); border-radius:12px; padding:12px; font-size:12.5px; color:var(--row-text); line-height:1.45;">
       💡 <strong>Cách làm:</strong> Bấm nút màu cam ở trên ➔ Chọn thư mục <strong>Download (Tải xuống)</strong> trên điện thoại ➔ Bấm vào file <strong>QuanLyKho_AutoBackup.json</strong> để phục hồi nguyên vẹn kho hàng.
     </div>
 
-    <button class="btn btn-full bg-neutral-solid text-cream mt-3" onclick="chuyenTrangKhongNav('trangChu')">
-      <i class="ti ti-arrow-left"></i> Quay lại Trang chủ
-    </button>
+    <div class="kq-actions">
+      <button class="kq-btn kq-btn--new" onclick="chuyenTrangKhongNav('trangChu')">
+        <i class="ti ti-arrow-left"></i> Quay lại Trang chủ
+      </button>
+    </div>
   </div>
 </div>
 
@@ -378,22 +380,26 @@
 <div id="lichSu" class="page">
   <div class="card">
     <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:14px;">
-      <h3 style="margin:0">Lịch Sử Chỉ X1</h3>
-      <button class="btn btn-blue" style="padding:4px 12px; font-size:13px; margin:0;" onclick="chuyenTrangKhongNav('trangChu')"><i class="ti ti-arrow-left"></i> Quay lại</button>
+      <h3 style="margin:0; border:none; padding:0;">Lịch Sử Chỉ X1</h3>
+      <button class="kq-btn kq-btn--new kq-btn--sm" onclick="chuyenTrangKhongNav('trangChu')"><i class="ti ti-arrow-left"></i> Quay lại</button>
     </div>
-    <input type="text" id="lichsu-cx1-tim" placeholder="Tìm theo ngày hoặc quy cách..." autocomplete="off" oninput="renderLichSuCX1()" style="margin-bottom:12px">
+    <input type="text" id="lichsu-cx1-tim" placeholder="🔍 Tìm theo ngày hoặc quy cách..." autocomplete="off" oninput="renderLichSuCX1()" style="margin-bottom:12px">
     <div id="lichsu-list"></div>
-    <button class="btn btn-excel btn-full mt-3" onclick="xuatExcelLichSuCX1()"><i class="ti ti-file-spreadsheet"></i> Xuất File Excel Lịch Sử X1</button>
-    <button class="btn btn-red btn-full" style="margin-top:8px" onclick="xoaTatCaLichSuCX1()">Xóa tất cả lịch sử</button>
-    <button class="btn btn-full bg-neutral-solid text-cream mt-2" onclick="chuyenTrangKhongNav('trangChu')"><i class="ti ti-arrow-left"></i> Quay lại Trang chủ</button>
+    <div class="kq-actions">
+      <button class="kq-btn kq-btn--excel" onclick="xuatExcelLichSuCX1()"><i class="ti ti-file-spreadsheet"></i> Xuất Excel Lịch Sử X1</button>
+      <div class="row">
+        <button class="kq-btn kq-btn--new" onclick="chuyenTrangKhongNav('trangChu')"><i class="ti ti-arrow-left"></i> Trang chủ</button>
+        <button class="kq-btn kq-btn--danger" onclick="xoaTatCaLichSuCX1()"><i class="ti ti-trash"></i> Xóa tất cả</button>
+      </div>
+    </div>
   </div>
 </div>
 
 <div id="tonKho" class="page">
   <div class="card">
     <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:14px;">
-      <h3 style="margin:0; display:flex; align-items:center; gap:8px;"><i class="ti ti-database" style="color:var(--primary)"></i> Tra Tồn Kho</h3>
-      <button class="btn btn-blue" style="padding:4px 10px; font-size:12px; margin:0;" onclick="chuyenTrangKhongNav('trangChu')"><i class="ti ti-arrow-left"></i> Trang chủ</button>
+      <h3 style="margin:0; border:none; padding:0; display:flex; align-items:center; gap:8px;"><i class="ti ti-database" style="color:var(--primary)"></i> Tra Tồn Kho</h3>
+      <button class="kq-btn kq-btn--new kq-btn--sm" onclick="chuyenTrangKhongNav('trangChu')"><i class="ti ti-arrow-left"></i> Trang chủ</button>
     </div>
 
     <div id="tk-search-box">
@@ -408,7 +414,7 @@
           <button type="button" class="tk-clear-btn" id="tk-clear-btn" onclick="tkXoaOTen()" aria-label="Xoá">✕</button>
           <div id="tk-dropdown" class="tk-dropdown"></div>
         </div>
-        <button class="btn btn-blue" onclick="tkTimTonKho()">Tìm</button>
+        <button class="kq-btn kq-btn--primary" style="min-height:40px; padding:0 16px;" onclick="tkTimTonKho()"><i class="ti ti-search"></i> Tìm</button>
       </div>
       <div id="tk-freq-chips" class="tk-freq-chips"></div>
     </div>
@@ -419,13 +425,26 @@
 
     <div id="tk-ket-qua"></div>
 
-    <button class="btn btn-full" style="background:var(--card-raised); color:var(--cream); border:1px solid var(--line); margin-top:14px" onclick="chuyenTrangKhongNav('trangChu')"><i class="ti ti-arrow-left"></i> Quay lại Trang chủ</button>
+    <div class="kq-actions">
+      <button class="kq-btn kq-btn--new" onclick="chuyenTrangKhongNav('trangChu')"><i class="ti ti-arrow-left"></i> Quay lại Trang chủ</button>
+    </div>
   </div>
 </div>
 
 <div id="lichsuChiTiet" class="page">
   <div class="card">
-    <h3 id="lichsu-chitiet-tieude">Chi tiết phiên</h3>
+    <h3 id="lichsu-chitiet-tieude" style="text-align:center; margin-bottom:16px;">Chi tiết phiên</h3>
+
+    <div class="kq-stat-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:14px;">
+      <div style="background:var(--surface-2); border:1px solid var(--border-card); border-radius:12px; padding:10px; text-align:center;">
+        <div style="font-size:11px; color:var(--row-muted); font-weight:700; text-transform:uppercase; margin-bottom:2px;">Bao</div>
+        <div id="ls-cx1-tong-bao" style="font-family:'IBM Plex Mono', monospace; font-size:24px; font-weight:800; color:var(--primary-text, var(--primary));">0</div>
+      </div>
+      <div style="background:var(--surface-2); border:1px solid var(--border-card); border-radius:12px; padding:10px; text-align:center;">
+        <div style="font-size:11px; color:var(--row-muted); font-weight:700; text-transform:uppercase; margin-bottom:2px;">KG</div>
+        <div id="ls-cx1-tong-kg" style="font-family:'IBM Plex Mono', monospace; font-size:24px; font-weight:800; color:var(--success);">0</div>
+      </div>
+    </div>
 
     <div style="display:flex; background:var(--surface-2); border:1px solid var(--border-card); border-radius:10px; padding:3px; gap:4px; margin-bottom:12px;">
       <button id="ls-cx1-tab-chitiet" class="btn" style="flex:1; border-radius:8px; margin:0; padding:7px 12px; font-size:13px; font-weight:700; background:var(--surface); color:var(--row-text); border:none; box-shadow:0 2px 6px rgba(0,0,0,0.06);" onclick="toggleLichSuCX1View('chitiet')">Chi Tiết</button>
@@ -458,10 +477,12 @@
       </div>
     </div>
 
-    <div style="display:flex; flex-direction:column; width:100%; gap:8px;">
-      <button class="btn btn-green btn-full" onclick="tiepTucTuChiTietLichSu()">Tiếp tục quét / Sửa phiên này</button>
-      <button class="btn btn-excel btn-full" onclick="xuatExcelLichSuCX1()"><i class="ti ti-file-spreadsheet"></i> Xuất File Excel Phiên Này</button>
-      <button class="btn btn-full" style="background:var(--card-raised); color:var(--cream); border:1px solid var(--line);" onclick="chuyenTrangKhongNav('lichSu')"><i class="ti ti-arrow-left"></i> Quay lại Lịch sử</button>
+    <div class="kq-actions">
+      <button class="kq-btn kq-btn--next" onclick="tiepTucTuChiTietLichSu()"><i class="ti ti-scan"></i> Quét tiếp / Sửa phiên này</button>
+      <div class="row">
+        <button class="kq-btn kq-btn--excel" onclick="xuatExcelLichSuCX1()"><i class="ti ti-file-spreadsheet"></i> Xuất Excel</button>
+        <button class="kq-btn kq-btn--new" onclick="chuyenTrangKhongNav('lichSu')"><i class="ti ti-arrow-left"></i> Quay lại</button>
+      </div>
     </div>
   </div>
 </div>
@@ -498,7 +519,7 @@
     </div>
 
     <input type="hidden" id="chon-loai">
-    <button class="btn btn-blue btn-full" onclick="batDauQuetQR()">Bắt đầu</button>
+    <button class="kq-btn kq-btn--primary" style="width:100%;" onclick="batDauQuetQR()"><i class="ti ti-scan"></i> Bắt đầu</button>
   </div>
 
   <div id="qr-cam" style="display:none; width:100%; max-width:600px; box-sizing:border-box; margin:0 auto; padding:6px 12px 10px 12px; overflow:hidden;">
@@ -729,13 +750,17 @@
   <div class="card">
     <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:14px;">
       <h3 style="margin:0">Lịch Sử Quét QR</h3>
-      <button class="btn btn-blue" style="padding:4px 12px; font-size:13px; margin:0;" onclick="chuyenTrangKhongNav('trangChu')"><i class="ti ti-arrow-left"></i> Quay lại</button>
+      <button class="kq-btn kq-btn--new kq-btn--sm" onclick="chuyenTrangKhongNav('trangChu')"><i class="ti ti-arrow-left"></i> Quay lại</button>
     </div>
     <input type="text" id="lichsu-qr-tim" placeholder="Tìm theo ngày hoặc quy cách..." autocomplete="off" oninput="renderLichSuQR()" style="margin-bottom:12px">
     <div id="lichsu-qr-list"></div>
-    <button class="btn btn-excel btn-full mt-3" onclick="xuatExcelLichSuQR()"><i class="ti ti-file-spreadsheet"></i> Xuất File Excel Lịch Sử Quét QR</button>
-    <button class="btn btn-red btn-full" style="margin-top:8px" onclick="xoaTatCaLichSuQR()">Xóa tất cả lịch sử</button>
-    <button class="btn btn-full bg-neutral-solid text-cream mt-2" onclick="chuyenTrangKhongNav('trangChu')"><i class="ti ti-arrow-left"></i> Quay lại Trang chủ</button>
+    <div class="kq-actions">
+      <button class="kq-btn kq-btn--excel" onclick="xuatExcelLichSuQR()"><i class="ti ti-file-spreadsheet"></i> Xuất Excel Lịch Sử Quét QR</button>
+      <div class="row">
+        <button class="kq-btn kq-btn--new" onclick="chuyenTrangKhongNav('trangChu')"><i class="ti ti-arrow-left"></i> Trang chủ</button>
+        <button class="kq-btn kq-btn--danger" onclick="xoaTatCaLichSuQR()"><i class="ti ti-trash"></i> Xóa tất cả</button>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -745,8 +770,10 @@
     <div id="kk-form">
       <label>Ngày</label>
       <input type="date" id="kk-ngay">
-      <button class="btn btn-blue btn-full" onclick="batDauKiemKe()">Quét</button>
-      <button class="btn btn-excel btn-full" style="margin-top:8px" onclick="xuatExcelKiemKe()"><i class="ti ti-file-spreadsheet"></i> Xuất File Excel</button>
+      <div class="kq-actions">
+        <button class="kq-btn kq-btn--primary" onclick="batDauKiemKe()"><i class="ti ti-scan"></i> Bắt đầu quét</button>
+        <button class="kq-btn kq-btn--excel" onclick="xuatExcelKiemKe()"><i class="ti ti-file-spreadsheet"></i> Xuất File Excel</button>
+      </div>
     </div>
     <div id="kk-cam" style="display:none; width:100%; max-width:600px; box-sizing:border-box; margin:0 auto; padding:6px 0;">
       <div id="kk-video-box" class="video-container btp-camera-main" style="margin-top:8px;">
@@ -812,7 +839,7 @@
     <h3>Chỉ For</h3>
     <label>Ngày</label>
     <input type="date" id="cx1-ngay">
-    <button class="btn btn-blue btn-full" onclick="batDauCX1('quet')">Bắt đầu</button>
+    <button class="kq-btn kq-btn--primary" style="width:100%;" onclick="batDauCX1('quet')"><i class="ti ti-scan"></i> Bắt đầu</button>
   </div>
 
   <div id="cx1-cam" style="display:none; width:100%; max-width:600px; box-sizing:border-box; margin:0 auto; padding:6px 12px 10px 12px; overflow:hidden;">
@@ -1065,10 +1092,12 @@
         </div>
       </div>
     </div>
-    <button class="btn btn-blue btn-full" onclick="batDauBTP()">Bắt đầu</button>
-    <button id="btn-dongbo-btp-form" class="btn btn-warning btn-full" style="display:none; margin-top:10px; background:linear-gradient(135deg, #f59e0b, #d97706); color:#1a1a2e; font-weight:700;" onclick="dongBoThietBiBTP()">
-      <i class="ti ti-cloud-upload"></i> Đồng bộ hàng chờ (<span id="btp-pending-count-form">0</span>)
-    </button>
+    <div class="kq-actions" style="margin-top:4px;">
+      <button class="kq-btn kq-btn--primary" onclick="batDauBTP()"><i class="ti ti-scan"></i> Bắt đầu</button>
+      <button id="btn-dongbo-btp-form" class="kq-btn kq-btn--send is-pending" style="display:none;" onclick="dongBoThietBiBTP()">
+        <i class="ti ti-cloud-upload"></i> Đồng bộ hàng chờ (<span id="btp-pending-count-form">0</span>)
+      </button>
+    </div>
   </div>
 
   <div id="btp-cam" style="display:none; width:100%; max-width:600px; box-sizing:border-box; margin:0 auto; padding:6px 12px 10px 12px; overflow:hidden;">
@@ -1272,19 +1301,34 @@
   <div class="card">
     <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:14px;">
       <h3 style="margin:0">Lịch Sử Quét BTP</h3>
-      <button class="btn btn-blue" style="padding:4px 12px; font-size:13px; margin:0;" onclick="chuyenTrangKhongNav('trangChu')"><i class="ti ti-arrow-left"></i> Quay lại</button>
+      <button class="kq-btn kq-btn--new kq-btn--sm" onclick="chuyenTrangKhongNav('trangChu')"><i class="ti ti-arrow-left"></i> Quay lại</button>
     </div>
     <input type="text" id="lichsu-btp-tim" placeholder="Tìm theo ngày hoặc quy cách..." autocomplete="off" oninput="renderLichSuBTP()" style="margin-bottom:12px">
     <div id="lichsu-btp-list"></div>
-    <button class="btn btn-excel btn-full mt-3" onclick="xuatExcelLichSuBTP()"><i class="ti ti-file-spreadsheet"></i> Xuất File Excel Lịch Sử BTP</button>
-    <button class="btn btn-red btn-full" style="margin-top:8px" onclick="xoaTatCaLichSuBTP()">Xóa tất cả lịch sử</button>
-    <button class="btn btn-full bg-neutral-solid text-cream mt-2" onclick="chuyenTrangKhongNav('trangChu')"><i class="ti ti-arrow-left"></i> Quay lại Trang chủ</button>
+    <div class="kq-actions">
+      <button class="kq-btn kq-btn--excel" onclick="xuatExcelLichSuBTP()"><i class="ti ti-file-spreadsheet"></i> Xuất Excel Lịch Sử BTP</button>
+      <div class="row">
+        <button class="kq-btn kq-btn--new" onclick="chuyenTrangKhongNav('trangChu')"><i class="ti ti-arrow-left"></i> Trang chủ</button>
+        <button class="kq-btn kq-btn--danger" onclick="xoaTatCaLichSuBTP()"><i class="ti ti-trash"></i> Xóa tất cả</button>
+      </div>
+    </div>
   </div>
 </div>
 
 <div id="lichSuBTPChiTiet" class="page">
   <div class="card">
-    <h3 id="lichsu-btp-chitiet-tieude">Chi tiết Lịch sử BTP</h3>
+    <h3 id="lichsu-btp-chitiet-tieude" style="text-align:center; margin-bottom:16px;">Chi tiết Lịch sử BTP</h3>
+
+    <div class="kq-stat-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:14px;">
+      <div style="background:var(--surface-2); border:1px solid var(--border-card); border-radius:12px; padding:10px; text-align:center;">
+        <div style="font-size:11px; color:var(--row-muted); font-weight:700; text-transform:uppercase; margin-bottom:2px;">Đợt</div>
+        <div id="ls-btp-tong-dot" style="font-family:'IBM Plex Mono', monospace; font-size:24px; font-weight:800; color:var(--primary-text, var(--primary));">0</div>
+      </div>
+      <div style="background:var(--surface-2); border:1px solid var(--border-card); border-radius:12px; padding:10px; text-align:center;">
+        <div style="font-size:11px; color:var(--row-muted); font-weight:700; text-transform:uppercase; margin-bottom:2px;">Tổng</div>
+        <div id="ls-btp-tong-ma" style="font-family:'IBM Plex Mono', monospace; font-size:24px; font-weight:800; color:var(--success);">0</div>
+      </div>
+    </div>
 
     <div style="display:flex; background:var(--surface-2); border:1px solid var(--border-card); border-radius:10px; padding:3px; gap:4px; margin-bottom:12px;">
       <button id="ls-btp-tab-chitiet" class="btn" style="flex:1; border-radius:8px; margin:0; padding:7px 12px; font-size:13px; font-weight:700; background:var(--surface); color:var(--row-text); border:none; box-shadow:0 2px 6px rgba(0,0,0,0.06);" onclick="toggleLichSuBTPView('chitiet')">Chi Tiết</button>
@@ -1317,10 +1361,12 @@
       </div>
     </div>
 
-    <div style="display:flex; flex-direction:column; width:100%; gap:8px;">
-      <button class="btn btn-green btn-full" onclick="tiepTucTuChiTietLichSuBTP()">Quét tiếp / Sửa phiên này</button>
-      <button class="btn btn-excel btn-full" onclick="xuatExcelLichSuBTP()"><i class="ti ti-file-spreadsheet"></i> Xuất Excel Phiên Này</button>
-      <button class="btn btn-full" style="background:var(--card-raised); color:var(--cream); border:1px solid var(--line);" onclick="chuyenTrangKhongNav('lichSuBTP')"><i class="ti ti-arrow-left"></i> Quay lại Lịch sử</button>
+    <div class="kq-actions">
+      <button class="kq-btn kq-btn--next" onclick="tiepTucTuChiTietLichSuBTP()"><i class="ti ti-scan"></i> Quét tiếp / Sửa phiên này</button>
+      <div class="row">
+        <button class="kq-btn kq-btn--excel" onclick="xuatExcelLichSuBTP()"><i class="ti ti-file-spreadsheet"></i> Xuất Excel</button>
+        <button class="kq-btn kq-btn--new" onclick="chuyenTrangKhongNav('lichSuBTP')"><i class="ti ti-arrow-left"></i> Quay lại</button>
+      </div>
     </div>
   </div>
 </div>
@@ -1330,16 +1376,26 @@
     <h3>Chỉ X5</h3>
     <label>Ngày</label>
     <input type="date" id="cx5-ngay">
-    <button class="btn btn-blue btn-full" onclick="batDauCX5()">Bắt đầu</button>
-    
+    <button class="kq-btn kq-btn--primary" style="width:100%;" onclick="batDauCX5()"><i class="ti ti-pencil-plus"></i> Bắt đầu</button>
   </div>
 
   <div id="cx5-nhap" class="card" style="display:none">
-    <div style="display:flex; justify-content:space-between; align-items:center">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
       <h3 style="margin:0;padding:0;border:0;box-shadow:none" id="cx5-ngay-hienthi"></h3>
       <span id="cx5-dem" class="cx5-badge">Đã nhập: 0 dòng</span>
     </div>
-    <div id="cx5-pending-line" style="display:none;color:var(--brass);font-size:12px;font-weight:600;margin-top:6px"></div>
+    <div id="cx5-pending-line" style="display:none;color:var(--brass);font-size:12px;font-weight:600;margin-bottom:10px;"></div>
+
+    <div class="kq-stat-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:12px;">
+      <div style="background:var(--surface-2); border:1px solid var(--border-card); border-radius:12px; padding:10px; text-align:center;">
+        <div style="font-size:11px; color:var(--row-muted); font-weight:700; text-transform:uppercase; margin-bottom:2px;">Bao</div>
+        <div id="cx5-tong-bao" style="font-family:'IBM Plex Mono', monospace; font-size:22px; font-weight:800; color:var(--brass);">0</div>
+      </div>
+      <div style="background:var(--surface-2); border:1px solid var(--border-card); border-radius:12px; padding:10px; text-align:center;">
+        <div style="font-size:11px; color:var(--row-muted); font-weight:700; text-transform:uppercase; margin-bottom:2px;">KG</div>
+        <div id="cx5-tong-kg" style="font-family:'IBM Plex Mono', monospace; font-size:22px; font-weight:800; color:var(--success);">0</div>
+      </div>
+    </div>
 
     <label>QC</label>
     <div class="cx5-ten-wrap" id="cx5-qc-tim-wrap">
@@ -1353,7 +1409,7 @@
     </div>
     <input type="hidden" id="cx5-msp">
 
-    <div style="display: flex; gap: 10px; margin-bottom: 12px;">
+    <div style="display: flex; gap: 10px; margin-bottom: 10px;">
       <div style="flex: 1;">
         <label>Bao</label>
         <input type="text" id="cx5-bao" value="1" inputmode="none" onkeydown="if(event.key==='Enter'){event.preventDefault();document.getElementById('cx5-kg').focus()}">
@@ -1364,44 +1420,56 @@
       </div>
     </div>
 
-    <button class="btn btn-green btn-full" onclick="themDongCX5()">Thêm</button>
+    <button class="kq-btn kq-btn--primary" style="width:100%; margin-bottom:14px;" onclick="themDongCX5()"><i class="ti ti-plus"></i> Thêm vào đợt</button>
 
-    <div class="cx5-box">
-      <div class="cx5-box-top">
-        <div class="cx5-box-title">Chi tiết</div>
+    <div style="display:flex; background:var(--surface-2); border:1px solid var(--border-card); border-radius:10px; padding:3px; gap:4px; margin-bottom:10px;">
+      <button id="cx5-tab-chitiet" class="btn" style="flex:1; border-radius:8px; margin:0; padding:7px 12px; font-size:13px; font-weight:700; background:var(--surface); color:var(--row-text); border:none; box-shadow:0 2px 6px rgba(0,0,0,0.06);" onclick="toggleCX5NhapView('chitiet')">Chi Tiết</button>
+      <button id="cx5-tab-tonghop" class="btn" style="flex:1; border-radius:8px; margin:0; padding:7px 12px; font-size:13px; font-weight:700; background:transparent; color:var(--row-muted); border:none;" onclick="toggleCX5NhapView('tonghop')">Tổng Hợp</button>
+    </div>
+
+    <div id="cx5-box-chitiet" class="cx5-box" style="margin-top:0;">
+      <div class="cx5-box-top" style="margin-bottom:6px;">
+        <div class="cx5-box-title" style="font-size:12px; color:var(--row-muted); text-transform:uppercase;">Bảng chi tiết lượt nhập</div>
         <button class="cx5-xoay-btn" onclick="xoayBangCX5('cx5-bang-chitiet')" title="Xoay ngang"><i class="ti ti-maximize"></i></button>
       </div>
-      <div id="cx5-bang-chitiet-wrap" class="cx5-scroll">
-        <table class="cx5-table">
-          <thead><tr><th>Lượt</th><th>QC</th><th>Bao</th><th>Kg</th><th></th></tr></thead>
-          <tbody id="cx5-tbody-chitiet"></tbody>
-        </table>
+      <div class="kq-card-wrap">
+        <div id="cx5-bang-chitiet-wrap" class="cx5-scroll">
+          <table class="cx5-kq-table">
+            <thead><tr><th>Lượt</th><th>QC</th><th style="text-align:center;">Bao</th><th style="text-align:right;">Kg</th><th style="width:36px;"></th></tr></thead>
+            <tbody id="cx5-tbody-chitiet"></tbody>
+            <tfoot id="cx5-tfoot-chitiet"></tfoot>
+          </table>
+        </div>
       </div>
     </div>
 
-    <div class="cx5-box">
-      <div class="cx5-box-top">
-        <div class="cx5-box-title">Tổng hợp</div>
+    <div id="cx5-box-tonghop" class="cx5-box" style="display:none; margin-top:0;">
+      <div class="cx5-box-top" style="margin-bottom:6px;">
+        <div class="cx5-box-title" style="font-size:12px; color:var(--row-muted); text-transform:uppercase;">Bảng tổng hợp theo QC</div>
         <button class="cx5-xoay-btn" onclick="xoayBangCX5('cx5-bang-tonghop')" title="Xem rộng"><i class="ti ti-maximize"></i></button>
       </div>
-      <div id="cx5-bang-tonghop-wrap" class="cx5-scroll">
-        <table class="cx5-table">
-          <thead><tr><th>QC</th><th>Bao</th><th>Kg</th><th>Trạng thái</th></tr></thead>
-          <tbody id="cx5-tbody-tonghop"></tbody>
-        </table>
+      <div class="kq-card-wrap">
+        <div id="cx5-bang-tonghop-wrap" class="cx5-scroll">
+          <table class="cx5-kq-table">
+            <thead><tr><th>QC</th><th style="text-align:center;">Bao</th><th style="text-align:right;">Kg</th><th style="text-align:center;">Trạng thái</th></tr></thead>
+            <tbody id="cx5-tbody-tonghop"></tbody>
+            <tfoot id="cx5-tfoot-tonghop"></tfoot>
+          </table>
+        </div>
       </div>
     </div>
 
-    <button class="btn btn-blue btn-full" onclick="ketThucPhienCX5()">Đối chiếu</button>
-    
+    <div class="kq-actions">
+      <button class="kq-btn kq-btn--send is-pending" onclick="ketThucPhienCX5()"><i class="ti ti-arrows-Left-right"></i> Chuyển sang Đối chiếu SX</button>
+    </div>
   </div>
 
   <div id="cx5-doichieu" class="card" style="display:none">
     <h3>Đối chiếu Sản Xuất</h3>
     <div id="cx5-pending-line-dc" style="display:none;color:var(--brass);font-size:12px;font-weight:600;margin:-8px 0 12px"></div>
 
-    <div class="cx5-box" style="margin-bottom:14px; background:var(--card-raised); border:1px solid var(--line); border-radius:8px; padding:12px;">
-      <div class="cx5-box-title" style="color:var(--brass); font-weight:700; margin-bottom:8px;">NHẬP DỮ LIỆU BÊN SẢN XUẤT (SX)</div>
+    <div class="cx5-box" style="margin-bottom:14px; background:var(--surface-2); border:1px solid var(--border-card); border-radius:12px; padding:12px;">
+      <div class="cx5-box-title" style="color:var(--brass); font-weight:700; font-size:12px; text-transform:uppercase; margin-bottom:8px;">Nhập dữ liệu bên Sản Xuất (SX)</div>
 
       <label>Quy cách SX</label>
       <div class="cx5-ten-wrap" id="cx5-sx-qc-wrap">
@@ -1410,9 +1478,9 @@
       </div>
       <input type="hidden" id="cx5-sx-msp">
 
-      <div style="display:flex; gap:8px; margin-top:10px;">
-        <input type="text" id="cx5-sx-kg" placeholder="Số kg SX..." inputmode="none" onkeydown="if(event.key==='Enter'){event.preventDefault();themDongSXCX5()}">
-        <button class="btn btn-blue" style="flex-shrink:0; width:90px;" onclick="themDongSXCX5()"><i class="ti ti-plus"></i> Thêm</button>
+      <div style="display:flex; gap:8px; margin-top:10px; align-items:stretch;">
+        <input type="text" id="cx5-sx-kg" placeholder="Số kg SX..." inputmode="none" style="margin:0; flex:1;" onkeydown="if(event.key==='Enter'){event.preventDefault();themDongSXCX5()}">
+        <button class="kq-btn kq-btn--primary" style="flex-shrink:0; width:96px; min-height:42px;" onclick="themDongSXCX5()"><i class="ti ti-plus"></i> Thêm</button>
       </div>
     </div>
 
@@ -1424,32 +1492,40 @@
     </div>
 
     <div id="cx5-doichieu-list"></div>
-    <div style="display: flex; gap: 8px; margin-top: 12px; align-items: center;">
-      <button class="btn btn-full" style="flex: 1; background:var(--neutral-solid); color:var(--cream); padding: 0 4px; font-size: 14px; margin: 0; white-space: nowrap;" onclick="xemTongKgGhepPalletCX5()"><i class="ti ti-layers-intersect"></i> Tổng kg pallet</button>
-      <button id="cx5-btn-dongbo-tatca" class="btn btn-blue btn-full" style="flex: 1; padding: 0 4px; font-size: 14px; margin: 0; white-space: nowrap;" onclick="dongBoTatCaCX5()"><i class="ti ti-refresh"></i> Đồng bộ</button>
+    <div class="kq-actions">
+      <button id="cx5-btn-dongbo-tatca" class="kq-btn kq-btn--send is-pending" onclick="dongBoTatCaCX5()"><i class="ti ti-cloud-upload"></i> Đồng bộ lên Sheet</button>
+      <div class="row">
+        <button class="kq-btn kq-btn--next" onclick="xemTongKgGhepPalletCX5()"><i class="ti ti-layers-intersect"></i> Tổng kg pallet</button>
+        <button class="kq-btn kq-btn--new" onclick="dongDoiChieuCX5()"><i class="ti ti-arrow-left"></i> Nhập kho</button>
+      </div>
     </div>
-    <button class="btn btn-full" style="background:var(--neutral-solid);color:var(--cream); margin-top:8px;" onclick="dongDoiChieuCX5()"><i class="ti ti-arrow-left"></i> Quay lại nhập kho</button>
   </div>
 
   <div id="cx5-tongkg" class="card" style="display:none">
     <h3>Tổng kg pallet</h3>
     <div id="cx5-tongkg-list"></div>
     <div class="cx5-box" style="margin-top:16px">
-      <div class="cx5-box-top">
-        <div class="cx5-box-title" style="color:var(--brass); font-weight:700; font-size:15px; text-transform:uppercase;">Bảng Tổng kết</div>
+      <div class="cx5-box-top" style="margin-bottom:6px;">
+        <div class="cx5-box-title" style="color:var(--brass); font-weight:700; font-size:13px; text-transform:uppercase;">Bảng Tổng kết</div>
         <button class="cx5-xoay-btn" onclick="xoayBangCX5('cx5-bang-tongkg-phien')" title="Xoay ngang"><i class="ti ti-maximize"></i></button>
       </div>
-      <div id="cx5-bang-tongkg-phien-wrap" class="cx5-scroll">
-        <table id="cx5-bang-tongkg-phien" class="cx5-table">
-          <thead><tr><th>QC</th><th>Bao</th><th>Kg</th><th>Trạng thái</th></tr></thead>
-          <tbody id="cx5-tbody-tongkg-phien"></tbody>
-        </table>
+      <div class="kq-card-wrap">
+        <div id="cx5-bang-tongkg-phien-wrap" class="cx5-scroll">
+          <table id="cx5-bang-tongkg-phien" class="cx5-kq-table">
+            <thead><tr><th>QC</th><th style="text-align:center;">Bao</th><th style="text-align:right;">Kg</th><th style="text-align:center;">Trạng thái</th></tr></thead>
+            <tbody id="cx5-tbody-tongkg-phien"></tbody>
+            <tfoot id="cx5-tfoot-tongkg-phien"></tfoot>
+          </table>
+        </div>
       </div>
     </div>
-    <button id="cx5-btn-ghep" class="btn btn-blue btn-full" style="margin-top:12px" onclick="dongBoGhepCX5()"><i class="ti ti-refresh"></i> Đồng bộ Bảng Tổng kết</button>
-    <button class="btn btn-full bg-neutral-solid text-cream mt-2" onclick="quayLaiDoiChieuCX5()"><i class="ti ti-arrow-left"></i> Quay lại đối chiếu</button>
-    <button class="btn btn-full" style="background:var(--brass); color:#000; margin-top:8px" onclick="chuyenTrangCX5Nhap()"><i class="ti ti-pencil"></i> Chỉnh sửa / Nhập thêm</button>
-    
+    <div class="kq-actions">
+      <button id="cx5-btn-ghep" class="kq-btn kq-btn--send is-pending" onclick="dongBoGhepCX5()"><i class="ti ti-cloud-upload"></i> Đồng bộ Bảng Tổng kết</button>
+      <div class="row">
+        <button class="kq-btn kq-btn--next" onclick="chuyenTrangCX5Nhap()"><i class="ti ti-pencil"></i> Sửa / Nhập thêm</button>
+        <button class="kq-btn kq-btn--new" onclick="quayLaiDoiChieuCX5()"><i class="ti ti-arrow-left"></i> Đối chiếu</button>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -1457,13 +1533,17 @@
   <div class="card">
     <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:14px;">
       <h3 style="margin:0">Lịch Sử Chỉ X5</h3>
-      <button class="btn btn-blue" style="padding:4px 12px; font-size:13px; margin:0;" onclick="chuyenTrangKhongNav('trangChu')"><i class="ti ti-arrow-left"></i> Quay lại</button>
+      <button class="kq-btn kq-btn--new kq-btn--sm" onclick="chuyenTrangKhongNav('trangChu')"><i class="ti ti-arrow-left"></i> Quay lại</button>
     </div>
     <input type="text" id="lichsu-x5-tim" placeholder="Tìm theo ngày hoặc quy cách..." autocomplete="off" oninput="renderLichSuCX5()" style="margin-bottom:12px">
     <div id="lichsu-x5-list"></div>
-    <button class="btn btn-excel btn-full mt-3" onclick="xuatExcelLichSuCX5()"><i class="ti ti-file-spreadsheet"></i> Xuất File Excel Lịch Sử X5</button>
-    <button class="btn btn-red btn-full" style="margin-top:8px" onclick="xoaTatCaLichSuCX5()">Xóa tất cả lịch sử</button>
-    <button class="btn btn-full bg-neutral-solid text-cream mt-2" onclick="chuyenTrangKhongNav('trangChu')"><i class="ti ti-arrow-left"></i> Quay lại Trang chủ</button>
+    <div class="kq-actions">
+      <button class="kq-btn kq-btn--excel" onclick="xuatExcelLichSuCX5()"><i class="ti ti-file-spreadsheet"></i> Xuất Excel Lịch Sử X5</button>
+      <div class="row">
+        <button class="kq-btn kq-btn--new" onclick="chuyenTrangKhongNav('trangChu')"><i class="ti ti-arrow-left"></i> Trang chủ</button>
+        <button class="kq-btn kq-btn--danger" onclick="xoaTatCaLichSuCX5()"><i class="ti ti-trash"></i> Xóa tất cả</button>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -1477,7 +1557,7 @@
   <div class="overlay-card">
     <div class="overlay-title" style="display:flex;align-items:center;justify-content:space-between;gap:8px">
       <span id="cx5-sl-ten"></span>
-      <button type="button" class="btn btn-sm" style="padding:4px 8px;background:var(--card-raised);border:1px solid var(--line);color:var(--cream-soft);font-size:12px;" onclick="moDoiQCLuotCX5()" title="Chỉnh sửa Quy cách lượt này"><i class="ti ti-pencil"></i> Sửa QC</button>
+      <button type="button" class="kq-btn kq-btn--new kq-btn--sm" onclick="moDoiQCLuotCX5()" title="Chỉnh sửa Quy cách lượt này"><i class="ti ti-pencil"></i> Sửa QC</button>
     </div>
     <div id="cx5-sl-doi-qc-wrap" style="display:none;margin:8px 0;">
       <div class="cx5-ten-wrap">
@@ -1486,11 +1566,13 @@
       </div>
     </div>
     <div id="cx5-sl-chitiet" class="cx5-chitiet-kg" style="margin-top:10px"></div>
-    <div style="display:flex;gap:8px;margin-top:14px">
-      <input type="text" id="cx5-sl-them-kg" inputmode="none" placeholder="Thêm số kg..." onkeydown="if(event.key==='Enter'){event.preventDefault();themKgVaoLuotCX5()}">
-      <button class="btn btn-green" style="width:56px;flex-shrink:0" onclick="themKgVaoLuotCX5()"><i class="ti ti-plus"></i></button>
+    <div style="display:flex;gap:8px;margin-top:14px;align-items:stretch;">
+      <input type="text" id="cx5-sl-them-kg" inputmode="none" placeholder="Thêm số kg..." style="margin:0;flex:1;" onkeydown="if(event.key==='Enter'){event.preventDefault();themKgVaoLuotCX5()}">
+      <button class="kq-btn kq-btn--primary" style="width:56px;flex-shrink:0" onclick="themKgVaoLuotCX5()"><i class="ti ti-plus"></i></button>
     </div>
-    <button class="btn btn-full" style="background:var(--neutral-solid);color:var(--cream);margin-top:12px" onclick="dongSuaLuotCX5()">Đóng</button>
+    <div class="kq-actions">
+      <button class="kq-btn kq-btn--new" onclick="dongSuaLuotCX5()">Đóng</button>
+    </div>
   </div>
 </div>
 
@@ -1505,10 +1587,13 @@
 <div class="overlay" id="cx5-overlay-chitiet-lichsu">
   <div class="overlay-card">
     <div class="overlay-title" id="cx5-ctls-tieude"></div>
-    <div id="cx5-ctls-noidung" style="max-height:50vh;overflow:auto;margin:8px 0"></div>
-    <div style="display:flex; gap:10px; margin-top:6px;">
-      <button class="btn" style="flex:1;background:var(--neutral-solid);color:var(--cream)" onclick="dongChiTietLichSuCX5()">Đóng</button>
-      <button class="btn btn-blue" style="flex:1" id="cx5-ctls-tieptuc">Tiếp tục sửa</button>
+    <div id="cx5-ctls-noidung" style="max-height:55vh;overflow:auto;margin:8px 0"></div>
+    <div class="kq-actions">
+      <button class="kq-btn kq-btn--next" id="cx5-ctls-tieptuc"><i class="ti ti-pencil"></i> Tiếp tục sửa phiên này</button>
+      <div class="row">
+        <button class="kq-btn kq-btn--excel" id="cx5-ctls-excel"><i class="ti ti-file-spreadsheet"></i> Xuất Excel</button>
+        <button class="kq-btn kq-btn--new" onclick="dongChiTietLichSuCX5()"><i class="ti ti-arrow-left"></i> Đóng</button>
+      </div>
     </div>
   </div>
 </div>
@@ -1516,10 +1601,12 @@
 <div class="overlay" id="cx5-overlay-xacnhan">
   <div class="overlay-card" style="text-align:center;">
     <div class="overlay-title" style="text-align:center;">Xác nhận</div>
-    <div style="color:var(--cream-soft);font-size:13px;margin:-4px 0 4px;" id="cx5-xacnhan-noidung"></div>
-    <div style="display:flex; gap:10px; margin-top:6px;">
-      <button class="btn" style="flex:1;background:var(--neutral-solid);color:var(--cream)" id="cx5-xacnhan-nut-huy" onclick="dongXacNhanCX5(false)">Hủy</button>
-      <button class="btn btn-red" style="flex:1" id="cx5-xacnhan-nut-ok" onclick="dongXacNhanCX5(true)">Xóa</button>
+    <div style="color:var(--cream-soft);font-size:13px;margin:-4px 0 8px;" id="cx5-xacnhan-noidung"></div>
+    <div class="kq-actions" style="margin-top:8px;">
+      <div class="row">
+        <button class="kq-btn kq-btn--new" id="cx5-xacnhan-nut-huy" onclick="dongXacNhanCX5(false)">Hủy</button>
+        <button class="kq-btn kq-btn--danger" id="cx5-xacnhan-nut-ok" onclick="dongXacNhanCX5(true)">Xóa</button>
+      </div>
     </div>
   </div>
 </div>
@@ -1528,8 +1615,8 @@
   <div class="overlay-card">
     <div class="overlay-title">Chi Tiết Nguồn Gốc</div>
     <div id="cx5-ng-noidung" style="max-height:55vh;overflow:auto;margin:8px 0"></div>
-    <div style="display:flex; gap:10px; margin-top:6px;">
-      <button class="btn btn-full" style="background:var(--neutral-solid);color:var(--cream)" onclick="dongNguonGocCX5()">Đóng</button>
+    <div class="kq-actions" style="margin-top:8px;">
+      <button class="kq-btn kq-btn--new" onclick="dongNguonGocCX5()">Đóng</button>
     </div>
   </div>
 </div>
@@ -1545,9 +1632,11 @@
   <div class="overlay-card" style="text-align:center;">
     <div class="overlay-title" style="text-align:center;" id="app-xacnhan-tieude">Xác nhận</div>
     <div style="color:var(--cream-soft);font-size:14px;margin:10px 0 18px;line-height:1.5;" id="app-xacnhan-noidung"></div>
-    <div style="display:flex; gap:10px;">
-      <button class="btn" style="flex:1;background:var(--card-raised);color:var(--cream);border:1px solid var(--line);" id="app-xacnhan-nut-huy" onclick="dongXacNhanApp(false)">Hủy</button>
-      <button class="btn btn-red" style="flex:1" id="app-xacnhan-nut-ok" onclick="dongXacNhanApp(true)">Đồng ý</button>
+    <div class="kq-actions" style="margin-top:0;">
+      <div class="row">
+        <button class="kq-btn kq-btn--new" id="app-xacnhan-nut-huy" onclick="dongXacNhanApp(false)">Hủy</button>
+        <button class="kq-btn kq-btn--danger" id="app-xacnhan-nut-ok" onclick="dongXacNhanApp(true)">Đồng ý</button>
+      </div>
     </div>
   </div>
 </div>
@@ -1557,11 +1646,13 @@
     <div class="overlay-title" style="text-align:center;" id="app-prompt-tieude">Nhập thông tin</div>
     <div style="color:var(--cream-soft);font-size:14px;margin:8px 0 14px;line-height:1.4;" id="app-prompt-noidung"></div>
     <div style="margin-bottom:16px;">
-      <input type="text" id="app-prompt-input" style="width:100%;font-size:16px;text-align:center;padding:10px;border-radius:8px;background:var(--card-raised);color:var(--cream);border:1px solid var(--line);box-sizing:border-box;" autocomplete="off" onkeydown="if(event.key==='Enter'){event.preventDefault();dongPromptApp(true)}">
+      <input type="text" id="app-prompt-input" style="width:100%;font-size:16px;text-align:center;padding:10px;border-radius:10px;background:var(--surface-2);color:var(--cream);border:1px solid var(--border-card);box-sizing:border-box;" autocomplete="off" onkeydown="if(event.key==='Enter'){event.preventDefault();dongPromptApp(true)}">
     </div>
-    <div style="display:flex; gap:10px;">
-      <button class="btn" style="flex:1;background:var(--card-raised);color:var(--cream);border:1px solid var(--line);" onclick="dongPromptApp(false)">Hủy</button>
-      <button class="btn btn-blue" style="flex:1" onclick="dongPromptApp(true)">Xác nhận</button>
+    <div class="kq-actions" style="margin-top:0;">
+      <div class="row">
+        <button class="kq-btn kq-btn--new" onclick="dongPromptApp(false)">Hủy</button>
+        <button class="kq-btn kq-btn--next" onclick="dongPromptApp(true)">Xác nhận</button>
+      </div>
     </div>
   </div>
 </div>
@@ -1569,23 +1660,25 @@
 <div class="overlay" id="overlay-thoat">
   <div class="overlay-card" style="text-align:center;">
     <div class="overlay-title" style="text-align:center;">Bạn sợ à?</div>
-    <div style="display:flex; gap:10px; margin-top:6px;">
-      <button class="btn btn-blue" style="flex:1" onclick="khongThoatApp()">Không</button>
-      <button class="btn btn-red" style="flex:1" onclick="xacNhanThoatApp()">Tôi sợ</button>
+    <div class="kq-actions" style="margin-top:8px;">
+      <div class="row">
+        <button class="kq-btn kq-btn--next" onclick="khongThoatApp()">Không</button>
+        <button class="kq-btn kq-btn--danger" onclick="xacNhanThoatApp()">Tôi sợ</button>
+      </div>
     </div>
   </div>
 </div>
 
 </div><!-- /#app-viewport -->
 
-<script src="app.js?v=20261027-v150" defer></script>
-<script src="scanner-core.js?v=20261027-v150" defer></script>
-<script src="quetqr.js?v=20261027-v150" defer></script>
-<script src="kiemke.js?v=20261027-v150" defer></script>
-<script src="cx1.js?v=20261027-v150" defer></script>
-<script src="cx5.js?v=20261027-v150" defer></script>
-<script src="btp.js?v=20261027-v150" defer></script>
-<script src="tonkho.js?v=20261027-v150" defer></script>
+<script src="app.js?v=20261027-v151" defer></script>
+<script src="scanner-core.js?v=20261027-v151" defer></script>
+<script src="quetqr.js?v=20261027-v151" defer></script>
+<script src="kiemke.js?v=20261027-v151" defer></script>
+<script src="cx1.js?v=20261027-v151" defer></script>
+<script src="cx5.js?v=20261027-v151" defer></script>
+<script src="btp.js?v=20261027-v151" defer></script>
+<script src="tonkho.js?v=20261027-v151" defer></script>
 
 <!-- BOTTOM SHEET MODAL LỊCH SỬ -->
 <div class="modal-overlay" id="modal-overlay" onclick="closeLichSuModal(event)">

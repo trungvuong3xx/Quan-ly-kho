@@ -1059,15 +1059,15 @@ function nhapTayCX1(dot, msp, qc) {
       <div class="overlay-card">
         <div class="overlay-title" style="display:flex;align-items:center;justify-content:space-between;gap:8px">
           <span id="cx1-sua-chitiet-title"></span>
-          <button type="button" class="btn btn-sm btn-red" style="padding:4px 8px;font-size:12px;" onclick="xoaTongCX1()">Xóa tổng</button>
+          <button type="button" class="kq-btn kq-btn--danger kq-btn--sm" onclick="xoaTongCX1()"><i class="ti ti-trash"></i> Xóa tổng</button>
         </div>
         <div class="cx5-chitiet-kg" id="cx1-sua-chitiet-container" style="margin-top:10px">
         </div>
-        <div style="display:flex;gap:8px;margin-top:14px">
-          <input type="text" id="cx1-them-kg" inputmode="none" placeholder="Thêm số kg..." onkeydown="if(event.key==='Enter'){event.preventDefault();themKgVaoDotCX1()}">
-          <button class="btn btn-green" style="width:56px;flex-shrink:0" onclick="themKgVaoDotCX1()"><i class="ti ti-plus"></i></button>
+        <div style="display:flex;gap:8px;margin-top:14px;align-items:stretch;">
+          <input type="text" id="cx1-them-kg" inputmode="none" placeholder="Thêm số kg..." style="margin:0;flex:1;" onkeydown="if(event.key==='Enter'){event.preventDefault();themKgVaoDotCX1()}">
+          <button class="kq-btn kq-btn--primary" style="width:56px;flex-shrink:0" onclick="themKgVaoDotCX1()"><i class="ti ti-plus"></i></button>
         </div>
-        <button class="btn btn-full" style="background:var(--neutral-solid);color:var(--cream);margin-top:12px" onclick="dongNhapTayCX1()">Đóng</button>
+        <div class="kq-actions" style="margin-top:12px;"><button class="kq-btn kq-btn--new" onclick="dongNhapTayCX1()">Đóng</button></div>
       </div>
     `;
     document.body.appendChild(modal);
@@ -2137,7 +2137,7 @@ function xemChiTietLichSuCX1(idPhien) {
   if (!entry) return;
 
   dangXemLichSuId = idPhien;
-  const { hangDot, footDot, hangGom, footGom } = taoHangKetQuaCX1(entry.phienCX1, true);
+  const { hangDot, footDot, hangGom, footGom, tongQRAll, tongKGAll } = taoHangKetQuaCX1(entry.phienCX1, true);
   const tbodyDot = document.getElementById("lichsu-tbody-dot");
   const tfootDot = document.getElementById("lichsu-tfoot-dot");
   const tbodyGom = document.getElementById("lichsu-tbody-gom");
@@ -2147,6 +2147,11 @@ function xemChiTietLichSuCX1(idPhien) {
   if (tbodyGom) tbodyGom.innerHTML = hangGom;
   if (tfootGom) tfootGom.innerHTML = footGom;
   document.getElementById("lichsu-chitiet-tieude").textContent = "Chỉ For — " + entry.ngay;
+  const elBao = document.getElementById("ls-cx1-tong-bao");
+  const elKg = document.getElementById("ls-cx1-tong-kg");
+  if (elBao) elBao.textContent = (tongQRAll || 0).toLocaleString("vi-VN");
+  if (elKg) elKg.textContent = Number(tongKGAll || 0).toLocaleString("vi-VN", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+  if (typeof toggleLichSuCX1View === "function") toggleLichSuCX1View("chitiet");
 
   if (typeof chuyenTrangKhongNav === "function") chuyenTrangKhongNav("lichsuChiTiet");
 }
