@@ -1594,7 +1594,7 @@ function taoHangKetQuaCX1(danhSach, isReadonly = false) {
       const safeQc = typeof escapeHtml === "function" ? escapeHtml(g.qc) : g.qc;
       const escapedMspParam = String(g.msp || "").replace(/\\/g, "\\\\").replace(/'/g, "\\'").replace(/"/g, "&quot;");
       const escapedQcParam = String(g.qc || "").replace(/\\/g, "\\\\").replace(/'/g, "\\'").replace(/"/g, "&quot;");
-      const countBadge = soBaoNhom > 1 ? `<span class="kq-badge-count">×${soBaoNhom}</span>` : '';
+
       const keyB64 = btoa(encodeURIComponent(safeKey));
 
       let subItemsHtml = g.items.map((it, subIdx) => {
@@ -1628,7 +1628,7 @@ function taoHangKetQuaCX1(danhSach, isReadonly = false) {
             <span class="kq-col-dot">Đợt ${g.dot}</span>
             <div class="kq-col-name">
               <span>${safeQc}</span>
-              ${countBadge}
+
             </div>
             <span class="kq-col-count">${soBaoNhom}</span>
             <span class="kq-col-kg">${tongKgNhom.toFixed(1)}</span>

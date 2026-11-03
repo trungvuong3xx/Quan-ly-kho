@@ -1145,7 +1145,7 @@ function taoHangKetQuaBTP(danhSach, tuKhoa = "", isReadonly = false) {
       const keyB64 = btoa(encodeURIComponent(g.key));
       const safeId = 'btp-kq-grp-' + keyB64.replace(/[^a-zA-Z0-9]/g, '');
       const isOpen = window.expandedKQBTP.has(g.key);
-      const countBadge = g.items.length > 1 ? `<span class="kq-badge-count">×${g.items.length}</span>` : '';
+
       const kgText = (g.kg !== undefined && g.kg !== null && Number(g.kg) > 0) ? anToanHtmlBTP(g.kg) : '—';
 
       let subItemsHtml = g.items.map((it, subIdx) => {
@@ -1178,7 +1178,7 @@ function taoHangKetQuaBTP(danhSach, tuKhoa = "", isReadonly = false) {
             <span class="kq-col-dot">Đợt ${g.dot}</span>
             <div class="kq-col-name">
               <span>${safeMsp}</span>
-              ${countBadge}
+
             </div>
             <span class="kq-col-count" style="color:var(--success); font-weight:700;">${kgText}</span>
             <span class="kq-col-kg" style="color:var(--row-text); font-weight:700;">${g.items.length} mã</span>
