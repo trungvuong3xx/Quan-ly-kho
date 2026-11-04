@@ -1066,13 +1066,22 @@ function toggleChiTietKQBTP(groupKey) {
     const isOpen = window.expandedKQBTP.has(groupKey);
     detailsEl.style.display = isOpen ? 'block' : 'none';
     if (isOpen) chevEl.classList.add('open'); else chevEl.classList.remove('open');
+    chevEl.style.transform = isOpen ? 'rotate(180deg)' : 'none';
   } else {
     thucHienLocKetQuaBTP();
   }
 }
 window.toggleChiTietKQBTP = toggleChiTietKQBTP;
 
-function toggleChiTietKQBTPByB64(keyB64) {
+function toggleChiTietKQBTPByB64(keyB64, event) {
+  if (event) {
+    const content = event.currentTarget;
+    if (content && content.classList.contains('swiped')) {
+      content.style.transform = 'translateX(0px)';
+      content.classList.remove('swiped');
+      return;
+    }
+  }
   let targetKey = "";
   try {
     targetKey = decodeURIComponent(atob(keyB64));
@@ -1174,7 +1183,7 @@ function taoHangKetQuaBTP(danhSach, tuKhoa = "", isReadonly = false) {
               <span>Xóa</span>
             </button>
           </div>`}
-          <div class="kq-swipe-content" onclick="toggleChiTietKQBTPByB64('${keyB64}')">
+          <div class="kq-swipe-content" onclick="toggleChiTietKQBTPByB64('${keyB64}', event)">
             <span class="kq-col-dot">Đợt ${g.dot}</span>
             <div class="kq-col-name">
               <span>${safeMsp}</span>

@@ -452,8 +452,8 @@
       const endX = (e && e.changedTouches && e.changedTouches[0]) ? e.changedTouches[0].clientX : touchState.currentX;
       const dx = endX - touchState.startX;
 
-      content.style.transition = "transform 0.2s cubic-bezier(0.2, 0.9, 0.3, 1)";
       if (touchState.isSwiping) {
+        content.style.transition = "transform 0.2s cubic-bezier(0.2, 0.9, 0.3, 1)";
         if (dx < -35) {
           content.style.transform = "translateX(-76px)";
           content.classList.add("swiped");
@@ -462,6 +462,7 @@
           content.classList.remove("swiped");
         }
       } else if (touchState.isAlreadySwiped) {
+        content.style.transition = "transform 0.2s cubic-bezier(0.2, 0.9, 0.3, 1)";
         content.style.transform = "translateX(0px)";
         content.classList.remove("swiped");
       }

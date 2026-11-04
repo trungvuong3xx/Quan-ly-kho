@@ -3521,6 +3521,11 @@ body.cam-active #chiFor.active {
   cursor: pointer;
   user-select: none;
   -webkit-user-select: none;
+  touch-action: pan-y;
+}
+
+.kq-swipe-content > * {
+  pointer-events: none;
 }
 
 .kq-col-dot {
@@ -3571,7 +3576,14 @@ body.cam-active #chiFor.active {
   flex-shrink: 0;
 }
 
-.kq-col-chevron.open {
+.kq-col-chevron i {
+  display: inline-block;
+  transition: transform 0.2s;
+}
+
+.kq-col-chevron.open,
+.kq-col-chevron i.open,
+.kq-col-chevron.open i {
   transform: rotate(180deg);
 }
 

@@ -946,11 +946,31 @@ function toggleChiTietKQQR(groupKey) {
     const isOpen = window.expandedKQQR.has(groupKey);
     detailsEl.style.display = isOpen ? 'block' : 'none';
     if (isOpen) chevEl.classList.add('open'); else chevEl.classList.remove('open');
+    chevEl.style.transform = isOpen ? 'rotate(180deg)' : 'none';
   } else {
     hienKetQuaQuetQR();
   }
 }
 window.toggleChiTietKQQR = toggleChiTietKQQR;
+
+function toggleChiTietKQQRByB64(keyB64, event) {
+  if (event) {
+    const content = event.currentTarget;
+    if (content && content.classList.contains('swiped')) {
+      content.style.transform = 'translateX(0px)';
+      content.classList.remove('swiped');
+      return;
+    }
+  }
+  let targetKey = "";
+  try {
+    targetKey = decodeURIComponent(atob(keyB64));
+  } catch (e) {
+    targetKey = keyB64;
+  }
+  toggleChiTietKQQR(targetKey);
+}
+window.toggleChiTietKQQRByB64 = toggleChiTietKQQRByB64;
 
 function xoaItemKqQR(originalIndex, ev) {
   if (ev) ev.stopPropagation();
@@ -1030,7 +1050,8 @@ function taoHangKetQuaQuetQR(danhSach) {
       const soBaoNhom = g.items.length;
       const tongKgNhom = g.items.reduce((sum, it) => sum + (it.item.kg || 0), 0);
       const safeKey = String(g.key);
-      const safeId = 'qr-kq-grp-' + btoa(encodeURIComponent(safeKey)).replace(/[^a-zA-Z0-9]/g, '');
+      const keyB64 = btoa(encodeURIComponent(safeKey));
+      const safeId = 'qr-kq-grp-' + keyB64.replace(/[^a-zA-Z0-9]/g, '');
       const isOpen = window.expandedKQQR.has(safeKey);
       const safeQc = typeof escapeHtml === "function" ? escapeHtml(g.qc) : g.qc;
 
@@ -1061,7 +1082,7 @@ function taoHangKetQuaQuetQR(danhSach) {
               <span>Xóa</span>
             </button>
           </div>
-          <div class="kq-swipe-content" onclick="toggleChiTietKQQR('${safeKey}')">
+          <div class="kq-swipe-content" onclick="toggleChiTietKQQRByB64('${keyB64}', event)">
             <span class="kq-col-dot">Đợt ${g.dot}</span>
             <div class="kq-col-name">
               <span>${safeQc}</span>

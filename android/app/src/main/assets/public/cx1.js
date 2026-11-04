@@ -1448,7 +1448,15 @@ function capNhatLogCX1() {
 // ── Quản lý trạng thái Accordion Bảng Kết Quả CX1 (An toàn Base64 chống lỗi dấu nháy & XSS) ──
 window.expandedKQCX1 = window.expandedKQCX1 || new Set();
 
-function toggleChiTietKQCX1(groupKeyParam) {
+function toggleChiTietKQCX1(groupKeyParam, event) {
+  if (event) {
+    const content = event.currentTarget;
+    if (content && content.classList.contains('swiped')) {
+      content.style.transform = 'translateX(0px)';
+      content.classList.remove('swiped');
+      return;
+    }
+  }
   let groupKey = String(groupKeyParam || "");
   try {
     groupKey = decodeURIComponent(atob(groupKeyParam));
@@ -1468,6 +1476,7 @@ function toggleChiTietKQCX1(groupKeyParam) {
     const isOpen = window.expandedKQCX1.has(groupKey);
     detailsEl.style.display = isOpen ? 'block' : 'none';
     if (isOpen) chevEl.classList.add('open'); else chevEl.classList.remove('open');
+    chevEl.style.transform = isOpen ? 'rotate(180deg)' : 'none';
   } else {
     hienKetQuaCX1();
   }
@@ -1624,7 +1633,7 @@ function taoHangKetQuaCX1(danhSach, isReadonly = false) {
               <span>Xóa</span>
             </button>
           </div>` : ''}
-          <div class="kq-swipe-content" onclick="toggleChiTietKQCX1('${keyB64}')">
+          <div class="kq-swipe-content" onclick="toggleChiTietKQCX1('${keyB64}', event)">
             <span class="kq-col-dot">Đợt ${g.dot}</span>
             <div class="kq-col-name">
               <span>${safeQc}</span>
