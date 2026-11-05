@@ -1085,7 +1085,7 @@ function nhapTayCX1(dot, msp, qc) {
 function renderSuaChiTietCX1() {
   const container = document.getElementById("cx1-sua-chitiet-container");
   if (!container) return;
-  const rows = phienCX1.filter(r => r.dotQuet === cx1DangSuaDot && r.msp === cx1DangSuaMsp);
+  const rows = phienCX1.filter(r => r.dotQuet === cx1DangSuaDot && ((r.qc || r.msp || "KHAC") === cx1DangSuaQc || r.msp === cx1DangSuaMsp));
 
   let listHtml = "";
   if (rows.length === 0) {
@@ -1146,7 +1146,7 @@ function xoaMaCX1TrongSua(index, ev) {
 function xoaTongCX1() {
   if (typeof moXacNhanApp === "function") {
     moXacNhanApp("Xóa tất cả mã của quy cách này trong đợt " + cx1DangSuaDot + "?", () => {
-      phienCX1 = phienCX1.filter(r => !(r.dotQuet === cx1DangSuaDot && r.msp === cx1DangSuaMsp));
+      phienCX1 = phienCX1.filter(r => !(r.dotQuet === cx1DangSuaDot && ((r.qc || r.msp || "KHAC") === cx1DangSuaQc || r.msp === cx1DangSuaMsp)));
       const maxDot = phienCX1.length > 0 ? Math.max(0, ...phienCX1.map(r => r.dotQuet || 1)) : 0;
       demSoDot = maxDot > 0 ? maxDot : 1;
       luuPhienDoDangCX1();
@@ -1485,6 +1485,20 @@ function toggleChiTietKQCX1(groupKeyParam, event) {
 }
 window.toggleChiTietKQCX1 = toggleChiTietKQCX1;
 
+function suaNhomDotCX1(dot, msp, qc, ev) {
+  if (ev) {
+    ev.stopPropagation();
+    const wrap = ev.currentTarget ? ev.currentTarget.closest('.kq-swipe-row-wrap') : null;
+    const content = wrap ? wrap.querySelector('.kq-swipe-content') : null;
+    if (content) {
+      content.style.transform = 'translateX(0px)';
+      content.classList.remove('swiped');
+    }
+  }
+  nhapTayCX1(dot, msp, qc);
+}
+window.suaNhomDotCX1 = suaNhomDotCX1;
+
 function xoaNhomDotCX1ByB64(keyB64, ev) {
   if (ev) ev.stopPropagation();
   let groupKey = "";
@@ -1630,7 +1644,11 @@ function taoHangKetQuaCX1(danhSach, isReadonly = false) {
       <div class="kq-swipe-container">
         <div class="kq-swipe-row-wrap">
           ${!isReadonly ? `
-          <div class="kq-swipe-actions">
+          <div class="kq-swipe-actions kq-swipe-actions--dual">
+            <button type="button" class="kq-swipe-btn-edit" onclick="suaNhomDotCX1(${g.dot}, '${escapedMspParam}', '${escapedQcParam}', event)">
+              <i class="ti ti-edit"></i>
+              <span>Sửa</span>
+            </button>
             <button type="button" class="kq-swipe-btn-del" onclick="xoaNhomDotCX1ByB64('${keyB64}', event)">
               <i class="ti ti-trash"></i>
               <span>Xóa</span>
@@ -1649,12 +1667,6 @@ function taoHangKetQuaCX1(danhSach, isReadonly = false) {
         </div>
         <div id="details-${safeId}" class="kq-group-details" style="display:${isOpen ? 'block' : 'none'};">
           ${subItemsHtml}
-          ${!isReadonly ? `
-          <div style="display:flex; justify-content:flex-end; padding:4px 2px 2px 2px;">
-            <button type="button" class="kq-sub-edit-btn" onclick="nhapTayCX1(${g.dot}, '${escapedMspParam}', '${escapedQcParam}')">
-              <i class="ti ti-edit"></i> Sửa Kg đợt ${g.dot}
-            </button>
-          </div>` : ''}
         </div>
       </div>`;
     });

@@ -395,19 +395,33 @@
     }
   }
 
-  // ── 2. API Vuốt Xóa (Swipe-to-Delete) Dùng Chung ────────────────────────────
+  // ── 2. API Vuốt Xóa / Sửa (Swipe Actions) Dùng Chung ────────────────────────
   function khoiTaoSwipe(containerOrId, contentSelector = ".btp-swipe-content", initFlag = "__swipeCoreInit") {
     const container = typeof containerOrId === "string" ? document.getElementById(containerOrId) : containerOrId;
     if (!container || container[initFlag]) return;
     container[initFlag] = true;
 
     let touchState = null;
+    let preventNextClick = false;
 
-    container.addEventListener("touchstart", (e) => {
-      const touch = e.touches[0];
-      if (!touch) return;
-      const content = e.target.closest(contentSelector);
+    container.addEventListener("click", (e) => {
+      if (preventNextClick) {
+        preventNextClick = false;
+        if (!e.target.closest(".kq-swipe-actions, .btp-swipe-actions")) {
+          e.stopPropagation();
+          e.preventDefault();
+        }
+      }
+    }, true);
+
+    const startSwipe = (clientX, clientY, target, isMouse = false) => {
+      const content = target.closest(contentSelector);
       if (!content) return;
+      const wrap = content.parentElement;
+      const actionsEl = wrap ? wrap.querySelector(".kq-swipe-actions, .btp-swipe-actions") : null;
+      if (!actionsEl) return;
+      const defaultW = actionsEl.classList.contains("kq-swipe-actions--dual") ? 140 : 76;
+      const actionWidth = actionsEl.offsetWidth > 0 ? actionsEl.offsetWidth : defaultW;
 
       const allSwiped = container.querySelectorAll(contentSelector + ".swiped");
       allSwiped.forEach(el => {
@@ -420,48 +434,54 @@
       const isAlreadySwiped = content.classList.contains("swiped");
       touchState = {
         content: content,
-        startX: touch.clientX,
-        startY: touch.clientY,
-        currentX: touch.clientX,
+        startX: clientX,
+        startY: clientY,
+        currentX: clientX,
         isSwiping: false,
-        isAlreadySwiped: isAlreadySwiped
+        isAlreadySwiped: isAlreadySwiped,
+        actionWidth: actionWidth,
+        isMouse: isMouse
       };
-    }, { passive: true });
+    };
 
-    container.addEventListener("touchmove", (e) => {
+    const moveSwipe = (clientX, clientY) => {
       if (!touchState) return;
-      const touch = e.touches[0];
-      if (!touch) return;
-      touchState.currentX = touch.clientX;
-      const dx = touch.clientX - touchState.startX;
-      const dy = touch.clientY - touchState.startY;
+      touchState.currentX = clientX;
+      const dx = clientX - touchState.startX;
+      const dy = clientY - touchState.startY;
+      const maxW = touchState.actionWidth || 76;
 
       if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 10) {
         touchState.isSwiping = true;
-        let offset = touchState.isAlreadySwiped ? (-76 + dx) : dx;
+        let offset = touchState.isAlreadySwiped ? (-maxW + dx) : dx;
         if (offset > 0) offset = 0;
-        if (offset < -85) offset = -85;
+        if (offset < -(maxW + 12)) offset = -(maxW + 12);
         touchState.content.style.transition = "none";
         touchState.content.style.transform = `translateX(${offset}px)`;
       }
-    }, { passive: true });
+    };
 
-    const finishSwipe = (e) => {
+    const finishSwipe = (endClientX) => {
       if (!touchState) return;
       const content = touchState.content;
-      const endX = (e && e.changedTouches && e.changedTouches[0]) ? e.changedTouches[0].clientX : touchState.currentX;
+      const maxW = touchState.actionWidth || 76;
+      const endX = typeof endClientX === "number" ? endClientX : touchState.currentX;
       const dx = endX - touchState.startX;
 
       if (touchState.isSwiping) {
+        preventNextClick = true;
+        setTimeout(() => { preventNextClick = false; }, 120);
         content.style.transition = "transform 0.2s cubic-bezier(0.2, 0.9, 0.3, 1)";
-        if (dx < -35) {
-          content.style.transform = "translateX(-76px)";
+        if (dx < -35 || (touchState.isAlreadySwiped && dx < 35)) {
+          content.style.transform = `translateX(-${maxW}px)`;
           content.classList.add("swiped");
         } else {
           content.style.transform = "translateX(0px)";
           content.classList.remove("swiped");
         }
-      } else if (touchState.isAlreadySwiped) {
+      } else if (touchState.isAlreadySwiped && !touchState.isMouse) {
+        preventNextClick = true;
+        setTimeout(() => { preventNextClick = false; }, 120);
         content.style.transition = "transform 0.2s cubic-bezier(0.2, 0.9, 0.3, 1)";
         content.style.transform = "translateX(0px)";
         content.classList.remove("swiped");
@@ -469,12 +489,47 @@
       touchState = null;
     };
 
-    container.addEventListener("touchend", finishSwipe);
+    container.addEventListener("touchstart", (e) => {
+      const touch = e.touches[0];
+      if (!touch) return;
+      startSwipe(touch.clientX, touch.clientY, e.target, false);
+    }, { passive: true });
+
+    container.addEventListener("touchmove", (e) => {
+      if (!touchState || touchState.isMouse) return;
+      const touch = e.touches[0];
+      if (!touch) return;
+      moveSwipe(touch.clientX, touch.clientY);
+    }, { passive: true });
+
+    container.addEventListener("touchend", (e) => {
+      if (!touchState || touchState.isMouse) return;
+      const endX = (e && e.changedTouches && e.changedTouches[0]) ? e.changedTouches[0].clientX : touchState.currentX;
+      finishSwipe(endX);
+    });
+
     container.addEventListener("touchcancel", () => {
-      if (touchState) {
-        touchState.content.style.transform = touchState.isAlreadySwiped ? "translateX(-76px)" : "translateX(0px)";
+      if (touchState && !touchState.isMouse) {
+        const maxW = touchState.actionWidth || 76;
+        touchState.content.style.transform = touchState.isAlreadySwiped ? `translateX(-${maxW}px)` : "translateX(0px)";
         touchState = null;
       }
+    });
+
+    // Hỗ trợ kéo chuột ngang trên PC / Desktop
+    container.addEventListener("mousedown", (e) => {
+      if (e.button !== 0) return;
+      startSwipe(e.clientX, e.clientY, e.target, true);
+    });
+
+    window.addEventListener("mousemove", (e) => {
+      if (!touchState || !touchState.isMouse) return;
+      moveSwipe(e.clientX, e.clientY);
+    });
+
+    window.addEventListener("mouseup", (e) => {
+      if (!touchState || !touchState.isMouse) return;
+      finishSwipe(e.clientX);
     });
   }
 

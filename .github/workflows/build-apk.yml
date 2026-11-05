@@ -7,12 +7,14 @@ on:
       - main
     paths:
       - 'app.js'
+      - 'scanner-core.js'
       - 'quetqr.js'
       - 'kiemke.js'
       - 'cx1.js'
       - 'cx5.js'
       - 'btp.js'
       - 'tonkho.js'
+      - 'sw.js'
       - 'index.html'
       - 'style.css'
       - 'package.json'

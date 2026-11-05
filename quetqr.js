@@ -973,6 +973,20 @@ function toggleChiTietKQQRByB64(keyB64, event) {
 }
 window.toggleChiTietKQQRByB64 = toggleChiTietKQQRByB64;
 
+function suaNhomDotQR(dot, qc, ev) {
+  if (ev) {
+    ev.stopPropagation();
+    const wrap = ev.currentTarget ? ev.currentTarget.closest('.kq-swipe-row-wrap') : null;
+    const content = wrap ? wrap.querySelector('.kq-swipe-content') : null;
+    if (content) {
+      content.style.transform = 'translateX(0px)';
+      content.classList.remove('swiped');
+    }
+  }
+  nhapTayKGQR(dot, qc);
+}
+window.suaNhomDotQR = suaNhomDotQR;
+
 function xoaItemKqQR(originalIndex, ev) {
   if (ev) ev.stopPropagation();
   if (originalIndex >= 0 && originalIndex < phienQuetQR.length) {
@@ -1077,8 +1091,12 @@ function taoHangKetQuaQuetQR(danhSach) {
       hangDot += `
       <div class="kq-swipe-container">
         <div class="kq-swipe-row-wrap">
-          <div class="kq-swipe-actions">
-            <button type="button" class="kq-swipe-btn-del" onclick="xoaNhomDotQR(${g.dot}, '${escapedQcParam}')">
+          <div class="kq-swipe-actions kq-swipe-actions--dual">
+            <button type="button" class="kq-swipe-btn-edit" onclick="suaNhomDotQR(${g.dot}, '${escapedQcParam}', event)">
+              <i class="ti ti-edit"></i>
+              <span>Sửa</span>
+            </button>
+            <button type="button" class="kq-swipe-btn-del" onclick="xoaNhomDotQR(${g.dot}, '${escapedQcParam}', event)">
               <i class="ti ti-trash"></i>
               <span>Xóa</span>
             </button>
@@ -1096,11 +1114,6 @@ function taoHangKetQuaQuetQR(danhSach) {
         </div>
         <div id="details-${safeId}" class="kq-group-details" style="display:${isOpen ? 'block' : 'none'};">
           ${subItemsHtml}
-          <div style="display:flex; justify-content:flex-end; padding:4px 2px 2px 2px;">
-            <button type="button" class="kq-sub-edit-btn" onclick="nhapTayKGQR(${g.dot}, '${escapedQcParam}')">
-              <i class="ti ti-edit"></i> Sửa Kg đợt ${g.dot}
-            </button>
-          </div>
         </div>
       </div>`;
     });
@@ -1353,7 +1366,8 @@ function xoaTongQR() {
 }
 window.nhapTayKGQR = nhapTayKGQR;
 
-function xoaNhomDotQR(dot, qc) {
+function xoaNhomDotQR(dot, qc, ev) {
+  if (ev) ev.stopPropagation();
   if (typeof moXacNhanApp === "function") {
     moXacNhanApp(
       `Xóa tất cả bao của QC ${qc} trong Đợt ${dot}?`,
