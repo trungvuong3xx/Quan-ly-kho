@@ -1468,12 +1468,14 @@ function toggleChiTietKQCX1(groupKeyParam, event) {
   } else {
     window.expandedKQCX1.add(groupKey);
   }
+  const isOpen = window.expandedKQCX1.has(groupKey);
   const keyB64 = btoa(encodeURIComponent(groupKey));
-  const safeId = 'cx1-kq-grp-' + keyB64.replace(/[^a-zA-Z0-9]/g, '');
-  const detailsEl = document.getElementById('details-' + safeId);
-  const chevEl = document.getElementById('chev-' + safeId);
+  const rawId = keyB64.replace(/[^a-zA-Z0-9]/g, '');
+
+  const container = (event && event.currentTarget) ? event.currentTarget.closest('.kq-swipe-container') : null;
+  const detailsEl = container ? container.querySelector('.kq-group-details') : (document.getElementById('details-cx1-kq-grp-' + rawId) || document.getElementById('details-cx1-ls-grp-' + rawId));
+  const chevEl = container ? container.querySelector('.kq-col-chevron i') : (document.getElementById('chev-cx1-kq-grp-' + rawId) || document.getElementById('chev-cx1-ls-grp-' + rawId));
   if (detailsEl && chevEl) {
-    const isOpen = window.expandedKQCX1.has(groupKey);
     detailsEl.style.display = isOpen ? 'block' : 'none';
     if (isOpen) chevEl.classList.add('open'); else chevEl.classList.remove('open');
     chevEl.style.transform = isOpen ? 'rotate(180deg)' : 'none';
@@ -1598,7 +1600,8 @@ function taoHangKetQuaCX1(danhSach, isReadonly = false) {
       const soBaoNhom = g.items.reduce((sum, it) => sum + (parseInt(it.item.bao) || 1), 0);
       const tongKgNhom = g.items.reduce((sum, it) => sum + (it.item.kg || 0), 0);
       const safeKey = String(g.key);
-      const safeId = 'cx1-kq-grp-' + btoa(encodeURIComponent(safeKey)).replace(/[^a-zA-Z0-9]/g, '');
+      const prefix = isReadonly ? 'cx1-ls-grp-' : 'cx1-kq-grp-';
+      const safeId = prefix + btoa(encodeURIComponent(safeKey)).replace(/[^a-zA-Z0-9]/g, '');
       const isOpen = window.expandedKQCX1.has(safeKey);
       const safeQc = typeof escapeHtml === "function" ? escapeHtml(g.qc) : g.qc;
       const escapedMspParam = String(g.msp || "").replace(/\\/g, "\\\\").replace(/'/g, "\\'").replace(/"/g, "&quot;");

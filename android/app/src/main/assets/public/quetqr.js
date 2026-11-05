@@ -933,17 +933,18 @@ function capNhatLogQR() {
 // ── Quản lý trạng thái Accordion Bảng Kết Quả Quét QR ──────────────────
 window.expandedKQQR = window.expandedKQQR || new Set();
 
-function toggleChiTietKQQR(groupKey) {
+function toggleChiTietKQQR(groupKey, event) {
   if (window.expandedKQQR.has(groupKey)) {
     window.expandedKQQR.delete(groupKey);
   } else {
     window.expandedKQQR.add(groupKey);
   }
+  const isOpen = window.expandedKQQR.has(groupKey);
   const safeId = 'qr-kq-grp-' + btoa(encodeURIComponent(groupKey)).replace(/[^a-zA-Z0-9]/g, '');
-  const detailsEl = document.getElementById('details-' + safeId);
-  const chevEl = document.getElementById('chev-' + safeId);
+  const container = (event && event.currentTarget) ? event.currentTarget.closest('.kq-swipe-container') : null;
+  const detailsEl = container ? container.querySelector('.kq-group-details') : document.getElementById('details-' + safeId);
+  const chevEl = container ? container.querySelector('.kq-col-chevron i') : document.getElementById('chev-' + safeId);
   if (detailsEl && chevEl) {
-    const isOpen = window.expandedKQQR.has(groupKey);
     detailsEl.style.display = isOpen ? 'block' : 'none';
     if (isOpen) chevEl.classList.add('open'); else chevEl.classList.remove('open');
     chevEl.style.transform = isOpen ? 'rotate(180deg)' : 'none';
@@ -968,7 +969,7 @@ function toggleChiTietKQQRByB64(keyB64, event) {
   } catch (e) {
     targetKey = keyB64;
   }
-  toggleChiTietKQQR(targetKey);
+  toggleChiTietKQQR(targetKey, event);
 }
 window.toggleChiTietKQQRByB64 = toggleChiTietKQQRByB64;
 

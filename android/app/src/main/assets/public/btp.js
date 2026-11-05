@@ -1051,18 +1051,20 @@ async function ketThucBTP() {
 // ── Quản lý trạng thái Accordion Bảng Kết Quả BTP ──────────────────
 window.expandedKQBTP = window.expandedKQBTP || new Set();
 
-function toggleChiTietKQBTP(groupKey) {
+function toggleChiTietKQBTP(groupKey, event) {
   if (window.expandedKQBTP.has(groupKey)) {
     window.expandedKQBTP.delete(groupKey);
   } else {
     window.expandedKQBTP.add(groupKey);
   }
+  const isOpen = window.expandedKQBTP.has(groupKey);
   const keyB64 = btoa(encodeURIComponent(groupKey));
-  const safeId = 'btp-kq-grp-' + keyB64.replace(/[^a-zA-Z0-9]/g, '');
-  const detailsEl = document.getElementById('details-' + safeId);
-  const chevEl = document.getElementById('chev-' + safeId);
+  const rawId = keyB64.replace(/[^a-zA-Z0-9]/g, '');
+
+  const container = (event && event.currentTarget) ? event.currentTarget.closest('.kq-swipe-container') : null;
+  const detailsEl = container ? container.querySelector('.kq-group-details') : (document.getElementById('details-btp-kq-grp-' + rawId) || document.getElementById('details-btp-ls-grp-' + rawId));
+  const chevEl = container ? container.querySelector('.kq-col-chevron i') : (document.getElementById('chev-btp-kq-grp-' + rawId) || document.getElementById('chev-btp-ls-grp-' + rawId));
   if (detailsEl && chevEl) {
-    const isOpen = window.expandedKQBTP.has(groupKey);
     detailsEl.style.display = isOpen ? 'block' : 'none';
     if (isOpen) chevEl.classList.add('open'); else chevEl.classList.remove('open');
     chevEl.style.transform = isOpen ? 'rotate(180deg)' : 'none';
@@ -1087,7 +1089,7 @@ function toggleChiTietKQBTPByB64(keyB64, event) {
   } catch (e) {
     targetKey = keyB64;
   }
-  toggleChiTietKQBTP(targetKey);
+  toggleChiTietKQBTP(targetKey, event);
 }
 window.toggleChiTietKQBTPByB64 = toggleChiTietKQBTPByB64;
 
@@ -1151,7 +1153,8 @@ function taoHangKetQuaBTP(danhSach, tuKhoa = "", isReadonly = false) {
     hangDot = filteredGroups.map(g => {
       const safeMsp = anToanHtmlBTP(g.msp);
       const keyB64 = btoa(encodeURIComponent(g.key));
-      const safeId = 'btp-kq-grp-' + keyB64.replace(/[^a-zA-Z0-9]/g, '');
+      const prefix = isReadonly ? 'btp-ls-grp-' : 'btp-kq-grp-';
+      const safeId = prefix + keyB64.replace(/[^a-zA-Z0-9]/g, '');
       const isOpen = window.expandedKQBTP.has(g.key);
 
       const kgText = (g.kg !== undefined && g.kg !== null && Number(g.kg) > 0) ? anToanHtmlBTP(g.kg) : '—';
