@@ -71,3 +71,11 @@ Project-level behavioral and tooling guidelines.
 2. Chỉ sử dụng những hàm/thư viện đã có trong code được cung cấp. Nếu cần một chức năng chưa có, PHẢI tự viết code triển khai chi tiết hàm đó hoặc báo người dùng cài thêm package.
 3. Không tự tiện thêm các tính năng nằm ngoài phạm vi yêu cầu.
 4. Nếu có chỗ nào chưa rõ về cấu trúc dự án, HÃY DỪNG LẠI VÀ ĐẶT CÂU HỎI CHO NGƯỜI DÙNG thay vì tự suy đoán.
+
+### 6. 🔍 RÀ SOÁT TƯƠNG TÁC TOÀN DIỆN KHI THÊM / SỬA / XÓA CODE:
+1. **Tuyệt đối không chủ quan coi việc "chỉ sửa hiển thị/HTML/CSS" là an toàn:**
+   - Dù chỉ sửa/xóa 1 thẻ nhỏ, nếu phần tử đó nằm trong một khối tương tác (interactive container: dòng bảng kết quả, accordion, nút bấm, vùng vuốt swipe, camera overlay), BẮT BUỘC phải rà soát lại toàn bộ chuỗi sự kiện (`onclick`, `touch`, `drag/swipe`, xoay icon mũi tên).
+2. **Luôn rà soát lại toàn bộ logic ở các phần khác có liên quan:**
+   - Rà soát các module/bảng tương tự (BTP, CX1, Quét QR, CX5) để đảm bảo đồng bộ, tránh sửa chỗ này mà sót chỗ khác hoặc làm sai lệch dữ liệu.
+3. **Kiểm tra tương tác thực tế trước khi bàn giao:**
+   - Phải kiểm tra hành vi bấm/chạm thực tế xem phản hồi giao diện và logic có hoạt động trơn tru không trước khi hoàn tất task.
