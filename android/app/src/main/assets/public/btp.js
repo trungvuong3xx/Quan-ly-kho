@@ -433,13 +433,12 @@ function taoHtmlNhomLogBTP(g, isFirst) {
   let subItemsHtml = isExpanded ? g.items.map((it, subIdx) => {
     const subGio = it.thoiGian ? new Date(it.thoiGian).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit", second: "2-digit" }) : "";
     const subKg = (it.kg !== undefined && it.kg !== null && Number(it.kg) > 0) ? anToanHtmlBTP(it.kg) : (Number(g.kg) > 0 ? anToanHtmlBTP(g.kg) : '0');
-    const safeSubMsp = anToanHtmlBTP(it.msp || g.msp);
+    const safeSubMsp = anToanHtmlBTP(it.rawQR || it.msp || g.msp);
     const safeUid = anToanHtmlBTP(it.uid || ("idx_" + subIdx));
 
-    return `<div class="btp-sub-item">
+    return `<div class="btp-sub-item btp-sub-item-btp">
         <span class="btp-sub-stt">${subIdx + 1}</span>
-        <span class="btp-sub-msp">${safeSubMsp}</span>
-        <span class="btp-sub-kg">${subKg}</span>
+        <span class="btp-sub-msp" title="${safeSubMsp}">${safeSubMsp}</span>
         <span class="btp-sub-gio">${subGio}</span>
         <button type="button" class="btp-sub-del-btn" onclick="xoaMaBTP('${safeUid}', event)" title="Xóa lần quét này">
           <i class="ti ti-trash"></i>
@@ -1166,7 +1165,6 @@ function taoHangKetQuaBTP(danhSach, tuKhoa = "", isReadonly = false) {
         return `<div class="kq-sub-item">
           <span class="kq-sub-stt">${subIdx + 1}</span>
           <span class="kq-sub-name" title="${safeSubMsp}">${safeSubMsp}</span>
-          <span class="kq-sub-val">${subKg}</span>
           <span class="kq-sub-time">${subGio}</span>
           ${isReadonly ? '' : `<button type="button" class="kq-sub-del-btn" onclick="xoaMaBTP('${safeUid}', event)" title="Xóa mã này">
             <i class="ti ti-trash"></i>
