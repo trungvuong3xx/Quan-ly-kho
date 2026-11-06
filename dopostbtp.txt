@@ -1,114 +1,152 @@
-var ALLOWED_BTP_SHEET_ID = "1KlAdGFca-FCmTrzPrjCMUMK2pTOfMHxFFH-keCkdr1A";
+/**
+ * ===================================================================
+ * SERVER WEB APP: Nhận dữ liệu BTP, định dạng Giờ chuẩn & Chống trùng
+ * Kèm API lấy danh sách QC tính KG tự động cho Bảng Tổng Hợp
+ * ===================================================================
+ */
 
 function doPost(e) {
-  var result;
   try {
-    var body = JSON.parse(e.postData.contents);
-    var sheetId = ALLOWED_BTP_SHEET_ID;
+    var contents = JSON.parse(e.postData.contents);
+    var action = contents.action;
+    
+    // 1. LƯU DỮ LIỆU QUÉT BTP TỪ THIẾT BỊ
+    if (action === "luuBTP") {
+      var data = contents.data || [];
+      if (!Array.isArray(data) || data.length === 0) {
+        return ContentService.createTextOutput(JSON.stringify({ success: true, count: 0 }))
+          .setMimeType(ContentService.MimeType.JSON);
+      }
 
-    if (body.action === "luuBTP") {
-      result = luuBTP(sheetId, body.data || body.payload);
-    } else if (body.action === "chayTongHopBTPTatCa" || body.action === "chayTongHopBTPKhoang" || body.action === "tongHopBTP") {
-      result = chayTongHopBTP(sheetId);
-    } else {
-      result = { success: false, message: "Action không hợp lệ: " + body.action };
-    }
-  } catch (err) {
-    result = { success: false, message: "Lỗi server: " + err.message };
-  }
-  return ContentService.createTextOutput(JSON.stringify(result))
-    .setMimeType(ContentService.MimeType.JSON);
-}
-
-function luuBTP(sheetId, data) {
-  var lock = LockService.getScriptLock();
-  try {
-    lock.waitLock(30000);
-    if (!data || !Array.isArray(data) || data.length === 0) {
-      return { success: false, message: "Không có dữ liệu BTP" };
-    }
-
-    var ss = SpreadsheetApp.openById(sheetId);
-    var sheet = ss.getSheetByName("QRBTP") || ss.getSheets()[0];
-    var startRow = Math.max(sheet.getLastRow() + 1, 5);
-
-    var rows = data.map(function(item) {
-      var ngay = item.ngay || "";
-      var gioQuet = "";
-      if (item.thoiGian) {
-        try {
-          var d = new Date(item.thoiGian);
-          gioQuet = !isNaN(d.getTime()) ? Utilities.formatDate(d, "GMT+7", "HH:mm:ss") : String(item.thoiGian);
-        } catch (e) {
-          gioQuet = String(item.thoiGian);
+      var ss = SpreadsheetApp.getActiveSpreadsheet();
+      var sheet = ss.getSheetByName("QRBTP") || ss.getActiveSheet();
+      var lastRow = sheet.getLastRow();
+      
+      // 1. Đọc các dòng gần nhất (tối đa 300 dòng) để kiểm tra chống trùng lặp
+      var existingKeys = {};
+      if (lastRow >= 5) {
+        var startCheckRow = Math.max(5, lastRow - 300);
+        var checkCount = lastRow - startCheckRow + 1;
+        var existingVals = sheet.getRange(startCheckRow, 1, checkCount, 5).getValues();
+        
+        for (var k = 0; k < existingVals.length; k++) {
+          var exRow = existingVals[k];
+          var exID = String(exRow[0] || "").trim();
+          var exTime = exRow[4] instanceof Date 
+            ? Utilities.formatDate(exRow[4], Session.getScriptTimeZone(), "HH:mm:ss") 
+            : String(exRow[4] || "").trim();
+          
+          if (exID) {
+            existingKeys[exID + "|" + exTime] = true;
+          }
         }
       }
 
-      return [
-        item.rawQR || item.id || "",
-        item.msp || "",
-        Number(item.kg || 0),
-        ngay,
-        gioQuet
-      ];
-    });
+      var rowsToAppend = [];
+      for (var i = 0; i < data.length; i++) {
+        var item = data[i];
+        var rawID = String(item.rawQR || item.id || "").trim();
+        if (!rawID) continue;
 
-    sheet.getRange(startRow, 1, rows.length, 5).setValues(rows);
-    return { success: true, message: "Đã lưu " + rows.length + " dòng vào Sheet QRBTP!" };
-  } catch (err) {
-    return { success: false, message: "Lỗi lưu: " + err.message };
-  } finally {
-    try { lock.releaseLock(); } catch (eLock) {}
-  }
-}
+        // Cột D (4): Ngày -> Date Object
+        var ngayDate;
+        if (item.ngay) {
+          var p = String(item.ngay).split("-");
+          if (p.length === 3) {
+            ngayDate = new Date(parseInt(p[0], 10), parseInt(p[1], 10) - 1, parseInt(p[2], 10));
+          } else {
+            ngayDate = new Date(item.ngay);
+          }
+        } else {
+          ngayDate = new Date();
+        }
 
-function chayTongHopBTP(sheetId) {
-  try {
-    sheetId = sheetId || "1KlAdGFca-FCmTrzPrjCMUMK2pTOfMHxFFH-keCkdr1A";
-    var ss = SpreadsheetApp.openById(sheetId);
-    var sheetTH = ss.getSheetByName("Tổng Hợp");
+        // Cột E (5): Thời gian -> Chuỗi giờ chuẩn "HH:mm:ss" (VD: "17:38:51")
+        var thoiGianDate = item.thoiGian ? new Date(item.thoiGian) : new Date();
+        if (isNaN(thoiGianDate.getTime())) thoiGianDate = new Date();
+        
+        var thoiGianStr = Utilities.formatDate(thoiGianDate, Session.getScriptTimeZone(), "HH:mm:ss");
 
-    var ngayLoc = null;   // null = lấy tất cả ngày
-    var phienLoc = null;  // null = lấy tất cả phiên
+        // Key chống trùng lặp
+        var key = rawID + "|" + thoiGianStr;
 
-    if (sheetTH) {
-      var valC2 = sheetTH.getRange("C2").getValue();
-      var valC3 = sheetTH.getRange("C3").getValue();
+        if (existingKeys[key]) continue; // ĐÃ CÓ TRÊN SHEET -> BỎ QUA BẢN GHI TRÙNG
+        existingKeys[key] = true;
 
-      // Ô C2: Ngày cần tổng hợp (dạng Date hoặc text)
-      if (valC2 instanceof Date) {
-        ngayLoc = valC2;
-      } else if (valC2 && !isNaN(new Date(valC2).getTime())) {
-        ngayLoc = new Date(valC2);
+        // Cột F (6): Số phiên (1..5)
+        var phienVal = item.phien ? parseInt(item.phien, 10) : 1;
+
+        rowsToAppend.push([
+          rawID,         // Cột A: ID
+          item.msp || "",// Cột B: Đơn
+          item.kg || 0,  // Cột C: Loại
+          ngayDate,      // Cột D: Ngày
+          thoiGianStr,   // Cột E: Thời gian dạng "HH:mm:ss" (VD: 17:38:51)
+          phienVal       // Cột F: Phiên
+        ]);
       }
+      
+      if (rowsToAppend.length > 0) {
+        var startRow = lastRow < 4 ? 5 : lastRow + 1;
+        var numRows = rowsToAppend.length;
 
-      // Ô C3: Phiên quét (1, 2, 3, 4, 5...). Để trống = lấy tất cả phiên
-      if (valC3 && !isNaN(valC3)) {
-        phienLoc = parseInt(valC3, 10);
+        // Ghi dữ liệu
+        sheet.getRange(startRow, 1, numRows, 6).setValues(rowsToAppend);
+
+        // Định dạng hiển thị Cột D (Ngày) và Cột E (Giờ hh:mm:ss)
+        sheet.getRange(startRow, 4, numRows, 1).setNumberFormat("yyyy-MM-dd");
+        sheet.getRange(startRow, 5, numRows, 1).setNumberFormat("hh:mm:ss");
       }
+      
+      return ContentService.createTextOutput(JSON.stringify({ success: true, count: rowsToAppend.length }))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+    
+    // 2. LẤY DANH MỤC QC ĐỂ TÍNH KG TRÊN BẢNG TỔNG HỢP
+    else if (action === "layDanhSachQCBTP" || action === "layDanhSachQC") {
+      var ssQC = SpreadsheetApp.getActiveSpreadsheet();
+      var sheetQC = ssQC.getSheetByName("QC");
+      if (!sheetQC) {
+        return ContentService.createTextOutput(JSON.stringify({ success: false, message: "Không tìm thấy Sheet QC" }))
+          .setMimeType(ContentService.MimeType.JSON);
+      }
+      var lastRowQC = sheetQC.getLastRow();
+      var list = [];
+      if (lastRowQC >= 2) {
+        var qcVals = sheetQC.getRange(2, 1, lastRowQC - 1, 27).getValues();
+        for (var j = 0; j < qcVals.length; j++) {
+          var rowQC = qcVals[j];
+          var maEM = String(rowQC[0] || "").trim().toUpperCase();
+          if (!maEM) continue;
+          var qcV = String(rowQC[21] || "").trim();
+          var kgAA = parseFloat(rowQC[26]) || 0;
+          var tach = tachSoMatVaChieuDaiQC_DoPost(qcV);
+          list.push({
+            maEM: maEM,
+            qcV: qcV,
+            mat: tach.mat,
+            dai: tach.dai,
+            kgAA: kgAA
+          });
+        }
+      }
+      return ContentService.createTextOutput(JSON.stringify({ success: true, list: list }))
+        .setMimeType(ContentService.MimeType.JSON);
     }
 
-    tongHopBTPSheet(sheetId, ngayLoc, phienLoc);
-    return { success: true, message: "Nhớ kiểm tra lại nhé" };
+    else {
+      return ContentService.createTextOutput(JSON.stringify({ success: false, message: "Action không hợp lệ: " + action }))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+
   } catch (err) {
-    return { success: false, message: "Lỗi tổng hợp: " + err.message };
+    return ContentService.createTextOutput(JSON.stringify({ error: err.toString() }))
+      .setMimeType(ContentService.MimeType.JSON);
   }
 }
 
-function chayTongHopBTPTatCa() {
-  chayTongHopBTP();
-}
-
-function chayTongHopBTPKhoang() {
-  chayTongHopBTP();
-}
-
-function tongHopBTP() {
-  chayTongHopBTP();
-}
-
-// Tách số mắt (sau chữ "x" thứ 2) và chiều dài (sau chữ "x" thứ 3) từ chuỗi quy cách QC
-function tachSoMatVaChieuDaiQC(qcV) {
+// Hàm phụ trợ tách số mắt và chiều dài từ chuỗi quy cách QC (tên riêng tránh trùng với file tổng hợp)
+function tachSoMatVaChieuDaiQC_DoPost(qcV) {
   var matVal = 0;
   var daiVal = 0;
   if (!qcV) return { mat: 0, dai: 0 };
@@ -119,7 +157,6 @@ function tachSoMatVaChieuDaiQC(qcV) {
   }
 
   if (partsQC.length >= 3) {
-    // Lấy phần sau chữ "x" thứ 2 (số mắt / số kèo MD)
     var valStr = partsQC[2].replace(/[^0-9\.]/g, "");
     matVal = parseFloat(valStr) || 0;
   } else {
@@ -130,305 +167,9 @@ function tachSoMatVaChieuDaiQC(qcV) {
   }
 
   if (partsQC.length >= 4) {
-    // Lấy phần sau chữ "x" thứ 3 (chiều dài)
     var daiStr = partsQC[3].replace(/[^0-9\.]/g, "");
     daiVal = parseFloat(daiStr) || 0;
   }
 
   return { mat: matVal, dai: daiVal };
-}
-
-// Tìm đúng quy cách TẤM NGUYÊN phù hợp dựa trên mã EM và số kèo (so thêm chiều dài sau chữ "x" thứ 3)
-function timInfoQCBTP(mapQC, maEM, soKeo) {
-  var key = String(maEM || "").trim().toUpperCase();
-  var qcEntry = mapQC[key];
-  if (!qcEntry) return null;
-
-  var targetSoKeo = parseFloat(soKeo) || 0;
-
-  // 1. Kiểm tra xem soKeo tương ứng với dòng nào trong QC để tìm ra CHIỀU DÀI (sau chữ "x" thứ 3)
-  var matchedRow = null;
-  if (targetSoKeo > 0 && qcEntry.rowByMat && qcEntry.rowByMat[targetSoKeo]) {
-    matchedRow = qcEntry.rowByMat[targetSoKeo];
-  } else if (targetSoKeo > 0 && qcEntry.rows) {
-    for (var r = 0; r < qcEntry.rows.length; r++) {
-      if (qcEntry.rows[r].mat === targetSoKeo) {
-        matchedRow = qcEntry.rows[r];
-        break;
-      }
-    }
-  }
-
-  // 2. Nếu tìm được dòng tương ứng với soKeo:
-  // Lấy TẤM NGUYÊN có CÙNG CHIỀU DÀI (sau chữ "x" thứ 3) với dòng đó!
-  if (matchedRow) {
-    var keyDai = String(matchedRow.dai);
-    if (qcEntry.nguyenTamByDai && qcEntry.nguyenTamByDai[keyDai]) {
-      return qcEntry.nguyenTamByDai[keyDai];
-    }
-  }
-
-  // 3. Nếu soKeo là kiện lẻ không có trong QC (ví dụ kiện lẻ bất kỳ):
-  // Tìm tấm nguyên có mat >= soKeo nhỏ nhất
-  if (targetSoKeo > 0 && qcEntry.rows && qcEntry.rows.length > 0) {
-    var bestMatch = null;
-    for (var r = 0; r < qcEntry.rows.length; r++) {
-      var item = qcEntry.rows[r];
-      if (item.mat >= targetSoKeo) {
-        if (!bestMatch || item.mat < bestMatch.mat) {
-          bestMatch = item;
-        }
-      }
-    }
-    if (bestMatch) {
-      var keyDaiBest = String(bestMatch.dai);
-      if (qcEntry.nguyenTamByDai && qcEntry.nguyenTamByDai[keyDaiBest]) {
-        return qcEntry.nguyenTamByDai[keyDaiBest];
-      }
-      return bestMatch;
-    }
-  }
-
-  // 4. Fallback: trả về dòng mặc định / lớn nhất của mã EM
-  return {
-    maEM: qcEntry.maEM,
-    mspERP: qcEntry.mspERP,
-    qcV: qcEntry.qcV,
-    kgAA: qcEntry.kgAA,
-    mat: qcEntry.matMax
-  };
-}
-
-function tongHopBTPSheet(sheetId, ngayLoc, phienLoc) {
-  sheetId = sheetId || "1KlAdGFca-FCmTrzPrjCMUMK2pTOfMHxFFH-keCkdr1A";
-  var ss = SpreadsheetApp.openById(sheetId);
-  var sheetQC = ss.getSheetByName("QC");
-  var sheetQR = ss.getSheetByName("QRBTP") || ss.getSheets()[0];
-  var sheetTH = ss.getSheetByName("Tổng Hợp");
-
-  if (!sheetTH) {
-    sheetTH = ss.insertSheet("Tổng Hợp");
-  }
-  
-  if (!sheetQR) return;
-  var fromRow = 5;
-  var toRow = sheetQR.getLastRow();
-  if (toRow < 5) return;
-
-  var mapQC = {};
-  if (sheetQC) {
-    var lastRowQC = sheetQC.getLastRow();
-    if (lastRowQC >= 2) {
-      var qcVals = sheetQC.getRange(2, 1, lastRowQC - 1, 30).getValues();
-      for (var i = 0; i < qcVals.length; i++) {
-        var row = qcVals[i];
-        var maEM = String(row[0] || "").trim().toUpperCase();
-        if (!maEM) continue;
-
-        var mspJ = String(row[9] || "").trim();
-        var mspFinal = mspJ;
-
-        var qcV = String(row[21] || "").trim();
-        var kgAA = parseFloat(row[26]) || 0;
-
-        var tach = tachSoMatVaChieuDaiQC(qcV);
-        var matVal = tach.mat;
-        var daiVal = tach.dai;
-
-        if (!mapQC[maEM]) {
-          mapQC[maEM] = {
-            maEM: maEM,
-            mspERP: mspFinal,
-            qcV: qcV,
-            kgAA: kgAA,
-            matMax: matVal,
-            rows: [],
-            // Map theo chiều dài (sau chữ "x" thứ 3): key = daiVal
-            // Lưu dòng có số mắt (sau chữ "x" thứ 2) LỚN NHẤT trong cùng chiều dài -> TẤM NGUYÊN
-            nguyenTamByDai: {},
-            // Map theo số mắt trực tiếp để tra chiều dài
-            rowByMat: {}
-          };
-        }
-
-        var rowItem = {
-          maEM: maEM,
-          mspERP: mspFinal,
-          qcV: qcV,
-          kgAA: kgAA,
-          mat: matVal,
-          dai: daiVal
-        };
-        mapQC[maEM].rows.push(rowItem);
-
-        if (matVal > 0) {
-          if (!mapQC[maEM].rowByMat[matVal]) {
-            mapQC[maEM].rowByMat[matVal] = rowItem;
-          }
-        }
-
-        // Xác định TẤM NGUYÊN cho từng chiều dài (dòng có mat lớn nhất trong cùng chiều dài dai)
-        var keyDai = String(daiVal);
-        if (!mapQC[maEM].nguyenTamByDai[keyDai]) {
-          mapQC[maEM].nguyenTamByDai[keyDai] = rowItem;
-        } else {
-          var currentMax = mapQC[maEM].nguyenTamByDai[keyDai];
-          if (matVal > currentMax.mat) {
-            mapQC[maEM].nguyenTamByDai[keyDai] = rowItem;
-          } else if (matVal === currentMax.mat && kgAA > 0 && currentMax.kgAA === 0) {
-            mapQC[maEM].nguyenTamByDai[keyDai] = rowItem;
-          }
-        }
-
-        // Dòng mặc định / lớn nhất toàn đơn
-        if (matVal > mapQC[maEM].matMax) {
-          mapQC[maEM].matMax = matVal;
-          if (qcV) mapQC[maEM].qcV = qcV;
-          if (kgAA > 0) mapQC[maEM].kgAA = kgAA;
-        } else if (matVal === mapQC[maEM].matMax && kgAA > 0 && mapQC[maEM].kgAA === 0) {
-          mapQC[maEM].kgAA = kgAA;
-        }
-        if (mspFinal && !mapQC[maEM].mspERP) mapQC[maEM].mspERP = mspFinal;
-      }
-    }
-  }
-
-  var numRows = toRow - fromRow + 1;
-  if (numRows <= 0) return;
-
-  // Đọc 6 cột (A đến F) để lấy Cột D (Ngày) và Cột F (Phiên)
-  var qrVals = sheetQR.getRange(fromRow, 1, numRows, 6).getValues();
-  var gomData = {};
-
-  for (var j = 0; j < qrVals.length; j++) {
-    var qrRow = qrVals[j];
-
-    // 1. Lọc theo Ngày (Cột D - index 3) nếu ô C2 có chọn ngày
-    if (ngayLoc) {
-      var ngayCell = qrRow[3];
-      if (!(ngayCell instanceof Date)) continue;
-      var ngayCellNorm = new Date(ngayCell.getFullYear(), ngayCell.getMonth(), ngayCell.getDate());
-      var ngayLocNorm = new Date(ngayLoc.getFullYear(), ngayLoc.getMonth(), ngayLoc.getDate());
-      if (ngayCellNorm.getTime() !== ngayLocNorm.getTime()) continue;
-    }
-
-    // 2. Lọc theo Phiên (Cột F - index 5) nếu ô C3 có chọn phiên
-    if (phienLoc) {
-      var phienRow = parseInt(qrRow[5], 10) || 1;
-      if (phienRow !== phienLoc) continue;
-    }
-
-    var maEM = String(qrRow[1] || "").trim().toUpperCase();
-    var soKeo = parseFloat(qrRow[2]) || 0;
-    if (!maEM || soKeo <= 0) continue;
-
-    // Tìm quy cách TẤM NGUYÊN QC tương ứng (so cùng chiều dài sau chữ "x" thứ 3)
-    var infoQC = timInfoQCBTP(mapQC, maEM, soKeo) || {};
-    var matTam = infoQC.mat || 960;
-    var isNguyenTam = (soKeo >= matTam && matTam > 0) || (soKeo === 960);
-
-    var qcV = infoQC.qcV || "";
-    var mspERP = infoQC.mspERP || maEM;
-    var kgAA = infoQC.kgAA || 0;
-    // Khóa nhóm phân biệt theo cả mã EM và quy cách để tách riêng các quy cách khác nhau
-    var groupKey = maEM + "__" + (qcV || matTam);
-
-    if (!gomData[groupKey]) {
-      gomData[groupKey] = {
-        groupKey: groupKey,
-        maEM: maEM,
-        mspERP: mspERP,
-        qcV: qcV,
-        kgAA: kgAA,
-        matTam: matTam,
-        nguyenTamCount: 0,
-        nguyenTamSize: matTam,
-        kienMap: {},
-        tongKienEyes: 0
-      };
-    }
-
-    if (isNguyenTam) {
-      gomData[groupKey].nguyenTamCount += 1;
-      gomData[groupKey].nguyenTamSize = soKeo;
-    } else {
-      if (!gomData[groupKey].kienMap[soKeo]) {
-        gomData[groupKey].kienMap[soKeo] = 0;
-      }
-      gomData[groupKey].kienMap[soKeo] += 1;
-      gomData[groupKey].tongKienEyes += soKeo;
-    }
-  }
-
-  var rowsTongHop = [];
-  var groupList = Object.keys(gomData).map(function(k) { return gomData[k]; }).sort(function(a, b) {
-    var cmpEM = String(a.maEM || "").localeCompare(String(b.maEM || ""), undefined, { numeric: true, sensitivity: 'base' });
-    if (cmpEM !== 0) return cmpEM;
-    return (parseFloat(b.matTam) || 0) - (parseFloat(a.matTam) || 0);
-  });
-
-  for (var k = 0; k < groupList.length; k++) {
-    var item = groupList[k];
-
-    var maEM = item.maEM;
-    var mspERP = item.mspERP;
-    var qcV = item.qcV;
-    var kgAA = item.kgAA;
-    var matTam = item.matTam || item.nguyenTamSize || 960;
-    var maSoDonOnly = maEM.replace(/^EM/i, "");
-
-    // Kiểm tra đơn này có CẢ tấm hoàn chỉnh VÀ kiện lẻ không
-    var coNguyenTam = item.nguyenTamCount > 0;
-    var soKeoKeys = Object.keys(item.kienMap).sort(function(a, b) {
-      return (parseFloat(b) || 0) - (parseFloat(a) || 0);
-    });
-    var coKienLe = soKeoKeys.length > 0;
-
-    if (coNguyenTam) {
-      var soTamNguyen = item.nguyenTamCount;
-      var soKgNguyen = Math.round((soTamNguyen * kgAA) * 10) / 10;
-
-      // Chỉ ghi "lưới dài" khi cùng đơn có cả kiện lẻ
-      var colJTextNguyen;
-      if (coKienLe) {
-        colJTextNguyen = maSoDonOnly + " chưa vá lưới dài";
-      } else {
-        colJTextNguyen = maSoDonOnly + " chưa vá";
-      }
-
-      rowsTongHop.push([
-        mspERP, "", qcV, "", "", soTamNguyen, soKgNguyen, "", "", colJTextNguyen, maEM
-      ]);
-    }
-
-    if (coKienLe) {
-      var tongEyes = item.tongKienEyes;
-      var kienNotes = [];
-      for (var s = 0; s < soKeoKeys.length; s++) {
-        var sk = soKeoKeys[s];
-        var countSk = item.kienMap[sk];
-        kienNotes.push(countSk + "k " + sk + "md");
-      }
-      var noteText = kienNotes.join(" + ");
-
-      var ratioTam = (matTam > 0) ? (tongEyes / matTam) : 0;
-      var soTamLe = Math.round(ratioTam * 10) / 10;
-      var soKgLe = Math.round((ratioTam * kgAA) * 10) / 10;
-      var colJTextLe = maSoDonOnly + " chưa vá " + noteText;
-
-      rowsTongHop.push([
-        mspERP, "", qcV, "", "", soTamLe, soKgLe, "", "", colJTextLe, maEM
-      ]);
-    }
-  }
-
-  // 4. Ghi dữ liệu vào Sheet 'Tổng Hợp'
-  var lastRowTH = sheetTH.getLastRow();
-  if (lastRowTH >= 6) {
-    sheetTH.getRange(6, 1, lastRowTH - 5, 11).clearContent();
-  }
-
-  if (rowsTongHop.length > 0) {
-    sheetTH.getRange(6, 1, rowsTongHop.length, 11).setValues(rowsTongHop);
-  }
 }

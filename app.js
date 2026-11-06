@@ -398,6 +398,8 @@ function chuyenTrang(id, el) {
   if (id !== "btpPage") {
     document.body.classList.remove("cam-active");
     if (typeof dungBTP === "function") dungBTP();
+  } else if (typeof taiDanhSachQCBTP === "function") {
+    taiDanhSachQCBTP();
   }
   if (id === "trangChu" && typeof capNhatTrangChu === "function") capNhatTrangChu();
 
@@ -437,6 +439,8 @@ function chuyenTrangKhongNav(id) {
   if (id !== "btpPage") {
     document.body.classList.remove("cam-active");
     if (typeof dungBTP === "function") dungBTP();
+  } else if (typeof taiDanhSachQCBTP === "function") {
+    taiDanhSachQCBTP();
   }
   const page = document.getElementById(id);
   if (page) page.classList.add("active");
