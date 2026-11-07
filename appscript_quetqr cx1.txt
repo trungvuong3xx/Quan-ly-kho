@@ -390,6 +390,160 @@ function layDanhSachQC() {
   }
 }
 
+function formatNgayNganCX1_(val) {
+  if (!val) return "";
+  if (val instanceof Date) {
+    return Utilities.formatDate(val, Session.getScriptTimeZone(), "dd/MM");
+  }
+  const s = String(val).trim();
+  let p = s.split("/");
+  if (p.length >= 2) {
+    if (p[0].length === 4) return p[2].padStart(2, "0") + "/" + p[1].padStart(2, "0");
+    return p[0].padStart(2, "0") + "/" + p[1].padStart(2, "0");
+  }
+  p = s.split("-");
+  if (p.length === 3) {
+    if (p[0].length === 4) return p[2].padStart(2, "0") + "/" + p[1].padStart(2, "0");
+    return p[0].padStart(2, "0") + "/" + p[1].padStart(2, "0");
+  }
+  return s;
+}
+
+function formatNgayDayDuCX1_(val) {
+  if (!val) return Utilities.formatDate(new Date(), Session.getScriptTimeZone(), "dd/MM/yyyy");
+  if (val instanceof Date) return Utilities.formatDate(val, Session.getScriptTimeZone(), "dd/MM/yyyy");
+  const s = String(val).trim();
+  const p = s.split("-");
+  if (p.length === 3 && p[0].length === 4) {
+    return p[2].padStart(2, "0") + "/" + p[1].padStart(2, "0") + "/" + p[0];
+  }
+  return s;
+}
+
+function layTonChuaXuatCX1(payload) {
+  try {
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    const sh = ss.getSheetByName("CX1");
+    if (!sh) return { success: true, itemsByMsp: {} };
+
+    const lastRow = sh.getLastRow();
+    if (lastRow < 5) return { success: true, itemsByMsp: {} };
+
+    const targetMsp = (payload && payload.msp) ? String(payload.msp).trim() : "";
+    const numRows = lastRow - 5 + 1;
+    // Cột 2 (B: MSP) -> Cột 10 (J: Tồn còn lại): 9 cột
+    const data = sh.getRange(5, 2, numRows, 9).getValues();
+    const itemsByMsp = {};
+
+    for (let i = 0; i < data.length; i++) {
+      const r = data[i];
+      const rowNum = 5 + i;
+      const msp = String(r[0] || "").trim();
+      const ten = String(r[1] || "").trim();
+      if (!msp) continue;
+      if (targetMsp && msp !== targetMsp) continue;
+
+      const trangThaiG = String(r[5] || "").trim().toUpperCase();
+      if (trangThaiG === "ĐÃ XUẤT" || trangThaiG === "DA XUAT") continue;
+
+      const baoGoc = Number(r[2]) || 0;
+      const kgGoc = Math.round((parseFloat(r[3]) || 0) * 100) / 100;
+      const tonJ = String(r[8] || "").trim();
+
+      let conBao = baoGoc;
+      let conKg = kgGoc;
+      if (trangThaiG === "CÒN" && tonJ) {
+        const m = tonJ.match(/^([\d.]+)\((\d+)\)$/);
+        if (m) {
+          conKg = Math.round((parseFloat(m[1]) || 0) * 100) / 100;
+          conBao = parseInt(m[2], 10) || 0;
+        }
+      }
+
+      if (conBao <= 0 || conKg <= 0) continue;
+
+      const ngayNgan = formatNgayNganCX1_(r[4]);
+      if (!itemsByMsp[msp]) itemsByMsp[msp] = [];
+      itemsByMsp[msp].push({
+        source: "CX1",
+        row: rowNum,
+        msp: msp,
+        ten: ten,
+        ngay: formatNgayDayDuCX1_(r[4]),
+        ngayNgan: ngayNgan,
+        bao: conBao,
+        kg: conKg,
+        trangThai: trangThaiG,
+        bags: []
+      });
+    }
+
+    return { success: true, itemsByMsp: itemsByMsp };
+  } catch (err) {
+    return { success: false, error: err.message };
+  }
+}
+
+function danhDauXuatCX1(payload) {
+  const lock = LockService.getDocumentLock();
+  try {
+    lock.waitLock(30000);
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    const sh = ss.getSheetByName("CX1");
+    if (!sh) return { success: false, message: "Không tìm thấy sheet CX1" };
+
+    const marks = (payload && payload.marks) ? payload.marks : [];
+    if (!Array.isArray(marks) || marks.length === 0) {
+      return { success: true, count: 0 };
+    }
+
+    const defaultNgay = formatNgayDayDuCX1_(payload && payload.dateStr);
+    const defaultLoai = String((payload && payload.loaiText) || "Đã xuất").trim();
+
+    for (let i = 0; i < marks.length; i++) {
+      const m = marks[i];
+      if (!m) continue;
+      const row = Number(m.row || m.lotRow);
+      if (!Number.isInteger(row) || row < 5) continue;
+
+      const mNgay = m.ngayXuat ? formatNgayDayDuCX1_(m.ngayXuat) : defaultNgay;
+      const mLoai = String(m.loaiText || defaultLoai).trim();
+
+      if (m.type === "LOT" && !m.isPartial) {
+        sh.getRange(row, 7, 1, 4).setValues([["ĐÃ XUẤT", mNgay, mLoai, ""]]);
+      } else {
+        const rowData = sh.getRange(row, 2, 1, 9).getValues()[0];
+        let conBao = Number(rowData[2]) || 0;
+        let conKg = Math.round((parseFloat(rowData[3]) || 0) * 100) / 100;
+        const trangThaiG = String(rowData[5] || "").trim().toUpperCase();
+        const tonJ = String(rowData[8] || "").trim();
+        if (trangThaiG === "CÒN" && tonJ) {
+          const match = tonJ.match(/^([\d.]+)\((\d+)\)$/);
+          if (match) {
+            conKg = Math.round((parseFloat(match[1]) || 0) * 100) / 100;
+            conBao = parseInt(match[2], 10) || 0;
+          }
+        }
+        const baoXuat = Number(m.bao) || 1;
+        const kgXuat = Math.round((parseFloat(m.kg) || 0) * 100) / 100;
+        const newBao = conBao - baoXuat;
+        const newKg = Math.round((conKg - kgXuat) * 100) / 100;
+        if (newBao <= 0 || newKg <= 0.05) {
+          sh.getRange(row, 7, 1, 4).setValues([["ĐÃ XUẤT", mNgay, mLoai, ""]]);
+        } else {
+          sh.getRange(row, 7, 1, 4).setValues([["CÒN", mNgay, mLoai, newKg + "(" + newBao + ")"]]);
+        }
+      }
+    }
+
+    return { success: true, count: marks.length };
+  } catch (err) {
+    return { success: false, message: "Lỗi đánh dấu CX1: " + err.message };
+  } finally {
+    try { lock.releaseLock(); } catch (eLock) {}
+  }
+}
+
 function doPost(e) {
   try {
     if (!e || !e.postData || !e.postData.contents) {
@@ -404,6 +558,8 @@ function doPost(e) {
     if (action === "kiemTraQR") return reply(kiemTraQR(body.id, body.msp, body.loai));
     if (action === "luuKiemKe") return reply(luuKiemKe(body.data));
     if (action === "luuCX1") return reply(luuCX1(body.data));
+    if (action === "layTonChuaXuatCX1") return reply(layTonChuaXuatCX1(body.payload));
+    if (action === "danhDauXuatCX1") return reply(danhDauXuatCX1(body.payload));
 
     if (action === "luuGiaoDich") {
       return reply(luuGiaoDich(

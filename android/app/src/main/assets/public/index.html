@@ -32,7 +32,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
-  <link rel="stylesheet" href="style.css?v=20261106-v159">
+  <link rel="stylesheet" href="style.css?v=20261107-v160">
   <link rel="stylesheet" href="lib/tabler-icons.min.css">
   <script src="lib/qrcode.min.js" defer></script>
   <script src="lib/zxing.min.js" defer></script>
@@ -1377,13 +1377,42 @@
   <div id="cx5-form" class="card">
     <h3>Chỉ X5</h3>
     <label>Ngày</label>
-    <input type="date" id="cx5-ngay" style="margin-bottom:16px;">
+    <input type="date" id="cx5-ngay" style="margin-bottom:14px;">
+
+    <label>Loại giao dịch</label>
+    <div class="custom-select" style="margin-bottom:20px;">
+      <button type="button" id="cx5-loai-btn" class="custom-select-btn" onclick="toggleDropdownLoaiCX5(event)">
+        <span>Nhập SX</span>
+        <i class="ti ti-chevron-down" style="font-size:18px;color:var(--row-muted);flex-shrink:0;"></i>
+      </button>
+
+      <div id="cx5-loai-list" class="custom-select-list">
+        <div class="group-title">Nhập</div>
+        <div class="custom-option" data-value="NHAP_SX" onclick="chonLoaiCX5('NHAP_SX', 'Nhập SX', event)">Nhập SX</div>
+        <div class="custom-option" data-value="NHAP_TRA" onclick="chonLoaiCX5('NHAP_TRA', 'Nhập Trả', event)">Nhập Trả</div>
+        <div class="custom-option" data-value="NHAP_FOR" onclick="chonLoaiCX5('NHAP_FOR', 'Nhập For', event)">Nhập For</div>
+
+        <div class="group-title">Xuất</div>
+        <div class="custom-option" data-value="XUAT_SX" onclick="chonLoaiCX5('XUAT_SX', 'Xuất SX', event)">Xuất SX</div>
+        <div class="custom-option" data-value="XUAT_TRA" onclick="chonLoaiCX5('XUAT_TRA', 'Xuất Trả', event)">Xuất Trả</div>
+        <div class="custom-option" data-value="XUAT_GIACONG" onclick="chonLoaiCX5('XUAT_GIACONG', 'Xuất Gia Công', event)">Xuất Gia Công</div>
+        <div class="custom-option" data-value="XUAT_PHE" onclick="chonLoaiCX5('XUAT_PHE', 'Xuất Vá', event)">Xuất Vá</div>
+        <div class="custom-option" data-value="XUAT_BAN" onclick="chonLoaiCX5('XUAT_BAN', 'Xuất Bán', event)">Xuất Bán</div>
+        <div class="custom-option" data-value="XUAT_BT" onclick="chonLoaiCX5('XUAT_BT', 'Bình Thuận', event)">Bình Thuận</div>
+        <div class="custom-option" data-value="XUAT_FOR" onclick="chonLoaiCX5('XUAT_FOR', 'Xuất For', event)">Xuất For</div>
+      </div>
+    </div>
+    <input type="hidden" id="cx5-loai" value="NHAP_SX">
+
     <button class="kq-btn kq-btn--primary" style="width:100%; margin-top:8px;" onclick="batDauCX5()"><i class="ti ti-pencil-plus"></i> Bắt đầu</button>
   </div>
 
   <div id="cx5-nhap" class="card" style="display:none">
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-      <h3 style="margin:0;padding:0;border:0;box-shadow:none" id="cx5-ngay-hienthi"></h3>
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; gap:8px;">
+      <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+        <h3 style="margin:0;padding:0;border:0;box-shadow:none" id="cx5-ngay-hienthi"></h3>
+        <span id="cx5-loai-badge" class="cx5-badge" style="background:rgba(59,130,246,0.12); color:#60a5fa; border:1px solid rgba(59,130,246,0.3);">Nhập SX</span>
+      </div>
       <span id="cx5-dem" class="cx5-badge">Đã nhập: 0 dòng</span>
     </div>
     <div id="cx5-pending-line" style="display:none;color:var(--brass);font-size:12px;font-weight:600;margin-bottom:10px;"></div>
@@ -1410,16 +1439,23 @@
       <span class="cx5-qc-khoa-doi">Đổi</span>
     </div>
     <input type="hidden" id="cx5-msp">
+    <input type="hidden" id="cx5-vung" value="NORMAL">
 
     <div style="display: flex; gap: 10px; margin-bottom: 10px;">
       <div style="flex: 1;">
         <label>Bao</label>
         <input type="text" id="cx5-bao" value="1" inputmode="none" onkeydown="if(event.key==='Enter'){event.preventDefault();document.getElementById('cx5-kg').focus()}">
       </div>
-      <div style="flex: 1;">
+      <div style="flex: 1; position: relative;" id="cx5-kg-wrap">
         <label>Kg</label>
-        <input type="text" id="cx5-kg" inputmode="none" onkeydown="if(event.key==='Enter'){event.preventDefault();themDongCX5()}">
+        <input type="text" id="cx5-kg" inputmode="none" autocomplete="off" oninput="onInputKgCX5()" onfocus="hienGoiYKgCX5()" onclick="hienGoiYKgCX5()" onkeydown="if(event.key==='Enter'){event.preventDefault();themDongCX5()}">
+        <div id="cx5-kg-dropdown" class="cx5-dropdown"></div>
       </div>
+    </div>
+
+    <div id="cx5-ghichu-wrap" style="display:none; margin-bottom:10px;">
+      <label>Ghi chú (tùy chọn)</label>
+      <input type="text" id="cx5-ghichu" placeholder="Nhập ghi chú..." autocomplete="off" onfocus="if(typeof dongBanPhimCX5==='function') dongBanPhimCX5()">
     </div>
 
     <button class="kq-btn kq-btn--primary" style="width:100%; margin-bottom:14px;" onclick="themDongCX5()"><i class="ti ti-plus"></i> Thêm vào đợt</button>
@@ -1461,8 +1497,16 @@
       </div>
     </div>
 
-    <div class="kq-actions">
+    <div class="kq-actions" id="cx5-actions-nhapsx">
       <button class="kq-btn kq-btn--send is-pending" onclick="ketThucPhienCX5()"><i class="ti ti-arrows-Left-right"></i> Chuyển sang Đối chiếu SX</button>
+    </div>
+
+    <div class="kq-actions" id="cx5-actions-tructiep" style="display:none;">
+      <button id="cx5-btn-dongbo-tructiep" class="kq-btn kq-btn--send is-pending" onclick="dongBoTrucTiepCX5()"><i class="ti ti-cloud-upload"></i> Đồng bộ lên Sheet</button>
+      <div class="row">
+        <button class="kq-btn kq-btn--excel" onclick="xuatExcelLichSuCX5(idPhienHienTaiC5)"><i class="ti ti-file-spreadsheet"></i> Xuất Excel</button>
+        <button class="kq-btn kq-btn--new" onclick="quayVeFormCX5()"><i class="ti ti-arrow-left"></i> Đổi loại / Mới</button>
+      </div>
     </div>
   </div>
 
@@ -1673,14 +1717,14 @@
 
 </div><!-- /#app-viewport -->
 
-<script src="app.js?v=20261106-v159" defer></script>
-<script src="scanner-core.js?v=20261106-v159" defer></script>
-<script src="quetqr.js?v=20261106-v159" defer></script>
-<script src="kiemke.js?v=20261106-v159" defer></script>
-<script src="cx1.js?v=20261106-v159" defer></script>
-<script src="cx5.js?v=20261106-v159" defer></script>
-<script src="btp.js?v=20261106-v159" defer></script>
-<script src="tonkho.js?v=20261106-v159" defer></script>
+<script src="app.js?v=20261107-v160" defer></script>
+<script src="scanner-core.js?v=20261107-v160" defer></script>
+<script src="quetqr.js?v=20261107-v160" defer></script>
+<script src="kiemke.js?v=20261107-v160" defer></script>
+<script src="cx1.js?v=20261107-v160" defer></script>
+<script src="cx5.js?v=20261107-v160" defer></script>
+<script src="btp.js?v=20261107-v160" defer></script>
+<script src="tonkho.js?v=20261107-v160" defer></script>
 
 <!-- BOTTOM SHEET MODAL LỊCH SỬ -->
 <div class="modal-overlay" id="modal-overlay" onclick="closeLichSuModal(event)">

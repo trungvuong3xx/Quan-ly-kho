@@ -1,11 +1,27 @@
 const API_CX5 = "https://script.google.com/macros/s/AKfycbyOhUM1KCg0eUsj-tBPDFnyJXS_PDlxcsRWRqzR7ZdoX9ZCMRlvPApouk9Jn6yghVS1xg/exec";
+const API_CX1_FOR_CX5 = "https://script.google.com/macros/s/AKfycbzk7afcuHDOTnL6QSIQ0ZgT-CSiIDNZ8h5S8_IkGXahc7PQRvqZKpLpjkBphioXAyzDKQ/exec";
 
 const CX5_LICHSU_KEY = "cx5_lich_su";
 const CX5_LICHSU_SO_NGAY_GIU = 30;
 const CX5_KG_MAX = 2000;
 
+const CX5_LOAI_META = {
+  NHAP_SX:      { label: "Nhập SX",       isXuat: false },
+  NHAP_TRA:     { label: "Nhập Trả",      isXuat: false },
+  NHAP_FOR:     { label: "Nhập For",      isXuat: false },
+  XUAT_SX:      { label: "Xuất SX",       isXuat: true },
+  XUAT_TRA:     { label: "Xuất Trả",      isXuat: true },
+  XUAT_GIACONG: { label: "Xuất Gia Công", isXuat: true },
+  XUAT_PHE:     { label: "Xuất Vá",       isXuat: true },
+  XUAT_BAN:     { label: "Xuất Bán",      isXuat: true },
+  XUAT_BT:      { label: "Bình Thuận",    isXuat: true },
+  XUAT_FOR:     { label: "Xuất For",      isXuat: true }
+};
+
 let phienCX5 = [];
 let ngayCX5 = null;
+let loaiCX5 = "NHAP_SX";
+let ghiChuCX5 = "";
 let idPhienHienTaiC5 = null;
 let seqCX5 = 0;
 let dangKetThucCX5 = false;
@@ -13,10 +29,18 @@ let luotDemCX5 = 0;
 let luotHienTaiCX5 = null;
 
 let mspDataCX5 = [];
+let mspDataFullCX5 = [];
 let mspCacheX5 = {};
+let mspCacheFullX5 = {};
 let filteredCX5 = [];
 let activeIndexCX5 = -1;
 let dangHienGoiYCX5 = false;
+
+let tonChuaXuatLSC5Map = {};
+let tonChuaXuatCX1Map = {};
+let dangTaiTonChuaXuatCX5 = false;
+let filteredKgCandidatesCX5 = [];
+let selectedKgCandidateCX5 = null;
 
 let doiChieuCX5 = {};
 
@@ -25,6 +49,97 @@ let tongKetPhienCX5 = [];
 let dangTaiUngVienCX5 = false;
 let loiTaiUngVienCX5 = false;
 let tokenUngVienCX5 = 0;
+
+function isXuatCX5(loai) {
+  const k = loai || loaiCX5 || "NHAP_SX";
+  return !!(CX5_LOAI_META[k] && CX5_LOAI_META[k].isXuat);
+}
+
+function layNhanLoaiCX5(loai) {
+  const k = loai || loaiCX5 || "NHAP_SX";
+  return (CX5_LOAI_META[k] && CX5_LOAI_META[k].label) ? CX5_LOAI_META[k].label : k;
+}
+
+function toggleDropdownLoaiCX5(ev) {
+  if (ev) ev.stopPropagation();
+  const list = document.getElementById("cx5-loai-list");
+  if (!list) return;
+  const isOpen = list.style.display === "block";
+  list.style.display = isOpen ? "none" : "block";
+}
+window.toggleDropdownLoaiCX5 = toggleDropdownLoaiCX5;
+
+function chonLoaiCX5(val, label, ev) {
+  if (ev) ev.stopPropagation();
+  const hidden = document.getElementById("cx5-loai");
+  if (hidden) hidden.value = val;
+  const btnSpan = document.querySelector("#cx5-loai-btn span");
+  if (btnSpan) btnSpan.textContent = label || layNhanLoaiCX5(val);
+  const list = document.getElementById("cx5-loai-list");
+  if (list) list.style.display = "none";
+}
+window.chonLoaiCX5 = chonLoaiCX5;
+
+function capNhatGiaoDienTheoLoaiCX5() {
+  const badge = document.getElementById("cx5-loai-badge");
+  const isXuat = isXuatCX5(loaiCX5);
+  const isNhapSX = (loaiCX5 === "NHAP_SX");
+  if (badge) {
+    badge.textContent = layNhanLoaiCX5(loaiCX5);
+    if (isXuat) {
+      badge.style.background = "rgba(245,158,11,0.14)";
+      badge.style.color = "#f59e0b";
+      badge.style.borderColor = "rgba(245,158,11,0.35)";
+    } else {
+      badge.style.background = "rgba(59,130,246,0.12)";
+      badge.style.color = "#60a5fa";
+      badge.style.borderColor = "rgba(59,130,246,0.3)";
+    }
+  }
+  const ghichuWrap = document.getElementById("cx5-ghichu-wrap");
+  if (ghichuWrap) ghichuWrap.style.display = isNhapSX ? "none" : "block";
+  const ghichuInput = document.getElementById("cx5-ghichu");
+  if (ghichuInput && ghichuInput.value !== (ghiChuCX5 || "")) {
+    ghichuInput.value = ghiChuCX5 || "";
+  }
+  const actNhapSX = document.getElementById("cx5-actions-nhapsx");
+  const actTrucTiep = document.getElementById("cx5-actions-tructiep");
+  if (actNhapSX) actNhapSX.style.display = isNhapSX ? "" : "none";
+  if (actTrucTiep) actTrucTiep.style.display = isNhapSX ? "none" : "";
+
+  // Cập nhật danh sách QC hiệu lực theo loại
+  if (mspDataFullCX5 && mspDataFullCX5.length > 0) {
+    mspDataCX5 = isNhapSX ? mspDataFullCX5.filter(i => i.vung !== "FOR") : mspDataFullCX5.slice();
+  }
+  if (!isXuat) closeDropdownKgCX5();
+  capNhatNutDongBoTrucTiepCX5();
+}
+
+function capNhatNutDongBoTrucTiepCX5() {
+  const btn = document.getElementById("cx5-btn-dongbo-tructiep");
+  if (!btn) return;
+  const chuaDongBo = phienCX5.filter(r => !r.daDongBo);
+  const coChuaDongBo = chuaDongBo.length > 0;
+  btn.disabled = !coChuaDongBo && phienCX5.length > 0;
+  btn.classList.toggle("is-pending", coChuaDongBo);
+  btn.classList.toggle("is-done", !coChuaDongBo && phienCX5.length > 0);
+  if (!coChuaDongBo && phienCX5.length > 0) {
+    btn.innerHTML = '<i class="ti ti-check"></i> Đã đồng bộ đủ';
+  } else {
+    btn.innerHTML = '<i class="ti ti-cloud-upload"></i> Đồng bộ lên Sheet' + (coChuaDongBo ? ' (' + chuaDongBo.length + ' bao)' : '');
+  }
+}
+
+function quayVeFormCX5() {
+  closeDropdownCX5();
+  closeDropdownKgCX5();
+  if (typeof dongBanPhimCX5 === "function") dongBanPhimCX5();
+  document.getElementById("cx5-nhap").style.display = "none";
+  document.getElementById("cx5-doichieu").style.display = "none";
+  document.getElementById("cx5-tongkg").style.display = "none";
+  document.getElementById("cx5-form").style.display = "block";
+}
+window.quayVeFormCX5 = quayVeFormCX5;
 
 async function callApiCX5(body) {
   const res = await fetch(API_CX5, { method: "POST", body: JSON.stringify(body) });
@@ -56,9 +171,11 @@ function keyQCX5(msp, ten) {
 }
 
 function luuPhienDoDangCX5() {
+  const ghichuEl = document.getElementById("cx5-ghichu");
+  if (ghichuEl && loaiCX5 !== "NHAP_SX") ghiChuCX5 = ghichuEl.value || "";
   try {
     localStorage.setItem("cx5_phien_dodang", JSON.stringify({
-      phienCX5, ngayCX5, capNhat: new Date().toISOString(),
+      phienCX5, ngayCX5, loaiCX5, ghiChuCX5, capNhat: new Date().toISOString(),
       idPhienHienTaiC5, seqCX5, doiChieuCX5, dangKetThucCX5,
       luotDemCX5, luotHienTaiCX5, tongKgDataCX5, tongKetPhienCX5
     }));
@@ -84,7 +201,7 @@ const CX5_MSP_CACHE_TTL_MS = 4 * 60 * 60 * 1000;
 
 function docMspCacheLocalCX5(monthKey, boQuaHanSuDung) {
   try {
-    const raw = localStorage.getItem("cx5_msp_cache_" + monthKey);
+    const raw = localStorage.getItem("cx5_msp_cache_full_" + monthKey) || localStorage.getItem("cx5_msp_cache_" + monthKey);
     if (!raw) return null;
     const parsed = JSON.parse(raw);
     if (!parsed || !Array.isArray(parsed.data)) return null;
@@ -94,7 +211,18 @@ function docMspCacheLocalCX5(monthKey, boQuaHanSuDung) {
 }
 
 function luuMspCacheLocalCX5(monthKey, data) {
-  try { localStorage.setItem("cx5_msp_cache_" + monthKey, JSON.stringify({ data, savedAt: Date.now() })); } catch (e) { }
+  try { localStorage.setItem("cx5_msp_cache_full_" + monthKey, JSON.stringify({ data, savedAt: Date.now() })); } catch (e) { }
+}
+
+function apDungMspListTheoLoaiCX5(fullList, monthKey) {
+  mspDataFullCX5 = Array.isArray(fullList) ? fullList : [];
+  if (monthKey) {
+    mspCacheFullX5[monthKey] = mspDataFullCX5;
+    mspCacheX5[monthKey] = mspDataFullCX5.filter(i => i.vung !== "FOR");
+  }
+  mspDataCX5 = (loaiCX5 === "NHAP_SX")
+    ? mspDataFullCX5.filter(i => i.vung !== "FOR")
+    : mspDataFullCX5.slice();
 }
 
 let taiDanhSachTokenCX5 = 0;
@@ -104,8 +232,8 @@ async function taiDanhSachQCX5(dateStr, forceRefresh) {
   const monthKey = new Date(dateStr).getMonth() + 1;
 
   // 1. Nếu đã có trong RAM -> Nạp ngay lập tức 0ms
-  if (!forceRefresh && mspCacheX5[monthKey] && mspCacheX5[monthKey].length > 0) {
-    mspDataCX5 = mspCacheX5[monthKey];
+  if (!forceRefresh && mspCacheFullX5[monthKey] && mspCacheFullX5[monthKey].length > 0) {
+    apDungMspListTheoLoaiCX5(mspCacheFullX5[monthKey], monthKey);
     return;
   }
 
@@ -113,19 +241,14 @@ async function taiDanhSachQCX5(dateStr, forceRefresh) {
   if (!forceRefresh) {
     const local = docMspCacheLocalCX5(monthKey, true); // Nạp tức thì cache local
     if (local && local.length > 0) {
-      mspDataCX5 = local;
-      mspCacheX5[monthKey] = local;
+      apDungMspListTheoLoaiCX5(local, monthKey);
 
       // Cập nhật ngầm danh sách mới từ Apps Script server (không chặn UI)
       callApiCX5({ action: "khoiTaoForm", dateStr, forceRefresh: false }).then(res => {
         if (myToken !== taiDanhSachTokenCX5) return;
-        if (res && res.mspList && Array.isArray(res.mspList)) {
-          const freshData = res.mspList.filter(i => i.vung !== "FOR");
-          if (freshData.length > 0) {
-            mspDataCX5 = freshData;
-            mspCacheX5[monthKey] = freshData;
-            luuMspCacheLocalCX5(monthKey, freshData);
-          }
+        if (res && res.mspList && Array.isArray(res.mspList) && res.mspList.length > 0) {
+          apDungMspListTheoLoaiCX5(res.mspList, monthKey);
+          luuMspCacheLocalCX5(monthKey, res.mspList);
         }
       }).catch(() => { });
       return;
@@ -143,23 +266,23 @@ async function taiDanhSachQCX5(dateStr, forceRefresh) {
   try {
     const res = await callApiCX5({ action: "khoiTaoForm", dateStr, forceRefresh: !!forceRefresh });
     if (myToken !== taiDanhSachTokenCX5) return;
-    if (res.error) { showCanhBaoCX5(res.error); mspDataCX5 = []; }
-    else if (!res.exists) { showCanhBaoCX5('Chưa có sheet tháng "' + res.sheetName + '"'); mspDataCX5 = []; }
+    if (res.error) { showCanhBaoCX5(res.error); mspDataCX5 = []; mspDataFullCX5 = []; }
+    else if (!res.exists) { showCanhBaoCX5('Chưa có sheet tháng "' + res.sheetName + '"'); mspDataCX5 = []; mspDataFullCX5 = []; }
     else {
-      mspDataCX5 = (res.mspList || []).filter(i => i.vung !== "FOR");
-      mspCacheX5[monthKey] = mspDataCX5;
-      luuMspCacheLocalCX5(monthKey, mspDataCX5);
+      const fullList = res.mspList || [];
+      apDungMspListTheoLoaiCX5(fullList, monthKey);
+      luuMspCacheLocalCX5(monthKey, fullList);
     }
   } catch (e) {
     if (myToken !== taiDanhSachTokenCX5) return;
     const duPhong = docMspCacheLocalCX5(monthKey, true);
     if (duPhong) {
-      mspDataCX5 = duPhong;
-      mspCacheX5[monthKey] = duPhong;
+      apDungMspListTheoLoaiCX5(duPhong, monthKey);
       showCanhBaoCX5("Mất mạng — đang dùng danh sách quy cách đã lưu trước đó");
     } else {
       showCanhBaoCX5("Không tải được danh sách quy cách");
       mspDataCX5 = [];
+      mspDataFullCX5 = [];
     }
   } finally {
     if (typeof showLoading === "function") showLoading(false);
@@ -199,11 +322,26 @@ function batDauCX5() {
   }
   ngayCX5 = inputEl ? inputEl.value : ((typeof layNgayHomNayLocal === "function") ? layNgayHomNayLocal() : new Date().toISOString().split("T")[0]);
 
+  const loaiEl = document.getElementById("cx5-loai");
+  const chonLoai = (loaiEl && loaiEl.value) ? loaiEl.value : "NHAP_SX";
+
+  // Nhập For nối thẳng vào Chỉ X1 hiện tại
+  if (chonLoai === "NHAP_FOR") {
+    const cx1Ngay = document.getElementById("cx1-ngay");
+    if (cx1Ngay) cx1Ngay.value = ngayCX5;
+    if (typeof diToiTab === "function") diToiTab("chiFor");
+    if (typeof batDauCX1 === "function") batDauCX1("quet");
+    return;
+  }
+
+  loaiCX5 = chonLoai;
+
   let phienCu = null;
   try { phienCu = JSON.parse(localStorage.getItem("cx5_phien_dodang")); } catch (e) { }
   if (phienCu && Array.isArray(phienCu.phienCX5) && phienCu.phienCX5.length > 0) {
+    const tenLoaiCu = layNhanLoaiCX5(phienCu.loaiCX5 || "NHAP_SX");
     moXacNhanCX5(
-      "Bạn đang có phiên Chỉ X5 dở dang (" + phienCu.phienCX5.length + " dòng, ngày " + phienCu.ngayCX5 + "). Tiếp tục phiên đó hay bắt đầu phiên mới?",
+      "Bạn đang có phiên Chỉ X5 (" + tenLoaiCu + ") dở dang (" + phienCu.phienCX5.length + " dòng, ngày " + phienCu.ngayCX5 + "). Tiếp tục phiên đó hay bắt đầu phiên mới?",
       () => { xoaPhienDoDangCX5(); batDauPhienMoiCX5(); },
       "Bắt đầu mới",
       () => { khoiPhucCX5(phienCu); },
@@ -216,6 +354,13 @@ function batDauCX5() {
 }
 
 function batDauPhienMoiCX5() {
+  const loaiEl = document.getElementById("cx5-loai");
+  loaiCX5 = (loaiEl && loaiEl.value) ? loaiEl.value : (loaiCX5 || "NHAP_SX");
+  ghiChuCX5 = "";
+  const ghichuEl = document.getElementById("cx5-ghichu");
+  if (ghichuEl) ghichuEl.value = "";
+  selectedKgCandidateCX5 = null;
+
   phienCX5 = [];
   seqCX5 = 0;
   idPhienHienTaiC5 = Date.now() + "-" + Math.random().toString(36).slice(2);
@@ -234,17 +379,30 @@ function batDauPhienMoiCX5() {
   document.getElementById("cx5-nhap").style.display = "block";
   document.getElementById("cx5-ngay-hienthi").textContent = ngayCX5;
   resetKhoaQCCX5();
+  capNhatGiaoDienTheoLoaiCX5();
 
   renderBangChiTietCX5();
   renderBangTongHopCX5();
 
   // Nạp danh sách QC ngầm phía sau (0ms không chặn UI)
   taiDanhSachQCX5(ngayCX5, false).catch(() => {});
+  if (isXuatCX5(loaiCX5)) {
+    taiTonChuaXuatCX5(false).catch(() => {});
+  }
 }
 
 async function khoiPhucCX5(state) {
   phienCX5 = state.phienCX5.map(r => ({ ...r, thoiGian: new Date(r.thoiGian) }));
   ngayCX5 = state.ngayCX5;
+  loaiCX5 = state.loaiCX5 || "NHAP_SX";
+  ghiChuCX5 = state.ghiChuCX5 || "";
+  selectedKgCandidateCX5 = null;
+
+  const loaiEl = document.getElementById("cx5-loai");
+  if (loaiEl) loaiEl.value = loaiCX5;
+  const btnSpan = document.querySelector("#cx5-loai-btn span");
+  if (btnSpan) btnSpan.textContent = layNhanLoaiCX5(loaiCX5);
+
   idPhienHienTaiC5 = state.idPhienHienTaiC5 || (Date.now() + "-" + Math.random().toString(36).slice(2));
   seqCX5 = state.seqCX5 || phienCX5.reduce((m, r) => Math.max(m, r.seq), 0);
   doiChieuCX5 = state.doiChieuCX5 || {};
@@ -260,8 +418,12 @@ async function khoiPhucCX5(state) {
   document.getElementById("cx5-nhap").style.display = "block";
   document.getElementById("cx5-ngay-hienthi").textContent = ngayCX5;
   resetKhoaQCCX5();
+  capNhatGiaoDienTheoLoaiCX5();
 
   await taiDanhSachQCX5(ngayCX5, false);
+  if (isXuatCX5(loaiCX5)) {
+    taiTonChuaXuatCX5(false).catch(() => {});
+  }
 
   renderBangChiTietCX5();
   renderBangTongHopCX5();
@@ -281,7 +443,11 @@ function moKhoaQCCX5() {
   const ten = document.getElementById("cx5-ten");
   ten.value = "";
   document.getElementById("cx5-msp").value = "";
+  const vungEl = document.getElementById("cx5-vung");
+  if (vungEl) vungEl.value = "NORMAL";
+  selectedKgCandidateCX5 = null;
   closeDropdownCX5();
+  closeDropdownKgCX5();
   setTimeout(function () { ten.focus(); }, 0);
 }
 
@@ -290,6 +456,10 @@ function resetKhoaQCCX5() {
   document.getElementById("cx5-qc-tim-wrap").style.display = "block";
   document.getElementById("cx5-ten").value = "";
   document.getElementById("cx5-msp").value = "";
+  const vungEl = document.getElementById("cx5-vung");
+  if (vungEl) vungEl.value = "NORMAL";
+  selectedKgCandidateCX5 = null;
+  closeDropdownKgCX5();
 }
 
 function onInputCX5() {
@@ -374,6 +544,10 @@ function closeDropdownCX5() {
 function chonQCX5(item) {
   document.getElementById("cx5-ten").value = item.ten;
   document.getElementById("cx5-msp").value = item.msp;
+  const vungEl = document.getElementById("cx5-vung");
+  const itemVung = (item.vung === "FOR") ? "FOR" : "NORMAL";
+  if (vungEl) vungEl.value = itemVung;
+  selectedKgCandidateCX5 = null;
   if (typeof tkGhiNhanTanSuat === "function") {
     tkGhiNhanTanSuat(item.ten);
   }
@@ -383,9 +557,307 @@ function chonQCX5(item) {
 
   // Mỗi lần chọn quy cách (kể cả chọn lại đúng QC cũ sau khi bấm "Đổi") là 1 lượt mới
   luotDemCX5 += 1;
-  luotHienTaiCX5 = { msp: item.msp, ten: item.ten, id: luotDemCX5 };
+  luotHienTaiCX5 = { msp: item.msp, ten: item.ten, vung: itemVung, id: luotDemCX5 };
 
-  document.getElementById("cx5-kg").focus();
+  const kgEl = document.getElementById("cx5-kg");
+  if (kgEl) {
+    kgEl.focus();
+    if (isXuatCX5(loaiCX5)) {
+      hienGoiYKgCX5();
+    }
+  }
+}
+
+async function taiTonChuaXuatCX5(forceRefresh) {
+  if (!forceRefresh && Object.keys(tonChuaXuatLSC5Map).length > 0) return;
+  dangTaiTonChuaXuatCX5 = true;
+  try {
+    const pLSC5 = callApiCX5({ action: "layTonChuaXuatLSC5", payload: {} }).then(res => {
+      if (res && res.itemsByMsp) tonChuaXuatLSC5Map = res.itemsByMsp;
+    }).catch(() => {});
+
+    const pCX1 = fetch(API_CX1_FOR_CX5, {
+      method: "POST",
+      headers: { "Content-Type": "text/plain;charset=utf-8" },
+      body: JSON.stringify({ action: "layTonChuaXuatCX1", payload: {} })
+    }).then(r => r.text()).then(t => {
+      try {
+        const j = JSON.parse(t);
+        if (j && j.itemsByMsp) tonChuaXuatCX1Map = j.itemsByMsp;
+      } catch (e) {}
+    }).catch(() => {});
+
+    await Promise.all([pLSC5, pCX1]);
+  } finally {
+    dangTaiTonChuaXuatCX5 = false;
+    const kgEl = document.getElementById("cx5-kg");
+    if (isXuatCX5(loaiCX5) && kgEl && (document.activeElement === kgEl || banPhimActiveElCX5 === kgEl)) {
+      onInputKgCX5();
+    }
+  }
+}
+window.taiTonChuaXuatCX5 = taiTonChuaXuatCX5;
+
+function layUngVienKgChoQCCX5(msp, vung, queryStr) {
+  const mspClean = String(msp || "").trim();
+  if (!mspClean) return [];
+  const isFor = (vung === "FOR");
+  const rawLots = isFor ? (tonChuaXuatCX1Map[mspClean] || []) : (tonChuaXuatLSC5Map[mspClean] || []);
+  const q = String(queryStr || "").trim().toLowerCase();
+
+  // Tập các lô và bao lẻ đã được chọn vào phienCX5 trong phiên hiện tại
+  const usedLotRows = new Set();
+  const usedBagKeys = new Set();
+  phienCX5.forEach(r => {
+    if (r.lsc5Mark) {
+      const m = r.lsc5Mark;
+      const src = m.source || "LSC5";
+      if ((isFor && src === "CX1") || (!isFor && src === "LSC5")) {
+        if (m.type === "LOT" && m.row) usedLotRows.add(Number(m.row));
+        if (m.type === "BAG" && m.bagRow && m.bagCol) {
+          usedBagKeys.add(Number(m.bagRow) + "_" + Number(m.bagCol));
+        }
+      }
+    }
+  });
+
+  const lotCandidates = [];
+  const bagCandidates = [];
+
+  for (let i = 0; i < rawLots.length; i++) {
+    const lot = rawLots[i];
+    if (!lot) continue;
+    const lotRow = Number(lot.row);
+    if (usedLotRows.has(lotRow)) continue;
+
+    const bags = Array.isArray(lot.bags) ? lot.bags : [];
+    const availBags = bags.filter(b => !usedBagKeys.has(Number(b.row) + "_" + Number(b.col)));
+
+    let effBao = Number(lot.bao) || 0;
+    let effKg = Number(lot.kg) || 0;
+    if (!isFor && bags.length > 0) {
+      if (availBags.length === 0) continue;
+      if (availBags.length < bags.length) {
+        effBao = availBags.length;
+        effKg = Math.round(availBags.reduce((s, b) => s + (Number(b.kg) || 0), 0) * 100) / 100;
+      }
+    }
+    if (effBao <= 0 || effKg <= 0) continue;
+
+    const ngayNgan = lot.ngayNgan || "";
+    const lotLabel = effKg + "(" + effBao + ")" + (ngayNgan ? " " + ngayNgan : "");
+
+    if (!q || String(effKg).includes(q) || lotLabel.toLowerCase().includes(q)) {
+      lotCandidates.push({
+        kind: "LOT",
+        source: isFor ? "CX1" : "LSC5",
+        row: lotRow,
+        lotRow: lotRow,
+        msp: mspClean,
+        bao: effBao,
+        kg: effKg,
+        ngayNgan: ngayNgan,
+        label: lotLabel
+      });
+    }
+
+    // Nếu người dùng đang gõ tìm số kg (VD số kg lẻ 50.2), hiển thị cả từng bao lẻ E-P khớp số kg kèm ngày
+    if (q && !isFor && availBags.length > 0) {
+      availBags.forEach(b => {
+        const bKg = Number(b.kg) || 0;
+        const bNgay = b.ngayNgan || ngayNgan;
+        const bLabel = bKg + "(1)" + (bNgay ? " " + bNgay : "");
+        // Tránh trùng dòng nếu cả lô chỉ có 1 bao duy nhất trùng hệt
+        if (effBao === 1 && Math.abs(effKg - bKg) < 0.01) return;
+        if (String(bKg).includes(q) || bLabel.toLowerCase().includes(q)) {
+          bagCandidates.push({
+            kind: "BAG",
+            source: "LSC5",
+            row: lotRow,
+            lotRow: lotRow,
+            bagRow: Number(b.row),
+            bagCol: Number(b.col),
+            msp: mspClean,
+            bao: 1,
+            kg: bKg,
+            ngayNgan: bNgay,
+            label: bLabel
+          });
+        }
+      });
+    }
+  }
+
+  return lotCandidates.concat(bagCandidates).slice(0, 35);
+}
+
+function hienGoiYKgCX5() {
+  if (!isXuatCX5(loaiCX5)) {
+    closeDropdownKgCX5();
+    return;
+  }
+  const msp = document.getElementById("cx5-msp") ? document.getElementById("cx5-msp").value : "";
+  if (!msp) {
+    closeDropdownKgCX5();
+    return;
+  }
+  if (Object.keys(tonChuaXuatLSC5Map).length === 0 && !dangTaiTonChuaXuatCX5) {
+    taiTonChuaXuatCX5(false).catch(() => {});
+  }
+  onInputKgCX5();
+}
+window.hienGoiYKgCX5 = hienGoiYKgCX5;
+
+function onInputKgCX5() {
+  if (!isXuatCX5(loaiCX5)) {
+    closeDropdownKgCX5();
+    return;
+  }
+  const msp = document.getElementById("cx5-msp") ? document.getElementById("cx5-msp").value : "";
+  const vung = document.getElementById("cx5-vung") ? document.getElementById("cx5-vung").value : "NORMAL";
+  const kgEl = document.getElementById("cx5-kg");
+  const query = kgEl ? kgEl.value.trim() : "";
+
+  if (selectedKgCandidateCX5 && String(selectedKgCandidateCX5.kg) !== query) {
+    selectedKgCandidateCX5 = null;
+  }
+
+  if (!msp) {
+    closeDropdownKgCX5();
+    return;
+  }
+
+  filteredKgCandidatesCX5 = layUngVienKgChoQCCX5(msp, vung, query);
+  renderDropdownKgCX5();
+}
+window.onInputKgCX5 = onInputKgCX5;
+
+function renderDropdownKgCX5() {
+  const el = document.getElementById("cx5-kg-dropdown");
+  if (!el) return;
+  if (!isXuatCX5(loaiCX5) || filteredKgCandidatesCX5.length === 0) {
+    el.classList.remove("open");
+    el.innerHTML = "";
+    return;
+  }
+  const titleHtml = '<div class="cx5-dropdown-title">Tồn chưa xuất — chọn hoặc bấm X nếu đã xuất</div>';
+  el.innerHTML = titleHtml + filteredKgCandidatesCX5.map((cand, idx) => {
+    const tagBag = cand.kind === "BAG" ? ' <span style="font-size:11px;color:var(--brass);font-weight:600;">(bao lẻ)</span>' : '';
+    return '<div class="cx5-dropdown-item" data-idx="' + idx + '" style="display:flex;align-items:center;justify-content:space-between;gap:8px;">' +
+      '<span class="cx5-kg-cand-text" style="flex:1;font-family:var(--font-mono);font-weight:700;">' + escHtmlCX5(cand.label) + tagBag + '</span>' +
+      '<button type="button" class="cx5-kg-del-btn" data-del-idx="' + idx + '" title="Đánh dấu đã xuất / xóa khỏi gợi ý" style="background:rgba(239,68,68,0.12);color:#ef4444;border:none;border-radius:6px;width:26px;height:26px;display:inline-flex;align-items:center;justify-content:center;font-weight:800;cursor:pointer;flex-shrink:0;">✕</button>' +
+      '</div>';
+  }).join("");
+  el.classList.add("open");
+
+  Array.from(el.querySelectorAll(".cx5-dropdown-item")).forEach(rowEl => {
+    rowEl.addEventListener("mousedown", e => {
+      e.preventDefault();
+      e.stopPropagation();
+      const delBtn = e.target.closest(".cx5-kg-del-btn");
+      const idx = parseInt(rowEl.getAttribute("data-idx"), 10);
+      const cand = filteredKgCandidatesCX5[idx];
+      if (!cand) return;
+      if (delBtn) {
+        xoaNhanhTonKgCX5(cand);
+      } else {
+        chonUngVienKgCX5(cand);
+      }
+    });
+  });
+}
+
+function closeDropdownKgCX5() {
+  filteredKgCandidatesCX5 = [];
+  const el = document.getElementById("cx5-kg-dropdown");
+  if (el) {
+    el.classList.remove("open");
+    el.innerHTML = "";
+  }
+}
+window.closeDropdownKgCX5 = closeDropdownKgCX5;
+
+function chonUngVienKgCX5(cand) {
+  if (!cand) return;
+  selectedKgCandidateCX5 = cand;
+  const kgEl = document.getElementById("cx5-kg");
+  const baoEl = document.getElementById("cx5-bao");
+  if (kgEl) kgEl.value = String(cand.kg);
+  if (baoEl) baoEl.value = String(cand.bao || 1);
+  closeDropdownKgCX5();
+}
+
+function xoaBoUngVienKhoiCacheLocalCX5(cand) {
+  if (!cand || !cand.msp) return;
+  if (cand.source === "CX1") {
+    const list = tonChuaXuatCX1Map[cand.msp] || [];
+    tonChuaXuatCX1Map[cand.msp] = list.filter(it => Number(it.row) !== Number(cand.row));
+  } else {
+    const list = tonChuaXuatLSC5Map[cand.msp] || [];
+    if (cand.kind === "BAG") {
+      list.forEach(lot => {
+        if (Number(lot.row) === Number(cand.lotRow) && Array.isArray(lot.bags)) {
+          lot.bags = lot.bags.filter(b => !(Number(b.row) === Number(cand.bagRow) && Number(b.col) === Number(cand.bagCol)));
+          lot.bao = lot.bags.length;
+          lot.kg = Math.round(lot.bags.reduce((s, b) => s + (Number(b.kg) || 0), 0) * 100) / 100;
+        }
+      });
+      tonChuaXuatLSC5Map[cand.msp] = list.filter(lot => (Number(lot.bao) || 0) > 0 && (Number(lot.kg) || 0) > 0);
+    } else {
+      tonChuaXuatLSC5Map[cand.msp] = list.filter(lot => Number(lot.row) !== Number(cand.row));
+    }
+  }
+}
+
+function xoaNhanhTonKgCX5(cand) {
+  if (!cand) return;
+  // Ẩn tức thì khỏi danh sách gợi ý
+  xoaBoUngVienKhoiCacheLocalCX5(cand);
+  onInputKgCX5();
+
+  const markItem = cand.kind === "BAG"
+    ? { type: "BAG", source: cand.source, row: cand.lotRow, lotRow: cand.lotRow, bagRow: cand.bagRow, bagCol: cand.bagCol, bao: 1, kg: cand.kg }
+    : { type: "LOT", source: cand.source, row: cand.row, lotRow: cand.row, bao: cand.bao, kg: cand.kg };
+
+  const loaiText = layNhanLoaiCX5(loaiCX5);
+  if (cand.source === "CX1") {
+    fetch(API_CX1_FOR_CX5, {
+      method: "POST",
+      headers: { "Content-Type": "text/plain;charset=utf-8" },
+      body: JSON.stringify({ action: "danhDauXuatCX1", payload: { marks: [markItem], dateStr: ngayCX5, loaiText: loaiText } })
+    }).catch(() => {});
+  } else {
+    callApiCX5({
+      action: "danhDauXuatLSC5",
+      payload: { marks: [markItem], dateStr: ngayCX5, loaiText: loaiText }
+    }).catch(() => {});
+  }
+  showCanhBaoCX5("Đã đánh dấu xuất: " + cand.label, "success");
+}
+
+function timMarkTuDongKhiThemCX5(msp, vung, bao, kg) {
+  if (!isXuatCX5(loaiCX5)) return null;
+  if (selectedKgCandidateCX5 && selectedKgCandidateCX5.msp === msp &&
+      Math.abs(Number(selectedKgCandidateCX5.kg) - kg) < 0.05 &&
+      Number(selectedKgCandidateCX5.bao) === bao) {
+    const c = selectedKgCandidateCX5;
+    return c.kind === "BAG"
+      ? { type: "BAG", source: c.source, row: c.lotRow, lotRow: c.lotRow, bagRow: c.bagRow, bagCol: c.bagCol, bao: 1, kg: c.kg, label: c.label }
+      : { type: "LOT", source: c.source, row: c.row, lotRow: c.row, bao: c.bao, kg: c.kg, label: c.label };
+  }
+  // Nếu không bấm chọn nhưng gõ đúng y hệt 1 lô hoặc 1 bao lẻ duy nhất đang tồn
+  const cands = layUngVienKgChoQCCX5(msp, vung, String(kg));
+  const exactLot = cands.find(c => c.kind === "LOT" && Number(c.bao) === bao && Math.abs(Number(c.kg) - kg) < 0.05);
+  if (exactLot) {
+    return { type: "LOT", source: exactLot.source, row: exactLot.row, lotRow: exactLot.row, bao: exactLot.bao, kg: exactLot.kg, label: exactLot.label };
+  }
+  if (bao === 1) {
+    const exactBag = cands.find(c => c.kind === "BAG" && Math.abs(Number(c.kg) - kg) < 0.05);
+    if (exactBag) {
+      return { type: "BAG", source: exactBag.source, row: exactBag.lotRow, lotRow: exactBag.lotRow, bagRow: exactBag.bagRow, bagCol: exactBag.bagCol, bao: 1, kg: exactBag.kg, label: exactBag.label };
+    }
+  }
+  return null;
 }
 
 function onKeydownCX5(e) {
@@ -412,6 +884,8 @@ function onKeydownCX5(e) {
 function themDongCX5() {
   const msp = document.getElementById("cx5-msp").value;
   const ten = document.getElementById("cx5-ten").value.trim();
+  const vungEl = document.getElementById("cx5-vung");
+  const vung = (vungEl && vungEl.value === "FOR") ? "FOR" : "NORMAL";
   const kg = parseFloat(document.getElementById("cx5-kg").value);
   let bao = parseInt(document.getElementById("cx5-bao") ? document.getElementById("cx5-bao").value : "1", 10);
   if (isNaN(bao) || bao < 1) bao = 1;
@@ -421,21 +895,33 @@ function themDongCX5() {
   if (!kg || kg <= 0) { showCanhBaoCX5("Nhập số kg hợp lệ"); return; }
   if (kg > CX5_KG_MAX) { showCanhBaoCX5("Số kg quá lớn (trên " + CX5_KG_MAX + "kg), kiểm tra lại"); return; }
 
-  if (!luotHienTaiCX5 || luotHienTaiCX5.msp !== msp || luotHienTaiCX5.ten !== ten) {
+  if (!luotHienTaiCX5 || luotHienTaiCX5.msp !== msp || luotHienTaiCX5.ten !== ten || (luotHienTaiCX5.vung || "NORMAL") !== vung) {
     luotDemCX5 += 1;
-    luotHienTaiCX5 = { msp, ten, id: luotDemCX5 };
+    luotHienTaiCX5 = { msp, ten, vung, id: luotDemCX5 };
   }
+
+  const autoMark = timMarkTuDongKhiThemCX5(msp, vung, bao, kg);
+  selectedKgCandidateCX5 = null;
+  closeDropdownKgCX5();
 
   const kgMoiBao = Math.round((kg / bao) * 100) / 100;
   let kgTong = 0;
   for (let i = 0; i < bao - 1; i++) {
     seqCX5 += 1;
-    phienCX5.push({ seq: seqCX5, msp, ten, kg: kgMoiBao, luot: luotHienTaiCX5.id, thoiGian: new Date(), daDongBo: false });
+    phienCX5.push({
+      seq: seqCX5, msp, ten, vung, kg: kgMoiBao, luot: luotHienTaiCX5.id,
+      lsc5Mark: (i === 0 && autoMark) ? autoMark : null,
+      thoiGian: new Date(), daDongBo: false
+    });
     kgTong += kgMoiBao;
   }
   const kgCuoiCung = Math.round((kg - kgTong) * 100) / 100;
   seqCX5 += 1;
-  phienCX5.push({ seq: seqCX5, msp, ten, kg: kgCuoiCung, luot: luotHienTaiCX5.id, thoiGian: new Date(), daDongBo: false });
+  phienCX5.push({
+    seq: seqCX5, msp, ten, vung, kg: kgCuoiCung, luot: luotHienTaiCX5.id,
+    lsc5Mark: (bao === 1 && autoMark) ? autoMark : null,
+    thoiGian: new Date(), daDongBo: false
+  });
 
   luuPhienDoDangCX5();
   renderBangChiTietCX5();
@@ -444,6 +930,9 @@ function themDongCX5() {
   document.getElementById("cx5-kg").value = "";
   if (document.getElementById("cx5-bao")) document.getElementById("cx5-bao").value = "1";
   document.getElementById("cx5-kg").focus();
+  if (isXuatCX5(loaiCX5)) {
+    hienGoiYKgCX5();
+  }
 }
 
 function xoaDongCX5(seq) {
@@ -454,6 +943,9 @@ function xoaDongCX5(seq) {
   luuPhienDoDangCX5();
   renderBangChiTietCX5();
   renderBangTongHopCX5();
+  if (isXuatCX5(loaiCX5)) {
+    onInputKgCX5();
+  }
 }
 
 function toggleCX5NhapView(mode) {
@@ -496,7 +988,8 @@ window.toggleCX5NhapView = toggleCX5NhapView;
 
 function renderBangChiTietCX5() {
   const elDem = document.getElementById("cx5-dem");
-  if (elDem) elDem.textContent = "Đã nhập: " + phienCX5.length + " dòng";
+  if (elDem) elDem.textContent = (isXuatCX5(loaiCX5) ? "Đã chọn: " : "Đã nhập: ") + phienCX5.length + " dòng";
+  capNhatNutDongBoTrucTiepCX5();
   const tbody = document.getElementById("cx5-tbody-chitiet");
   const tfoot = document.getElementById("cx5-tfoot-chitiet");
   const elTongBao = document.getElementById("cx5-tong-bao");
@@ -591,7 +1084,7 @@ function themKgVaoLuotCX5() {
 
   const first = rows[0];
   seqCX5 += 1;
-  phienCX5.push({ seq: seqCX5, msp: first.msp, ten: first.ten, kg, luot: luotDangSuaCX5, thoiGian: new Date(), daDongBo: false });
+  phienCX5.push({ seq: seqCX5, msp: first.msp, ten: first.ten, vung: first.vung || "NORMAL", kg, luot: luotDangSuaCX5, thoiGian: new Date(), daDongBo: false });
   luuPhienDoDangCX5();
   renderBangChiTietCX5();
   renderBangTongHopCX5();
@@ -606,8 +1099,9 @@ function tomTatCX5() {
   phienCX5.forEach(r => {
     const mspNorm = String(r.msp || "").trim();
     const tenNorm = String(r.ten || "").trim();
+    const vungNorm = (r.vung === "FOR") ? "FOR" : "NORMAL";
     const key = keyQCX5(mspNorm, tenNorm);
-    if (!gom[key]) gom[key] = { msp: mspNorm, ten: tenNorm, bao: 0, kg: 0, baoDaDongBo: 0, kgDaDongBo: 0 };
+    if (!gom[key]) gom[key] = { msp: mspNorm, ten: tenNorm, vung: vungNorm, bao: 0, kg: 0, baoDaDongBo: 0, kgDaDongBo: 0 };
     gom[key].bao += 1;
     gom[key].kg += r.kg;
     if (r.daDongBo) { gom[key].baoDaDongBo += 1; gom[key].kgDaDongBo += r.kg; }
@@ -1283,6 +1777,190 @@ async function dongBoTatCaCX5() {
     showCanhBaoCX5("Đồng bộ: " + thanhCong + " thành công, " + thatBai + " thất bại.", "error");
   }
 }
+
+async function dongBoTrucTiepCX5() {
+  if (dangDongBoCX5Lock) return;
+  const chuaDongBoRows = phienCX5.filter(r => !r.daDongBo);
+  if (chuaDongBoRows.length === 0) {
+    showCanhBaoCX5("Tất cả dữ liệu đã được đồng bộ trước đó!");
+    return;
+  }
+
+  const ghichuEl = document.getElementById("cx5-ghichu");
+  if (ghichuEl) ghiChuCX5 = ghichuEl.value.trim();
+
+  // Gom nhóm theo msp + ten + vung
+  const groupMap = new Map();
+  chuaDongBoRows.forEach(r => {
+    const msp = String(r.msp || "").trim();
+    const ten = String(r.ten || "").trim();
+    const vung = (r.vung === "FOR") ? "FOR" : "NORMAL";
+    const key = msp + "|" + ten + "|" + vung;
+    if (!groupMap.has(key)) groupMap.set(key, { key, msp, ten, vung, rows: [] });
+    groupMap.get(key).rows.push(r);
+  });
+
+  const itemsToSubmit = [];
+  Array.from(groupMap.values()).forEach(g => {
+    const bao = g.rows.length;
+    const kg = g.rows.reduce((s, r) => s + (Number(r.kg) || 0), 0);
+    const cleanTen = String(g.ten || "").replace(/[^a-zA-Z0-9]/g, "");
+    const idItem = "CX5_" + loaiCX5 + "_" + (idPhienHienTaiC5 || "P") + "_" + g.msp + "_" + cleanTen + "_" + bao + "_" + Date.now();
+    itemsToSubmit.push({
+      id: idItem,
+      key: g.key,
+      dateStr: ngayCX5,
+      loai: loaiCX5,
+      vung: g.vung,
+      msp: g.msp,
+      ten: g.ten,
+      bao: Math.round(bao * 100) / 100,
+      kg: Math.round(kg * 100) / 100,
+      ghiChu: ghiChuCX5 || ""
+    });
+  });
+
+  // 1) Nếu là NHAP_TRA vùng NORMAL (X5) -> ghi các lô vào LSC5
+  const lsc5SessionEntries = [];
+  if (loaiCX5 === "NHAP_TRA") {
+    const normalRows = chuaDongBoRows.filter(r => (r.vung || "NORMAL") !== "FOR" && !r.daDongBoLSC5);
+    const sessionMap = new Map();
+    normalRows.forEach(r => {
+      const k = keyQCX5(r.msp, r.ten);
+      if (!sessionMap.has(k)) sessionMap.set(k, { msp: r.msp, ten: r.ten, lotMap: new Map(), lotOrder: [] });
+      const entry = sessionMap.get(k);
+      if (!entry.lotMap.has(r.luot)) { entry.lotMap.set(r.luot, []); entry.lotOrder.push(r.luot); }
+      entry.lotMap.get(r.luot).push(r.kg);
+    });
+    Array.from(sessionMap.values()).forEach(e => {
+      lsc5SessionEntries.push({
+        dateStr: ngayCX5,
+        msp: e.msp,
+        ten: e.ten,
+        lots: e.lotOrder.map(lid => ({ lotId: idPhienHienTaiC5 + "_" + lid, kgList: e.lotMap.get(lid) }))
+      });
+    });
+  }
+
+  // 2) Nếu là nhóm XUAT_* -> gom danh sách đánh dấu LSC5 và CX1
+  const lsc5Marks = [];
+  const cx1Marks = [];
+  const loaiText = layNhanLoaiCX5(loaiCX5);
+  if (isXuatCX5(loaiCX5)) {
+    chuaDongBoRows.forEach(r => {
+      if (r.lsc5Mark) {
+        const m = r.lsc5Mark;
+        if (m.source === "CX1") {
+          cx1Marks.push(m);
+        } else {
+          lsc5Marks.push(m);
+        }
+      }
+    });
+  }
+
+  dangDongBoCX5Lock = true;
+  const btn = document.getElementById("cx5-btn-dongbo-tructiep");
+  if (btn) { btn.disabled = true; btn.innerHTML = '<i class="ti ti-refresh spin"></i> Đang đồng bộ...'; }
+  if (typeof showLoading === "function") showLoading(true);
+
+  let thanhCong = 0, thatBai = 0;
+  try {
+    const res = await callApiCX5({
+      action: "batchSubmitEntryX5",
+      payload: {
+        dateStr: ngayCX5,
+        loaiText: loaiText,
+        items: itemsToSubmit,
+        lsc5SessionEntries: lsc5SessionEntries,
+        lsc5Marks: lsc5Marks
+      }
+    });
+
+    if (res && res.results && Array.isArray(res.results)) {
+      res.results.forEach(r => {
+        if (r.success) {
+          thanhCong++;
+          const grp = groupMap.get(r.key);
+          if (grp && grp.rows) {
+            grp.rows.forEach(row => {
+              row.daDongBo = true;
+              if (loaiCX5 === "NHAP_TRA") row.daDongBoLSC5 = true;
+            });
+          }
+        } else {
+          thatBai++;
+          if (r.message) showCanhBaoCX5((r.ten || r.msp) + ": " + r.message, "error");
+        }
+      });
+    } else if (res && res.success) {
+      thanhCong = itemsToSubmit.length;
+      chuaDongBoRows.forEach(row => {
+        row.daDongBo = true;
+        if (loaiCX5 === "NHAP_TRA") row.daDongBoLSC5 = true;
+      });
+    } else {
+      thatBai = itemsToSubmit.length;
+      if (res && res.message) showCanhBaoCX5(res.message, "error");
+    }
+
+    // Nếu có đánh dấu sang Sheet CX1 (khi xuất QC thuộc vùng X1)
+    if (cx1Marks.length > 0 && thanhCong > 0) {
+      fetch(API_CX1_FOR_CX5, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify({
+          action: "danhDauXuatCX1",
+          payload: { marks: cx1Marks, dateStr: ngayCX5, loaiText: loaiText }
+        })
+      }).catch(() => {});
+    }
+
+    // Cập nhật cache tồn chưa xuất trên máy sau khi đồng bộ thành công
+    if (isXuatCX5(loaiCX5) && thanhCong > 0) {
+      chuaDongBoRows.forEach(r => {
+        if (r.daDongBo && r.lsc5Mark) {
+          const m = r.lsc5Mark;
+          xoaBoUngVienKhoiCacheLocalCX5({
+            kind: m.type,
+            source: m.source || "LSC5",
+            msp: r.msp,
+            row: m.row,
+            lotRow: m.lotRow || m.row,
+            bagRow: m.bagRow,
+            bagCol: m.bagCol
+          });
+        }
+      });
+    }
+  } catch (e) {
+    thatBai = itemsToSubmit.length;
+    try {
+      const pending = docPendingCX5();
+      itemsToSubmit.forEach(payload => {
+        if (!pending.some(p => p.id === payload.id)) {
+          pending.push(payload);
+        }
+      });
+      luuPendingCX5(pending);
+    } catch (ePend) {}
+    showCanhBaoCX5("Lỗi mạng khi đồng bộ — đã lưu vào hàng chờ trên máy", "warning");
+  } finally {
+    dangDongBoCX5Lock = false;
+    if (typeof showLoading === "function") showLoading(false);
+    capNhatNutDongBoTrucTiepCX5();
+  }
+
+  luuPhienDoDangCX5();
+  renderBangChiTietCX5();
+  renderBangTongHopCX5();
+  if (typeof capNhatTrangThaiMang === "function") capNhatTrangThaiMang();
+
+  if (thatBai === 0 && thanhCong > 0) {
+    showCanhBaoCX5("Đồng bộ " + layNhanLoaiCX5(loaiCX5) + " thành công (" + thanhCong + " QC)!", "success");
+  }
+}
+window.dongBoTrucTiepCX5 = dongBoTrucTiepCX5;
 
 function buildLocalTongKgDataCX5(dsQC) {
   if (!dsQC || dsQC.length === 0) return;
@@ -2376,6 +3054,8 @@ function luuPhienVaoLichSuCX5() {
   const banGhi = {
     idPhien: idPhienHienTaiC5,
     ngay: ngayCX5,
+    loaiCX5: loaiCX5 || "NHAP_SX",
+    ghiChuCX5: ghiChuCX5 || "",
     capNhatLuc: new Date().toISOString(),
     phienCX5: phienCX5,
     seqCX5: seqCX5,
@@ -2426,9 +3106,10 @@ function renderLichSuCX5() {
       ? '<i class="ti ti-check cx5-trangthai-ok"></i>'
       : '<i class="ti ti-x cx5-trangthai-mot-phan"></i>';
     const gio = new Date(s.capNhatLuc).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" });
+    const loaiNhan = layNhanLoaiCX5(s.loaiCX5 || "NHAP_SX");
     return '<div class="irow lichsu-row lichsu-card-row" onclick="xemChiTietLichSuCX5(\'' + s.idPhien + '\')">'
       + '<div class="ls-col-main">'
-      + '<div class="ls-row-top"><span class="ls-date">' + ngayNgan + '</span><span class="ls-time">' + gio + '</span><span class="ls-loai-badge ls-loai-xuat">' + soLuot + ' lượt</span></div>'
+      + '<div class="ls-row-top"><span class="ls-date">' + ngayNgan + '</span><span class="ls-time">' + gio + '</span><span class="ls-loai-badge ' + (isXuatCX5(s.loaiCX5) ? 'ls-loai-xuat' : 'ls-loai-nhap') + '">' + escHtmlCX5(loaiNhan) + ' · ' + soLuot + ' lượt</span></div>'
       + '<div class="ls-row-metrics"><span class="ls-metric-pill"><b>' + soBao + '</b> bao</span><span class="ls-metric-pill ls-metric-kg"><b>' + Math.round(tongKg) + '</b> kg</span></div>'
       + '</div>'
       + '<div class="ls-col-actions">'
@@ -2687,6 +3368,8 @@ function tiepTucLichSuCX5(idPhien) {
   khoiPhucCX5({
     phienCX5: entry.phienCX5,
     ngayCX5: entry.ngay,
+    loaiCX5: entry.loaiCX5 || "NHAP_SX",
+    ghiChuCX5: entry.ghiChuCX5 || "",
     idPhienHienTaiC5: entry.idPhien,
     seqCX5: entry.seqCX5,
     doiChieuCX5: entry.doiChieuCX5,
@@ -2699,7 +3382,9 @@ function tiepTucLichSuCX5(idPhien) {
   // Coi phiên vừa mở từ lịch sử là phiên "đang dở dang" hiện tại, để nếu
   // thoát app giữa chừng thì lần sau vẫn thấy banner tiếp tục đúng phiên này.
   luuPhienDoDangCX5();
-  moTongKgCX5(); // Nhảy thẳng vào bảng tổng kết
+  if ((entry.loaiCX5 || "NHAP_SX") === "NHAP_SX") {
+    moTongKgCX5(); // Nhảy thẳng vào bảng tổng kết đối với Nhập SX
+  }
 
 }
 window.tiepTucLichSuCX5 = tiepTucLichSuCX5;
@@ -2748,10 +3433,16 @@ window.addEventListener("load", function () {
     tenInput.addEventListener("focus", hienGoiYQCCX5);
   }
   document.addEventListener("click", e => {
-    const trongOTimKiem = e.target.closest(".cx5-ten-wrap, #cx1-qc-tim-wrap, #qr-qc-tim-wrap, #cx1-dropdown, #qr-dropdown, #cx5-dropdown");
+    const trongOTimKiem = e.target.closest(".cx5-ten-wrap, #cx5-kg-wrap, #cx1-qc-tim-wrap, #qr-qc-tim-wrap, #cx1-dropdown, #qr-dropdown, #cx5-dropdown, #cx5-kg-dropdown");
     const trongBanPhim = e.target.closest(".cx5-bp-panel");
+    const trongLoaiCX5 = e.target.closest("#cx5-loai-btn, #cx5-loai-list");
+    if (!trongLoaiCX5) {
+      const loaiList = document.getElementById("cx5-loai-list");
+      if (loaiList) loaiList.style.display = "none";
+    }
     if (!trongOTimKiem && !trongBanPhim) {
       closeDropdownCX5();
+      closeDropdownKgCX5();
       if (typeof closeDropdownCX1 === "function") closeDropdownCX1();
       if (typeof closeDropdownQR === "function") closeDropdownQR();
     }
@@ -2975,6 +3666,7 @@ function dongBanPhimCX5() {
   banPhimLoaiCX5 = null;
   banPhimQCPendingCX5 = null;
   closeDropdownCX5();
+  closeDropdownKgCX5();
   closeDropdownSXCX5();
   if (typeof closeDropdownCX1 === "function") closeDropdownCX1();
   else if (typeof dongDropdownCX1 === "function") dongDropdownCX1();
@@ -3051,11 +3743,13 @@ function chonQCSLLuotCX5(item) {
     if (r.luot === luotDangSuaCX5) {
       r.msp = item.msp;
       r.ten = item.ten;
+      r.vung = (item.vung === "FOR") ? "FOR" : "NORMAL";
     }
   });
   if (luotHienTaiCX5 && luotHienTaiCX5.id === luotDangSuaCX5) {
     luotHienTaiCX5.msp = item.msp;
     luotHienTaiCX5.ten = item.ten;
+    luotHienTaiCX5.vung = (item.vung === "FOR") ? "FOR" : "NORMAL";
   }
   luuPhienDoDangCX5();
   renderBangChiTietCX5();
@@ -3082,17 +3776,20 @@ function bpKgSoCX5(ky) {
   const cur = bpGiaTriCX5();
   if (ky === "." && cur.includes(".")) return;
   bpDatGiaTriCX5(cur + ky);
+  if (banPhimActiveElCX5.id === "cx5-kg") onInputKgCX5();
 }
 window.bpKgSoCX5 = bpKgSoCX5;
 
 function bpKgXoaLuiCX5() {
   if (!banPhimActiveElCX5) return;
   bpDatGiaTriCX5(bpGiaTriCX5().slice(0, -1));
+  if (banPhimActiveElCX5.id === "cx5-kg") onInputKgCX5();
 }
 window.bpKgXoaLuiCX5 = bpKgXoaLuiCX5;
 
 function bpKgXoaHetCX5() {
   bpDatGiaTriCX5("");
+  if (banPhimActiveElCX5 && banPhimActiveElCX5.id === "cx5-kg") onInputKgCX5();
 }
 window.bpKgXoaHetCX5 = bpKgXoaHetCX5;
 
@@ -3101,6 +3798,9 @@ function bpKgEnterCX5() {
   const id = banPhimActiveElCX5.id;
   if (id === "cx5-kg") {
     themDongCX5();
+  } else if (id === "cx5-bao") {
+    const kgEl = document.getElementById("cx5-kg");
+    if (kgEl) { kgEl.focus(); moBanPhimCX5(kgEl, "kg"); hienGoiYKgCX5(); }
   } else if (id === "cx1-kg") {
     if (typeof themDongNhapTayCX1 === "function") themDongNhapTayCX1();
   } else if (id === "cx1-bao") {
@@ -3239,7 +3939,6 @@ window.addEventListener("load", function () {
   const monthKey = now.getMonth() + 1;
   const local = docMspCacheLocalCX5(monthKey, true);
   if (local && local.length > 0) {
-    mspDataCX5 = local;
-    mspCacheX5[monthKey] = local;
+    apDungMspListTheoLoaiCX5(local, monthKey);
   }
 });

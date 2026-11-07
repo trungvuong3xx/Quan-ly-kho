@@ -12,7 +12,6 @@ Project-level behavioral and tooling guidelines.
 | `core-extensions` | Helpers: StringExtensions, NumberExtensions, EnumExtensions, XmlExtensions |
 | `logging` | Logging: LogEnter/LogLeave, Log/Warning/Error, [] formatting, | separator |
 | `codebase-memory` | MCP graph: search_graph, trace_path, detect_changes, index_repository |
-| `erp-igp-automation` | Quy trình tự động hóa nhập liệu chứng từ WorkFlow ERP iGP từ Google Sheets (Chỉ & Nhựa) |
 | `karpathy-guidelines` | Behavioral guidelines derived from Andrej Karpathy to reduce common LLM coding mistakes |
 | `anti-hallucination` | Quy tắc chống bịa code (Strict Restrictions): cấm tự sáng tác hàm/props/API/giá trị không có thật, chỉ dùng hàm sẵn có hoặc tự triển khai đầy đủ, không thêm tính năng ngoài yêu cầu, dừng lại hỏi nếu chưa rõ |
 
@@ -79,3 +78,7 @@ Project-level behavioral and tooling guidelines.
    - Rà soát các module/bảng tương tự (BTP, CX1, Quét QR, CX5) để đảm bảo đồng bộ, tránh sửa chỗ này mà sót chỗ khác hoặc làm sai lệch dữ liệu.
 3. **Kiểm tra tương tác thực tế trước khi bàn giao:**
    - Phải kiểm tra hành vi bấm/chạm thực tế xem phản hồi giao diện và logic có hoạt động trơn tru không trước khi hoàn tất task.
+
+### 7. 🚫 PHÂN TÁCH RÕ RÀNG DỰ ÁN (KHÔNG NHẦM LẪN VỚI ERP BOT):
+1. Dự án hiện tại (`Code gốc` / `Quan-ly-kho`) chỉ bao gồm **App Quét Kho PWA & Android APK** (Quét QR, Chỉ X5, BTP, Chỉ X1, Tồn Kho, Kiểm Kê) và các Google Apps Script của kho.
+2. Dự án `C:\NTV\ERP BOT` (Bot tự động nhập liệu ERP iGP) là một dự án **hoàn toàn độc lập, không liên quan** đến dự án Quản lý kho này. Tuyệt đối KHÔNG gộp chung hoặc trỏ nhầm sang `C:\NTV\ERP BOT`.
