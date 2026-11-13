@@ -4,10 +4,12 @@ function chayTongHopBTP() {
 
   var ngayLoc = null;   // null = lấy tất cả ngày
   var phienLoc = null;  // null = lấy tất cả phiên
+  var trangThaiVa = "chưa vá"; // Mặc định nếu ô C4 để trống
 
   if (sheetTH) {
     var valC2 = sheetTH.getRange("C2").getValue();
     var valC3 = sheetTH.getRange("C3").getValue();
+    var valC4 = sheetTH.getRange("C4").getValue();
 
     // Ô C2: Ngày cần tổng hợp (dạng Date hoặc text)
     if (valC2 instanceof Date) {
@@ -20,9 +22,14 @@ function chayTongHopBTP() {
     if (valC3 && !isNaN(valC3)) {
       phienLoc = parseInt(valC3, 10);
     }
+
+    // Ô C4: Trạng thái vá (VD: "chưa vá", "vá rồi"...)
+    if (valC4 !== null && valC4 !== undefined && String(valC4).trim() !== "") {
+      trangThaiVa = String(valC4).trim();
+    }
   }
 
-  tongHopBTPSheet(ngayLoc, phienLoc);
+  tongHopBTPSheet(ngayLoc, phienLoc, trangThaiVa);
 }
 
 function chayTongHopBTPTatCa() {
@@ -132,7 +139,26 @@ function timInfoQCBTP(mapQC, maEM, soKeo) {
   };
 }
 
-function tongHopBTPSheet(ngayLoc, phienLoc) {
+// Tạo text cảnh báo cho cột L: số kèo trên tem không khớp dòng nào trong QC
+function taoTextCanhBao(canhBaoObj, qcEntry) {
+  var keys = Object.keys(canhBaoObj);
+  if (keys.length === 0) return "";
+
+  var matsQC = [];
+  if (qcEntry && qcEntry.rows) {
+    qcEntry.rows.forEach(function(r) {
+      if (r.mat > 0 && matsQC.indexOf(r.mat) === -1) matsQC.push(r.mat);
+    });
+  }
+
+  var sai = keys.map(function(k) { return k + "md"; }).join(", ");
+  return "⚠ " + sai + " không có trong QC [QC chỉ có: " + matsQC.join(", ") + "] → kiểm tra lại tem";
+}
+
+function tongHopBTPSheet(ngayLoc, phienLoc, trangThaiVa) {
+  var textVa = (trangThaiVa !== null && trangThaiVa !== undefined && String(trangThaiVa).trim() !== "")
+    ? String(trangThaiVa).trim()
+    : "chưa vá";
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   var sheetQC = ss.getSheetByName("QC");
   var sheetQR = ss.getSheetByName("QRBTP") || ss.getActiveSheet();
@@ -275,8 +301,26 @@ function tongHopBTPSheet(ngayLoc, phienLoc) {
         nguyenTamCount: 0,
         nguyenTamSize: matTam,
         kienMap: {},
-        tongKienEyes: 0
+        tongKienEyes: 0,
+        canhBaoLe: {},      // số kèo kiện lẻ không khớp QC
+        canhBaoNguyen: {}   // số kèo tấm nguyên không khớp QC
       };
+    }
+
+    // Số kèo không khớp dòng nào trong QC (dung sai < 1 cho các mã có số lẻ như 150.5, 600.5)
+    var qcE = mapQC[maEM];
+    var coKhopQC = false;
+    if (qcE && qcE.rows) {
+      for (var rIdx = 0; rIdx < qcE.rows.length; rIdx++) {
+        if (Math.abs(qcE.rows[rIdx].mat - soKeo) < 1) {
+          coKhopQC = true;
+          break;
+        }
+      }
+    }
+    if (qcE && !coKhopQC) {
+      var nhomCB = isNguyenTam ? gomData[groupKey].canhBaoNguyen : gomData[groupKey].canhBaoLe;
+      nhomCB[soKeo] = true;
     }
 
     if (isNguyenTam) {
@@ -292,6 +336,7 @@ function tongHopBTPSheet(ngayLoc, phienLoc) {
   }
 
   var rowsTongHop = [];
+  var rowsCanhBao = [];
   var groupList = Object.keys(gomData).map(function(k) { return gomData[k]; }).sort(function(a, b) {
     var cmpEM = String(a.maEM || "").localeCompare(String(b.maEM || ""), undefined, { numeric: true, sensitivity: 'base' });
     if (cmpEM !== 0) return cmpEM;
@@ -318,18 +363,13 @@ function tongHopBTPSheet(ngayLoc, phienLoc) {
     if (coNguyenTam) {
       var soTamNguyen = item.nguyenTamCount;
       var soKgNguyen = Math.round((soTamNguyen * kgAA) * 10) / 10;
-
-      // Chỉ ghi "lưới dài" khi cùng đơn có cả kiện lẻ
-      var colJTextNguyen;
-      if (coKienLe) {
-        colJTextNguyen = maSoDonOnly + " chưa vá lưới dài";
-      } else {
-        colJTextNguyen = maSoDonOnly + " chưa vá";
-      }
+      var colJTextNguyen = maSoDonOnly + " " + textVa;
+      var cbNguyen = taoTextCanhBao(item.canhBaoNguyen, mapQC[maEM]);
 
       rowsTongHop.push([
-        mspERP, "", qcV, "", "", soTamNguyen, soKgNguyen, "", "", colJTextNguyen, maEM
+        mspERP, "", qcV, "", "", soTamNguyen, soKgNguyen, "", "", colJTextNguyen, maEM, cbNguyen
       ]);
+      if (cbNguyen) rowsCanhBao.push(rowsTongHop.length - 1);
     }
 
     if (coKienLe) {
@@ -345,20 +385,27 @@ function tongHopBTPSheet(ngayLoc, phienLoc) {
       var ratioTam = (matTam > 0) ? (tongEyes / matTam) : 0;
       var soTamLe = Math.round(ratioTam * 10) / 10;
       var soKgLe = Math.round((ratioTam * kgAA) * 10) / 10;
-      var colJTextLe = maSoDonOnly + " chưa vá " + noteText;
+      var colJTextLe = maSoDonOnly + " " + textVa + " " + noteText;
+      var cbLe = taoTextCanhBao(item.canhBaoLe, mapQC[maEM]);
 
       rowsTongHop.push([
-        mspERP, "", qcV, "", "", soTamLe, soKgLe, "", "", colJTextLe, maEM
+        mspERP, "", qcV, "", "", soTamLe, soKgLe, "", "", colJTextLe, maEM, cbLe
       ]);
+      if (cbLe) rowsCanhBao.push(rowsTongHop.length - 1);
     }
   }
 
   var lastRowTH = sheetTH.getLastRow();
-  if (lastRowTH >= 6) {
-    sheetTH.getRange(6, 1, lastRowTH - 5, 11).clearContent();
+  if (lastRowTH >= 7) {
+    var rngCu = sheetTH.getRange(7, 1, lastRowTH - 6, 12);
+    rngCu.clearContent();
+    rngCu.setBackground(null);
   }
 
   if (rowsTongHop.length > 0) {
-    sheetTH.getRange(6, 1, rowsTongHop.length, 11).setValues(rowsTongHop);
+    sheetTH.getRange(7, 1, rowsTongHop.length, 12).setValues(rowsTongHop);
+    rowsCanhBao.forEach(function(idx) {
+      sheetTH.getRange(7 + idx, 1, 1, 12).setBackground("#fff2cc");
+    });
   }
 }

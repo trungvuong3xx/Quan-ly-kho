@@ -1,5 +1,6 @@
 // ── Quản lý BTP (Bán Thành Phẩm) v20261024-ultra ──────────────────────────
 // Đã xử lý triệt để 100% các vấn đề theo Báo cáo rà soát app Kho
+// [+] Cảnh báo mềm (chế độ A): tem có số kèo không khớp QC -> bíp trầm + rung + banner + nhãn [Lệch QC]
 
 let zxingReaderBTP = null;
 let dangQuetBTP = false;
@@ -96,6 +97,133 @@ function xuLyDuLieuQRBTP(text) {
   return { id: id || rawQR, rawQR: rawQR, msp, qc, kg };
 }
 
+// ══════════════════════════════════════════════════════════════════════════
+// ── CẢNH BÁO LỆCH QC KHI QUÉT (chế độ A: cảnh báo mềm, vẫn lưu mã) ──
+// ══════════════════════════════════════════════════════════════════════════
+let audioCtxCanhBaoBTP = null;
+let bannerLechTimerBTP = null;
+let lanLamMoiQCNenBTP = 0;
+
+// AudioContext dùng chung, tạo 1 lần; resume() nếu bị Android treo (suspended)
+function moKhoaAmThanhBTP() {
+  try {
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC) return null;
+    if (!audioCtxCanhBaoBTP) audioCtxCanhBaoBTP = new AC();
+    if (audioCtxCanhBaoBTP.state === "suspended") {
+      audioCtxCanhBaoBTP.resume().catch(() => { });
+    }
+    return audioCtxCanhBaoBTP;
+  } catch (e) { return null; }
+}
+// Dự phòng: mở khóa ở cú chạm đầu tiên bất kỳ
+["touchstart", "click"].forEach(ev =>
+  document.addEventListener(ev, moKhoaAmThanhBTP, { once: true, passive: true })
+);
+
+// Bíp trầm 2 tiếng, khác hẳn tiếng bíp thành công
+function phatBipCanhBaoBTP() {
+  const ctx = moKhoaAmThanhBTP();
+  if (!ctx) return;
+  try {
+    const t = ctx.currentTime;
+    [[220, 0], [170, 0.24]].forEach(([freq, delay]) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = "square";
+      osc.frequency.value = freq;
+      gain.gain.setValueAtTime(0.0001, t + delay);
+      gain.gain.exponentialRampToValueAtTime(0.35, t + delay + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.0001, t + delay + 0.22);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(t + delay);
+      osc.stop(t + delay + 0.24);
+    });
+  } catch (e) { }
+}
+
+// CSS cho cảnh báo (tự chèn 1 lần, không cần sửa file CSS)
+function chenCssCanhBaoBTP() {
+  if (document.getElementById("btp-lech-style")) return;
+  const st = document.createElement("style");
+  st.id = "btp-lech-style";
+  st.textContent = `
+    #btp-lech-banner{position:fixed;left:10px;right:10px;top:calc(env(safe-area-inset-top,0px) + 10px);z-index:99999;
+      display:none;padding:12px 14px;border-radius:12px;font-size:14px;font-weight:700;line-height:1.35;
+      color:#fff;background:linear-gradient(135deg,#f97316,#dc2626);box-shadow:0 8px 24px rgba(220,38,38,.45);text-align:center}
+    .cam-flash-overlay.flash-canhbao{box-shadow:inset 0 0 0 6px #f97316,inset 0 0 70px 12px rgba(249,115,22,.65);opacity:1}
+    #btp-video-box.btp-lech-vien{outline:4px solid #f97316;outline-offset:-4px}
+    .btp-badge-lech{display:inline-block;margin-left:6px;padding:1px 6px;border-radius:6px;font-size:10px;
+      font-weight:800;color:#fff;background:#dc2626;white-space:nowrap;vertical-align:middle}
+  `;
+  document.head.appendChild(st);
+}
+
+function hienBannerLechBTP(text) {
+  chenCssCanhBaoBTP();
+  let el = document.getElementById("btp-lech-banner");
+  if (!el) {
+    el = document.createElement("div");
+    el.id = "btp-lech-banner";
+    document.body.appendChild(el);
+  }
+  el.textContent = text;
+  el.style.display = "block";
+  if (bannerLechTimerBTP) clearTimeout(bannerLechTimerBTP);
+  bannerLechTimerBTP = setTimeout(() => { el.style.display = "none"; }, 5000);
+}
+
+function hienVienLechBTP() {
+  chenCssCanhBaoBTP();
+  const overlay = document.getElementById("btp-cam-flash-overlay");
+  if (overlay) {
+    overlay.className = "cam-flash-overlay flash-canhbao";
+    setTimeout(() => { overlay.className = "cam-flash-overlay"; }, 1200);
+  }
+  const box = document.getElementById("btp-video-box");
+  if (box) {
+    box.classList.add("btp-lech-vien");
+    setTimeout(() => box.classList.remove("btp-lech-vien"), 1200);
+  }
+}
+
+// Tách số kèo từ đuôi mã tem dạng chuỗi đơn (VD 8AEM2609271-100 -> 100). Tem dạng tag => null (không kiểm tra)
+function laySoKeoDuoiTemBTP(data) {
+  if (!data || data.qc) return null;
+  const m = String(data.id || "").match(/-(\d+(?:\.\d+)?)$/);
+  return m ? parseFloat(m[1]) : null;
+}
+
+// So số kèo với các dòng QC của mã EM. Dung sai < 1 (QC có số lẻ kiểu 150.5)
+function kiemTraLechQCBTP(maEM, soKeo) {
+  if (!maEM || !(soKeo > 0)) return { tt: "boQua" };
+  if (!daNapLocalQCBTP || Object.keys(mapQCBTP).length === 0) napDuLieuQCBTPLocal();
+  const entry = mapQCBTP[String(maEM).trim().toUpperCase()];
+  if (!entry || !entry.rows) return { tt: "khongCoQC" };
+  const mats = [];
+  entry.rows.forEach(r => { if (r.mat > 0 && mats.indexOf(r.mat) === -1) mats.push(r.mat); });
+  if (mats.length === 0) return { tt: "khongCoQC" };
+  mats.sort((a, b) => b - a);
+  return mats.some(m => Math.abs(m - soKeo) < 1) ? { tt: "ok" } : { tt: "lech", mats: mats };
+}
+
+// Làm mới QC ngầm (tối đa 1 lần / 5 phút) để đơn mới có dữ liệu so sánh
+function lamMoiQCNenBTP() {
+  const now = Date.now();
+  if (now - lanLamMoiQCNenBTP < 5 * 60 * 1000) return;
+  lanLamMoiQCNenBTP = now;
+  try { taiDanhSachQCBTP(); } catch (e) { }
+}
+
+function canhBaoLechQCBTP(info, maEM, soKeo) {
+  phatBipCanhBaoBTP();
+  if (navigator.vibrate) { try { navigator.vibrate([200, 100, 200, 100, 400]); } catch (e) { } }
+  hienVienLechBTP();
+  hienBannerLechBTP("⚠️ Cảnh báo: Tem đuôi " + soKeo + "md không có trong QC đơn " + maEM +
+    " (QC chỉ có: " + info.mats.join(", ") + "md)!");
+}
+
 // Bộ nhớ chống quét lặp per-QR trong khoảng thời gian ngắn
 const mapKhoaBTP = new Map();
 
@@ -184,13 +312,25 @@ function themMaVaoPhienBTP(data, rawText, src) {
     return false;
   }
 
-  hienVienFeedbackBTP("success");
+  // Kiểm tra số kèo trên tem có khớp QC không (chế độ A: cảnh báo mềm, vẫn lưu)
+  let lechInfo = null;
+  try {
+    const soKeoTem = laySoKeoDuoiTemBTP(data);
+    const kq = kiemTraLechQCBTP(data.msp, soKeoTem);
+    if (kq.tt === "lech") lechInfo = { soKeo: soKeoTem, mats: kq.mats };
+  } catch (eLech) { }
 
-  // Âm thanh và rung phản hồi
-  if (typeof window.phatTiengBip === "function") {
-    window.phatTiengBip();
-  } else if (navigator.vibrate) {
-    try { navigator.vibrate(70); } catch (e) { }
+  if (lechInfo) {
+    canhBaoLechQCBTP(lechInfo, data.msp, lechInfo.soKeo);
+  } else {
+    hienVienFeedbackBTP("success");
+
+    // Âm thanh và rung phản hồi
+    if (typeof window.phatTiengBip === "function") {
+      window.phatTiengBip();
+    } else if (navigator.vibrate) {
+      try { navigator.vibrate(70); } catch (e) { }
+    }
   }
 
   // Tạo UID duy nhất cho mỗi dòng quét (phục vụ xóa lẻ chính xác 100%)
@@ -206,7 +346,8 @@ function themMaVaoPhienBTP(data, rawText, src) {
     qc: data.qc,
     kg: data.kg,
     thoiGian: new Date(),
-    dotQuet: demSoDotBTP || 1
+    dotQuet: demSoDotBTP || 1,
+    lechQC: lechInfo
   };
   phienBTP.push(newItem);
 
@@ -426,6 +567,7 @@ function taoHtmlNhomLogBTP(g, isFirst) {
   const safeId = 'btp-grp-' + keyB64.replace(/[^a-zA-Z0-9]/g, '');
   const isExpanded = window.expandedBTPGroups.has(g.key);
   const countBadge = g.items.length > 1 ? `<span class="btp-badge-count">×${g.items.length}</span>` : '';
+  const lechBadge = g.items.some(it => it && it.lechQC) ? '<span class="btp-badge-lech" title="Số kèo không có trong QC">Lệch QC</span>' : '';
   const gio = g.lastThoiGian ? new Date(g.lastThoiGian).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit", second: "2-digit" }) : "";
   const flashClass = isFirst ? ' scan-flash-new' : '';
   const kgText = (g.kg !== undefined && g.kg !== null && Number(g.kg) > 0) ? anToanHtmlBTP(g.kg) : '—';
@@ -438,7 +580,7 @@ function taoHtmlNhomLogBTP(g, isFirst) {
 
     return `<div class="btp-sub-item btp-sub-item-btp">
         <span class="btp-sub-stt">${subIdx + 1}</span>
-        <span class="btp-sub-msp" title="${safeSubMsp}">${safeSubMsp}</span>
+        <span class="btp-sub-msp" title="${safeSubMsp}">${safeSubMsp}${it.lechQC ? '<span class="btp-badge-lech">Lệch QC</span>' : ''}</span>
         <span class="btp-sub-gio">${subGio}</span>
         <button type="button" class="btp-sub-del-btn" onclick="xoaMaBTP('${safeUid}', event)" title="Xóa lần quét này">
           <i class="ti ti-trash"></i>
@@ -458,7 +600,7 @@ function taoHtmlNhomLogBTP(g, isFirst) {
           <span class="btp-col-dot">${g.dot}</span>
           <div class="btp-col-msp-wrap">
             <span class="btp-col-msp">${safeMsp}</span>
-            ${countBadge}
+            ${countBadge}${lechBadge}
           </div>
           <span class="btp-col-kg">${kgText}</span>
           <span class="btp-col-gio">${gio}</span>
@@ -678,6 +820,9 @@ function xoaPhienDoDangBTP() {
 async function khoiDongCameraBTP() {
   if (dangKhoiTaoCamBTP) return;
   dangKhoiTaoCamBTP = true;
+  moKhoaAmThanhBTP();   // mở khóa âm thanh (Android cần resume sau cú chạm)
+  chenCssCanhBaoBTP();
+  lamMoiQCNenBTP();     // làm mới QC ngầm để đơn mới có dữ liệu đối chiếu
 
   try {
     const btpVid = document.getElementById("btp-reader");
