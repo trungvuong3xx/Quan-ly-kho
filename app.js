@@ -392,6 +392,7 @@ function chuyenTrang(id, el) {
   if (targetPage) targetPage.classList.add("active");
   const targetBtn = el || document.querySelector('.nav-item[data-page="' + id + '"], .bnav-btn[data-page="' + id + '"]');
   if (targetBtn) targetBtn.classList.add("active");
+  tatDenPinKhiRoiTab(id);
   if (id !== "quetQR" && typeof dungQuet === "function") dungQuet();
   if (id !== "chiFor" && typeof dungCX1 === "function") dungCX1();
   if (id !== "kiemKe" && typeof dungKiemKe === "function") dungKiemKe();
@@ -433,6 +434,7 @@ function chuyenTrangKhongNav(id) {
     document.querySelectorAll(".nav-item, .bnav-btn").forEach(b => b.classList.remove("active"));
     targetNav.classList.add("active");
   }
+  tatDenPinKhiRoiTab(id);
   if (id !== "quetQR" && typeof dungQuet === "function") dungQuet();
   if (id !== "chiFor" && typeof dungCX1 === "function") dungCX1();
   if (id !== "kiemKe" && typeof dungKiemKe === "function") dungKiemKe();
@@ -569,6 +571,74 @@ const cameraSleepingMap = {};
 const cameraWakingUpMap = {};
 const CAMERA_IDLE_TIMEOUT_MS = 18000; // 18 giây không quét & không chạm -> tự ngủ để máy mát và tiết kiệm pin
 
+// ── Đèn pin: bật là sáng liên tục cho tới khi người dùng bấm tắt (dừng/quét tiếp không ảnh hưởng) ──
+const denPinMap = {};        // videoId -> true nếu người dùng đang bật đèn
+const denPinBtnMap = {};     // videoId -> nút đèn pin trên HUD (để đồng bộ giao diện)
+const denPinGiuMap = {};     // videoId -> true nếu stream đang được giữ lại CHỈ vì đèn (đã dừng quét)
+const readerHienTaiMap = {}; // videoId -> bộ giải mã đang chạy
+window.denPinMap = denPinMap;
+window.denPinGiuMap = denPinGiuMap;
+
+function capNhatNutDenPin(videoId, on) {
+  const idNutMacDinh = { 'reader': 'btn-flash-qr', 'cx1-reader': 'btn-flash-cx1' };
+  const btn = denPinBtnMap[videoId] || (idNutMacDinh[videoId] ? document.getElementById(idNutMacDinh[videoId]) : null);
+  if (btn) {
+    btn.classList.toggle("active-flash", !!on);
+    btn.title = on ? "Tắt đèn pin" : "Bật đèn pin";
+  }
+}
+
+// Áp lại đèn cho track hiện tại nếu trạng thái đèn đang bật (sau khi mở stream mới / applyConstraints khác)
+async function apDungDenPin(videoId) {
+  if (!denPinMap[videoId]) return;
+  const videoEl = document.getElementById(videoId);
+  const track = videoEl && videoEl.srcObject && videoEl.srcObject.getVideoTracks ? videoEl.srcObject.getVideoTracks()[0] : null;
+  try {
+    const caps = track && typeof track.getCapabilities === "function" ? track.getCapabilities() : {};
+    if (!track || !caps.torch) throw new Error("Không hỗ trợ đèn pin");
+    await track.applyConstraints({ advanced: [{ torch: true }] });
+  } catch (e) {
+    denPinMap[videoId] = false;
+    capNhatNutDenPin(videoId, false);
+  }
+}
+
+// Giải phóng camera đang được giữ lại chỉ để làm đèn pin
+function giaiPhongCameraGiuDen(videoId) {
+  denPinGiuMap[videoId] = false;
+  const videoEl = document.getElementById(videoId);
+  if (videoEl && videoEl.srcObject) {
+    try {
+      videoEl.srcObject.getTracks().forEach(t => { try { t.stop(); } catch (e) { } });
+      videoEl.srcObject = null;
+    } catch (e) { }
+  }
+  if (window.AndroidNative && typeof window.AndroidNative.setKeepScreenOn === "function") {
+    try { window.AndroidNative.setKeepScreenOn(false); } catch (e) { }
+  }
+}
+
+// Tắt hẳn đèn + giải phóng camera đang giữ vì đèn (dùng khi kết thúc phiên / chuyển sang nhập tay)
+function tatDenPinHoanToan(videoId) {
+  if (!denPinMap[videoId] && !denPinGiuMap[videoId]) return;
+  denPinMap[videoId] = false;
+  capNhatNutDenPin(videoId, false);
+  if (denPinGiuMap[videoId]) giaiPhongCameraGiuDen(videoId);
+}
+window.tatDenPinHoanToan = tatDenPinHoanToan;
+
+// Rời sang tab khác: tắt đèn của các camera không thuộc tab mới
+function tatDenPinKhiRoiTab(idTrangMoi) {
+  const pageMap = { 'reader': 'quetQR', 'kk-reader': 'kiemKe', 'cx1-reader': 'chiFor', 'btp-reader': 'btpPage' };
+  for (const vid in pageMap) {
+    if (pageMap[vid] === idTrangMoi) continue;
+    if (!denPinMap[vid] && !denPinGiuMap[vid]) continue;
+    denPinMap[vid] = false;
+    capNhatNutDenPin(vid, false);
+    if (denPinGiuMap[vid]) giaiPhongCameraGiuDen(vid);
+  }
+}
+
 // Lắng nghe tương tác người dùng 1 lần duy nhất ở cấp document (ngăn rò rỉ listener khi camera ngủ/thức nhiều lần)
 function onGlobalCameraInteraction() {
   const pageMap = {
@@ -659,6 +729,7 @@ function anSleepOverlayCamera(videoId) {
 function choCameraNgu(videoId) {
   const videoEl = document.getElementById(videoId);
   if (!videoEl || !videoEl.srcObject) return;
+  if (denPinMap[videoId]) return; // đèn pin đang bật -> không cho camera ngủ
 
   cameraSleepingMap[videoId] = true;
 
@@ -741,6 +812,7 @@ function resetSleepTimerCamera(videoId) {
   }
   cameraSleepingMap[videoId] = false;
   anSleepOverlayCamera(videoId);
+  if (denPinMap[videoId]) return; // đèn pin đang bật -> không đặt hẹn giờ ngủ
 
   cameraSleepTimerMap[videoId] = setTimeout(() => {
     choCameraNgu(videoId);
@@ -1091,9 +1163,10 @@ function locChongChoaCanvas(ctx, w, h) {
 
 window.toggleFlashlightHUD = async function (videoId, btnEl) {
   if (typeof batTatDenPinCamera === "function") {
-    const isCurrentlyActive = btnEl.classList.contains("active-flash");
-    const newState = await batTatDenPinCamera(videoId, null, isCurrentlyActive);
-    btnEl.classList.toggle("active-flash", !!newState);
+    if (btnEl) denPinBtnMap[videoId] = btnEl;
+    // Trạng thái đèn lấy từ denPinMap (không phụ thuộc class CSS của nút)
+    const newState = await batTatDenPinCamera(videoId, null, !!denPinMap[videoId]);
+    capNhatNutDenPin(videoId, !!newState);
   }
 };
 
@@ -1109,6 +1182,12 @@ async function khoiTaoCameraFast(videoId, onDecodedCallback) {
   const videoEl = document.getElementById(videoId);
   if (!videoEl) return null;
 
+  // Dừng vòng quét cũ (nếu còn) để không chạy 2 vòng quét song song khi dùng lại stream
+  const readerCu = readerHienTaiMap[videoId];
+  if (readerCu && typeof readerCu.reset === 'function') {
+    try { readerCu.reset(); } catch (e) { }
+  }
+
   if (typeof onDecodedCallback === 'function') {
     lastCameraCallbackMap[videoId] = onDecodedCallback;
   }
@@ -1119,8 +1198,17 @@ async function khoiTaoCameraFast(videoId, onDecodedCallback) {
   }
 
   let stream = null;
+  let dungLaiStream = false;
   try {
-    stream = await moLuongCameraDungHuong();
+    // Đèn pin đang bật: dùng lại stream cũ (nếu còn sống) để đèn không bị tắt khi quét tiếp
+    const streamCu = videoEl.srcObject;
+    const trackCu = streamCu && streamCu.getVideoTracks ? streamCu.getVideoTracks()[0] : null;
+    if (denPinMap[videoId] && trackCu && trackCu.readyState === 'live') {
+      stream = streamCu;
+      dungLaiStream = true;
+    } else {
+      stream = await moLuongCameraDungHuong();
+    }
 
     if (!stream) {
       console.warn("Không lấy được luồng camera sau!");
@@ -1142,7 +1230,8 @@ async function khoiTaoCameraFast(videoId, onDecodedCallback) {
     videoEl.setAttribute('playsinline', '');
     videoEl.setAttribute('webkit-playsinline', '');
     videoEl.setAttribute('autoplay', '');
-    videoEl.srcObject = stream;
+    if (videoEl.srcObject !== stream) videoEl.srcObject = stream;
+    denPinGiuMap[videoId] = false;
 
     try {
       const playPromise = videoEl.play();
@@ -1180,7 +1269,10 @@ async function khoiTaoCameraFast(videoId, onDecodedCallback) {
     }
 
     // Kích hoạt Continuous Autofocus
-    await batContinuousAutofocus(stream);
+    if (!dungLaiStream) await batContinuousAutofocus(stream);
+    // Stream mới (hoặc applyConstraints khác có thể làm mất đèn) mà trạng thái đèn đang bật -> áp lại đèn
+    await apDungDenPin(videoId);
+    capNhatNutDenPin(videoId, !!denPinMap[videoId]); // đồng bộ nút (module có thể đã tự gỡ class khi bắt đầu quét)
 
     // Cập nhật nút đổi camera trên viewfinder (ẩn triệt để)
     capNhatNutDoiCamera(videoEl);
@@ -1394,7 +1486,7 @@ async function khoiTaoCameraFast(videoId, onDecodedCallback) {
   lenLichQuetTiep(120);
   resetSleepTimerCamera(videoId); // Kích hoạt bộ đếm 18s khi bắt đầu phiên quét
 
-  return {
+  const readerObj = {
     reset: () => {
       isScanning = false;
       if (animFrameMap[videoId]) {
@@ -1420,6 +1512,8 @@ async function khoiTaoCameraFast(videoId, onDecodedCallback) {
       lastMotionSamples = null;
     }
   };
+  readerHienTaiMap[videoId] = readerObj;
+  return readerObj;
 }
 
 function dungCameraFast(videoId, zxingReaderObj) {
@@ -1439,6 +1533,12 @@ function dungCameraFast(videoId, zxingReaderObj) {
     zxingReaderObj.reset();
   }
   const videoEl = document.getElementById(videoId);
+  // Đèn pin đang bật: chỉ dừng vòng quét, GIỮ stream camera để đèn sáng liên tục tới khi người dùng bấm tắt
+  const trackDen = videoEl && videoEl.srcObject && videoEl.srcObject.getVideoTracks ? videoEl.srcObject.getVideoTracks()[0] : null;
+  if (denPinMap[videoId] && trackDen && trackDen.readyState === 'live') {
+    denPinGiuMap[videoId] = true;
+    return;
+  }
   if (videoEl && videoEl.srcObject) {
     videoEl.srcObject.getTracks().forEach(t => t.stop());
     videoEl.srcObject = null;
@@ -2039,6 +2139,14 @@ function triggerResumeCamera() {
         await khoiPhucCamera(item.vid, item.fallback);
       }
     }
+    // Ẩn app thì hệ điều hành tắt camera nên đèn tắt theo: camera nào không được khôi phục thì đồng bộ nút đèn về tắt
+    for (const vid of ['reader', 'kk-reader', 'cx1-reader', 'btp-reader']) {
+      const v = document.getElementById(vid);
+      if (denPinMap[vid] && !(v && v.srcObject)) {
+        denPinMap[vid] = false;
+        capNhatNutDenPin(vid, false);
+      }
+    }
   }, 250);
 }
 
@@ -2054,6 +2162,7 @@ function ngatTatCaCamera() {
       cameraSleepTimerMap[id] = null;
     }
     anSleepOverlayCamera(id);
+    denPinGiuMap[id] = false; // stream sắp bị đóng hẳn, không còn "giữ lại vì đèn"
     const videoEl = document.getElementById(id);
     if (videoEl && videoEl.srcObject) {
       try {
@@ -2700,26 +2809,37 @@ let soLanBoQuaSaoLuuGiam = 0; // số lần liên tiếp bỏ qua sao lưu vì l
 // ── CÁC HÀM DÙNG CHUNG CHO TẤT CẢ CÁC MODULE QUÉT QR ─────────────────
 
 window.batTatDenPinCamera = async function (videoId, btnId, currentState) {
+  // denPinMap là nguồn trạng thái duy nhất; currentState do module truyền vào có thể đã cũ nên không dùng
+  const hienTai = !!denPinMap[videoId];
   const videoEl = document.getElementById(videoId);
   if (!videoEl || !videoEl.srcObject) {
     if (typeof showCanhBao === "function") showCanhBao("Camera chưa sẵn sàng.", "warning");
-    return currentState;
+    return hienTai;
   }
   const track = videoEl.srcObject.getVideoTracks()[0];
-  if (!track) return currentState;
+  if (!track) return hienTai;
 
   const capabilities = (typeof track.getCapabilities === "function") ? track.getCapabilities() : {};
   if (!capabilities.torch) {
     if (typeof showCanhBao === "function") showCanhBao("Thiết bị không hỗ trợ đèn pin.", "warning");
-    return currentState;
+    return hienTai;
   }
 
   const btnFlash = btnId ? document.getElementById(btnId) : null;
-  if (btnFlash) btnFlash.disabled = true;
+  if (btnFlash) {
+    denPinBtnMap[videoId] = btnFlash;
+    btnFlash.disabled = true;
+  }
 
-  const newState = !currentState;
+  const newState = !hienTai;
   try {
     await track.applyConstraints({ advanced: [{ torch: newState }] });
+    denPinMap[videoId] = newState;
+    if (!newState) {
+      // Tắt đèn: nếu camera đang được giữ lại chỉ vì đèn thì giải phóng, còn đang quét thì khởi động lại bộ đếm ngủ
+      if (denPinGiuMap[videoId]) giaiPhongCameraGiuDen(videoId);
+      else resetSleepTimerCamera(videoId);
+    }
     if (btnFlash) {
       btnFlash.classList.toggle("active-flash", newState);
       btnFlash.title = newState ? "Tắt đèn pin" : "Bật đèn pin";
@@ -2730,7 +2850,7 @@ window.batTatDenPinCamera = async function (videoId, btnId, currentState) {
     console.warn("Lỗi bật/tắt đèn pin:", err);
     if (typeof showCanhBao === "function") showCanhBao("Không thể bật/tắt đèn pin.", "error");
     if (btnFlash) btnFlash.disabled = false;
-    return currentState;
+    return hienTai;
   }
 };
 

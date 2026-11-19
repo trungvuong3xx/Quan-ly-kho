@@ -827,7 +827,7 @@ async function khoiDongCameraBTP() {
   try {
     const btpVid = document.getElementById("btp-reader");
     const btpTrack = btpVid && btpVid.srcObject ? btpVid.srcObject.getVideoTracks()[0] : null;
-    const isCamRunningBTP = btpTrack && btpTrack.readyState === 'live';
+    const isCamRunningBTP = btpTrack && btpTrack.readyState === 'live' && !(window.denPinGiuMap && window.denPinGiuMap["btp-reader"]);
 
     if (!zxingReaderBTP || !isCamRunningBTP) {
       if (typeof khoiTaoCameraFast === "function") {
@@ -1090,6 +1090,7 @@ async function guiLenSheetBTP(rows) {
 
 // Khi xem kết quả: Tắt hẳn camera hardware để bảo vệ nhiệt độ máy K20 Pro
 function xemKetQuaBTP() {
+  if (typeof window.tatDenPinHoanToan === "function") window.tatDenPinHoanToan("btp-reader");
   dungBTP();
   if (typeof dungCameraFast === "function" && zxingReaderBTP) {
     try { dungCameraFast("btp-reader", zxingReaderBTP); } catch (e) { }

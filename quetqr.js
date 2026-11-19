@@ -238,6 +238,7 @@ function onInputQR() {
 window.onInputQR = onInputQR;
 
 function chuyenSangNhapTayQR() {
+  if (typeof window.tatDenPinHoanToan === "function") window.tatDenPinHoanToan("reader");
   dungQuetQR();
   const pauseOverlay = document.getElementById("qr-cam-pause-overlay");
   if (pauseOverlay) pauseOverlay.style.display = "none";
@@ -510,7 +511,7 @@ async function batDauQuetQR() {
   try {
     const videoEl = document.getElementById("reader");
     const track = videoEl && videoEl.srcObject ? videoEl.srcObject.getVideoTracks()[0] : null;
-    const isCamRunning = track && track.readyState === "live";
+    const isCamRunning = track && track.readyState === "live" && !(window.denPinGiuMap && window.denPinGiuMap["reader"]);
 
     if (!zxingReaderQR || !isCamRunning) {
       zxingReaderQR = await khoiTaoCameraFast("reader", (txt) => {
@@ -633,7 +634,8 @@ window.themMaThuCongQR = themMaThuCongQR;
 // ── Nhập tay mã thủ công ───────────────────────────────────────────
 let denPinBatQR = false;
 async function toggleFlashQR() {
-  if (!zxingReaderQR || !dangQuetQR) return;
+  // Cho phép bấm tắt đèn cả khi đang dừng quét (camera được giữ lại vì đèn)
+  if (!zxingReaderQR || (!dangQuetQR && !(window.denPinMap && window.denPinMap["reader"]))) return;
   if (typeof batTatDenPinCamera === "function") {
     denPinBatQR = await batTatDenPinCamera("reader", "btn-flash-qr", denPinBatQR);
   }
@@ -681,7 +683,7 @@ async function tiepTucQuetQR() {
   try {
     const videoEl = document.getElementById("reader");
     const track = videoEl && videoEl.srcObject ? videoEl.srcObject.getVideoTracks()[0] : null;
-    const isCamRunning = track && track.readyState === "live";
+    const isCamRunning = track && track.readyState === "live" && !(window.denPinGiuMap && window.denPinGiuMap["reader"]);
 
     if (!zxingReaderQR || !isCamRunning) {
       zxingReaderQR = await khoiTaoCameraFast("reader", (txt) => {
@@ -707,6 +709,7 @@ window.toggleDungTiepTucQR = toggleDungTiepTucQR;
 
 // Tắt hẳn phần cứng camera khi kết thúc phiên hoặc chuyển sang tab khác để tiết kiệm pin
 function tatCameraQR() {
+  if (typeof window.tatDenPinHoanToan === "function") window.tatDenPinHoanToan("reader");
   dangQuetQR = false;
   window.dangQuetQR = false;
   if (zxingReaderQR) {
@@ -1427,7 +1430,7 @@ async function quetTiepQuetQR() {
   try {
     const videoEl = document.getElementById("reader");
     const track = videoEl && videoEl.srcObject ? videoEl.srcObject.getVideoTracks()[0] : null;
-    const isCamRunning = track && track.readyState === "live";
+    const isCamRunning = track && track.readyState === "live" && !(window.denPinGiuMap && window.denPinGiuMap["reader"]);
 
     if (!zxingReaderQR || !isCamRunning) {
       if (zxingReaderQR && typeof dungCameraFast === "function") {

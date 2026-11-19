@@ -43,7 +43,8 @@ if (typeof phatTiengBip !== "function") {
 }
 
 async function toggleFlashCX1() {
-  if (!zxingReaderCX1 || !dangQuetCX1) return;
+  // Cho phép bấm tắt đèn cả khi đang dừng quét (camera được giữ lại vì đèn)
+  if (!zxingReaderCX1 || (!dangQuetCX1 && !(window.denPinMap && window.denPinMap["cx1-reader"]))) return;
   if (typeof batTatDenPinCamera === "function") {
     denPinBat = await batTatDenPinCamera("cx1-reader", "btn-flash-cx1", denPinBat);
   }
@@ -272,7 +273,7 @@ async function tiepTucKhoiTaoCX1(cheDo = "quet") {
   try {
     const cx1Vid = document.getElementById("cx1-reader");
     const cx1Track = cx1Vid && cx1Vid.srcObject ? cx1Vid.srcObject.getVideoTracks()[0] : null;
-    const isCamRunningCX1 = cx1Track && cx1Track.readyState === 'live';
+    const isCamRunningCX1 = cx1Track && cx1Track.readyState === 'live' && !(window.denPinGiuMap && window.denPinGiuMap["cx1-reader"]);
     if (!zxingReaderCX1 || !isCamRunningCX1) {
       if (zxingReaderCX1) {
         if (typeof dungCameraFast === "function") dungCameraFast("cx1-reader", zxingReaderCX1);
@@ -330,7 +331,7 @@ async function tiepTucCX1() {
   try {
     const cx1Vid = document.getElementById("cx1-reader");
     const cx1Track = cx1Vid && cx1Vid.srcObject ? cx1Vid.srcObject.getVideoTracks()[0] : null;
-    const isCamRunningCX1 = cx1Track && cx1Track.readyState === 'live';
+    const isCamRunningCX1 = cx1Track && cx1Track.readyState === 'live' && !(window.denPinGiuMap && window.denPinGiuMap["cx1-reader"]);
     if (!zxingReaderCX1 || !isCamRunningCX1) {
       if (zxingReaderCX1) {
         if (typeof dungCameraFast === "function") dungCameraFast("cx1-reader", zxingReaderCX1);
@@ -415,6 +416,7 @@ async function guiLenSheetCX1(rows, timeoutMs = 30000) {
 
 function ketThucCX1() {
   if (typeof dongBanPhimCX5 === "function") dongBanPhimCX5();
+  if (typeof window.tatDenPinHoanToan === "function") window.tatDenPinHoanToan("cx1-reader");
   dungCX1();
   const pauseOverlay = document.getElementById("cx1-cam-pause-overlay");
   if (pauseOverlay) pauseOverlay.style.display = "none";
@@ -844,6 +846,7 @@ function themDongNhapTayCX1() {
 window.themDongNhapTayCX1 = themDongNhapTayCX1;
 
 function chuyenSangNhapTayCX1() {
+  if (typeof window.tatDenPinHoanToan === "function") window.tatDenPinHoanToan("cx1-reader");
   dungCX1();
   const pauseOverlay = document.getElementById("cx1-cam-pause-overlay");
   if (pauseOverlay) pauseOverlay.style.display = "none";
@@ -1816,7 +1819,7 @@ async function quetTiepCX1() {
   try {
     const cx1Vid = document.getElementById("cx1-reader");
     const cx1Track = cx1Vid && cx1Vid.srcObject ? cx1Vid.srcObject.getVideoTracks()[0] : null;
-    const isCamRunningCX1 = cx1Track && cx1Track.readyState === 'live';
+    const isCamRunningCX1 = cx1Track && cx1Track.readyState === 'live' && !(window.denPinGiuMap && window.denPinGiuMap["cx1-reader"]);
     if (!zxingReaderCX1 || !isCamRunningCX1) {
       if (zxingReaderCX1) {
         if (typeof dungCameraFast === "function") dungCameraFast("cx1-reader", zxingReaderCX1);
@@ -1945,7 +1948,7 @@ async function khoiPhucCX1(state) {
   try {
     const cx1Vid = document.getElementById("cx1-reader");
     const cx1Track = cx1Vid && cx1Vid.srcObject ? cx1Vid.srcObject.getVideoTracks()[0] : null;
-    const isCamRunningCX1 = cx1Track && cx1Track.readyState === 'live';
+    const isCamRunningCX1 = cx1Track && cx1Track.readyState === 'live' && !(window.denPinGiuMap && window.denPinGiuMap["cx1-reader"]);
     if (!zxingReaderCX1 || !isCamRunningCX1) {
       if (zxingReaderCX1) {
         if (typeof dungCameraFast === "function") dungCameraFast("cx1-reader", zxingReaderCX1);
