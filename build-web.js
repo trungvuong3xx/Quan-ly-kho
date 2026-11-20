@@ -12,6 +12,7 @@ const filesToCopy = [
   'cx5.js',
   'btp.js',
   'tonkho.js',
+  'tp.js',
   'Fast.mp3',
   'manifest.json',
   'icon-192.png',

@@ -14,10 +14,14 @@ on:
       - 'cx5.js'
       - 'btp.js'
       - 'tonkho.js'
+      - 'tp.js'
       - 'sw.js'
       - 'index.html'
       - 'style.css'
       - 'package.json'
+      - 'package-lock.json'
+      - 'tests/**'
+      - 'playwright.config.cjs'
       - 'build-web.js'
       - 'lib/**'
       - 'android/**'
@@ -43,6 +47,15 @@ jobs:
 
       - name: Install Node Dependencies
         run: npm install
+
+      - name: Test TP data and storage
+        run: npm test
+
+      - name: Install test browser
+        run: npx playwright install --with-deps chromium
+
+      - name: Test browser flows
+        run: npm run test:browser
 
       - name: Build Web Assets
         run: npm run build

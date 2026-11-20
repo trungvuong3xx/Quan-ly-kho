@@ -4208,3 +4208,46 @@ body.cam-active #chiFor.active {
   color: var(--row-text);
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
 }
+
+/* Thành phẩm: independent scanner layout and bounded log. */
+#tpPage, #lichSuTP { max-width: 900px; margin: auto; padding: 12px; }
+.tp-heading, .tp-toolbar, .tp-meta { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
+.tp-heading h2 { margin: 0; font-size: 20px; }
+.tp-meta { font-size: 12px; justify-content: space-between; }
+#tp-message { font-size: 13px; margin: 4px 0; color: var(--text-main); }
+#tp-message[data-type="error"] { color: var(--danger, #dc2626); }
+body.cam-active #tpPage.active { display: flex; flex-direction: column; min-height: 0; background: var(--bg-scan, var(--bg-body)); }
+body.cam-active #tp-cam:not([style*="display: none"]):not([style*="display:none"]) { display: flex; flex-direction: column; flex: 1; min-height: 0; overflow: hidden; width: 100%; max-width: 600px; margin: 0 auto; gap: 8px; }
+#tp-video-box { position: relative; width: 100%; flex: 0 0 auto; height: clamp(150px, 29dvh, 280px); overflow: hidden; border-radius: 14px; background: #111; }
+#tp-reader { width: 100%; height: 100%; object-fit: cover; }
+.tp-flash { position: absolute; top: 8px; right: 8px; z-index: 4; border: 1px solid white; border-radius: 8px; padding: 8px; background: #111b; color: white; }
+.tp-flash.active-flash { background: #b45309; }
+#tp-log-container { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; }
+#tp-log-note { font-size: 12px; padding: 8px; }
+.tp-group-row { border: 1px solid var(--border); border-radius: 8px; margin: 4px 0; }
+.tp-group-row summary { display: grid; grid-template-columns: 20px minmax(0,1fr) auto auto 16px; gap: 6px; padding: 10px 6px; align-items: center; cursor: pointer; font-size: 12px; overflow-wrap: anywhere; }
+.tp-group-row summary::-webkit-details-marker { display: none; }
+.tp-group-row[open] .tp-chevron { transform: rotate(180deg); }
+.tp-badge-bao { background: var(--primary); color: white; border-radius: 8px; padding: 3px 5px; }
+.tp-sub-item { display: grid; grid-template-columns: minmax(0,1fr) auto auto 36px; align-items: center; gap: 8px; padding: 6px 10px; border-top: 1px solid var(--border); font-size: 12px; overflow-wrap: anywhere; }
+.tp-sub-item button { min-width: 32px; padding: 6px; }
+.tp-table-wrap { overflow: auto; }
+.tp-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.tp-table th, .tp-table td { border-bottom: 1px solid var(--border); padding: 10px 6px; text-align: right; }
+.tp-table th:first-child, .tp-table td:first-child { text-align: left; }
+.tp-history-card { border: 1px solid var(--border); border-radius: 12px; padding: 14px; margin: 12px 0; }
+.tp-history-card .btn { margin: 4px; }
+#lichsu-tp-tim { width: 100%; margin: 8px 0; padding: 12px; }
+#tpPage [hidden], #lichSuTP [hidden] { display: none !important; }
+@media (orientation: landscape) and (max-height: 500px) { #tp-video-box { height: 130px; } #tpPage .tp-heading { display: none; } }
+
+body.cam-active #tp-video-box { height: clamp(150px, 29dvh, 280px) !important; min-height: 0 !important; }
+@media (orientation: landscape) and (max-height: 500px) {
+  body.cam-active #tpPage.active { display: grid; grid-template-columns: 1fr; }
+  body.cam-active #tpPage > .tp-heading, body.cam-active #tpPage > .tp-meta, body.cam-active #tp-message { display: none; }
+  body.cam-active #tpPage > .tp-toolbar { margin: 0; }
+  body.cam-active #tp-cam:not([style*="display: none"]):not([style*="display:none"]) { display: grid !important; grid-template-columns: 1fr 1fr; grid-template-rows: auto minmax(0,1fr); max-width: none; height: 100%; }
+  body.cam-active #tp-video-box { grid-row: 1 / 3; height: 100% !important; max-height: 220px; }
+  body.cam-active #tp-cam > .tp-toolbar { margin: 0; }
+  body.cam-active #tp-log-container { grid-column: 2; }
+}

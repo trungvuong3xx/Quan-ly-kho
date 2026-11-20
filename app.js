@@ -40,12 +40,12 @@ function formatKg(value) {
 let isXlsxLoading = false;
 let xlsxLoadingCallbacks = [];
 
-function napThuVienXLSX(callback) {
+function napThuVienXLSX(callback, onError) {
   if (typeof XLSX !== "undefined") {
     if (callback) callback();
     return;
   }
-  if (callback) xlsxLoadingCallbacks.push(callback);
+  xlsxLoadingCallbacks.push({ callback, onError });
   if (isXlsxLoading) return;
   isXlsxLoading = true;
 
@@ -55,11 +55,13 @@ function napThuVienXLSX(callback) {
     isXlsxLoading = false;
     const cbs = xlsxLoadingCallbacks;
     xlsxLoadingCallbacks = [];
-    cbs.forEach(cb => { try { cb(); } catch (e) {} });
+    cbs.forEach(entry => { try { if (entry.callback) entry.callback(); } catch (e) { if (entry.onError) entry.onError(e); } });
   };
   script.onerror = () => {
     isXlsxLoading = false;
+    const cbs = xlsxLoadingCallbacks;
     xlsxLoadingCallbacks = [];
+    cbs.forEach(entry => { if (entry.onError) entry.onError(new Error("Không thể nạp thư viện Excel")); });
     if (typeof showCanhBao === "function") showCanhBao("Không thể nạp thư viện xuất Excel. Vui lòng thử lại!", "error");
   };
   document.head.appendChild(script);
@@ -67,16 +69,20 @@ function napThuVienXLSX(callback) {
 window.napThuVienXLSX = napThuVienXLSX;
 
 // ── Hàm tiện ích Xuất File Excel dùng chung ─────────
-function exportToExcel(filename, sheetName, dataArray) {
-  if (!dataArray || dataArray.length === 0) {
+async function exportToExcel(filename, sheetName, dataArray, options = {}) {
+  const sheets = options.sheets || [{ name: sheetName, data: dataArray }];
+  if (!sheets.length || sheets.some(s => !Array.isArray(s.data) || !s.data.length)) {
     if (typeof showCanhBao === "function") showCanhBao("Không có dữ liệu để xuất file Excel!", "warning");
-    return;
-  }
-  if (typeof XLSX === "undefined") {
-    napThuVienXLSX(() => exportToExcel(filename, sheetName, dataArray));
-    return;
+    return { ok: false };
   }
   try {
+    if (typeof XLSX === "undefined") {
+      await new Promise((resolve, reject) => napThuVienXLSX(resolve, reject));
+    }
+    const wb = XLSX.utils.book_new();
+    const names = new Set();
+    for (const sheet of sheets) {
+    dataArray = sheet.data;
     const ws = XLSX.utils.json_to_sheet(dataArray);
 
     // Tự động căn chỉnh độ rộng cột chuẩn đẹp
@@ -94,9 +100,16 @@ function exportToExcel(filename, sheetName, dataArray) {
       ws['!cols'] = colWidths;
     }
 
-    const wb = XLSX.utils.book_new();
-    let safeSheetName = (sheetName || "Báo Cáo").replace(/[\\/*?:\[\]]/g, "").slice(0, 31).trim() || "Báo Cáo";
+    let safeSheetName = (sheet.name || "Báo Cáo").replace(/[\\/*?:\[\]]/g, "").slice(0, 31).trim() || "Báo Cáo";
+    const base = safeSheetName;
+    let suffix = 1;
+    while (names.has(safeSheetName.toLowerCase())) {
+      const tail = "_" + (++suffix);
+      safeSheetName = base.slice(0, 31 - tail.length) + tail;
+    }
+    names.add(safeSheetName.toLowerCase());
     XLSX.utils.book_append_sheet(wb, ws, safeSheetName);
+    }
     const safeBaseName = (filename || "BaoCaoKho").replace(/\.xlsx$/i, "");
     const fullFileName = safeBaseName + ".xlsx";
 
@@ -120,16 +133,19 @@ function exportToExcel(filename, sheetName, dataArray) {
         } else if (typeof showCanhBao === "function") {
           showCanhBao("Đã lưu " + fullFileName + " vào Download!", "success");
         }
-        return;
+        return { ok: true, native: true };
       }
+      throw new Error(res || "Điện thoại không xác nhận lưu file vào Download");
     }
 
     XLSX.writeFile(wb, fullFileName);
     if (typeof showCanhBao === "function") {
-      showCanhBao("Đã tải xuống " + fullFileName, "success");
+      showCanhBao("Đã tạo file và yêu cầu tải xuống " + fullFileName, "success");
     }
+    return { ok: true, native: false };
   } catch (e) {
     if (typeof showCanhBao === "function") showCanhBao("Lỗi khi xuất file Excel: " + e.message, "error");
+    return { ok: false, error: e.message };
   }
 }
 window.exportToExcel = exportToExcel;
@@ -393,13 +409,10 @@ function chuyenTrang(id, el) {
   const targetBtn = el || document.querySelector('.nav-item[data-page="' + id + '"], .bnav-btn[data-page="' + id + '"]');
   if (targetBtn) targetBtn.classList.add("active");
   tatDenPinKhiRoiTab(id);
-  if (id !== "quetQR" && typeof dungQuet === "function") dungQuet();
-  if (id !== "chiFor" && typeof dungCX1 === "function") dungCX1();
-  if (id !== "kiemKe" && typeof dungKiemKe === "function") dungKiemKe();
-  if (id !== "btpPage") {
+  dungCameraNgoaiTrang(id);
+  if (id !== "btpPage" && id !== "tpPage") {
     document.body.classList.remove("cam-active");
-    if (typeof dungBTP === "function") dungBTP();
-  } else if (typeof taiDanhSachQCBTP === "function") {
+  } else if (id === "btpPage" && typeof taiDanhSachQCBTP === "function") {
     taiDanhSachQCBTP();
   }
   if (id === "trangChu" && typeof capNhatTrangChu === "function") capNhatTrangChu();
@@ -435,17 +448,15 @@ function chuyenTrangKhongNav(id) {
     targetNav.classList.add("active");
   }
   tatDenPinKhiRoiTab(id);
-  if (id !== "quetQR" && typeof dungQuet === "function") dungQuet();
-  if (id !== "chiFor" && typeof dungCX1 === "function") dungCX1();
-  if (id !== "kiemKe" && typeof dungKiemKe === "function") dungKiemKe();
-  if (id !== "btpPage") {
+  dungCameraNgoaiTrang(id);
+  if (id !== "btpPage" && id !== "tpPage") {
     document.body.classList.remove("cam-active");
-    if (typeof dungBTP === "function") dungBTP();
-  } else if (typeof taiDanhSachQCBTP === "function") {
+  } else if (id === "btpPage" && typeof taiDanhSachQCBTP === "function") {
     taiDanhSachQCBTP();
   }
   const page = document.getElementById(id);
   if (page) page.classList.add("active");
+  if (id === "lichSuTP" && typeof window.renderLichSuTP === "function") window.renderLichSuTP();
   if (id === "lichSuQuetQR" && typeof renderLichSuQR === "function") renderLichSuQR();
 }
 window.chuyenTrangKhongNav = chuyenTrangKhongNav;
@@ -514,7 +525,8 @@ function khongThoatApp() {
   pushChanThoatState();
 }
 
-function xacNhanThoatApp() {
+async function xacNhanThoatApp() {
+  if (typeof window.luuTPTruocRoiApp === "function" && !await window.luuTPTruocRoiApp()) return;
   isExitingApp = true;
   window.removeEventListener("popstate", handlePopStateThoat);
   const el = document.getElementById("overlay-thoat");
@@ -575,13 +587,45 @@ const CAMERA_IDLE_TIMEOUT_MS = 18000; // 18 giây không quét & không chạm -
 const denPinMap = {};        // videoId -> true nếu người dùng đang bật đèn
 const denPinBtnMap = {};     // videoId -> nút đèn pin trên HUD (để đồng bộ giao diện)
 const denPinGiuMap = {};     // videoId -> true nếu stream đang được giữ lại CHỈ vì đèn (đã dừng quét)
+const CAMERA_CONFIG_MAP = {
+  'reader': { pageId: 'quetQR', boxId: 'qr-cam', giuDen: true, pausedFlag: 'dangQuetQR', isRunning: () => typeof dangQuetQR !== 'undefined' && dangQuetQR, flashButton: 'btn-flash-qr',
+    dungFn: () => { if (typeof dungQuet === 'function') dungQuet(); },
+    setReader: r => { if (typeof zxingReaderQR !== 'undefined') zxingReaderQR = r; window.zxingReaderQR = r; },
+    resumeFallback: txt => { if (typeof dangQuetQR !== 'undefined' && dangQuetQR && typeof khiQuetDuocMaQR === 'function') khiQuetDuocMaQR(txt); } },
+  'cx1-reader': { pageId: 'chiFor', boxId: 'cx1-cam', giuDen: true, pausedFlag: 'dangQuetCX1', isRunning: () => typeof dangQuetCX1 !== 'undefined' && dangQuetCX1, flashButton: 'btn-flash-cx1',
+    dungFn: () => { if (typeof dungCX1 === 'function') dungCX1(); },
+    setReader: r => { if (typeof zxingReaderCX1 !== 'undefined') zxingReaderCX1 = r; window.zxingReaderCX1 = r; },
+    resumeFallback: txt => { if (typeof dangQuetCX1 !== 'undefined' && dangQuetCX1 && typeof khiQuetDuocMa === 'function') khiQuetDuocMa({ getText: () => txt }); } },
+  'btp-reader': { pageId: 'btpPage', boxId: 'btp-cam', giuDen: true, pausedFlag: 'dangQuetBTP', isRunning: () => typeof dangQuetBTP !== 'undefined' && dangQuetBTP,
+    dungFn: () => { if (typeof dungBTP === 'function') dungBTP(); },
+    setReader: r => { if (typeof zxingReaderBTP !== 'undefined') zxingReaderBTP = r; window.zxingReaderBTP = r; },
+    resumeFallback: txt => { if (typeof dangQuetBTP !== 'undefined' && dangQuetBTP && typeof khiQuetDuocMaBTP === 'function') khiQuetDuocMaBTP(txt); } },
+  'kk-reader': { pageId: 'kiemKe', boxId: 'kk-cam', giuDen: false, pausedFlag: null,
+    dungFn: () => { if (typeof dungKiemKe === 'function') dungKiemKe(); },
+    setReader: r => { if (typeof zxingReaderKK !== 'undefined') zxingReaderKK = r; window.zxingReaderKK = r; }, resumeFallback: null },
+  'tp-reader': { pageId: 'tpPage', boxId: 'tp-cam', giuDen: true, pausedFlag: 'dangQuetTP', flashButton: 'btn-flash-tp',
+    dungFn: () => { if (typeof window.dungTP === 'function') window.dungTP(); },
+    setReader: r => { if (typeof window.nhanReaderTP === 'function') window.nhanReaderTP(r); },
+    resumeFallback: txt => { if (window.dangQuetTP && typeof window.khiQuetDuocMaTP === 'function') window.khiQuetDuocMaTP(txt); } }
+};
+const cameraGenerationMap = {};
+const cameraOpeningMap = {};
+function cameraRequestActive(videoId, generation) {
+  const cfg = CAMERA_CONFIG_MAP[videoId];
+  return cameraGenerationMap[videoId] === generation && document.visibilityState !== 'hidden' &&
+    (!cfg || (document.getElementById(cfg.pageId)?.classList.contains('active') && (cfg.isRunning ? cfg.isRunning() : (!cfg.pausedFlag || window[cfg.pausedFlag] !== false))));
+}
+function dungCameraNgoaiTrang(id) {
+  for (const cfg of Object.values(CAMERA_CONFIG_MAP)) if (cfg.pageId !== id) cfg.dungFn();
+}
+
 const readerHienTaiMap = {}; // videoId -> bộ giải mã đang chạy
 window.denPinMap = denPinMap;
 window.denPinGiuMap = denPinGiuMap;
 
 function capNhatNutDenPin(videoId, on) {
-  const idNutMacDinh = { 'reader': 'btn-flash-qr', 'cx1-reader': 'btn-flash-cx1' };
-  const btn = denPinBtnMap[videoId] || (idNutMacDinh[videoId] ? document.getElementById(idNutMacDinh[videoId]) : null);
+  const buttonId = CAMERA_CONFIG_MAP[videoId]?.flashButton;
+  const btn = denPinBtnMap[videoId] || (buttonId ? document.getElementById(buttonId) : null);
   if (btn) {
     btn.classList.toggle("active-flash", !!on);
     btn.title = on ? "Tắt đèn pin" : "Bật đèn pin";
@@ -629,9 +673,8 @@ window.tatDenPinHoanToan = tatDenPinHoanToan;
 
 // Rời sang tab khác: tắt đèn của các camera không thuộc tab mới
 function tatDenPinKhiRoiTab(idTrangMoi) {
-  const pageMap = { 'reader': 'quetQR', 'kk-reader': 'kiemKe', 'cx1-reader': 'chiFor', 'btp-reader': 'btpPage' };
-  for (const vid in pageMap) {
-    if (pageMap[vid] === idTrangMoi) continue;
+  for (const [vid, cfg] of Object.entries(CAMERA_CONFIG_MAP)) {
+    if (cfg.pageId === idTrangMoi) continue;
     if (!denPinMap[vid] && !denPinGiuMap[vid]) continue;
     denPinMap[vid] = false;
     capNhatNutDenPin(vid, false);
@@ -641,16 +684,9 @@ function tatDenPinKhiRoiTab(idTrangMoi) {
 
 // Lắng nghe tương tác người dùng 1 lần duy nhất ở cấp document (ngăn rò rỉ listener khi camera ngủ/thức nhiều lần)
 function onGlobalCameraInteraction() {
-  const pageMap = {
-    'reader': 'quetQR',
-    'kk-reader': 'kiemKe',
-    'cx1-reader': 'chiFor',
-    'btp-reader': 'btpPage'
-  };
-
   // 1. Nếu có camera của trang đang hiển thị đang ở chế độ ngủ -> Đánh thức ngay lập tức!
-  for (const vid of ['reader', 'kk-reader', 'cx1-reader', 'btp-reader']) {
-    const pageEl = document.getElementById(pageMap[vid]);
+  for (const vid of Object.keys(CAMERA_CONFIG_MAP)) {
+    const pageEl = document.getElementById(CAMERA_CONFIG_MAP[vid].pageId);
     const isPageActive = pageEl && pageEl.classList.contains('active') && pageEl.style.display !== 'none';
     if (isPageActive && cameraSleepingMap[vid]) {
       danhThucCamera(vid);
@@ -662,7 +698,7 @@ function onGlobalCameraInteraction() {
   // Nếu người dùng đã rời sang trang khác, không reset timer để camera cũ được giải phóng hoàn toàn
   for (const vid in cameraSleepTimerMap) {
     if (cameraSleepTimerMap[vid]) {
-      const pageId = pageMap[vid];
+      const pageId = CAMERA_CONFIG_MAP[vid]?.pageId;
       const pageEl = pageId ? document.getElementById(pageId) : null;
       const isPageActive = pageEl && pageEl.classList.contains('active') && pageEl.style.display !== 'none';
       if (isPageActive) {
@@ -771,15 +807,7 @@ async function danhThucCamera(videoId) {
 
   try {
     let cb = lastCameraCallbackMap[videoId];
-    if (!cb) {
-      if (videoId === 'reader') {
-        cb = (txt) => { if (txt && window.dangQuetQR && typeof window.khiQuetDuocMaQR === 'function') window.khiQuetDuocMaQR({ getText: () => txt }); };
-      } else if (videoId === 'cx1-reader') {
-        cb = (txt) => { if (txt && window.dangQuetCX1 && typeof window.khiQuetDuocMa === 'function') window.khiQuetDuocMa({ getText: () => txt }); };
-      } else if (videoId === 'btp-reader') {
-        cb = (txt) => { if (txt && window.dangQuetBTP && typeof window.khiQuetDuocMaBTP === 'function') window.khiQuetDuocMaBTP({ getText: () => txt }); };
-      }
-    }
+    if (!cb) cb = CAMERA_CONFIG_MAP[videoId]?.resumeFallback;
 
     await khoiPhucCamera(videoId, cb);
     cameraSleepingMap[videoId] = false;
@@ -1179,6 +1207,21 @@ window.toggleQuetTrungHUD = function (checkboxId, btnEl) {
 };
 
 async function khoiTaoCameraFast(videoId, onDecodedCallback) {
+  const generation = cameraGenerationMap[videoId] || 0;
+  cameraGenerationMap[videoId] = generation;
+  const previous = cameraOpeningMap[videoId];
+  if (previous) {
+    if (previous.generation === generation) return previous.promise;
+    try { await previous.promise; } catch (e) { }
+  }
+  if (!cameraRequestActive(videoId, generation)) return null;
+  const promise = khoiTaoCameraFastInternal(videoId, onDecodedCallback, generation);
+  const opening = { generation, promise };
+  cameraOpeningMap[videoId] = opening;
+  try { return await promise; }
+  finally { if (cameraOpeningMap[videoId] === opening) delete cameraOpeningMap[videoId]; }
+}
+async function khoiTaoCameraFastInternal(videoId, onDecodedCallback, generation) {
   const videoEl = document.getElementById(videoId);
   if (!videoEl) return null;
 
@@ -1215,6 +1258,10 @@ async function khoiTaoCameraFast(videoId, onDecodedCallback) {
       throw new Error("Không lấy được luồng camera sau!");
     }
 
+    if (!cameraRequestActive(videoId, generation)) {
+      stream.getTracks().forEach(t => t.stop());
+      return null;
+    }
     // Ghi nhớ Camera 0 trong phiên hiện tại để lần sau mở nhanh
     navigator.mediaDevices.enumerateDevices().then(devList => {
       const exactCam0 = timCamera0(devList);
@@ -1274,10 +1321,17 @@ async function khoiTaoCameraFast(videoId, onDecodedCallback) {
     await apDungDenPin(videoId);
     capNhatNutDenPin(videoId, !!denPinMap[videoId]); // đồng bộ nút (module có thể đã tự gỡ class khi bắt đầu quét)
 
+    if (!cameraRequestActive(videoId, generation)) {
+      stream.getTracks().forEach(t => t.stop());
+      if (videoEl.srcObject === stream) videoEl.srcObject = null;
+      return null;
+    }
     // Cập nhật nút đổi camera trên viewfinder (ẩn triệt để)
     capNhatNutDoiCamera(videoEl);
   } catch (e) {
     console.warn("getUserMedia camera stream notice:", e);
+    if (stream) stream.getTracks().forEach(t => t.stop());
+    if (videoEl.srcObject === stream) videoEl.srcObject = null;
     throw e;
   }
 
@@ -1460,6 +1514,7 @@ async function khoiTaoCameraFast(videoId, onDecodedCallback) {
         } catch (eZxing) { }
       }
 
+      if (!isScanning || !cameraRequestActive(videoId, generation)) return;
       if (qrText) {
         consecutiveMisses = 0;
         try {
@@ -1517,6 +1572,9 @@ async function khoiTaoCameraFast(videoId, onDecodedCallback) {
 }
 
 function dungCameraFast(videoId, zxingReaderObj) {
+  cameraGenerationMap[videoId] = (cameraGenerationMap[videoId] || 0) + 1;
+  const currentReader = readerHienTaiMap[videoId];
+  if (currentReader && currentReader !== zxingReaderObj) currentReader.reset();
   cameraSleepingMap[videoId] = false;
   cameraWakingUpMap[videoId] = false;
   if (cameraSleepTimerMap[videoId]) {
@@ -1535,7 +1593,7 @@ function dungCameraFast(videoId, zxingReaderObj) {
   const videoEl = document.getElementById(videoId);
   // Đèn pin đang bật: chỉ dừng vòng quét, GIỮ stream camera để đèn sáng liên tục tới khi người dùng bấm tắt
   const trackDen = videoEl && videoEl.srcObject && videoEl.srcObject.getVideoTracks ? videoEl.srcObject.getVideoTracks()[0] : null;
-  if (denPinMap[videoId] && trackDen && trackDen.readyState === 'live') {
+  if (CAMERA_CONFIG_MAP[videoId]?.giuDen !== false && denPinMap[videoId] && trackDen && trackDen.readyState === 'live') {
     denPinGiuMap[videoId] = true;
     return;
   }
@@ -1543,6 +1601,9 @@ function dungCameraFast(videoId, zxingReaderObj) {
     videoEl.srcObject.getTracks().forEach(t => t.stop());
     videoEl.srcObject = null;
   }
+  denPinMap[videoId] = false;
+  denPinGiuMap[videoId] = false;
+  capNhatNutDenPin(videoId, false);
   if (fastAudioCtx && fastAudioCtx.state === "running") {
     setTimeout(() => {
       if (!document.body.classList.contains("cam-active") && fastAudioCtx && fastAudioCtx.state === "running") {
@@ -1725,7 +1786,9 @@ function moLichSuChon(loai) {
   const el = document.getElementById("lichsu-menu-trangchu");
   if (el) el.style.display = "none";
 
-  if (loai === "quetqr") {
+  if (loai === "tp") {
+    chuyenTrangKhongNav("lichSuTP");
+  } else if (loai === "quetqr") {
     if (typeof window.renderLichSuQR === "function") window.renderLichSuQR();
     if (typeof window.chuyenTrangKhongNav === "function") window.chuyenTrangKhongNav("lichSuQuetQR");
   } else if (loai === "btp") {
@@ -2079,31 +2142,21 @@ async function khoiPhucCamera(videoId, fallbackCb) {
   const cb = lastCameraCallbackMap[videoId] || fallbackCb;
   if (!cb) throw new Error("Chưa có hàm callback xử lý mã QR cho camera " + videoId);
 
+  let resumeGeneration = cameraGenerationMap[videoId] || 0;
   // 1. Chỉ dừng luồng cũ nếu nó còn đang chạy (nếu đã sleep thì srcObject đã là null)
   if (videoEl.srcObject) {
     dungCameraFast(videoId, null);
+    resumeGeneration = cameraGenerationMap[videoId];
     await new Promise(r => setTimeout(r, 150));
   }
 
+  if (!cameraRequestActive(videoId, resumeGeneration)) return null;
   // 2. Khởi tạo lại camera và kích hoạt lại vòng lặp quét mới
   const reader = await khoiTaoCameraFast(videoId, cb);
   if (!reader) {
     throw new Error("Không thể khởi tạo bộ giải mã camera!");
   }
-  if (videoId === 'reader') {
-    window.zxingReaderQR = reader;
-    window.dangQuetQR = true;
-  } else if (videoId === 'cx1-reader') {
-    window.zxingReaderCX1 = reader;
-    window.dangQuetCX1 = true;
-    if (typeof zxingReaderCX1 !== 'undefined') zxingReaderCX1 = reader;
-  } else if (videoId === 'btp-reader') {
-    window.zxingReaderBTP = reader;
-    window.dangQuetBTP = true;
-    if (typeof zxingReaderBTP !== 'undefined') zxingReaderBTP = reader;
-  } else if (videoId === 'kk-reader') {
-    window.zxingReaderKK = reader;
-  }
+  CAMERA_CONFIG_MAP[videoId]?.setReader(reader);
   return reader;
 }
 
@@ -2112,12 +2165,9 @@ let resumeCameraTimer = null;
 function triggerResumeCamera() {
   clearTimeout(resumeCameraTimer);
   resumeCameraTimer = setTimeout(async () => {
-    const camBoxes = [
-      { pageId: 'quetQR', vid: 'reader', box: 'qr-cam', fallback: (txt) => { if (txt && window.dangQuetQR && typeof window.khiQuetDuocMaQR === 'function') window.khiQuetDuocMaQR({ getText: () => txt }); } },
-      { pageId: 'kiemKe', vid: 'kk-reader', box: 'kk-cam', fallback: (txt) => { if (typeof xuLyMaKiemKe === 'function') xuLyMaKiemKe(txt); } },
-      { pageId: 'chiFor', vid: 'cx1-reader', box: 'cx1-cam', fallback: (txt) => { if (txt && window.dangQuetCX1 && typeof window.khiQuetDuocMa === 'function') window.khiQuetDuocMa({ getText: () => txt }); } },
-      { pageId: 'btpPage', vid: 'btp-reader', box: 'btp-cam', fallback: (txt) => { if (txt && window.dangQuetBTP && typeof window.khiQuetDuocMaBTP === 'function') window.khiQuetDuocMaBTP({ getText: () => txt }); } }
-    ];
+    const camBoxes = Object.entries(CAMERA_CONFIG_MAP).map(([vid, cfg]) => ({
+      pageId: cfg.pageId, vid, box: cfg.boxId, fallback: cfg.resumeFallback
+    }));
 
     for (const item of camBoxes) {
       const pageEl = document.getElementById(item.pageId);
@@ -2130,17 +2180,18 @@ function triggerResumeCamera() {
       // 3. Phần tử video tồn tại và phiên quét đang hoạt động (không bị tạm dừng hoặc đang ngủ)
       const isPageActive = pageEl && pageEl.classList.contains('active');
       const isBoxVisible = boxEl && boxEl.style.display !== 'none' && window.getComputedStyle(boxEl).display !== 'none';
-      const isPausedByUser = (item.vid === 'btp-reader' && window.dangQuetBTP === false) ||
-        (item.vid === 'reader' && window.dangQuetQR === false) ||
-        (item.vid === 'cx1-reader' && window.dangQuetCX1 === false);
+      const flag = CAMERA_CONFIG_MAP[item.vid].pausedFlag;
+      const cfg = CAMERA_CONFIG_MAP[item.vid];
+      const isPausedByUser = cfg.isRunning ? !cfg.isRunning() : (flag ? window[flag] === false : false);
 
       if (isPageActive && isBoxVisible && videoEl && !isPausedByUser && !cameraSleepingMap[item.vid]) {
         // Luôn khôi phục lại luồng camera mới tinh để không bao giờ bị đứng hình sau khi ẩn app
-        await khoiPhucCamera(item.vid, item.fallback);
+        try { await khoiPhucCamera(item.vid, item.fallback); }
+        catch (e) { if (document.visibilityState !== "hidden") showCanhBao("Không thể bật lại camera: " + e.message + ". Bấm quét tiếp để thử lại.", "error"); }
       }
     }
     // Ẩn app thì hệ điều hành tắt camera nên đèn tắt theo: camera nào không được khôi phục thì đồng bộ nút đèn về tắt
-    for (const vid of ['reader', 'kk-reader', 'cx1-reader', 'btp-reader']) {
+    for (const vid of Object.keys(CAMERA_CONFIG_MAP)) {
       const v = document.getElementById(vid);
       if (denPinMap[vid] && !(v && v.srcObject)) {
         denPinMap[vid] = false;
@@ -2151,8 +2202,10 @@ function triggerResumeCamera() {
 }
 
 function ngatTatCaCamera() {
-  const vids = ['reader', 'kk-reader', 'cx1-reader', 'btp-reader'];
+  const vids = Object.keys(CAMERA_CONFIG_MAP);
   for (const id of vids) {
+    cameraGenerationMap[id] = (cameraGenerationMap[id] || 0) + 1;
+    if (readerHienTaiMap[id]) readerHienTaiMap[id].reset();
     if (animFrameMap[id]) {
       clearTimeout(animFrameMap[id]);
       animFrameMap[id] = null;
@@ -2238,6 +2291,7 @@ window.tinhMaBam = tinhMaBam;
 
 async function saoLuuDuLieuToanBo() {
   try {
+    if (typeof window.flushTP === "function" && !window.flushTP()) return;
     if (window.ScannerCore && typeof window.ScannerCore.isLoaded === "function" && !window.ScannerCore.isLoaded()) {
       if (typeof window.ScannerCore.whenReady === "function") await window.ScannerCore.whenReady();
       if (!window.ScannerCore.isLoaded()) {
@@ -2368,6 +2422,7 @@ function xuLyFilePhucHoiDuLieu(event) {
       // Danh sách key được phép khôi phục (Whitelist an toàn tuyệt đối)
       const isAllowedKey = (key) => {
         if (!key || typeof key !== "string") return false;
+        if (key === "tp_lich_su" || key === "tp_phien_dodang") return true;
         if (/^(cx1|cx5|btp|qr|quetqr|kk|app)_/.test(key)) return true;
         const validExactKeys = [
           "user_theme", "tenNhanVien", "ten_nguoi_dung", "camera_uu_tien",
@@ -2376,6 +2431,7 @@ function xuLyFilePhucHoiDuLieu(event) {
         return validExactKeys.includes(key);
       };
 
+      if (typeof window.kiemTraBackupTP === "function") window.kiemTraBackupTP(parsed.duLieu);
       const soLuongMuc = Object.keys(parsed.duLieu).filter(isAllowedKey).length;
       if (soLuongMuc === 0) {
         if (typeof showCanhBao === "function") showCanhBao("Không tìm thấy dữ liệu hợp lệ trong file sao lưu!", "warning");
@@ -2390,8 +2446,9 @@ function xuLyFilePhucHoiDuLieu(event) {
 
       moXacNhanApp(
         xacNhanMsg,
-        () => {
+        async () => {
           try {
+            if (typeof window.chuanBiPhucHoiTP === "function" && !await window.chuanBiPhucHoiTP()) return;
             let restoredCount = 0;
             const pendingKeys = [
               "app_pending_saves", "cx1_pending_saves", "cx5_pending_saves",
@@ -2431,12 +2488,19 @@ function xuLyFilePhucHoiDuLieu(event) {
               }
 
               if (window.ScannerCore && Array.isArray(window.ScannerCore.HISTORY_KEYS) && window.ScannerCore.HISTORY_KEYS.includes(key)) {
-                if (window.ScannerCore.importHistoryFromBackup(key, val)) {
+                const imported = key === "tp_lich_su"
+                  ? await window.ScannerCore.importHistoryFromBackup(key, val, { awaitWrite: true })
+                  : window.ScannerCore.importHistoryFromBackup(key, val);
+                if (key === "tp_lich_su" && !imported) throw new Error("Không lưu được lịch sử TP đã phục hồi. Giữ file backup và thử lại sau khi giải phóng dung lượng.");
+                if (imported) {
                   restoredCount++;
                   continue;
                 }
               }
 
+              if (key === "tp_phien_dodang" && typeof window.nhapPhienBackupTP === "function") {
+                window.nhapPhienBackupTP(val); restoredCount++; continue;
+              }
               const valToStore = typeof val === "string" ? val : JSON.stringify(val);
               localStorage.setItem(key, valToStore);
               restoredCount++;
@@ -2455,6 +2519,7 @@ function xuLyFilePhucHoiDuLieu(event) {
               setTimeout(() => { window.location.reload(); }, 800);
             });
           } catch (errGhi) {
+            if (typeof window.huyPhucHoiTP === "function") window.huyPhucHoiTP();
             console.error("Lỗi ghi dữ liệu khôi phục:", errGhi);
             if (typeof showCanhBao === "function") showCanhBao("Lỗi ghi dữ liệu: " + errGhi.message, "error");
           }
@@ -2657,6 +2722,7 @@ let soLanBoQuaSaoLuuGiam = 0; // số lần liên tiếp bỏ qua sao lưu vì l
 
   // Hàm chính: Thực hiện Auto-Backup thông minh ghi đè máy (chỉ khi không quét camera)
   async function thucHienAutoBackup(lyDo = "auto") {
+    if (typeof window.flushTP === "function" && !window.flushTP()) return;
     if (dangSaoLuuAuto) return;
     const isForce = lyDo === "force" || lyDo === "app_exit";
     // Không sao lưu khi đang mở camera quét liên tục

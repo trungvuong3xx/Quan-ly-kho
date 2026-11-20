@@ -59,6 +59,7 @@
       window.addEventListener('load', () => {
         navigator.serviceWorker.register('./sw.js', { updateViaCache: 'none' }).then(reg => {
           reg.update();
+          if (reg.waiting) { window._pendingWorker = reg.waiting; const toast = document.getElementById("pwa-update-toast"); if (toast) toast.style.display = "block"; }
           reg.addEventListener('updatefound', () => {
             const newWorker = reg.installing;
             if (newWorker) {
@@ -90,7 +91,8 @@
         }
       });
 
-      window.apDungBanCapNhatMoi = function() {
+      window.apDungBanCapNhatMoi = async function() {
+        if (typeof window.luuTPTruocRoiApp === "function" && !await window.luuTPTruocRoiApp()) return;
         window._userRequestedReload = true;
         if (window._pendingWorker) {
           window._pendingWorker.postMessage({ action: 'skipWaiting' });
@@ -290,6 +292,10 @@
         <div class="grid-title">Chỉ X5</div>
         
       </div>
+      <button type="button" class="grid-card full-width" onclick="chuyenTrangKhongNav('tpPage')">
+        <span class="grid-icon" style="background:var(--primary)"><i class="ti ti-package"></i></span>
+        <span class="grid-title">Thành Phẩm (TP)</span>
+      </button>
       <div class="grid-card full-width" onclick="chuyenTrang('btpPage', document.querySelector('.nav-item[data-page=btpPage]'))">
         <div class="grid-icon" style="background: linear-gradient(135deg, #a78bfa, #7c3aed);"><i class="ti ti-box"></i></div>
         <div class="grid-text">
@@ -1057,6 +1063,33 @@
   </div>
 </div>
 
+<div id="tpPage" class="page">
+  <div class="tp-heading"><button class="btn" onclick="chuyenTrangKhongNav('trangChu')">← Trang chủ</button><h2>Thành Phẩm</h2></div>
+  <div class="tp-toolbar"><button id="tp-new" class="btn btn-blue">Bắt đầu phiên mới</button><button class="btn" onclick="moLichSuChon('tp')">Lịch sử</button><button id="tp-save" class="btn">Lưu lại</button></div>
+  <div class="tp-meta"><span id="tp-session"></span><span id="tp-count"></span><span id="tp-export-state"></span></div>
+  <p id="tp-message" role="status" aria-live="polite"></p>
+  <div id="tp-cam" style="display:none">
+    <div id="tp-video-box" class="video-container">
+      <video id="tp-reader" playsinline muted></video>
+      <div id="tp-cam-flash-overlay" class="cam-flash-overlay"></div>
+      <button id="btn-flash-tp" class="tp-flash" title="Bật đèn pin" onclick="toggleFlashlightHUD('tp-reader', this)"><i class="ti ti-bolt"></i> Đèn pin</button>
+    </div>
+    <div class="tp-toolbar"><span id="tp-status">Đã dừng quét</span><button id="tp-toggle" class="btn btn-blue">Quét tiếp</button><button id="tp-results" class="btn">Xem kết quả</button></div>
+    <div id="tp-log-container"><div id="tp-log-list"></div><p id="tp-log-note"></p></div>
+  </div>
+  <section id="tp-ketqua">
+    <div class="tp-toolbar"><button id="tp-continue" class="btn btn-blue">Quét tiếp</button><button id="tp-export" class="btn">Xuất Excel</button></div>
+    <div class="tp-table-wrap"><table class="tp-table"><thead><tr><th>QC</th><th>BAO</th><th>KG</th></tr></thead><tbody id="tp-summary"></tbody></table></div>
+    <h3>Chi tiết mã</h3><div id="tp-detail-list"></div><button id="tp-more" class="btn" hidden>Xem thêm 50 mã</button>
+  </section>
+</div>
+<div id="lichSuTP" class="page">
+  <div class="tp-heading"><button class="btn" onclick="chuyenTrangKhongNav('tpPage')">← Thành phẩm</button><h2>Lịch sử Thành Phẩm</h2></div>
+  <label for="lichsu-tp-tim">Tìm ngày / quy cách</label><input id="lichsu-tp-tim" type="search" placeholder="Ngày hoặc quy cách…">
+  <div class="tp-toolbar"><button id="tp-export-all" class="btn">Xuất tất cả</button><button id="tp-delete-all" class="btn">Xóa tất cả</button></div>
+  <div id="lichsu-tp-list" aria-live="polite"></div>
+</div>
+
 <div id="btpPage" class="page">
   <div id="btp-form" class="card">
     <h3>Quét BTP (Bán Thành Phẩm)</h3>
@@ -1725,6 +1758,7 @@
 <script src="cx5.js?v=20261107-v160" defer></script>
 <script src="btp.js?v=20261107-v160" defer></script>
 <script src="tonkho.js?v=20261107-v160" defer></script>
+<script src="tp.js?v=20261120-v164" defer></script>
 
 <!-- BOTTOM SHEET MODAL LỊCH SỬ -->
 <div class="modal-overlay" id="modal-overlay" onclick="closeLichSuModal(event)">
@@ -1735,6 +1769,7 @@
       <div onclick="closeLichSuModal(); moLichSuChon('quetqr')" role="button" tabindex="0" style="padding:16px; background:var(--bg-body); border-radius:16px; border:1px solid var(--border); font-weight:700; color:var(--text-main); display:flex; align-items:center; gap:12px; cursor: pointer;">
         <i class="ti ti-scan" style="font-size:24px; color:var(--primary)"></i> Lịch sử Quét QR
       </div>
+      <button class="btn" onclick="closeLichSuModal(); moLichSuChon('tp')"><i class="ti ti-package"></i> Lịch sử Thành Phẩm (TP)</button>
       <div onclick="closeLichSuModal(); moLichSuChon('btp')" role="button" tabindex="0" style="padding:16px; background:var(--bg-body); border-radius:16px; border:1px solid var(--border); font-weight:700; color:var(--text-main); display:flex; align-items:center; gap:12px; cursor: pointer;">
         <i class="ti ti-box" style="font-size:24px; color:var(--primary)"></i> Lịch sử BTP
       </div>

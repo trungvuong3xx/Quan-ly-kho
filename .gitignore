@@ -11,3 +11,6 @@ www/
 *.xapk
 *.apk
 BTPVUONG.*
+
+test-results/
+playwright-report/
