@@ -1859,14 +1859,20 @@ body.cam-active #quetQR.active {
 /* Khóa chặt: Khi phần tử có inline display:none thì BẮT BUỘC ẩn tuyệt đối */
 #btp-cam[style*="display: none"],
 #btp-cam[style*="display:none"],
+#tp-cam[style*="display: none"],
+#tp-cam[style*="display:none"],
 #cx1-cam[style*="display: none"],
 #cx1-cam[style*="display:none"],
 #qr-cam[style*="display: none"],
 #qr-cam[style*="display:none"],
 #btp-form[style*="display: none"],
 #btp-form[style*="display:none"],
+#tp-form[style*="display: none"],
+#tp-form[style*="display:none"],
 #btp-ketqua[style*="display: none"],
 #btp-ketqua[style*="display:none"],
+#tp-ketqua[style*="display: none"],
+#tp-ketqua[style*="display:none"],
 #form-chon[style*="display: none"],
 #form-chon[style*="display:none"],
 #qr-ketqua[style*="display: none"],
@@ -1879,6 +1885,7 @@ body.cam-active #quetQR.active {
 }
 
 body.cam-active #btp-cam:not([style*="display: none"]):not([style*="display:none"]),
+body.cam-active #tp-cam:not([style*="display: none"]):not([style*="display:none"]),
 body.cam-active #cx1-cam:not([style*="display: none"]):not([style*="display:none"]),
 body.cam-active #qr-cam:not([style*="display: none"]):not([style*="display:none"]) {
   display: flex !important;
@@ -1897,6 +1904,7 @@ body.cam-active #qr-cam:not([style*="display: none"]):not([style*="display:none"
 
 /* Đảm bảo toàn bộ các phần tử con trực tiếp bên trong camera (thanh trạng thái, camera, card tùy chọn, nút bấm, log) có cùng độ rộng và căn lề khớp 100% với khung camera */
 body.cam-active #btp-cam > *,
+body.cam-active #tp-cam > *,
 body.cam-active #cx1-cam > *,
 body.cam-active #qr-cam > * {
   width: 100% !important;
@@ -1922,7 +1930,9 @@ body.cam-active .video-container {
 }
 
 body.cam-active .video-container.btp-camera-main,
-.video-container.btp-camera-main {
+.video-container.btp-camera-main,
+body.cam-active .video-container.tp-camera-main,
+.video-container.tp-camera-main {
   flex: 0 0 auto !important;
   height: 40vh !important;
   min-height: 280px !important;
@@ -1941,6 +1951,7 @@ body.cam-active .video-container.btp-camera-main,
 }
 
 body.cam-active #btp-log-container,
+body.cam-active #tp-log-container,
 body.cam-active #cx1-log-container,
 body.cam-active #qr-log-container {
   flex: 1 1 auto !important;
@@ -1958,6 +1969,7 @@ body.cam-active #qr-log-container {
 }
 
 body.cam-active #btp-log-list,
+body.cam-active #tp-log-list,
 body.cam-active #cx1-log-list,
 body.cam-active #qr-log-list {
   flex: 1 1 auto !important;
@@ -3804,6 +3816,7 @@ body.cam-active #chiFor.active {
 #lichsu-list,
 #lichsu-qr-list,
 #lichsu-btp-list,
+#lichsu-tp-list,
 #lichsu-x5-list {
   display: flex;
   flex-direction: column;
@@ -4209,45 +4222,311 @@ body.cam-active #chiFor.active {
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
 }
 
-/* Thành phẩm: independent scanner layout and bounded log. */
-#tpPage, #lichSuTP { max-width: 900px; margin: auto; padding: 12px; }
-.tp-heading, .tp-toolbar, .tp-meta { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
-.tp-heading h2 { margin: 0; font-size: 20px; }
-.tp-meta { font-size: 12px; justify-content: space-between; }
-#tp-message { font-size: 13px; margin: 4px 0; color: var(--text-main); }
-#tp-message[data-type="error"] { color: var(--danger, #dc2626); }
-body.cam-active #tpPage.active { display: flex; flex-direction: column; min-height: 0; background: var(--bg-scan, var(--bg-body)); }
-body.cam-active #tp-cam:not([style*="display: none"]):not([style*="display:none"]) { display: flex; flex-direction: column; flex: 1; min-height: 0; overflow: hidden; width: 100%; max-width: 600px; margin: 0 auto; gap: 8px; }
-#tp-video-box { position: relative; width: 100%; flex: 0 0 auto; height: clamp(150px, 29dvh, 280px); overflow: hidden; border-radius: 14px; background: #111; }
-#tp-reader { width: 100%; height: 100%; object-fit: cover; }
-.tp-flash { position: absolute; top: 8px; right: 8px; z-index: 4; border: 1px solid white; border-radius: 8px; padding: 8px; background: #111b; color: white; }
-.tp-flash.active-flash { background: #b45309; }
-#tp-log-container { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; }
-#tp-log-note { font-size: 12px; padding: 8px; }
-.tp-group-row { border: 1px solid var(--border); border-radius: 8px; margin: 4px 0; }
-.tp-group-row summary { display: grid; grid-template-columns: 20px minmax(0,1fr) auto auto 16px; gap: 6px; padding: 10px 6px; align-items: center; cursor: pointer; font-size: 12px; overflow-wrap: anywhere; }
-.tp-group-row summary::-webkit-details-marker { display: none; }
-.tp-group-row[open] .tp-chevron { transform: rotate(180deg); }
-.tp-badge-bao { background: var(--primary); color: white; border-radius: 8px; padding: 3px 5px; }
-.tp-sub-item { display: grid; grid-template-columns: minmax(0,1fr) auto auto 36px; align-items: center; gap: 8px; padding: 6px 10px; border-top: 1px solid var(--border); font-size: 12px; overflow-wrap: anywhere; }
-.tp-sub-item button { min-width: 32px; padding: 6px; }
-.tp-table-wrap { overflow: auto; }
-.tp-table { width: 100%; border-collapse: collapse; font-size: 13px; }
-.tp-table th, .tp-table td { border-bottom: 1px solid var(--border); padding: 10px 6px; text-align: right; }
-.tp-table th:first-child, .tp-table td:first-child { text-align: left; }
-.tp-history-card { border: 1px solid var(--border); border-radius: 12px; padding: 14px; margin: 12px 0; }
-.tp-history-card .btn { margin: 4px; }
-#lichsu-tp-tim { width: 100%; margin: 8px 0; padding: 12px; }
-#tpPage [hidden], #lichSuTP [hidden] { display: none !important; }
-@media (orientation: landscape) and (max-height: 500px) { #tp-video-box { height: 130px; } #tpPage .tp-heading { display: none; } }
+/* ── MODULE THÀNH PHẨM (TP) ── */
+body.cam-active #tpPage.active {
+  background: var(--bg-scan) !important;
+}
 
-body.cam-active #tp-video-box { height: clamp(150px, 29dvh, 280px) !important; min-height: 0 !important; }
-@media (orientation: landscape) and (max-height: 500px) {
-  body.cam-active #tpPage.active { display: grid; grid-template-columns: 1fr; }
-  body.cam-active #tpPage > .tp-heading, body.cam-active #tpPage > .tp-meta, body.cam-active #tp-message { display: none; }
-  body.cam-active #tpPage > .tp-toolbar { margin: 0; }
-  body.cam-active #tp-cam:not([style*="display: none"]):not([style*="display:none"]) { display: grid !important; grid-template-columns: 1fr 1fr; grid-template-rows: auto minmax(0,1fr); max-width: none; height: 100%; }
-  body.cam-active #tp-video-box { grid-row: 1 / 3; height: 100% !important; max-height: 220px; }
-  body.cam-active #tp-cam > .tp-toolbar { margin: 0; }
-  body.cam-active #tp-log-container { grid-column: 2; }
+.tp-subcam-bar {
+  flex: 0 0 auto;
+  width: 100%;
+  height: 44px;
+  min-height: 44px;
+  margin: 0;
+  background: var(--primary-soft);
+  border: 1px solid var(--border-strong);
+  border-radius: 12px;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05), 0 4px 10px rgba(37, 99, 235, 0.06);
+  display: flex;
+  align-items: center;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.tp-subcam-chip-mode {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  height: 100%;
+  padding: 0 14px;
+  cursor: pointer;
+  box-sizing: border-box;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.tp-scanned-code {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--primary-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+  letter-spacing: 0.3px;
+}
+
+.tp-copy-btn {
+  background: transparent;
+  border: none;
+  color: var(--primary);
+  font-size: 16px;
+  padding: 4px;
+  cursor: pointer;
+}
+
+.tp-subcam-input-mode {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+  padding: 2px 4px 2px 10px;
+  box-sizing: border-box;
+  gap: 6px;
+}
+
+.tp-subcam-input-mode input {
+  flex: 1;
+  height: 36px;
+  border: none;
+  background: transparent;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--row-text);
+  outline: none;
+  padding: 0;
+}
+
+.tp-input-submit-btn {
+  background: var(--primary);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+.tp-log-card {
+  background: var(--surface);
+  border: 1px solid var(--border-card);
+  border-radius: 16px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.05);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-sizing: border-box;
+  width: 100%;
+}
+
+.tp-log-card-header {
+  padding: 10px 14px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid var(--border-card);
+}
+
+.tp-log-card-title {
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  color: var(--row-text);
+}
+
+.tp-log-card-badge {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 10px;
+  background: var(--primary-soft);
+  color: var(--primary-text);
+}
+
+.tp-log-list-scroll {
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 0 10px 8px 10px;
+  flex: 1 1 auto;
+}
+
+.tp-empty-log {
+  text-align: center;
+  color: var(--text-lighter);
+  font-size: 13px;
+  padding: 32px 10px;
+}
+
+.tp-swipe-container {
+  position: relative;
+  overflow: hidden;
+  border-bottom: 1px solid var(--border-card);
+  background: var(--surface);
+}
+
+.tp-swipe-container:last-child {
+  border-bottom: none;
+}
+
+.tp-swipe-row-wrap {
+  position: relative;
+  overflow: hidden;
+  width: 100%;
+}
+
+.tp-swipe-content {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 8px 6px;
+  background: var(--surface);
+  cursor: pointer;
+  user-select: none;
+}
+
+.tp-group-row {
+  display: grid;
+  grid-template-columns: 24px 1fr auto auto 18px;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+
+.tp-col-stt {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-lighter);
+}
+
+.tp-col-qc {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--row-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tp-badge-bao {
+  font-size: 11px;
+  font-weight: 800;
+  color: #2563eb;
+  background: var(--primary-soft);
+  padding: 1px 7px;
+  border-radius: 6px;
+  flex-shrink: 0;
+}
+
+.tp-col-kg {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--success);
+  text-align: right;
+  white-space: nowrap;
+}
+
+.tp-chevron {
+  color: var(--text-lighter);
+  font-size: 14px;
+  transition: transform 0.2s;
+  text-align: center;
+}
+
+.tp-swipe-actions {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  right: 0;
+  width: 76px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #ef4444;
+  z-index: 1;
+}
+
+.tp-swipe-btn-del {
+  width: 100%;
+  height: 100%;
+  border: none;
+  background: transparent;
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.tp-group-details {
+  background: var(--surface-2);
+  border-radius: 8px;
+  padding: 4px 6px;
+  margin: 2px 4px 6px 4px;
+  border: 1px solid var(--border-card);
+}
+
+.tp-sub-item {
+  display: grid;
+  grid-template-columns: 20px 1fr auto auto 24px;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 4px;
+  border-bottom: 1px dashed var(--border-card);
+  box-sizing: border-box;
+}
+
+.tp-sub-item:last-child {
+  border-bottom: none;
+}
+
+.tp-sub-stt {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-lighter);
+}
+
+.tp-sub-id {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--row-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tp-sub-kg {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--success);
+  text-align: right;
+  white-space: nowrap;
+}
+
+.tp-sub-gio {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--row-muted);
+  text-align: right;
+  white-space: nowrap;
+}
+
+.tp-sub-del-btn {
+  background: transparent;
+  border: none;
+  color: var(--danger);
+  cursor: pointer;
+  padding: 2px;
 }

@@ -59,7 +59,6 @@
       window.addEventListener('load', () => {
         navigator.serviceWorker.register('./sw.js', { updateViaCache: 'none' }).then(reg => {
           reg.update();
-          if (reg.waiting) { window._pendingWorker = reg.waiting; const toast = document.getElementById("pwa-update-toast"); if (toast) toast.style.display = "block"; }
           reg.addEventListener('updatefound', () => {
             const newWorker = reg.installing;
             if (newWorker) {
@@ -91,8 +90,7 @@
         }
       });
 
-      window.apDungBanCapNhatMoi = async function() {
-        if (typeof window.luuTPTruocRoiApp === "function" && !await window.luuTPTruocRoiApp()) return;
+      window.apDungBanCapNhatMoi = function() {
         window._userRequestedReload = true;
         if (window._pendingWorker) {
           window._pendingWorker.postMessage({ action: 'skipWaiting' });
@@ -292,16 +290,17 @@
         <div class="grid-title">Chỉ X5</div>
         
       </div>
-      <button type="button" class="grid-card full-width" onclick="chuyenTrangKhongNav('tpPage')">
-        <span class="grid-icon" style="background:var(--primary)"><i class="ti ti-package"></i></span>
-        <span class="grid-title">Thành Phẩm (TP)</span>
-      </button>
       <div class="grid-card full-width" onclick="chuyenTrang('btpPage', document.querySelector('.nav-item[data-page=btpPage]'))">
         <div class="grid-icon" style="background: linear-gradient(135deg, #a78bfa, #7c3aed);"><i class="ti ti-box"></i></div>
         <div class="grid-text">
           <div class="grid-title" style="margin-bottom:0">Bán Thành Phẩm (BTP)</div>
         </div>
-        
+      </div>
+      <div class="grid-card full-width" onclick="chuyenTrangKhongNav('tpPage')">
+        <div class="grid-icon" style="background: linear-gradient(135deg, #f43f5e, #e11d48);"><i class="ti ti-packages"></i></div>
+        <div class="grid-text">
+          <div class="grid-title" style="margin-bottom:0">Thành Phẩm (TP)</div>
+        </div>
       </div>
     </div>
 
@@ -1063,33 +1062,6 @@
   </div>
 </div>
 
-<div id="tpPage" class="page">
-  <div class="tp-heading"><button class="btn" onclick="chuyenTrangKhongNav('trangChu')">← Trang chủ</button><h2>Thành Phẩm</h2></div>
-  <div class="tp-toolbar"><button id="tp-new" class="btn btn-blue">Bắt đầu phiên mới</button><button class="btn" onclick="moLichSuChon('tp')">Lịch sử</button><button id="tp-save" class="btn">Lưu lại</button></div>
-  <div class="tp-meta"><span id="tp-session"></span><span id="tp-count"></span><span id="tp-export-state"></span></div>
-  <p id="tp-message" role="status" aria-live="polite"></p>
-  <div id="tp-cam" style="display:none">
-    <div id="tp-video-box" class="video-container">
-      <video id="tp-reader" playsinline muted></video>
-      <div id="tp-cam-flash-overlay" class="cam-flash-overlay"></div>
-      <button id="btn-flash-tp" class="tp-flash" title="Bật đèn pin" onclick="toggleFlashlightHUD('tp-reader', this)"><i class="ti ti-bolt"></i> Đèn pin</button>
-    </div>
-    <div class="tp-toolbar"><span id="tp-status">Đã dừng quét</span><button id="tp-toggle" class="btn btn-blue">Quét tiếp</button><button id="tp-results" class="btn">Xem kết quả</button></div>
-    <div id="tp-log-container"><div id="tp-log-list"></div><p id="tp-log-note"></p></div>
-  </div>
-  <section id="tp-ketqua">
-    <div class="tp-toolbar"><button id="tp-continue" class="btn btn-blue">Quét tiếp</button><button id="tp-export" class="btn">Xuất Excel</button></div>
-    <div class="tp-table-wrap"><table class="tp-table"><thead><tr><th>QC</th><th>BAO</th><th>KG</th></tr></thead><tbody id="tp-summary"></tbody></table></div>
-    <h3>Chi tiết mã</h3><div id="tp-detail-list"></div><button id="tp-more" class="btn" hidden>Xem thêm 50 mã</button>
-  </section>
-</div>
-<div id="lichSuTP" class="page">
-  <div class="tp-heading"><button class="btn" onclick="chuyenTrangKhongNav('tpPage')">← Thành phẩm</button><h2>Lịch sử Thành Phẩm</h2></div>
-  <label for="lichsu-tp-tim">Tìm ngày / quy cách</label><input id="lichsu-tp-tim" type="search" placeholder="Ngày hoặc quy cách…">
-  <div class="tp-toolbar"><button id="tp-export-all" class="btn">Xuất tất cả</button><button id="tp-delete-all" class="btn">Xóa tất cả</button></div>
-  <div id="lichsu-tp-list" aria-live="polite"></div>
-</div>
-
 <div id="btpPage" class="page">
   <div id="btp-form" class="card">
     <h3>Quét BTP (Bán Thành Phẩm)</h3>
@@ -1401,6 +1373,197 @@
       <div class="row">
         <button class="kq-btn kq-btn--excel" onclick="xuatExcelLichSuBTP()"><i class="ti ti-file-spreadsheet"></i> Xuất Excel</button>
         <button class="kq-btn kq-btn--new" onclick="chuyenTrangKhongNav('lichSuBTP')"><i class="ti ti-arrow-left"></i> Quay lại</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="tpPage" class="page">
+  <div id="tp-form" class="card">
+    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:14px;">
+      <h3 style="margin:0">Quét Thành Phẩm (TP)</h3>
+      <button class="kq-btn kq-btn--new kq-btn--sm" onclick="chuyenTrangKhongNav('trangChu')"><i class="ti ti-arrow-left"></i> Quay lại</button>
+    </div>
+    <label>Ngày</label>
+    <input type="date" id="tp-ngay" style="margin-bottom:20px;">
+    <div class="kq-actions" style="margin-top:8px;">
+      <button class="kq-btn kq-btn--primary" onclick="batDauTP()"><i class="ti ti-scan"></i> Bắt đầu</button>
+    </div>
+  </div>
+
+  <div id="tp-cam" style="display:none; width:100%; max-width:600px; box-sizing:border-box; margin:0 auto; padding:6px 12px 10px 12px; overflow:hidden;">
+    <span id="tp-dem" style="display:none;"></span>
+    <input type="checkbox" id="tp-cho-phep-trung-cam" style="display:none;">
+    <div id="tp-video-box" class="video-container tp-camera-main">
+      <video id="tp-reader" autoplay playsinline muted disablePictureInPicture style="position:absolute; width:100%; height:100%; object-fit:cover; transform:translateZ(0); will-change:transform;"></video>
+      <div id="tp-cam-flash-overlay" class="cam-flash-overlay"></div>
+
+      <!-- Khung ngắm Reticle 4 góc bo + laser scan -->
+      <div class="cam-reticle-overlay">
+        <div class="cam-reticle-box">
+          <div class="reticle-corner reticle-tl"></div>
+          <div class="reticle-corner reticle-tr"></div>
+          <div class="reticle-corner reticle-bl"></div>
+          <div class="reticle-corner reticle-br"></div>
+          <div class="reticle-laser-line"></div>
+        </div>
+      </div>
+
+      <!-- Góc trên trái: Đợt -->
+      <div class="cam-hud-top-left" style="display:flex; align-items:center; gap:6px;">
+        <span id="tp-status" class="cam-status-pill">
+          <div class="cam-status-dot"></div>
+          <span>Đợt 1</span>
+        </span>
+      </div>
+
+      <!-- Góc trên phải: Đèn pin + Quét trùng -->
+      <div class="cam-hud-top-right">
+        <button id="btn-flash-tp" type="button" class="cam-hud-btn" style="display:none;" onclick="toggleFlashlightHUD('tp-reader', this)" title="Bật/Tắt Đèn pin">
+          <svg class="torch-svg" viewBox="0 0 24 24" width="20" height="20" fill="none" style="display:block; transform: rotate(-35deg);">
+            <path d="M7 3h10l-2 6H9L7 3z" fill="#f59e0b" stroke="#fbbf24" stroke-width="1.3"/>
+            <path d="M9 9v9a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2V9H9z" fill="#334155" stroke="#94a3b8" stroke-width="1.3"/>
+            <circle cx="12" cy="13" r="1.5" fill="#fbbf24"/>
+            <path d="M6 3h12" stroke="#fef08a" stroke-width="1.6" stroke-linecap="round"/>
+          </svg>
+        </button>
+        <button id="btn-quet-trung-tp" type="button" class="cam-hud-btn" onclick="toggleQuetTrungHUD('tp-cho-phep-trung-cam', this)" title="Bật/Tắt Quét trùng" aria-label="Bật/Tắt Quét trùng">
+          <i class="ti ti-repeat"></i>
+        </button>
+      </div>
+
+      <!-- Đáy camera: Thanh mờ chứa Icon Bàn phím | Pause/Play | Hoàn tất -->
+      <div class="cam-hud-bottom-bar">
+        <button id="btn-toggle-banphim-tp" type="button" class="cam-hud-btn" onclick="toggleNhapTayTP()" title="Mở ô nhập tay">
+          <i class="ti ti-keyboard"></i>
+        </button>
+
+        <button id="btn-dung-tieptuc-tp" type="button" class="cam-shutter-center-btn" onclick="toggleDungTiepTucTP()" title="Dừng / Quét tiếp">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="#ffffff"><rect x="6" y="4" width="4" height="16" rx="2" /><rect x="14" y="4" width="4" height="16" rx="2" /></svg>
+        </button>
+
+        <button type="button" class="cam-hud-btn" onclick="xemKetQuaTP()" title="Xem bảng tổng kết">
+          <i class="ti ti-clipboard-list"></i>
+        </button>
+      </div>
+
+      <!-- Overlay khi Tạm dừng camera (Chạm để quét tiếp) -->
+      <div id="tp-cam-pause-overlay" class="cam-pause-overlay" style="display:none;" onclick="toggleDungTiepTucTP()">
+        <div class="cam-pause-badge">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><rect x="6" y="4" width="4" height="16" rx="2"/><rect x="14" y="4" width="4" height="16" rx="2"/></svg>
+          <span>ĐÃ TẠM DỪNG</span>
+        </div>
+        <div class="cam-pause-subtext">Chạm vào màn hình để quét tiếp</div>
+      </div>
+    </div>
+
+    <!-- Hàng mỏng full chiều ngang ngay dưới camera (Toggle Mã vừa quét vs Ô nhập tay) -->
+    <div id="tp-subcam-bar" class="tp-subcam-bar">
+      <!-- Chế độ 1: Mã vừa quét + Copy (mặc định) -->
+      <div id="tp-chip-mode" class="tp-subcam-chip-mode" onclick="saoChepMaQRTP(event)" title="Chạm để sao chép mã" role="button" tabindex="0">
+        <span id="tp-lock-status" class="tp-scanned-code">Chờ quét...</span>
+        <button type="button" id="btn-copy-tp" class="tp-copy-btn" onclick="saoChepMaQRTP(event)" title="Sao chép mã" aria-label="Sao chép mã TP">
+          <i id="icon-copy-tp" class="ti ti-copy"></i>
+        </button>
+      </div>
+
+      <!-- Chế độ 2: Ô nhập tay khi mở bàn phím -->
+      <div id="tp-input-mode" class="tp-subcam-input-mode" style="display:none;">
+        <input type="text" id="tp-manual-input-cam" placeholder="Dán hoặc nhập 5 dòng mã TP..." autocorrect="off" spellcheck="false" onkeydown="if(event.key==='Enter') nhapThuCongTP()">
+        <button type="button" class="tp-input-submit-btn" onclick="nhapThuCongTP()" title="Thêm mã" aria-label="Thêm mã TP thủ công">
+          <i class="ti ti-check"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- Bảng nhật ký Live Log -->
+    <div id="tp-log-container" class="tp-log-card">
+      <div class="tp-log-card-header">
+        <span class="tp-log-card-title"><i class="ti ti-clipboard-list"></i> NHẬT KÝ QUÉT TP</span>
+        <span id="tp-log-count" class="tp-log-card-badge">0 mã</span>
+      </div>
+      <div id="tp-log-list" class="tp-log-list-scroll">
+        <div class="tp-empty-log">Chưa có mã nào được quét</div>
+      </div>
+    </div>
+  </div>
+
+  <div id="tp-ketqua" class="card" style="display:none">
+    <h3 style="color:var(--success); text-align:center; margin-bottom:20px;">Hoàn tất Quét Thành Phẩm</h3>
+
+    <div style="margin-bottom: 20px;">
+      <!-- Khung Tóm Tắt (Summary Box) -->
+      <div class="kq-stat-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:14px;">
+        <div style="background:var(--surface-2); border:1px solid var(--border-card); border-radius:12px; padding:10px; text-align:center;">
+          <div style="font-size:11px; color:var(--row-muted); font-weight:700; text-transform:uppercase; margin-bottom:2px;">Tổng Số Bao</div>
+          <div id="tp-tong-cuon" style="font-family:'IBM Plex Mono', monospace; font-size:24px; font-weight:800; color:var(--primary-text, var(--primary));">0</div>
+        </div>
+        <div style="background:var(--surface-2); border:1px solid var(--border-card); border-radius:12px; padding:10px; text-align:center;">
+          <div style="font-size:11px; color:var(--row-muted); font-weight:700; text-transform:uppercase; margin-bottom:2px;">Tổng Khối Lượng</div>
+          <div id="tp-tong-kg" style="font-family:'IBM Plex Mono', monospace; font-size:24px; font-weight:800; color:var(--success);">0</div>
+        </div>
+      </div>
+
+      <!-- 2 Nút chuyển đổi & Tìm kiếm -->
+      <div style="display:flex; background:var(--surface-2); border:1px solid var(--border-card); border-radius:10px; padding:3px; gap:4px; margin-bottom:8px;">
+        <button id="btn-tp-view-chitiet" class="btn" style="flex:1; border-radius:8px; margin:0; padding:7px 12px; font-size:13px; font-weight:700; background:var(--surface); color:var(--row-text); border:none; box-shadow:0 2px 6px rgba(0,0,0,0.06);" onclick="toggleTPView('chitiet')">Chi Tiết</button>
+        <button id="btn-tp-view-gom" class="btn" style="flex:1; border-radius:8px; margin:0; padding:7px 12px; font-size:13px; font-weight:700; background:transparent; color:var(--row-muted); border:none;" onclick="toggleTPView('gom')">Tổng Hợp</button>
+      </div>
+      <input type="text" id="tp-ketqua-search" placeholder="🔍 Tìm kiếm mã hoặc QC..." autocorrect="off" spellcheck="false" oninput="locKetQuaTP()" style="width:100%; padding:9px 12px; font-size:13px; border-radius:10px; border:1px solid var(--border-card); margin-bottom:12px; background:var(--surface-2); color:var(--row-text); box-sizing:border-box;">
+
+      <!-- Khung Bảng Chi Tiết -->
+      <div id="tp-wrap-chitiet" class="table-sticky-wrap">
+        <div class="kq-card-wrap">
+          <div class="kq-table-header">
+            <div style="flex:0.6;">STT</div>
+            <div style="flex:1.4;">Mã ID</div>
+            <div style="flex:1.8;">Quy Cách Đủ</div>
+            <div style="flex:1; text-align:right;">KG</div>
+            <div style="width:28px;"></div>
+          </div>
+          <div id="tp-tbody-chitiet" style="display:flex; flex-direction:column; width:100%;"></div>
+          <div id="tp-tfoot-chitiet" class="kq-table-footer"></div>
+        </div>
+      </div>
+
+      <!-- Khung Bảng Tổng Hợp -->
+      <div id="tp-wrap-gom" class="table-sticky-wrap" style="display:none;">
+        <div class="kq-card-wrap">
+          <div class="kq-table-header">
+            <div style="flex:2;">QC</div>
+            <div style="flex:0.8; text-align:center;">BAO</div>
+            <div style="flex:1; text-align:right;">KG</div>
+          </div>
+          <div id="tp-tbody-gom" style="display:flex; flex-direction:column; width:100%;"></div>
+          <div id="tp-tfoot-gom" class="kq-table-footer"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="kq-actions">
+      <div class="row">
+        <button class="kq-btn kq-btn--next" onclick="quetTiepTP()"><i class="ti ti-scan"></i> Quét tiếp</button>
+        <button class="kq-btn kq-btn--new" onclick="quetMoiTP()"><i class="ti ti-plus"></i> Quét mới</button>
+      </div>
+      <button class="kq-btn kq-btn--excel" onclick="xuatExcelTP()"><i class="ti ti-file-spreadsheet"></i> Xuất Excel</button>
+      <button class="kq-btn kq-btn--new" onclick="chuyenTrangKhongNav('trangChu')"><i class="ti ti-home"></i> Trang chủ</button>
+    </div>
+  </div>
+</div>
+
+<div id="lichSuTP" class="page">
+  <div class="card">
+    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:14px;">
+      <h3 style="margin:0">Lịch Sử Quét Thành Phẩm</h3>
+      <button class="kq-btn kq-btn--new kq-btn--sm" onclick="chuyenTrangKhongNav('trangChu')"><i class="ti ti-arrow-left"></i> Quay lại</button>
+    </div>
+    <input type="text" id="lichsu-tp-tim" placeholder="Tìm theo ngày hoặc quy cách..." autocomplete="off" oninput="renderLichSuTP()" style="margin-bottom:12px">
+    <div id="lichsu-tp-list"></div>
+    <div class="kq-actions">
+      <button class="kq-btn kq-btn--excel" onclick="xuatExcelTatCaLichSuTP()"><i class="ti ti-file-spreadsheet"></i> Xuất Excel Tất Cả</button>
+      <div class="row">
+        <button class="kq-btn kq-btn--new" onclick="chuyenTrangKhongNav('trangChu')"><i class="ti ti-arrow-left"></i> Trang chủ</button>
+        <button class="kq-btn kq-btn--danger" onclick="xoaTatCaLichSuTP()"><i class="ti ti-trash"></i> Xóa tất cả</button>
       </div>
     </div>
   </div>
@@ -1757,8 +1920,8 @@
 <script src="cx1.js?v=20261107-v160" defer></script>
 <script src="cx5.js?v=20261107-v160" defer></script>
 <script src="btp.js?v=20261107-v160" defer></script>
+<script src="tp.js?v=20261120-v165" defer></script>
 <script src="tonkho.js?v=20261107-v160" defer></script>
-<script src="tp.js?v=20261120-v164" defer></script>
 
 <!-- BOTTOM SHEET MODAL LỊCH SỬ -->
 <div class="modal-overlay" id="modal-overlay" onclick="closeLichSuModal(event)">
@@ -1769,9 +1932,11 @@
       <div onclick="closeLichSuModal(); moLichSuChon('quetqr')" role="button" tabindex="0" style="padding:16px; background:var(--bg-body); border-radius:16px; border:1px solid var(--border); font-weight:700; color:var(--text-main); display:flex; align-items:center; gap:12px; cursor: pointer;">
         <i class="ti ti-scan" style="font-size:24px; color:var(--primary)"></i> Lịch sử Quét QR
       </div>
-      <button class="btn" onclick="closeLichSuModal(); moLichSuChon('tp')"><i class="ti ti-package"></i> Lịch sử Thành Phẩm (TP)</button>
       <div onclick="closeLichSuModal(); moLichSuChon('btp')" role="button" tabindex="0" style="padding:16px; background:var(--bg-body); border-radius:16px; border:1px solid var(--border); font-weight:700; color:var(--text-main); display:flex; align-items:center; gap:12px; cursor: pointer;">
         <i class="ti ti-box" style="font-size:24px; color:var(--primary)"></i> Lịch sử BTP
+      </div>
+      <div onclick="closeLichSuModal(); moLichSuChon('tp')" role="button" tabindex="0" style="padding:16px; background:var(--bg-body); border-radius:16px; border:1px solid var(--border); font-weight:700; color:var(--text-main); display:flex; align-items:center; gap:12px; cursor: pointer;">
+        <i class="ti ti-packages" style="font-size:24px; color:var(--primary)"></i> Lịch sử Thành Phẩm (TP)
       </div>
       <div onclick="closeLichSuModal(); moLichSuChon('for')" role="button" tabindex="0" style="padding:16px; background:var(--bg-body); border-radius:16px; border:1px solid var(--border); font-weight:700; color:var(--text-main); display:flex; align-items:center; gap:12px; cursor: pointer;">
         <div class="text-icon" style="font-size:20px; color:var(--primary); width:24px; text-align:center">X1</div> Lịch sử Chỉ X1

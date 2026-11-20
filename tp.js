@@ -1,456 +1,1342 @@
-/* Thành phẩm: local sessions, exact decimal weights, revision-aware exports. */
-(function (root) {
-  'use strict';
-  const HISTORY = 'tp_lich_su';
-  const DRAFT = 'tp_phien_dodang';
-  const clone = value => JSON.parse(JSON.stringify(value));
-  function units(value) {
-    const text = String(value).trim().replace(',', '.');
-    if (!/^\d+(?:\.\d{1,4})?$/.test(text)) throw new Error('Khối lượng phải là số dương, tối đa 4 số lẻ.');
-    const [whole, fraction = ''] = text.split('.');
-    const n = BigInt(whole) * 10000n + BigInt(fraction.padEnd(4, '0'));
-    if (n <= 0n || n > BigInt(Number.MAX_SAFE_INTEGER)) throw new Error('Khối lượng ngoài giới hạn an toàn.');
-    const kg = Number(n) / 10000;
-    // Persisted numeric kg must round-trip without losing a unit.
-    if (!Number.isFinite(kg) || Math.round(kg * 10000) !== Number(n)) throw new Error('Khối lượng quá lớn để lưu chính xác.');
-    return Number(n);
+// ── Quản lý Thành Phẩm (TP) v20261120 ─────────────────────────────────────────
+// Tuân thủ kiến trúc mô-đun chuẩn btp.js, tem 5 dòng, xuất Excel 2 cột,
+// bảng tổng hợp bỏ chữ "bao" và "kg", lưu phiên dở dang và lịch sử 30 ngày.
+
+let zxingReaderTP = null;
+let dangQuetTP = false;
+let phienTP = [];
+let tapMaDaQuetTP = new Set(); // Bộ nhớ chống trùng trong phiên theo ID Dòng 1
+let demSoDotTP = 1;
+let denPinBatTP = false;
+let ngayTP = null;
+let phienSoTP = 1;
+let idPhienHienTaiTP = null;
+let maQRVuaQuetTP = "";
+let daXuatExcelTP = false;
+let revisionTP = 0;
+let capNhatLucTP = null;
+let dangKhoiTaoCamTP = false;
+
+const TP_LICHSU_KEY = "tp_lich_su";
+const TP_LICHSU_SO_NGAY_GIU = 30;
+const TP_DODANG_KEY = "tp_phien_dodang";
+
+var SVG_SHUTTER_PAUSE = window.SVG_SHUTTER_PAUSE || '<svg viewBox="0 0 24 24" width="22" height="22" fill="#ffffff"><rect x="6" y="4" width="4" height="16" rx="2" /><rect x="14" y="4" width="4" height="16" rx="2" /></svg>';
+var SVG_SHUTTER_PLAY = window.SVG_SHUTTER_PLAY || '<svg viewBox="0 0 24 24" width="22" height="22" fill="#ffffff" style="margin-left:2px;"><path d="M8 5v14l11-7z" /></svg>';
+
+// ── Hàm tiện ích ngày giờ địa phương (chuẩn GMT+7 Việt Nam) ──
+function layNgayHomNayTP() {
+  if (typeof window.layNgayHomNayLocal === "function") {
+    return window.layNgayHomNayLocal();
   }
-  function parseKgTP(value) { return units(value) / 10000; }
-  function formatKgTP(value) {
-    if (!Number.isFinite(value)) throw new Error('Khối lượng không hợp lệ.');
-    return value.toFixed(4).replace(/(\.\d*?[1-9])0+$|\.0+$/, '$1').replace(/^(\d+)$/, '$1.0');
+  const now = new Date();
+  const offset = now.getTimezoneOffset() * 60000;
+  const localDate = new Date(now.getTime() - offset);
+  return localDate.toISOString().split("T")[0];
+}
+
+function layThoiGianHienTaiTP() {
+  const now = new Date();
+  const pad = n => String(n).padStart(2, '0');
+  return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+}
+
+// ── Escape HTML chống mã độc XSS & vỡ giao diện ──
+function anToanHtmlTP(str) {
+  if (typeof window.escapeHtml === "function") {
+    return window.escapeHtml(str);
   }
-  function localTime(date = new Date()) {
-    return new Date(date.getTime() + 7 * 3600000).toISOString().slice(0, 19).replace('T', ' ');
+  if (str === null || str === undefined) return "";
+  return String(str)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
+function anToanCongThucExcel(str) {
+  if (str === null || str === undefined) return "";
+  const s = String(str);
+  if (/^[=+\-@\t\r]/.test(s)) {
+    return "'" + s;
   }
-  function xuLyDuLieuQRTP(raw) {
-    if (typeof raw !== 'string') throw new Error('Mã QR phải là văn bản.');
-    const lines = raw.replace(/\r/g, '').split('\n').map(s => s.trim()).filter(Boolean);
-    if (lines.length !== 5 || !/^\d+$/.test(lines[2])) throw new Error('Mã không đúng định dạng tem Thành Phẩm (5 dòng)!');
-    const pcs = Number(lines[2]);
-    const match = lines[4].match(/^(.+?)\s+(\d+(?:[.,]\d{1,4})?)\s*$/);
-    if (!Number.isSafeInteger(pcs) || !match || !/x/i.test(match[1])) throw new Error('Mã không đúng định dạng tem Thành Phẩm (5 dòng)!');
-    return { id: lines[0], maKien: lines[1], pcs, tenHang: lines[3], qcDu: match[1], kg: parseKgTP(match[2]), raw };
-  }
-  const groupKey = item => item.qcDu.replace(/\s+/g, ' ').trim().toLowerCase();
-  function tinhThongKePhienTP(items) {
-    if (!Array.isArray(items)) throw new Error('Danh sách TP không hợp lệ.');
-    let total = 0;
-    const groups = new Map();
-    for (const item of items) {
-      const weight = units(item.kg);
-      if (!Number.isSafeInteger(total + weight)) throw new Error('Tổng khối lượng vượt giới hạn an toàn.');
-      total += weight;
-      const key = groupKey(item);
-      if (!groups.has(key)) groups.set(key, { key, qcDu: item.qcDu, soBao: 0, sum: 0, items: [] });
-      const group = groups.get(key);
-      group.soBao++; group.sum += weight; group.items.push(item);
-    }
-    return { tongBao: items.length, tongKg: total / 10000, gomNhom: Array.from(groups.values(), g => ({
-      key: g.key, qcDu: g.qcDu, soBao: g.soBao, tongKg: g.sum / 10000, items: g.items
-    })) };
-  }
-  function validateSession(value) {
-    if (!value || typeof value.idPhien !== 'string' || !value.idPhien || !Number.isSafeInteger(value.revision) || value.revision < 0 ||
-        typeof value.daXuatExcel !== 'boolean' || !Number.isFinite(Date.parse(value.ngay)) || !Number.isFinite(Date.parse(value.capNhatLuc))) {
-      throw new Error('Thông tin phiên TP không hợp lệ.');
-    }
-    const list = value.items || value.danhSach;
-    if (!Array.isArray(list)) throw new Error('Phiên TP thiếu danh sách mã.');
-    const seen = new Set();
-    const items = list.map(item => {
-      if (!item || !/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/.test(item.thoiGian)) throw new Error('Thời gian mã TP không hợp lệ.');
-      const parsed = xuLyDuLieuQRTP(item.raw);
-      if (seen.has(parsed.id) || ['id', 'maKien', 'pcs', 'tenHang', 'qcDu', 'kg'].some(k => parsed[k] !== item[k])) throw new Error('Dữ liệu mã TP không khớp QR gốc hoặc bị trùng.');
-      seen.add(parsed.id);
-      return { ...parsed, thoiGian: item.thoiGian };
-    });
-    tinhThongKePhienTP(items);
-    return { idPhien: value.idPhien, ngay: value.ngay, capNhatLuc: value.capNhatLuc,
-      revision: value.revision, daXuatExcel: value.daXuatExcel, items };
-  }
-  function newer(a, b) {
-    if (!b) return true;
-    if (a.revision !== b.revision) return a.revision > b.revision;
-    return Date.parse(a.capNhatLuc) > Date.parse(b.capNhatLuc);
-  }
-  function expired(record, activeId, now = Date.now()) {
-    const time = Date.parse(record.capNhatLuc || record.ngay);
-    return record.idPhien !== activeId && record.daXuatExcel === true && Number.isFinite(time) && now - time > 30 * 86400000;
-  }
-  const api = { units, parseKgTP, formatKgTP, xuLyDuLieuQRTP, tinhThongKePhienTP, validateSession, newer, expired };
-  if (typeof module !== 'undefined' && module.exports) module.exports = api;
-  if (!root.document) return;
-  Object.assign(root, { parseKgTP, formatKgTP, xuLyDuLieuQRTP, tinhThongKePhienTP });
-  const doc = root.document;
-  const el = id => doc.getElementById(id);
-  let session = null, reader = null, restoring = false, booting = true, draftInvalid = false;
-  let scanToken = 0, exportBusy = false, transitionBusy = false;
-  let draftTimer = null, historyTimer = null, draftMax = null, historyMax = null;
-  let writeChain = Promise.resolve(true), lastWriteOk = true;
-  const ids = new Set(), bounce = new Map(), liveNodes = new Map();
-  let detailLimit = 50, historyInitTask = null, historyInitialized = false;
-  root.dangQuetTP = false;
-  const sc = () => root.ScannerCore;
-  const notify = (message, type = 'error') => {
-    const status = el('tp-message');
-    if (status) { status.textContent = message; status.dataset.type = type; }
-    if (root.showCanhBao) root.showCanhBao(message, type);
+  return s;
+}
+
+// ── Xử lý số khối lượng chính xác (parseKgTP & formatKgTP) ──
+function parseKgTP(str) {
+  if (!str || typeof str !== 'string') return null;
+  const clean = str.trim().replace(',', '.');
+  if (!/^[\d]+(?:\.\d{1,4})?$/.test(clean)) return null;
+  const num = parseFloat(clean);
+  if (isNaN(num) || !Number.isFinite(num) || num <= 0) return null;
+  return num;
+}
+
+function formatKgTP(num) {
+  if (num === null || num === undefined || isNaN(num)) return "0.0";
+  let s = Number(num).toFixed(4);
+  s = s.replace(/(\.\d*?[1-9])0+$/, "$1").replace(/\.0000$/, ".0");
+  if (!s.includes('.')) s += ".0";
+  return s;
+}
+
+// ── Bóc tách & Thẩm định tem Thành Phẩm 5 dòng ──
+function xuLyDuLieuQRTP(text) {
+  if (!text) return null;
+  const rawQR = String(text).trim();
+  if (!rawQR) return null;
+
+  const lines = rawQR.replace(/\r/g, '').split('\n').map(l => l.trim()).filter(Boolean);
+  if (lines.length !== 5) return null;
+
+  const id = lines[0];
+  const maKien = lines[1];
+  const pcsStr = lines[2];
+  const tenHang = lines[3];
+  const dong5 = lines[4];
+
+  if (!id || !maKien || !/^\d+$/.test(pcsStr) || !tenHang) return null;
+  const pcs = parseInt(pcsStr, 10);
+
+  // Dòng 5: Quy cách đủ (phải chứa chữ x/X) & Khối lượng (>0)
+  const matchD5 = dong5.match(/^(.+?)\s+([\d]+(?:[.,]\d{1,4})?)\s*$/);
+  if (!matchD5) return null;
+
+  const qcDu = matchD5[1].trim();
+  if (!/[xX]/.test(qcDu)) return null;
+
+  const kg = parseKgTP(matchD5[2]);
+  if (kg === null) return null;
+
+  return {
+    id: id,
+    maKien: maKien,
+    pcs: pcs,
+    tenHang: tenHang,
+    qcDu: qcDu,
+    kg: kg,
+    rawQR: rawQR
   };
-  const confirm = message => new Promise(resolve => root.moXacNhanApp(message, () => resolve(true), 'Đồng ý', () => resolve(false), 'Hủy', 'Thành phẩm'));
-  function history() { return sc().docLichSu(HISTORY); }
-  function record(state) {
-    const { items, ...meta } = clone(state);
-    return { ...meta, thoiGian: localTime(new Date(meta.ngay)), danhSach: items };
+}
+window.xuLyDuLieuQRTP = xuLyDuLieuQRTP;
+
+// ── Hiệu ứng viền phản hồi camera ──
+function hienVienFeedbackTP(loai) {
+  const overlay = document.getElementById("tp-cam-flash-overlay");
+  if (overlay) {
+    overlay.className = "cam-flash-overlay flash-" + loai;
+    setTimeout(() => {
+      overlay.className = "cam-flash-overlay";
+    }, 280);
   }
-  function queueWrite(list, clear = false) {
-    const snapshot = clone(list);
-    const previous = clone(history());
-    writeChain = writeChain.then(async () => {
-      const ok = clear ? await sc().xoaLichSu(HISTORY) : await sc().luuLichSu(HISTORY, snapshot, () => notify('Bộ nhớ đầy. Giữ ứng dụng mở và xuất Excel, hoặc giải phóng dung lượng rồi thử lưu lại.'));
-      lastWriteOk = ok !== false;
-      if (!lastWriteOk) {
-        sc().luuLichSu(HISTORY, previous);
-        notify('Không lưu được lịch sử TP. Dữ liệu cũ được giữ để thử lại hoặc xuất Excel.');
-      }
-      return lastWriteOk;
-    }).catch(error => { lastWriteOk = false; notify('Lỗi lưu TP: ' + error.message); return false; });
-    return writeChain;
+  if (typeof hienVienFeedbackCamera === "function") {
+    try { hienVienFeedbackCamera("tp-video-box", loai); } catch (e) { }
   }
-  function cancelTimers() {
-    [draftTimer, historyTimer, draftMax, historyMax].forEach(clearTimeout);
-    draftTimer = historyTimer = draftMax = historyMax = null;
-  }
-  function saveDraft() {
-    clearTimeout(draftTimer); clearTimeout(draftMax); draftTimer = draftMax = null;
-    if (restoring || draftInvalid) return !draftInvalid;
-    try {
-      if (session) localStorage.setItem(DRAFT, JSON.stringify(session));
-      else localStorage.removeItem(DRAFT);
-      return true;
-    } catch (error) { notify('Không lưu được phiên TP: ' + error.message + '. Hãy xuất Excel và thử lưu lại.'); return false; }
-  }
-  function saveHistory() {
-    clearTimeout(historyTimer); clearTimeout(historyMax); historyTimer = historyMax = null;
-    if (!session || restoring || booting || !historyInitialized) return;
-    // Serialize read-modify-write too: a delayed write must not lose another session.
-    const snapshot = clone(session);
-    writeChain = writeChain.then(async () => {
-      if (!sc().isLoaded()) return true; // draft remains durable until DB is available
-      const list = history().filter(s => s.idPhien !== snapshot.idPhien);
-      if (snapshot.items.length) list.push(record(snapshot));
-      lastWriteOk = (await sc().luuLichSu(HISTORY, list, () => notify('Bộ nhớ đầy khi lưu lịch sử TP. Hãy xuất Excel.'))) !== false;
-      if (!lastWriteOk) notify('Không lưu được lịch sử TP; phiên dở dang vẫn được giữ để thử lại.');
-      return lastWriteOk;
-    }).catch(error => { lastWriteOk = false; notify('Lỗi lịch sử TP: ' + error.message); return false; });
-  }
-  function flushTP() {
-    if (restoring || booting) return true;
-    cancelTimers();
-    const ok = saveDraft();
-    if (ok) saveHistory();
-    return ok;
-  }
-  async function flushWait() {
-    if (!flushTP()) return false;
-    await writeChain;
-    await sc().whenIdle();
-    return lastWriteOk;
-  }
-  function scheduleSave() {
-    clearTimeout(draftTimer); clearTimeout(historyTimer);
-    draftTimer = setTimeout(saveDraft, 300); historyTimer = setTimeout(saveHistory, 1000);
-    if (!draftMax) draftMax = setTimeout(saveDraft, 1000);
-    if (!historyMax) historyMax = setTimeout(saveHistory, 3000);
-  }
-  function changed() {
-    session.revision++; session.daXuatExcel = false; session.capNhatLuc = new Date().toISOString();
-  }
-  function rebuildIds() { ids.clear(); bounce.clear(); if (session) session.items.forEach(i => ids.add(i.id)); }
-  function scanAllowed() { return root.dangQuetTP && el('tpPage')?.classList.contains('active') && !restoring && !transitionBusy; }
-  function khiQuetDuocMaTP(result) {
-    if (!scanAllowed() || !session) return;
-    const raw = result && typeof result.getText === 'function' ? result.getText() : String(result || '');
-    if (!raw.trim() || sc().kiemTraKhoaMa(bounce, raw, false)) return;
-    try {
-      const item = { ...xuLyDuLieuQRTP(raw), thoiGian: localTime() };
-      if (ids.has(item.id)) throw new Error('Đã quét mã ' + item.id + ' trong phiên này.');
-      tinhThongKePhienTP([...session.items, item]);
-      session.items.push(item); ids.add(item.id); changed(); scheduleSave(); capNhatLogTP();
-      if (root.phatTiengBip) root.phatTiengBip();
-      if (root.phatVibrateSuccess) root.phatVibrateSuccess();
-      sc().hienVienFeedback('tp-cam-flash-overlay', 'tp-video-box', 'success');
-    } catch (error) {
-      sc().khoaCanhBaoTrung(bounce, raw);
-      if (root.phatVibrateError) root.phatVibrateError();
-      if (root.phatTiengBip) root.phatTiengBip();
-      sc().hienVienFeedback('tp-cam-flash-overlay', 'tp-video-box', 'error');
-      notify(error.message);
+}
+window.hienVienFeedbackTP = hienVienFeedbackTP;
+
+// ── Tiếp nhận mã quét từ Camera hoặc Trình phát hiện ──
+const mapKhoaTP = new Map();
+function donDepMapKhoaTP() {
+  if (mapKhoaTP.size > 200) {
+    const now = Date.now();
+    for (const [key, timestamp] of mapKhoaTP.entries()) {
+      if (now - timestamp > 5000) mapKhoaTP.delete(key);
     }
   }
-  function dungTP() {
-    root.dangQuetTP = false; scanToken++;
-    root.dungCameraFast('tp-reader', reader); reader = null;
-    if (!booting) flushTP();
-    const button = el('tp-toggle'); if (button) button.textContent = 'Quét tiếp';
-    if (el('tp-status')) el('tp-status').textContent = 'Đã dừng quét';
+}
+
+function khiQuetDuocMaTP(res) {
+  const rawText = (typeof res === 'object' && res && typeof res.getText === 'function')
+    ? res.getText()
+    : String(res || '');
+  if (!rawText.trim() || !dangQuetTP) return;
+
+  // Chống nháy mã quá nhanh
+  const khoaTime = mapKhoaTP.get(rawText);
+  if (khoaTime && Date.now() < khoaTime) return;
+
+  const data = xuLyDuLieuQRTP(rawText);
+  if (!data) {
+    mapKhoaTP.set(rawText, Date.now() + 1500);
+    hienVienFeedbackTP("error");
+    if (typeof window.phatVibrateError === "function") window.phatVibrateError();
+    showCanhBaoTP("Mã không đúng định dạng tem Thành Phẩm (5 dòng)!", "error");
+    return;
   }
-  function stopFully() { root.tatDenPinHoanToan('tp-reader'); dungTP(); root.khoaCuonTrangQuet(false); }
-  async function startCamera() {
-    if (!session || restoring || !await readyHistory()) return;
-    const token = ++scanToken;
-    root.dangQuetTP = true;
-    root.chuyenTrangKhongNav('tpPage');
-    el('tp-cam').style.display = 'flex'; el('tp-ketqua').hidden = true;
-    root.khoaCuonTrangQuet(true);
-    el('tp-status').textContent = 'Đang mở camera…'; el('tp-toggle').textContent = 'Dừng quét';
-    try {
-      const next = await root.khoiTaoCameraFast('tp-reader', khiQuetDuocMaTP);
-      if (token !== scanToken || !scanAllowed()) return;
-      if (!next) throw new Error('Camera chưa sẵn sàng');
-      reader = next; el('tp-status').textContent = 'Đang quét';
-    } catch (error) {
-      if (token !== scanToken) return;
-      dungTP(); notify(error.name === 'NotAllowedError' ? 'Chưa được cấp quyền camera. Cấp quyền trong cài đặt rồi bấm Quét tiếp.' : 'Lỗi camera: ' + error.message + '. Bấm Quét tiếp để thử lại.');
+
+  themMaVaoPhienTP(data, rawText, 'cam_auto');
+}
+window.khiQuetDuocMaTP = khiQuetDuocMaTP;
+
+// ── Thêm mã vào phiên quét ──
+function themMaVaoPhienTP(data, rawText, src) {
+  if (!data || !data.rawQR) return false;
+
+  const elCheck = document.getElementById("tp-cho-phep-trung-cam");
+  const choPhepTrung = elCheck ? elCheck.checked : false;
+
+  const keyID = data.id;
+  const isDuplicate = tapMaDaQuetTP.has(keyID);
+
+  if (!choPhepTrung && isDuplicate) {
+    hienVienFeedbackTP("duplicate");
+    if (typeof window.phatVibrateError === "function") window.phatVibrateError();
+
+    const oldItem = phienTP.find(it => it.id === keyID);
+    const gioQuet = oldItem && oldItem.thoiGian ? (" (" + oldItem.thoiGian.split(" ")[1] + ")") : "";
+    showCanhBaoTP("Mã " + keyID + " đã quét" + gioQuet, "error");
+
+    if (src === 'cam_auto') {
+      mapKhoaTP.set(data.rawQR, Date.now() + 1500);
+    }
+    return false;
+  }
+
+  // Quét hợp lệ
+  hienVienFeedbackTP("success");
+  if (typeof window.phatTiengBip === "function") {
+    window.phatTiengBip();
+  } else if (navigator.vibrate) {
+    try { navigator.vibrate(70); } catch (e) { }
+  }
+
+  tapMaDaQuetTP.add(keyID);
+  daXuatExcelTP = false;
+  revisionTP++;
+  capNhatLucTP = new Date().toISOString();
+
+  const uid = "tp_item_" + Date.now() + "_" + Math.random().toString(36).slice(2, 9);
+  const newItem = {
+    uid: uid,
+    id: data.id,
+    maKien: data.maKien,
+    pcs: data.pcs,
+    tenHang: data.tenHang,
+    qcDu: data.qcDu,
+    kg: data.kg,
+    thoiGian: layThoiGianHienTaiTP(),
+    rawQR: data.rawQR,
+    dotQuet: demSoDotTP || 1
+  };
+
+  phienTP.push(newItem);
+
+  const demEl = document.getElementById("tp-dem");
+  if (demEl) demEl.textContent = "Đã quét: " + phienTP.length + " mã";
+
+  luuPhienDoDangTP();
+  luuVaoLichSuTPDebounced();
+  capNhatLogTPThemMoi(newItem);
+
+  maQRVuaQuetTP = data.id || data.rawQR || "";
+  const lockStatusEl = document.getElementById("tp-lock-status");
+  if (lockStatusEl) {
+    lockStatusEl.textContent = maQRVuaQuetTP;
+    lockStatusEl.title = maQRVuaQuetTP;
+  }
+
+  donDepMapKhoaTP();
+  return true;
+}
+
+// ── Nhập thủ công mã QR TP ──
+function toggleNhapTayTP() {
+  const chipMode = document.getElementById("tp-chip-mode");
+  const inputMode = document.getElementById("tp-input-mode");
+  const btnKeyboard = document.getElementById("btn-toggle-banphim-tp");
+  const inputField = document.getElementById("tp-manual-input-cam");
+  if (!chipMode || !inputMode) return;
+
+  const isInputOpen = inputMode.style.display !== "none";
+  if (isInputOpen) {
+    dongNhapTayTP();
+  } else {
+    chipMode.style.display = "none";
+    inputMode.style.display = "flex";
+    if (btnKeyboard) btnKeyboard.classList.add("active-mode");
+    if (inputField) {
+      inputField.value = "";
+      setTimeout(() => inputField.focus(), 80);
     }
   }
-  async function readyHistory() {
-    await sc().whenReady();
-    if (!sc().isLoaded()) { notify('Lịch sử chưa nạp được. Vui lòng thử lại; phiên quét vẫn được lưu trên máy.'); return false; }
-    await initializeHistory();
-    await writeChain;
-    return true;
+}
+window.toggleNhapTayTP = toggleNhapTayTP;
+
+function dongNhapTayTP() {
+  const chipMode = document.getElementById("tp-chip-mode");
+  const inputMode = document.getElementById("tp-input-mode");
+  const btnKeyboard = document.getElementById("btn-toggle-banphim-tp");
+  const inputField = document.getElementById("tp-manual-input-cam");
+  if (inputMode) inputMode.style.display = "none";
+  if (chipMode) chipMode.style.display = "flex";
+  if (btnKeyboard) btnKeyboard.classList.remove("active-mode");
+  if (inputField) inputField.value = "";
+}
+window.dongNhapTayTP = dongNhapTayTP;
+
+function nhapThuCongTP() {
+  const el = document.getElementById("tp-manual-input-cam");
+  if (!el) return;
+  const rawText = el.value.trim();
+  if (!rawText) {
+    showCanhBaoTP("Vui lòng nhập hoặc dán mã tem Thành Phẩm!", "warning");
+    return;
   }
-  async function batDauPhienMoiTP() {
-    if (booting || transitionBusy || restoring) return;
-    if (draftInvalid) { notify('Phiên đã lưu bị lỗi. Hãy sao lưu dữ liệu trước khi xử lý, không tạo phiên đè lên dữ liệu này.'); return; }
-    transitionBusy = true;
-    try {
-      if (session?.items.length && !session.daXuatExcel && !await confirm('Phiên hiện tại có ' + session.items.length + ' mã chưa xuất Excel. Bạn có muốn lưu và tạo phiên mới?')) return;
-      stopFully();
-      if (session?.items.length && (!await readyHistory() || !await flushWait())) return;
-      const now = new Date().toISOString();
-      session = { idPhien: 'TP_' + Date.now() + '_' + (root.crypto?.randomUUID?.() || Math.random().toString(36).slice(2)),
-        ngay: now, capNhatLuc: now, revision: 0, daXuatExcel: false, items: [] };
-      rebuildIds(); detailLimit = 50; capNhatLogTP(); saveDraft();
-    } finally { transitionBusy = false; }
-    if (el('tpPage')?.classList.contains('active')) await startCamera();
+
+  const data = xuLyDuLieuQRTP(rawText);
+  if (!data) {
+    showCanhBaoTP("Mã không đúng định dạng tem Thành Phẩm (5 dòng)!", "error");
+    return;
   }
-  async function xoaMaTP(id) {
-    if (!session || transitionBusy || !await readyHistory()) return;
-    const index = session.items.findIndex(i => i.id === id);
-    if (index < 0) return;
-    session.items.splice(index, 1); ids.delete(id); bounce.clear(); changed();
-    flushTP(); capNhatLogTP(); renderResults();
+
+  const thanhCong = themMaVaoPhienTP(data, rawText, 'manual');
+  if (thanhCong) {
+    el.value = "";
+    dongNhapTayTP();
+    showCanhBaoTP("Đã thêm: " + data.id, "success");
   }
-  function node(tag, text, className) {
-    const n = doc.createElement(tag); if (text !== undefined) n.textContent = text; if (className) n.className = className; return n;
+}
+window.nhapThuCongTP = nhapThuCongTP;
+
+// ── Quản lý Accordion Live Log ──
+window.expandedTPGroups = window.expandedTPGroups || new Set();
+
+function toggleChiTietTPGroup(groupKey) {
+  if (window.expandedTPGroups.has(groupKey)) {
+    window.expandedTPGroups.delete(groupKey);
+  } else {
+    window.expandedTPGroups.add(groupKey);
   }
-  function action(text, fn) {
-    const n = node('button', text, 'btn'); n.type = 'button'; n.addEventListener('click', e => { e.stopPropagation(); Promise.resolve(fn()).catch(error => notify(error.message)); }); return n;
+  const safeId = 'tp-grp-' + btoa(encodeURIComponent(groupKey)).replace(/[^a-zA-Z0-9]/g, '');
+  const detailsEl = document.getElementById('details-' + safeId);
+  const chevEl = document.getElementById('chev-' + safeId);
+  const isOpen = window.expandedTPGroups.has(groupKey);
+  if (detailsEl && chevEl && (!isOpen || detailsEl.innerHTML.trim() !== "")) {
+    detailsEl.style.display = isOpen ? 'block' : 'none';
+    chevEl.style.transform = isOpen ? 'rotate(180deg)' : 'none';
+  } else {
+    capNhatLogTP();
   }
-  function itemRow(item) {
-    const row = node('div', undefined, 'tp-sub-item');
-    row.append(node('span', item.id), node('span', formatKgTP(item.kg)), node('time', item.thoiGian.slice(11, 16)), action('×', () => xoaMaTP(item.id)));
-    return row;
+}
+window.toggleChiTietTPGroup = toggleChiTietTPGroup;
+
+function onTapRowTP(groupKey, event) {
+  const content = event.currentTarget;
+  if (content && content.classList.contains('swiped')) {
+    content.style.transform = 'translateX(0px)';
+    content.classList.remove('swiped');
+    return;
   }
-  function capNhatLogTP() {
-    const items = session?.items || [];
-    const stats = tinhThongKePhienTP(items);
-    el('tp-count').textContent = stats.tongBao + ' mã · ' + formatKgTP(stats.tongKg);
-    el('tp-export-state').textContent = session?.daXuatExcel ? 'Đã xuất Excel' : 'Chưa xuất Excel';
-    el('tp-session').textContent = session ? 'Phiên ' + localTime(new Date(session.ngay)) : 'Chưa có phiên';
-    const list = el('tp-log-list'); if (!list) return;
-    const latest = items.slice(-30).reverse();
-    const visibleKeys = Array.from(new Set(latest.map(groupKey)));
-    const totals = new Map(stats.gomNhom.map(g => [g.key, g]));
-    for (const [key, entry] of liveNodes) if (!visibleKeys.includes(key)) { entry.node.remove(); liveNodes.delete(key); }
-    visibleKeys.forEach((key, index) => {
-      const group = totals.get(key), visible = latest.filter(i => groupKey(i) === key);
-      const signature = JSON.stringify([group.soBao, group.tongKg, visible.map(i => i.id)]);
-      let entry = liveNodes.get(key);
-      if (!entry) {
-        const details = node('details', undefined, 'tp-group-row'); const summary = node('summary'); const rows = node('div');
-        details.append(summary, rows); entry = { node: details, summary, rows }; liveNodes.set(key, entry);
-      }
-      if (entry.signature !== signature || entry.index !== index) {
-        entry.summary.replaceChildren(node('span', String(index + 1)), node('span', group.qcDu), node('span', '×' + group.soBao, 'tp-badge-bao'), node('span', formatKgTP(group.tongKg)), node('span', '▾', 'tp-chevron'));
-        entry.rows.replaceChildren(...visible.map(itemRow)); entry.signature = signature; entry.index = index;
-      }
-      if (list.children[index] !== entry.node) list.insertBefore(entry.node, list.children[index] || null);
-    });
-    el('tp-log-note').textContent = items.length > 30 ? '30 mã mới nhất. Tổng nhóm tính toàn phiên; xem mã cũ trong Kết quả.' : (items.length ? 'Chạm quy cách để xem từng mã.' : 'Chưa có mã. Bấm Bắt đầu phiên mới để quét.');
+  toggleChiTietTPGroup(groupKey);
+}
+window.onTapRowTP = onTapRowTP;
+
+function xoaNhomTPByB64(keyB64, ev) {
+  if (ev) ev.stopPropagation();
+  let targetKey = "";
+  try {
+    targetKey = decodeURIComponent(atob(keyB64));
+  } catch (e) {
+    targetKey = keyB64;
   }
-  function renderResults() {
-    const items = session?.items || [], stats = tinhThongKePhienTP(items);
-    const tbody = el('tp-summary'); tbody.replaceChildren();
-    for (const group of stats.gomNhom) {
-      const row = node('tr'); row.append(node('td', group.qcDu), node('td', String(group.soBao)), node('td', formatKgTP(group.tongKg))); tbody.append(row);
+  xoaNhomTP(targetKey, ev);
+}
+window.xoaNhomTPByB64 = xoaNhomTPByB64;
+
+function xoaNhomTP(key, ev) {
+  if (ev) ev.stopPropagation();
+  const targetKey = String(key || '');
+  const itemsInGroup = phienTP.filter(item => (item.qcDu || 'KHAC') === targetKey);
+  const count = itemsInGroup.length;
+  if (count === 0) return;
+
+  const doXoa = () => {
+    // Xóa khỏi Set chống trùng
+    itemsInGroup.forEach(it => tapMaDaQuetTP.delete(it.id));
+    phienTP = phienTP.filter(item => (item.qcDu || 'KHAC') !== targetKey);
+    window.expandedTPGroups.delete(targetKey);
+
+    daXuatExcelTP = false;
+    revisionTP++;
+    capNhatLucTP = new Date().toISOString();
+
+    luuPhienDoDangTPNgay();
+    luuVaoLichSuTP();
+    capNhatLogTP();
+
+    const lastItem = phienTP.length > 0 ? phienTP[phienTP.length - 1] : null;
+    maQRVuaQuetTP = lastItem ? lastItem.id : "";
+    const lockStatusEl = document.getElementById("tp-lock-status");
+    if (lockStatusEl) {
+      lockStatusEl.textContent = maQRVuaQuetTP || "Chờ quét...";
+      lockStatusEl.title = maQRVuaQuetTP || "";
     }
-    const total = node('tr'); total.append(node('th', 'TỔNG'), node('th', String(stats.tongBao)), node('th', formatKgTP(stats.tongKg))); tbody.append(total);
-    el('tp-detail-list').replaceChildren(...items.slice().reverse().slice(0, detailLimit).map(itemRow));
-    el('tp-more').hidden = items.length <= detailLimit;
-  }
-  function xemKetQuaTP() { stopFully(); el('tp-cam').style.display = 'none'; el('tp-ketqua').hidden = false; renderResults(); }
-  async function tiepTucTuLichSuTP(id) {
-    if (transitionBusy || restoring || !await readyHistory()) return;
-    transitionBusy = true;
-    let proceed = false;
-    try {
-      if (session?.idPhien !== id) {
-        if (session?.items.length && !await confirm('Phiên hiện tại có ' + session.items.length + ' mã. Lưu phiên hiện tại và chuyển sang phiên lịch sử này?')) return;
-        stopFully(); if (!await flushWait()) return;
-        const found = history().find(s => s.idPhien === id); if (!found) throw new Error('Phiên này không còn trong lịch sử.');
-        session = validateSession(found); rebuildIds(); detailLimit = 50;
-        if (!saveDraft()) return;
-      }
-      capNhatLogTP(); proceed = true;
-    } finally { transitionBusy = false; }
-    if (proceed) { await startCamera(); notify('Đã nạp phiên: ' + localTime(new Date(session.ngay)) + ' (' + session.items.length + ' mã)', 'success'); }
-  }
-  async function xoaLichSuTP(id) {
-    if (transitionBusy || restoring || !await readyHistory()) return;
-    transitionBusy = true;
-    try {
-      const previousSession = session ? clone(session) : null;
-      const removesActive = session && (!id || session.idPhien === id);
-      if (!await confirm((id ? 'Xóa phiên này?' : 'Xóa toàn bộ lịch sử TP?') + (removesActive ? ' Phiên đang mở và dữ liệu dở dang cũng sẽ bị xóa.' : '') + ' Không thể hoàn tác.')) return;
-      if (removesActive) {
-        stopFully(); await writeChain; cancelTimers();
-        session = null; rebuildIds();
-        if (!saveDraft()) { session = previousSession; rebuildIds(); return; }
-      } else if (!await flushWait()) return;
-      const deleted = await queueWrite(id ? history().filter(s => s.idPhien !== id) : [], !id);
-      if (!deleted && removesActive) { session = previousSession; rebuildIds(); saveDraft(); }
-      capNhatLogTP(); renderResults(); renderLichSuTP();
-    } finally { transitionBusy = false; }
-  }
-  function renderLichSuTP() {
-    const list = el('lichsu-tp-list'); if (!list || !sc()) return;
-    list.replaceChildren();
-    if (!sc().isLoaded()) { list.append(node('p', 'Đang nạp lịch sử… Nếu chờ lâu, hãy mở lại ứng dụng.')); return; }
-    const query = el('lichsu-tp-tim').value.trim().toLowerCase();
-    const records = history().sort((a, b) => Date.parse(b.capNhatLuc) - Date.parse(a.capNhatLuc));
-    for (const saved of records) {
-      try {
-        const state = validateSession(saved), stats = tinhThongKePhienTP(state.items);
-        const date = new Date(state.ngay).toLocaleString('vi-VN', { timeZone: 'Asia/Bangkok' });
-        if (query && ![date, localTime(new Date(state.ngay)), ...stats.gomNhom.map(g => g.qcDu)].join(' ').toLowerCase().includes(query)) continue;
-        const card = node('article', undefined, 'tp-history-card');
-        card.append(node('h3', date), node('p', stats.tongBao + ' mã · ' + formatKgTP(stats.tongKg)), node('p', state.daXuatExcel ? 'Đã xuất Excel' : 'Chưa xuất Excel'));
-        card.append(action('Nạp lại / Quét tiếp', () => tiepTucTuLichSuTP(state.idPhien)), action('Xuất Excel', () => exportSessions([state.idPhien])), action('Xóa', () => xoaLichSuTP(state.idPhien)));
-        list.append(card);
-      } catch (error) { list.append(node('p', 'Có phiên TP không hợp lệ; dữ liệu được giữ nguyên. ' + error.message)); }
+    const demEl = document.getElementById("tp-dem");
+    if (demEl) demEl.textContent = "Đã quét: " + phienTP.length + " mã";
+
+    if (document.getElementById("tp-ketqua") && document.getElementById("tp-ketqua").style.display !== "none") {
+      locKetQuaTP();
     }
-    if (!list.children.length) list.append(node('p', 'Không có phiên phù hợp.'));
+    showCanhBaoTP("Đã xóa nhóm QC", "info");
+  };
+
+  const tieuDe = count > 1 ? `Xóa toàn bộ ${count} bao của nhóm này?` : `Xóa mã này khỏi phiên quét?`;
+  if (typeof moXacNhanApp === "function") {
+    moXacNhanApp(tieuDe, doXoa, "Xóa", null, "Hủy", "Xóa nhóm TP");
+  } else {
+    doXoa();
   }
-  async function exportSessions(selected) {
-    if (exportBusy || restoring || transitionBusy) return;
-    exportBusy = true;
-    try {
-      await flushWait(); // RAM export remains available when persistence fails.
-      if (selected !== 'current' && !await readyHistory()) return;
-      const snapshots = selected === 'current' ? (session?.items.length ? [clone(session)] : []) : history()
-        .filter(r => selected === 'all' || selected.includes(r.idPhien)).map(validateSession);
-      if (!snapshots.length) { notify('Không có dữ liệu TP để xuất.'); return; }
-      if (selected === 'all' && !await confirm('Xuất toàn bộ ' + snapshots.length + ' phiên, kể cả phiên ngoài bộ lọc hiện tại?')) return;
-      const sheets = snapshots.map((s, index) => ({ name: 'TP_' + (index + 1) + '_' + localTime(new Date(s.ngay)).slice(0, 10), data: s.items.map(i => ({ 'Thời gian': i.thoiGian, 'Mã QR Gốc': i.raw })) }));
-      const filename = 'Quet_TP_' + localTime().replace(/[-:]/g, '').replace(' ', '_');
-      const result = await root.exportToExcel(filename, sheets[0].name, sheets[0].data, { sheets });
-      if (!result?.ok) return;
-      await writeChain;
-      const list = history(); let modified = false;
-      for (const snapshot of snapshots) {
-        const current = session?.idPhien === snapshot.idPhien ? session : null;
-        if (current && current.revision !== snapshot.revision) continue;
-        const existing = list.find(s => s.idPhien === snapshot.idPhien);
-        if (!existing && !current) continue;
-        if (existing && existing.revision !== snapshot.revision) continue;
-        const time = new Date().toISOString();
-        if (current) { current.daXuatExcel = true; current.capNhatLuc = time; }
-        if (existing) { existing.daXuatExcel = true; existing.capNhatLuc = time; modified = true; }
-      }
-      if (modified) await queueWrite(list);
-      saveDraft(); capNhatLogTP(); renderLichSuTP();
-    } finally { exportBusy = false; }
-  }
-  function kiemTraBackupTP(data) {
-    for (const key of [HISTORY, DRAFT]) {
-      if (!(key in data)) continue;
-      const value = typeof data[key] === 'string' ? JSON.parse(data[key]) : data[key];
-      if (key === HISTORY) { if (!Array.isArray(value)) throw new Error('Lịch sử TP trong backup không hợp lệ'); value.forEach(validateSession); }
-      else validateSession(value);
+}
+window.xoaNhomTP = xoaNhomTP;
+
+function xoaMaTP(uid, ev) {
+  if (ev) ev.stopPropagation();
+  const targetUid = String(uid);
+  const index = phienTP.findIndex(item => item.uid === targetUid);
+  if (index < 0) return;
+
+  const item = phienTP[index];
+  const tenMa = item ? item.id : "mã này";
+
+  const doXoa = () => {
+    if (item && item.id) tapMaDaQuetTP.delete(item.id);
+    phienTP.splice(index, 1);
+
+    daXuatExcelTP = false;
+    revisionTP++;
+    capNhatLucTP = new Date().toISOString();
+
+    luuPhienDoDangTPNgay();
+    luuVaoLichSuTP();
+    capNhatLogTP();
+
+    const lastItem = phienTP.length > 0 ? phienTP[phienTP.length - 1] : null;
+    maQRVuaQuetTP = lastItem ? lastItem.id : "";
+    const lockStatusEl = document.getElementById("tp-lock-status");
+    if (lockStatusEl) {
+      lockStatusEl.textContent = maQRVuaQuetTP || "Chờ quét...";
+      lockStatusEl.title = maQRVuaQuetTP || "";
     }
-  }
-  function nhapPhienBackupTP(raw) {
-    const incoming = validateSession(typeof raw === 'string' ? JSON.parse(raw) : raw);
-    const existingRaw = localStorage.getItem(DRAFT);
-    const current = existingRaw ? validateSession(JSON.parse(existingRaw)) : null;
-    if (current && current.idPhien !== incoming.idPhien && current.items.length) {
-      const list = history();
-      if (!list.some(r => r.idPhien === current.idPhien && !newer(current, r))) {
-        sc().luuLichSu(HISTORY, [...list.filter(r => r.idPhien !== current.idPhien), record(current)]);
-      }
+    const demEl = document.getElementById("tp-dem");
+    if (demEl) demEl.textContent = "Đã quét: " + phienTP.length + " mã";
+
+    if (document.getElementById("tp-ketqua") && document.getElementById("tp-ketqua").style.display !== "none") {
+      locKetQuaTP();
     }
-    const saved = history().find(r => r.idPhien === incoming.idPhien);
-    let winner = saved && newer(saved, incoming) ? validateSession(saved) : incoming;
-    if (current?.idPhien === winner.idPhien && newer(current, winner)) winner = current;
-    localStorage.setItem(DRAFT, JSON.stringify(winner));
+    showCanhBaoTP("Đã xóa mã " + tenMa, "info");
+  };
+
+  if (typeof moXacNhanApp === "function") {
+    moXacNhanApp("Xóa mã " + tenMa + " khỏi phiên?", doXoa, "Xóa", null, "Hủy", "Xóa mã TP");
+  } else {
+    doXoa();
   }
-  function initializeHistory() {
-    if (!sc().isLoaded() || restoring || historyInitialized) return Promise.resolve();
-    if (historyInitTask) return historyInitTask;
-    historyInitTask = reconcileHistory().finally(() => { historyInitTask = null; });
-    return historyInitTask;
+}
+window.xoaMaTP = xoaMaTP;
+
+// ── Render Live Log Danh sách Quét ──
+function taoHtmlNhomLogTP(g, isFirst) {
+  const safeQC = anToanHtmlTP(g.qcDu);
+  const keyB64 = btoa(encodeURIComponent(g.key));
+  const safeId = 'tp-grp-' + keyB64.replace(/[^a-zA-Z0-9]/g, '');
+  const isExpanded = window.expandedTPGroups.has(g.key);
+  const countBadge = `<span class="tp-badge-bao">×${g.items.length}</span>`;
+  const flashClass = isFirst ? ' scan-flash-new' : '';
+  const kgText = formatKgTP(g.tongKg);
+
+  let subItemsHtml = isExpanded ? g.items.map((it, subIdx) => {
+    const subGio = it.thoiGian ? it.thoiGian.split(" ")[1] : "";
+    const subKg = formatKgTP(it.kg);
+    const safeIdCode = anToanHtmlTP(it.id);
+    const safeUid = anToanHtmlTP(it.uid || ("idx_" + subIdx));
+
+    return `<div class="tp-sub-item">
+      <span class="tp-sub-stt">${subIdx + 1}</span>
+      <span class="tp-sub-id">${safeIdCode}</span>
+      <span class="tp-sub-kg">${subKg}</span>
+      <span class="tp-sub-gio">${subGio}</span>
+      <button type="button" class="tp-sub-del-btn" onclick="xoaMaTP('${safeUid}', event)" title="Xóa mã này">
+        <i class="ti ti-x"></i>
+      </button>
+    </div>`;
+  }).join("") : "";
+
+  return `<div class="tp-swipe-container${flashClass}" data-group-key="${keyB64}">
+    <div class="tp-swipe-row-wrap">
+      <div class="tp-swipe-content" onclick="onTapRowTP('${anToanHtmlTP(g.key)}', event)">
+        <div class="tp-group-row">
+          <span class="tp-col-stt">${g.stt}</span>
+          <span class="tp-col-qc">${safeQC}</span>
+          ${countBadge}
+          <span class="tp-col-kg">${kgText}</span>
+          <i id="chev-${safeId}" class="ti ti-chevron-down tp-chevron" style="transform:${isExpanded ? 'rotate(180deg)' : 'none'};"></i>
+        </div>
+      </div>
+      <div class="tp-swipe-actions">
+        <button type="button" class="tp-swipe-btn-del" onclick="xoaNhomTPByB64('${keyB64}', event)" title="Xóa nhóm">
+          <i class="ti ti-trash"></i>
+        </button>
+      </div>
+    </div>
+    <div id="details-${safeId}" class="tp-group-details" style="display:${isExpanded ? 'block' : 'none'};">
+      ${subItemsHtml}
+    </div>
+  </div>`;
+}
+
+function capNhatLogTPThemMoi(newItem) {
+  capNhatLogTP();
+}
+
+function capNhatLogTP() {
+  const container = document.getElementById("tp-log-list");
+  if (!container) return;
+
+  const countEl = document.getElementById("tp-log-count");
+  if (countEl) countEl.textContent = phienTP.length + " mã";
+
+  if (phienTP.length === 0) {
+    container.innerHTML = '<div class="tp-empty-log">Chưa có mã nào được quét</div>';
+    return;
   }
-  async function reconcileHistory() {
-    await writeChain;
-    if (restoring) return;
-    if (session) {
-      const stored = history().find(s => s.idPhien === session.idPhien);
-      if (stored && newer(stored, session)) { session = validateSession(stored); rebuildIds(); saveDraft(); capNhatLogTP(); }
-      historyInitialized = true;
-      saveHistory(); await writeChain;
+
+  // Live Log hiển thị tối đa 30 mã mới nhất (để máy mát và cuộn mượt trên K20 Pro)
+  const MAX_LOG_ITEMS = 30;
+  const recentItems = phienTP.slice(-MAX_LOG_ITEMS);
+
+  // Gom nhóm theo qcDu
+  const groupMap = new Map();
+  recentItems.forEach(it => {
+    const k = it.qcDu || "KHÁC";
+    if (!groupMap.has(k)) {
+      groupMap.set(k, { key: k, qcDu: k, items: [], tongKg: 0 });
     }
-    const list = history(), kept = list.filter(r => !expired(r, session?.idPhien));
-    if (kept.length !== list.length) await queueWrite(kept, !kept.length);
-    historyInitialized = true;
-    renderLichSuTP(); renderResults();
-  }
-  Object.assign(root, {
-    flushTP, luuTPTruocRoiApp: flushWait, dungTP, khiQuetDuocMaTP, capNhatLogTP, renderLichSuTP,
-    tiepTucTuLichSuTP, kiemTraBackupTP, nhapPhienBackupTP,
-    nhanReaderTP: r => { reader = r; },
-    chuanBiPhucHoiTP: async () => {
-      if (!await readyHistory()) return false;
-      stopFully();
-      if (!await flushWait()) return false;
-      restoring = true; cancelTimers(); return true;
-    },
-    huyPhucHoiTP: () => {
-      restoring = false; historyInitialized = false; historyInitTask = null;
-      try { const raw = localStorage.getItem(DRAFT); session = raw ? validateSession(JSON.parse(raw)) : null; rebuildIds(); capNhatLogTP(); renderResults(); }
-      catch (error) { draftInvalid = true; notify('Dữ liệu phục hồi chưa hoàn chỉnh: ' + error.message); }
-    }
+    const g = groupMap.get(k);
+    g.items.push(it);
+    g.tongKg += Number(it.kg) || 0;
   });
-  function bind(id, fn) { el(id).addEventListener('click', () => Promise.resolve(fn()).catch(error => notify(error.message))); }
-  async function init() {
-    try {
-      const raw = localStorage.getItem(DRAFT); if (raw) session = validateSession(JSON.parse(raw));
-    } catch (error) { draftInvalid = true; notify('Không đọc được phiên TP: ' + error.message + '. Dữ liệu gốc được giữ nguyên.'); }
-    rebuildIds(); booting = false; capNhatLogTP(); renderResults();
-    bind('tp-new', batDauPhienMoiTP);
-    bind('tp-toggle', () => root.dangQuetTP ? dungTP() : (session ? startCamera() : batDauPhienMoiTP()));
-    bind('tp-results', xemKetQuaTP); bind('tp-continue', startCamera);
-    bind('tp-export', () => exportSessions('current'));
-    bind('tp-save', async () => { if (await flushWait()) notify('Đã lưu phiên TP.', 'success'); });
-    bind('tp-more', () => { detailLimit += 50; renderResults(); });
-    bind('tp-export-all', () => exportSessions('all')); bind('tp-delete-all', () => xoaLichSuTP(null));
-    el('lichsu-tp-tim').addEventListener('input', renderLichSuTP);
-    root.addEventListener('scannercore:history-ready', () => initializeHistory().catch(e => notify(e.message)));
-    await sc().whenReady(); await initializeHistory();
+
+  const groups = Array.from(groupMap.values()).reverse();
+  groups.forEach((g, idx) => { g.stt = idx + 1; });
+
+  const html = groups.map((g, idx) => taoHtmlNhomLogTP(g, idx === 0)).join("");
+  container.innerHTML = html;
+
+  if (window.ScannerCore && typeof window.ScannerCore.khoiTaoSwipe === "function") {
+    window.ScannerCore.khoiTaoSwipe("tp-log-list", ".tp-swipe-content", "__swipeInitTP");
   }
-  doc.addEventListener('visibilitychange', () => { if (doc.visibilityState === 'hidden') flushTP(); });
-  root.addEventListener('pagehide', flushTP);
-  init().catch(error => notify('Lỗi khởi tạo TP: ' + error.message));
-})(typeof window !== 'undefined' ? window : globalThis);
+}
+
+// ── Tính thống kê phiên quét (dùng chung cho Bảng KQ & Lịch sử) ──
+function tinhThongKePhienTP(danhSach) {
+  const list = danhSach || [];
+  const groupMap = new Map();
+  let tongKg = 0;
+
+  list.forEach(it => {
+    const qc = it.qcDu || "KHÁC";
+    if (!groupMap.has(qc)) {
+      groupMap.set(qc, { qcDu: qc, soBao: 0, tongKg: 0, items: [] });
+    }
+    const g = groupMap.get(qc);
+    g.soBao++;
+    g.tongKg += Number(it.kg) || 0;
+    g.items.push(it);
+    tongKg += Number(it.kg) || 0;
+  });
+
+  return {
+    tongBao: list.length, // 1 mã = 1 bao
+    tongKg: tongKg,
+    gomNhom: Array.from(groupMap.values())
+  };
+}
+window.tinhThongKePhienTP = tinhThongKePhienTP;
+
+// ── Bảng Kết Quả & Bảng Tổng Hợp ──
+function xemKetQuaTP() {
+  if (typeof window.tatDenPinHoanToan === "function") window.tatDenPinHoanToan("tp-reader");
+  dungTP();
+  if (typeof dungCameraFast === "function" && zxingReaderTP) {
+    try { dungCameraFast("tp-reader", zxingReaderTP); } catch (e) { }
+    zxingReaderTP = null;
+  }
+  hienKetQuaTP();
+  luuPhienDoDangTPNgay();
+  luuVaoLichSuTP();
+  if (typeof kichHoatKiemTraAutoBackup === "function") kichHoatKiemTraAutoBackup(2000);
+}
+window.xemKetQuaTP = xemKetQuaTP;
+
+function hienKetQuaTP() {
+  if (typeof khoaCuonTrangQuet === "function") khoaCuonTrangQuet(false); else document.body.classList.remove("cam-active");
+
+  const stat = tinhThongKePhienTP(phienTP);
+
+  const elTongBao = document.getElementById("tp-tong-cuon");
+  const elTongKg = document.getElementById("tp-tong-kg");
+  if (elTongBao) elTongBao.textContent = stat.tongBao;
+  if (elTongKg) elTongKg.textContent = formatKgTP(stat.tongKg);
+
+  document.getElementById("tp-cam").style.display = "none";
+  document.getElementById("tp-ketqua").style.display = "block";
+
+  locKetQuaTP();
+}
+
+function locKetQuaTP() {
+  const oTim = document.getElementById("tp-ketqua-search");
+  const tuKhoa = oTim ? oTim.value.trim().toLowerCase() : "";
+
+  let list = phienTP.slice();
+  if (tuKhoa) {
+    list = list.filter(r => (r.id && r.id.toLowerCase().includes(tuKhoa)) ||
+      (r.qcDu && r.qcDu.toLowerCase().includes(tuKhoa)) ||
+      (r.maKien && r.maKien.toLowerCase().includes(tuKhoa)) ||
+      (r.tenHang && r.tenHang.toLowerCase().includes(tuKhoa)));
+  }
+
+  // 1. Render Bảng Chi Tiết
+  const tbodyChiTiet = document.getElementById("tp-tbody-chitiet");
+  const tfootChiTiet = document.getElementById("tp-tfoot-chitiet");
+  if (tbodyChiTiet) {
+    if (list.length === 0) {
+      tbodyChiTiet.innerHTML = '<div style="padding:16px; text-align:center; color:var(--row-muted);">Không tìm thấy mã phù hợp</div>';
+    } else {
+      tbodyChiTiet.innerHTML = list.map((r, i) => `
+        <div class="kq-table-row" style="display:flex; align-items:center; padding:8px 6px; border-bottom:1px solid var(--border-row);">
+          <div style="flex:0.6; font-size:12px; color:var(--row-muted);">${i + 1}</div>
+          <div style="flex:1.4; font-family:'IBM Plex Mono', monospace; font-size:13px; font-weight:700;">${anToanHtmlTP(r.id)}</div>
+          <div style="flex:1.8; font-size:12px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${anToanHtmlTP(r.qcDu)}</div>
+          <div style="flex:1; text-align:right; font-family:'IBM Plex Mono', monospace; font-size:13px; font-weight:700; color:var(--success);">${formatKgTP(r.kg)}</div>
+          <div style="width:28px; text-align:right;">
+            <button type="button" class="btn-del-kq" onclick="xoaMaTP('${anToanHtmlTP(r.uid)}', event)" style="background:none; border:none; color:var(--red); padding:4px; cursor:pointer;">
+              <i class="ti ti-trash"></i>
+            </button>
+          </div>
+        </div>
+      `).join("");
+    }
+  }
+
+  const stat = tinhThongKePhienTP(list);
+  if (tfootChiTiet) {
+    // Dòng tổng: TỔNG | <tongBao> | <tongKg> (KHÔNG có chữ "bao", KHÔNG có chữ "kg")
+    tfootChiTiet.innerHTML = `
+      <div style="display:flex; justify-content:space-between; align-items:center; padding:10px 6px; font-weight:800; font-size:14px;">
+        <span style="color:var(--text-main);">TỔNG</span>
+        <div style="display:flex; gap:16px;">
+          <span style="font-family:'IBM Plex Mono', monospace;">${stat.tongBao}</span>
+          <span style="font-family:'IBM Plex Mono', monospace; color:var(--success);">${formatKgTP(stat.tongKg)}</span>
+        </div>
+      </div>
+    `;
+  }
+
+  // 2. Render Bảng Tổng Hợp (Gom theo QC)
+  const tbodyGom = document.getElementById("tp-tbody-gom");
+  const tfootGom = document.getElementById("tp-tfoot-gom");
+  if (tbodyGom) {
+    if (stat.gomNhom.length === 0) {
+      tbodyGom.innerHTML = '<div style="padding:16px; text-align:center; color:var(--row-muted);">Không có dữ liệu tổng hợp</div>';
+    } else {
+      tbodyGom.innerHTML = stat.gomNhom.map((g, i) => `
+        <div class="kq-table-row" style="display:flex; align-items:center; padding:10px 6px; border-bottom:1px solid var(--border-row);">
+          <div style="flex:2; font-size:13px; font-weight:600; line-height:1.3;">${anToanHtmlTP(g.qcDu)}</div>
+          <div style="flex:0.8; text-align:center; font-family:'IBM Plex Mono', monospace; font-size:14px; font-weight:700;">${g.soBao}</div>
+          <div style="flex:1; text-align:right; font-family:'IBM Plex Mono', monospace; font-size:14px; font-weight:700; color:var(--success);">${formatKgTP(g.tongKg)}</div>
+        </div>
+      `).join("");
+    }
+  }
+
+  if (tfootGom) {
+    // Dòng tổng: TỔNG | <tongBao> | <tongKg> (KHÔNG có chữ "bao", KHÔNG có chữ "kg")
+    tfootGom.innerHTML = `
+      <div style="display:flex; align-items:center; padding:10px 6px; font-weight:800; font-size:14px; border-top:2px solid var(--border-card);">
+        <div style="flex:2; color:var(--text-main);">TỔNG</div>
+        <div style="flex:0.8; text-align:center; font-family:'IBM Plex Mono', monospace;">${stat.tongBao}</div>
+        <div style="flex:1; text-align:right; font-family:'IBM Plex Mono', monospace; color:var(--success);">${formatKgTP(stat.tongKg)}</div>
+      </div>
+    `;
+  }
+}
+window.locKetQuaTP = locKetQuaTP;
+
+function toggleTPView(mode) {
+  const btnChitiet = document.getElementById('btn-tp-view-chitiet');
+  const btnGom = document.getElementById('btn-tp-view-gom');
+  const wrapChitiet = document.getElementById('tp-wrap-chitiet');
+  const wrapGom = document.getElementById('tp-wrap-gom');
+
+  if (mode === 'chitiet') {
+    if (wrapChitiet) wrapChitiet.style.display = 'block';
+    if (wrapGom) wrapGom.style.display = 'none';
+    if (btnChitiet) {
+      btnChitiet.style.background = 'var(--surface)';
+      btnChitiet.style.color = 'var(--row-text)';
+      btnChitiet.style.boxShadow = '0 2px 6px rgba(0,0,0,0.06)';
+    }
+    if (btnGom) {
+      btnGom.style.background = 'transparent';
+      btnGom.style.color = 'var(--row-muted)';
+      btnGom.style.boxShadow = 'none';
+    }
+  } else {
+    if (wrapChitiet) wrapChitiet.style.display = 'none';
+    if (wrapGom) wrapGom.style.display = 'block';
+    if (btnGom) {
+      btnGom.style.background = 'var(--surface)';
+      btnGom.style.color = 'var(--row-text)';
+      btnGom.style.boxShadow = '0 2px 6px rgba(0,0,0,0.06)';
+    }
+    if (btnChitiet) {
+      btnChitiet.style.background = 'transparent';
+      btnChitiet.style.color = 'var(--row-muted)';
+      btnChitiet.style.boxShadow = 'none';
+    }
+  }
+}
+window.toggleTPView = toggleTPView;
+
+// ── Bắt đầu, Quét tiếp, Bắt đầu mới ──
+async function batDauTP() {
+  const ngayEl = document.getElementById("tp-ngay");
+  if (ngayEl && !ngayEl.value) {
+    ngayEl.value = layNgayHomNayTP();
+  }
+  ngayTP = (ngayEl && ngayEl.value) ? ngayEl.value : layNgayHomNayTP();
+
+  let phienCu = null;
+  try { phienCu = JSON.parse(localStorage.getItem(TP_DODANG_KEY)); } catch (e) { }
+  if (phienCu && Array.isArray(phienCu.phienTP) && phienCu.phienTP.length > 0) {
+    if (typeof moXacNhanApp === "function") {
+      moXacNhanApp(
+        "Bạn đang có phiên TP dở dang (" + phienCu.phienTP.length + " mã). Bạn muốn tiếp tục hay bắt đầu mới?",
+        () => { khoiPhucTP(phienCu); },
+        "Tiếp tục",
+        () => { xoaPhienDoDangTP(); batDauPhienMoiTP(); },
+        "Bắt đầu mới",
+        "Phiên TP dở dang"
+      );
+      return;
+    }
+  }
+
+  batDauPhienMoiTP();
+}
+window.batDauTP = batDauTP;
+
+async function batDauPhienMoiTP() {
+  if (typeof khoaCuonTrangQuet === "function") khoaCuonTrangQuet(true); else document.body.classList.add("cam-active");
+  phienTP = [];
+  tapMaDaQuetTP.clear();
+  demSoDotTP = 1;
+  dangQuetTP = true;
+  window.dangQuetTP = true;
+  denPinBatTP = false;
+  idPhienHienTaiTP = "TP_" + Date.now() + "_" + Math.random().toString(36).slice(2, 8);
+  daXuatExcelTP = false;
+  revisionTP = 1;
+  capNhatLucTP = new Date().toISOString();
+
+  luuPhienDoDangTPNgay();
+
+  document.getElementById("tp-form").style.display = "none";
+  document.getElementById("tp-cam").style.display = "block";
+  document.getElementById("tp-ketqua").style.display = "none";
+  document.getElementById("tp-dem").textContent = "Đã quét: 0 mã";
+  const statusEl = document.getElementById("tp-status");
+  if (statusEl) statusEl.innerHTML = '<div class="cam-status-dot"></div><span>Đợt 1</span>';
+  maQRVuaQuetTP = "";
+  const lockStatusEl = document.getElementById("tp-lock-status");
+  if (lockStatusEl) lockStatusEl.textContent = "Chờ quét...";
+
+  const btnToggle = document.getElementById("btn-dung-tieptuc-tp");
+  if (btnToggle) {
+    btnToggle.innerHTML = SVG_SHUTTER_PAUSE;
+    btnToggle.className = "cam-shutter-center-btn";
+    btnToggle.classList.remove("paused");
+    btnToggle.title = "Dừng quét";
+  }
+
+  const pauseOverlay = document.getElementById("tp-cam-pause-overlay");
+  if (pauseOverlay) pauseOverlay.style.display = "none";
+
+  capNhatLogTP();
+  await khoiDongCameraTP();
+}
+window.batDauPhienMoiTP = batDauPhienMoiTP;
+
+async function khoiDongCameraTP() {
+  if (dangKhoiTaoCamTP) return;
+  dangKhoiTaoCamTP = true;
+  try {
+    const tpVid = document.getElementById("tp-reader");
+    const tpTrack = tpVid && tpVid.srcObject ? tpVid.srcObject.getVideoTracks()[0] : null;
+    const isCamRunningTP = tpTrack && tpTrack.readyState === 'live' && !(window.denPinGiuMap && window.denPinGiuMap["tp-reader"]);
+
+    if (!zxingReaderTP || !isCamRunningTP) {
+      if (zxingReaderTP) {
+        if (typeof dungCameraFast === "function") dungCameraFast("tp-reader", zxingReaderTP);
+        zxingReaderTP = null;
+      }
+      if (typeof khoiTaoCameraFast === "function") {
+        zxingReaderTP = await khoiTaoCameraFast("tp-reader", khiQuetDuocMaTP);
+        window.zxingReaderTP = zxingReaderTP;
+      }
+    }
+  } catch (err) {
+    console.error("Lỗi khởi động camera TP:", err);
+  } finally {
+    dangKhoiTaoCamTP = false;
+  }
+}
+
+async function quetTiepTP() {
+  if (typeof khoaCuonTrangQuet === "function") khoaCuonTrangQuet(true); else document.body.classList.add("cam-active");
+  const maxDot = phienTP.length > 0 ? Math.max(0, ...phienTP.map(r => r.dotQuet || 1)) : 0;
+  demSoDotTP = maxDot > 0 ? maxDot + 1 : 1;
+  dangQuetTP = true;
+  window.dangQuetTP = true;
+  denPinBatTP = false;
+
+  document.getElementById("tp-ketqua").style.display = "none";
+  document.getElementById("tp-cam").style.display = "block";
+  document.getElementById("tp-status").innerHTML = '<div class="cam-status-dot"></div><span>Đợt ' + demSoDotTP + '</span>';
+
+  const lastItemTP = phienTP.length > 0 ? phienTP[phienTP.length - 1] : null;
+  maQRVuaQuetTP = lastItemTP ? lastItemTP.id : "";
+  const lockStatusEl = document.getElementById("tp-lock-status");
+  if (lockStatusEl) {
+    lockStatusEl.textContent = maQRVuaQuetTP || "Chờ quét...";
+    lockStatusEl.title = maQRVuaQuetTP || "";
+  }
+
+  const btnToggle = document.getElementById("btn-dung-tieptuc-tp");
+  if (btnToggle) {
+    btnToggle.innerHTML = SVG_SHUTTER_PAUSE;
+    btnToggle.classList.remove("paused");
+    btnToggle.title = "Dừng quét";
+  }
+
+  const pauseOverlay = document.getElementById("tp-cam-pause-overlay");
+  if (pauseOverlay) pauseOverlay.style.display = "none";
+
+  luuPhienDoDangTPNgay();
+  await khoiDongCameraTP();
+}
+window.quetTiepTP = quetTiepTP;
+
+async function quetMoiTP() {
+  const coMaChuaXuat = phienTP.length > 0 && !daXuatExcelTP;
+  const thongBao = coMaChuaXuat
+    ? `Phiên hiện tại có ${phienTP.length} mã chưa xuất Excel! Bạn có chắc muốn tạo phiên mới?`
+    : "Bắt đầu phiên quét Thành Phẩm hoàn toàn mới?";
+
+  const doBatDauMoi = () => {
+    luuVaoLichSuTP();
+    xoaPhienDoDangTP();
+    batDauPhienMoiTP();
+  };
+
+  if (typeof moXacNhanApp === "function") {
+    moXacNhanApp(thongBao, doBatDauMoi, "Bắt đầu mới", null, "Hủy", "Phiên TP mới");
+  } else {
+    doBatDauMoi();
+  }
+}
+window.quetMoiTP = quetMoiTP;
+
+function toggleDungTiepTucTP() {
+  if (dangQuetTP) {
+    dungTP();
+  } else {
+    tiepTucTP();
+  }
+}
+window.toggleDungTiepTucTP = toggleDungTiepTucTP;
+
+function dungTP() {
+  dangQuetTP = false;
+  window.dangQuetTP = false;
+
+  const btnToggle = document.getElementById("btn-dung-tieptuc-tp");
+  if (btnToggle) {
+    btnToggle.innerHTML = SVG_SHUTTER_PLAY;
+    btnToggle.classList.add("paused");
+    btnToggle.title = "Quét tiếp";
+  }
+
+  const statusEl = document.getElementById("tp-status");
+  if (statusEl) {
+    statusEl.innerHTML = '<div class="cam-status-dot paused"></div><span>Đã dừng</span>';
+  }
+
+  const pauseOverlay = document.getElementById("tp-cam-pause-overlay");
+  if (pauseOverlay) pauseOverlay.style.display = "flex";
+
+  if (typeof dungCameraFast === "function") {
+    try { dungCameraFast("tp-reader", zxingReaderTP); } catch (e) { }
+    zxingReaderTP = null;
+  }
+  luuPhienDoDangTPNgay();
+  luuVaoLichSuTP();
+}
+window.dungTP = dungTP;
+
+async function tiepTucTP() {
+  dangQuetTP = true;
+  window.dangQuetTP = true;
+
+  const btnToggle = document.getElementById("btn-dung-tieptuc-tp");
+  if (btnToggle) {
+    btnToggle.innerHTML = SVG_SHUTTER_PAUSE;
+    btnToggle.classList.remove("paused");
+    btnToggle.title = "Dừng quét";
+  }
+
+  const statusEl = document.getElementById("tp-status");
+  if (statusEl) {
+    statusEl.innerHTML = '<div class="cam-status-dot"></div><span>Đợt ' + demSoDotTP + '</span>';
+  }
+
+  const pauseOverlay = document.getElementById("tp-cam-pause-overlay");
+  if (pauseOverlay) pauseOverlay.style.display = "none";
+
+  await khoiDongCameraTP();
+}
+window.tiepTucTP = tiepTucTP;
+
+// ── Quản lý Phiên dở dang (localStorage) ──
+let debounceTimerLuuPhienTP = null;
+function luuPhienDoDangTP() {
+  if (debounceTimerLuuPhienTP) clearTimeout(debounceTimerLuuPhienTP);
+  debounceTimerLuuPhienTP = setTimeout(() => {
+    debounceTimerLuuPhienTP = null;
+    luuPhienDoDangTPNgay();
+  }, 300);
+}
+
+function luuPhienDoDangTPNgay() {
+  if (debounceTimerLuuPhienTP) {
+    clearTimeout(debounceTimerLuuPhienTP);
+    debounceTimerLuuPhienTP = null;
+  }
+  try {
+    localStorage.setItem(TP_DODANG_KEY, JSON.stringify({
+      idPhien: idPhienHienTaiTP,
+      ngay: ngayTP || layNgayHomNayTP(),
+      phienSo: phienSoTP || 1,
+      capNhatLuc: capNhatLucTP || new Date().toISOString(),
+      daXuatExcel: daXuatExcelTP,
+      revision: revisionTP,
+      phienTP: phienTP,
+      demSoDotTP: demSoDotTP
+    }));
+  } catch (e) { }
+
+  const trangChuEl = document.getElementById("trangChu");
+  if (trangChuEl && trangChuEl.classList.contains("active") && typeof capNhatTrangChu === "function") {
+    capNhatTrangChu();
+  }
+}
+
+function xoaPhienDoDangTP() {
+  if (debounceTimerLuuPhienTP) {
+    clearTimeout(debounceTimerLuuPhienTP);
+    debounceTimerLuuPhienTP = null;
+  }
+  try { localStorage.removeItem(TP_DODANG_KEY); } catch (e) { }
+  const trangChuEl = document.getElementById("trangChu");
+  if (trangChuEl && trangChuEl.classList.contains("active") && typeof capNhatTrangChu === "function") {
+    capNhatTrangChu();
+  }
+}
+
+function khoiPhucTP(data) {
+  if (!data || !Array.isArray(data.phienTP)) return;
+  if (typeof khoaCuonTrangQuet === "function") khoaCuonTrangQuet(true); else document.body.classList.add("cam-active");
+
+  phienTP = data.phienTP.slice();
+  idPhienHienTaiTP = data.idPhien || ("TP_" + Date.now() + "_" + Math.random().toString(36).slice(2, 8));
+  ngayTP = data.ngay || layNgayHomNayTP();
+  phienSoTP = data.phienSo || 1;
+  demSoDotTP = data.demSoDotTP || 1;
+  daXuatExcelTP = !!data.daXuatExcel;
+  revisionTP = data.revision || 1;
+  capNhatLucTP = data.capNhatLuc || new Date().toISOString();
+
+  // Dựng lại Set chống trùng Dòng 1
+  tapMaDaQuetTP.clear();
+  phienTP.forEach(it => {
+    if (it.id) tapMaDaQuetTP.add(it.id);
+  });
+
+  dangQuetTP = true;
+  window.dangQuetTP = true;
+
+  document.getElementById("tp-form").style.display = "none";
+  document.getElementById("tp-cam").style.display = "block";
+  document.getElementById("tp-ketqua").style.display = "none";
+  document.getElementById("tp-dem").textContent = "Đã quét: " + phienTP.length + " mã";
+
+  const statusEl = document.getElementById("tp-status");
+  if (statusEl) statusEl.innerHTML = '<div class="cam-status-dot"></div><span>Đợt ' + demSoDotTP + '</span>';
+
+  const lastItem = phienTP.length > 0 ? phienTP[phienTP.length - 1] : null;
+  maQRVuaQuetTP = lastItem ? lastItem.id : "";
+  const lockStatusEl = document.getElementById("tp-lock-status");
+  if (lockStatusEl) lockStatusEl.textContent = maQRVuaQuetTP || "Chờ quét...";
+
+  capNhatLogTP();
+  khoiDongCameraTP();
+}
+
+// ── Quản lý Lịch Sử TP (IndexedDB qua ScannerCore) ──
+let debounceTimerLuuLichSuTP = null;
+function luuVaoLichSuTPDebounced() {
+  if (debounceTimerLuuLichSuTP) clearTimeout(debounceTimerLuuLichSuTP);
+  debounceTimerLuuLichSuTP = setTimeout(() => {
+    debounceTimerLuuLichSuTP = null;
+    luuVaoLichSuTP();
+  }, 1000);
+}
+
+function docLichSuTP(filterFn) {
+  const macDinhFilter = (session) => {
+    if (!session) return false;
+    // Dọn lịch sử 30 ngày: CHỈ xóa phiên đã xuất Excel, quá 30 ngày và không đang mở
+    if (session.daXuatExcel === true && session.idPhien !== idPhienHienTaiTP) {
+      const thoiDiem = new Date(session.capNhatLuc || session.ngay);
+      if (!isNaN(thoiDiem.getTime())) {
+        const soNgay = (Date.now() - thoiDiem.getTime()) / (1000 * 60 * 60 * 24);
+        if (soNgay > TP_LICHSU_SO_NGAY_GIU) return false;
+      }
+    }
+    return typeof filterFn === "function" ? filterFn(session) : true;
+  };
+
+  if (window.ScannerCore && typeof window.ScannerCore.docLichSu === "function") {
+    return window.ScannerCore.docLichSu(TP_LICHSU_KEY, macDinhFilter);
+  }
+  let list = [];
+  try { list = JSON.parse(localStorage.getItem(TP_LICHSU_KEY)) || []; } catch (e) { list = []; }
+  return list.filter(macDinhFilter);
+}
+
+function luuLichSuTP(list) {
+  if (window.ScannerCore && typeof window.ScannerCore.luuLichSu === "function") {
+    window.ScannerCore.luuLichSu(TP_LICHSU_KEY, list);
+    return;
+  }
+  try { localStorage.setItem(TP_LICHSU_KEY, JSON.stringify(list)); } catch (e) { }
+}
+
+function luuVaoLichSuTP() {
+  if (debounceTimerLuuLichSuTP) {
+    clearTimeout(debounceTimerLuuLichSuTP);
+    debounceTimerLuuLichSuTP = null;
+  }
+  if (!idPhienHienTaiTP) return;
+  const list = docLichSuTP();
+  if (phienTP.length === 0) {
+    const filtered = list.filter(s => s.idPhien !== idPhienHienTaiTP);
+    luuLichSuTP(filtered);
+    return;
+  }
+  const idx = list.findIndex(s => s.idPhien === idPhienHienTaiTP);
+  const banGhi = {
+    idPhien: idPhienHienTaiTP,
+    ngay: ngayTP || layNgayHomNayTP(),
+    phienSo: phienSoTP || 1,
+    capNhatLuc: capNhatLucTP || new Date().toISOString(),
+    thoiGian: layThoiGianHienTaiTP(),
+    daXuatExcel: daXuatExcelTP,
+    revision: revisionTP,
+    phienTP: phienTP,
+    demSoDotTP: demSoDotTP
+  };
+  if (idx >= 0) list[idx] = banGhi; else list.push(banGhi);
+  luuLichSuTP(list);
+}
+
+function moLichSuTP() {
+  renderLichSuTP();
+  if (typeof chuyenTrangKhongNav === "function") chuyenTrangKhongNav("lichSuTP");
+}
+window.moLichSuTP = moLichSuTP;
+
+function renderLichSuTP() {
+  const container = document.getElementById("lichsu-tp-list");
+  if (!container) return;
+  const oTim = document.getElementById("lichsu-tp-tim");
+  const tuKhoa = oTim ? oTim.value.trim().toLowerCase() : "";
+
+  let list = docLichSuTP().slice().sort((a, b) => new Date(b.capNhatLuc || b.ngay) - new Date(a.capNhatLuc || a.ngay));
+  if (tuKhoa) {
+    list = list.filter(s => {
+      const tg = (s.thoiGian || s.ngay || "").toLowerCase();
+      const hasQC = (s.phienTP || []).some(it => (it.qcDu && it.qcDu.toLowerCase().includes(tuKhoa)) || (it.id && it.id.toLowerCase().includes(tuKhoa)));
+      return tg.includes(tuKhoa) || hasQC;
+    });
+  }
+
+  if (list.length === 0) {
+    container.innerHTML = '<div style="padding:24px; text-align:center; color:var(--row-muted);">Chưa có phiên lịch sử nào</div>';
+    return;
+  }
+
+  container.innerHTML = list.map(s => {
+    const stat = tinhThongKePhienTP(s.phienTP);
+    const tgHienThi = s.thoiGian || s.ngay || "Không rõ";
+    const statusBadge = s.daXuatExcel
+      ? '<span style="font-size:11px; padding:2px 8px; border-radius:12px; background:rgba(34,197,94,0.15); color:var(--success); font-weight:700;">Đã xuất Excel</span>'
+      : '<span style="font-size:11px; padding:2px 8px; border-radius:12px; background:rgba(239,68,68,0.15); color:var(--red); font-weight:700;">Chưa xuất Excel</span>';
+
+    return `
+      <div class="card" style="margin-bottom:12px; padding:14px; border-radius:12px;">
+        <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:8px;">
+          <div>
+            <div style="font-size:14px; font-weight:800; color:var(--text-main); margin-bottom:4px;">${anToanHtmlTP(tgHienThi)}</div>
+            <div style="font-size:12px; color:var(--row-muted);">${statusBadge}</div>
+          </div>
+          <div style="text-align:right;">
+            <div style="font-family:'IBM Plex Mono', monospace; font-size:16px; font-weight:800; color:var(--primary);">${stat.tongBao} bao</div>
+            <div style="font-family:'IBM Plex Mono', monospace; font-size:13px; font-weight:700; color:var(--success);">${formatKgTP(stat.tongKg)}</div>
+          </div>
+        </div>
+
+        <div style="display:flex; gap:8px; margin-top:12px;">
+          <button class="kq-btn kq-btn--primary" style="flex:1; padding:7px 10px; font-size:12px;" onclick="tiepTucTuChiTietLichSuTP('${s.idPhien}')">
+            <i class="ti ti-scan"></i> Quét tiếp
+          </button>
+          <button class="kq-btn kq-btn--excel" style="flex:1; padding:7px 10px; font-size:12px;" onclick="xuatExcelPhienLichSuTP('${s.idPhien}')">
+            <i class="ti ti-file-spreadsheet"></i> Xuất Excel
+          </button>
+          <button class="kq-btn kq-btn--danger" style="padding:7px 10px; font-size:12px;" onclick="xoaMotPhienLichSuTP('${s.idPhien}', event)">
+            <i class="ti ti-trash"></i>
+          </button>
+        </div>
+      </div>
+    `;
+  }).join("");
+}
+window.renderLichSuTP = renderLichSuTP;
+
+function tiepTucTuChiTietLichSuTP(idPhien) {
+  const list = docLichSuTP();
+  const session = list.find(s => s.idPhien === idPhien);
+  if (!session) {
+    showCanhBaoTP("Không tìm thấy phiên lịch sử!", "error");
+    return;
+  }
+
+  // 1. Nếu đang quét đúng phiên này -> quay lại camera luôn
+  if (idPhienHienTaiTP === idPhien) {
+    if (typeof chuyenTrangKhongNav === "function") chuyenTrangKhongNav("tpPage");
+    else if (typeof chuyenTrang === "function") chuyenTrang("tpPage");
+    document.getElementById("tp-form").style.display = "none";
+    document.getElementById("tp-cam").style.display = "block";
+    document.getElementById("tp-ketqua").style.display = "none";
+    tiepTucTP();
+    return;
+  }
+
+  // 2. Nếu phiên hiện tại đang có dữ liệu khác -> Hỏi xác nhận
+  const doNapPhien = () => {
+    luuVaoLichSuTP(); // Lưu phiên cũ
+    khoiPhucTP(session);
+    if (typeof chuyenTrangKhongNav === "function") chuyenTrangKhongNav("tpPage");
+    else if (typeof chuyenTrang === "function") chuyenTrang("tpPage");
+    showCanhBaoTP("Đã nạp phiên: " + (session.thoiGian || session.ngay) + " (" + phienTP.length + " mã)", "success");
+  };
+
+  if (phienTP.length > 0) {
+    if (typeof moXacNhanApp === "function") {
+      moXacNhanApp(
+        `Phiên hiện tại đang có ${phienTP.length} mã! Bạn có muốn lưu phiên hiện tại và chuyển sang quét tiếp phiên lịch sử này không?`,
+        doNapPhien,
+        "Đồng ý",
+        null,
+        "Hủy",
+        "Nạp phiên lịch sử"
+      );
+    } else {
+      doNapPhien();
+    }
+  } else {
+    doNapPhien();
+  }
+}
+window.tiepTucTuChiTietLichSuTP = tiepTucTuChiTietLichSuTP;
+
+function xoaMotPhienLichSuTP(idPhien, ev) {
+  if (ev) ev.stopPropagation();
+  if (typeof moXacNhanApp === "function") {
+    moXacNhanApp(
+      "Xóa phiên lịch sử Thành Phẩm này? Không thể hoàn tác.",
+      () => {
+        luuLichSuTP(docLichSuTP().filter(s => s.idPhien !== idPhien));
+        if (idPhienHienTaiTP === idPhien) {
+          xoaPhienDoDangTP();
+          phienTP = [];
+          tapMaDaQuetTP.clear();
+        }
+        renderLichSuTP();
+        showCanhBaoTP("Đã xóa phiên lịch sử", "info");
+      },
+      "Xóa",
+      null,
+      "Hủy",
+      "Xóa phiên lịch sử"
+    );
+  }
+}
+window.xoaMotPhienLichSuTP = xoaMotPhienLichSuTP;
+
+function xoaTatCaLichSuTP() {
+  const list = docLichSuTP();
+  if (list.length === 0) { showCanhBaoTP("Không có lịch sử TP để xóa", "info"); return; }
+  if (typeof moXacNhanApp === "function") {
+    moXacNhanApp(
+      "Xóa toàn bộ " + list.length + " phiên lịch sử Thành Phẩm? Không thể hoàn tác.",
+      () => {
+        luuLichSuTP([]);
+        xoaPhienDoDangTP();
+        phienTP = [];
+        tapMaDaQuetTP.clear();
+        renderLichSuTP();
+        showCanhBaoTP("Đã xóa tất cả lịch sử TP", "info");
+      },
+      "Xóa tất cả",
+      null,
+      "Hủy",
+      "Xóa tất cả lịch sử"
+    );
+  }
+}
+window.xoaTatCaLichSuTP = xoaTatCaLichSuTP;
+
+// ── Xuất File Excel (2 cột chuẩn hóa cho APK & PWA) ──
+function xuatExcelTP() {
+  if (!phienTP || phienTP.length === 0) {
+    showCanhBaoTP("Chưa có dữ liệu để xuất file Excel!", "warning");
+    return;
+  }
+
+  // Dữ liệu đúng chuẩn 2 cột: Cột 1 = Thời gian, Cột 2 = Mã QR Gốc
+  const data = phienTP.map(r => ({
+    "Thời gian": r.thoiGian || "",
+    "Mã QR Gốc": anToanCongThucExcel(r.rawQR)
+  }));
+
+  const now = new Date();
+  const pad = n => String(n).padStart(2, '0');
+  const stamp = `${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}_${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`;
+  const filename = `Quet_TP_${stamp}`;
+
+  if (typeof exportToExcel === "function") {
+    exportToExcel(filename, "Thành Phẩm", data);
+    daXuatExcelTP = true;
+    luuPhienDoDangTPNgay();
+    luuVaoLichSuTP();
+    showCanhBaoTP("Đã xuất file Excel!", "success");
+  } else {
+    showCanhBaoTP("Không tìm thấy bộ xuất Excel!", "error");
+  }
+}
+window.xuatExcelTP = xuatExcelTP;
+
+function xuatExcelPhienLichSuTP(idPhien) {
+  const list = docLichSuTP();
+  const session = list.find(s => s.idPhien === idPhien);
+  if (!session || !session.phienTP || session.phienTP.length === 0) {
+    showCanhBaoTP("Phiên không có dữ liệu để xuất!", "warning");
+    return;
+  }
+
+  const data = session.phienTP.map(r => ({
+    "Thời gian": r.thoiGian || "",
+    "Mã QR Gốc": anToanCongThucExcel(r.rawQR)
+  }));
+
+  const now = new Date();
+  const pad = n => String(n).padStart(2, '0');
+  const stamp = `${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}_${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`;
+  const filename = `Quet_TP_${stamp}`;
+
+  if (typeof exportToExcel === "function") {
+    exportToExcel(filename, "Thành Phẩm", data);
+    session.daXuatExcel = true;
+    luuLichSuTP(list);
+    renderLichSuTP();
+    showCanhBaoTP("Đã xuất file Excel phiên lịch sử!", "success");
+  }
+}
+window.xuatExcelPhienLichSuTP = xuatExcelPhienLichSuTP;
+
+function xuatExcelTatCaLichSuTP() {
+  const list = docLichSuTP();
+  if (list.length === 0) {
+    showCanhBaoTP("Không có lịch sử để xuất Excel!", "warning");
+    return;
+  }
+
+  const allItems = [];
+  list.forEach(s => {
+    (s.phienTP || []).forEach(r => allItems.push(r));
+  });
+
+  if (allItems.length === 0) {
+    showCanhBaoTP("Các phiên lịch sử đều rỗng!", "warning");
+    return;
+  }
+
+  const data = allItems.map(r => ({
+    "Thời gian": r.thoiGian || "",
+    "Mã QR Gốc": anToanCongThucExcel(r.rawQR)
+  }));
+
+  const now = new Date();
+  const pad = n => String(n).padStart(2, '0');
+  const stamp = `${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}_${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`;
+  const filename = `Quet_TP_TatCa_${stamp}`;
+
+  if (typeof exportToExcel === "function") {
+    exportToExcel(filename, "Thành Phẩm", data);
+    list.forEach(s => { s.daXuatExcel = true; });
+    luuLichSuTP(list);
+    renderLichSuTP();
+    showCanhBaoTP("Đã xuất toàn bộ lịch sử TP!", "success");
+  }
+}
+window.xuatExcelTatCaLichSuTP = xuatExcelTatCaLichSuTP;
+
+async function saoChepMaQRTP(e) {
+  if (e) e.stopPropagation();
+  if (window.ScannerCore && typeof window.ScannerCore.saoChepMaQR === "function") {
+    await window.ScannerCore.saoChepMaQR(maQRVuaQuetTP, "icon-copy-tp", "btn-copy-tp", showCanhBaoTP);
+  }
+}
+window.saoChepMaQRTP = saoChepMaQRTP;
+
+// ── Toast thông báo cho TP ──
+let timerCanhBaoTP = null;
+function showCanhBaoTP(text, type = "info") {
+  const el = document.getElementById("canhbao-tp") || document.getElementById("canhbao");
+  if (!el) {
+    if (typeof showCanhBao === "function") showCanhBao(text, type);
+    return;
+  }
+  el.textContent = text;
+  el.className = "canhbao-toast show " + type;
+  if (timerCanhBaoTP) clearTimeout(timerCanhBaoTP);
+  timerCanhBaoTP = setTimeout(() => {
+    el.className = "canhbao-toast";
+  }, 3000);
+}
+window.showCanhBaoTP = showCanhBaoTP;

@@ -46,11 +46,7 @@
       try {
         const raw = localStorage.getItem(key);
         if (raw) {
-          let parsed = JSON.parse(raw);
-          if (key === "tp_lich_su" && parsed && parsed.replace === true && Array.isArray(parsed.sessions)) {
-            parsed = parsed.sessions;
-            _explicitClear.add(key); // durable replacement after a failed IDB write, including deletion
-          }
+          const parsed = JSON.parse(raw);
           if (Array.isArray(parsed)) {
             _memCache.set(key, parsed);
           }
@@ -96,7 +92,7 @@
   }
 
   // Hòa trộn danh sách lịch sử từ localStorage và IndexedDB theo idPhien (ưu tiên bản mới hơn)
-  function _mergeHistoryLists(localList, idbList, storeKey) {
+  function _mergeHistoryLists(localList, idbList) {
     const a = Array.isArray(localList) ? localList : [];
     const b = Array.isArray(idbList) ? idbList : [];
     if (a.length === 0) return b;
@@ -117,8 +113,7 @@
         const existing = map.get(id);
         const tNew = new Date(item.capNhatLuc || item.thoiGian || 0).getTime() || 0;
         const tOld = new Date(existing.capNhatLuc || existing.thoiGian || 0).getTime() || 0;
-        const tpRevisionDiff = storeKey === "tp_lich_su" ? (Number(item.revision) || 0) - (Number(existing.revision) || 0) : 0;
-        if (tpRevisionDiff > 0 || (tpRevisionDiff === 0 && tNew >= tOld)) {
+        if (tNew >= tOld) {
           map.set(id, item);
         }
       }
@@ -127,7 +122,6 @@
   }
 
   function _notifyHistoryChanged() {
-    try { if (typeof window.renderLichSuTP === "function") window.renderLichSuTP(); } catch (e) { }
     try { if (typeof window.renderLichSuQR === "function") window.renderLichSuQR(); } catch (e) { }
     try { if (typeof window.renderLichSuCX1 === "function") window.renderLichSuCX1(); } catch (e) { }
     try { if (typeof window.renderLichSuBTP === "function") window.renderLichSuBTP(); } catch (e) { }
@@ -136,10 +130,9 @@
   }
 
   // Ghi/xóa bản đệm trên localStorage (dùng khi IndexedDB chưa sẵn sàng hoặc ghi lỗi)
-  function _writeLocalMirror(storeKey, list, onQuotaError, replace = false) {
+  function _writeLocalMirror(storeKey, list, onQuotaError) {
     try {
-      if (replace && storeKey === "tp_lich_su") localStorage.setItem(storeKey, JSON.stringify({ replace: true, sessions: list }));
-      else if (!list || list.length === 0) localStorage.removeItem(storeKey);
+      if (!list || list.length === 0) localStorage.removeItem(storeKey);
       else localStorage.setItem(storeKey, JSON.stringify(list));
       return true;
     } catch (e) {
@@ -164,21 +157,19 @@
   }
 
   // Chỉ xóa bản đệm localStorage SAU KHI đã đọc lại IndexedDB và xác nhận đủ số phiên
-  function _verifyThenDropMirror(db, storeKey, expectedList) {
+  function _verifyThenDropMirror(db, storeKey, expectedLen) {
     return new Promise((resolve) => {
-      let mirror;
       try {
-        mirror = localStorage.getItem(storeKey);
-        if (mirror === null) { resolve(); return; }
+        if (localStorage.getItem(storeKey) === null) { resolve(); return; }
       } catch (e) { resolve(); return; }
       try {
         const tx = db.transaction([STORE_NAME], "readonly");
         const req = tx.objectStore(STORE_NAME).get(storeKey);
         req.onsuccess = function () {
           const rec = req.result;
-          const ok = rec && Array.isArray(rec.sessions) && JSON.stringify(rec.sessions) === JSON.stringify(expectedList);
+          const ok = rec && Array.isArray(rec.sessions) && rec.sessions.length === expectedLen;
           if (ok) {
-            try { if (localStorage.getItem(storeKey) === mirror) localStorage.removeItem(storeKey); } catch (e) { }
+            try { localStorage.removeItem(storeKey); } catch (e) { }
           }
           resolve();
         };
@@ -229,7 +220,7 @@
             return;
           }
           if (outcome === "fail") { resolve(false); return; }
-          _verifyThenDropMirror(db, storeKey, list).then(() => resolve(true));
+          _verifyThenDropMirror(db, storeKey, list.length).then(() => resolve(true));
         };
         tx.onerror = function () { resolve(false); };
         tx.onabort = function () { resolve(false); };
@@ -272,7 +263,7 @@
           const localArr = _memCache.get(key) || [];
           const cleared = _explicitClear.has(key);
           const idbArr = cleared ? [] : (idbMap.get(key) || []);
-          const merged = _mergeHistoryLists(localArr, idbArr, key);
+          const merged = _mergeHistoryLists(localArr, idbArr);
           if (merged.length !== localArr.length || idbArr.length > 0) changed = true;
           _memCache.set(key, merged);
           if (cleared || localArr.length > 0 || _dirty.has(key) || !idbMap.has(key)) {
@@ -335,17 +326,14 @@
       // Chỉ đánh dấu để gộp lại sau, và đệm tạm lên localStorage để không mất nếu app bị tắt.
       _dirty.add(storeKey);
       if (cleanList.length === 0 && prevLen === 0) return; // ghi rỗng "mù": bỏ qua
-      return Promise.resolve(_writeLocalMirror(storeKey, cleanList, onQuotaError));
+      _writeLocalMirror(storeKey, cleanList, onQuotaError);
+      return;
     }
 
     // Cho phép ghi rỗng khi RAM đang có dữ liệu (người dùng xóa hết / dọn hết phiên hết hạn)
     const allowEmpty = (opts && opts.allowEmpty === true) || prevLen > 0;
-    return _persistToIDB(storeKey, cleanList, { allowEmpty: allowEmpty }).then((ok) => {
-      if (!ok) {
-        // Do not let an older failed write restore a stale snapshot over a newer one.
-        return _writeLocalMirror(storeKey, _memCache.get(storeKey), onQuotaError, true);
-      }
-      return true;
+    _persistToIDB(storeKey, cleanList, { allowEmpty: allowEmpty }).then((ok) => {
+      if (!ok) _writeLocalMirror(storeKey, cleanList, onQuotaError);
     });
   }
 
@@ -353,7 +341,7 @@
     _memCache.set(storeKey, []);
     try { localStorage.removeItem(storeKey); } catch (e) { }
     if (_loaded) {
-      return _persistToIDB(storeKey, [], { allowEmpty: true }).then(ok => ok || (storeKey === "tp_lich_su" && _writeLocalMirror(storeKey, [], null, true)));
+      _persistToIDB(storeKey, [], { allowEmpty: true });
     } else {
       _explicitClear.add(storeKey);
       _dirty.add(storeKey);
@@ -365,22 +353,22 @@
     const out = {};
     for (const key of HISTORY_KEYS) {
       const list = _memCache.get(key);
-      if (Array.isArray(list) && (list.length > 0 || key === "tp_lich_su")) {
+      if (Array.isArray(list) && list.length > 0) {
         out[key] = JSON.stringify(list);
       }
     }
     return out;
   }
 
-  function importHistoryFromBackup(storeKey, rawOrArray, opts) {
+  function importHistoryFromBackup(storeKey, rawOrArray) {
     if (!HISTORY_KEYS.includes(storeKey)) return false;
     try {
       const incoming = typeof rawOrArray === "string" ? JSON.parse(rawOrArray) : rawOrArray;
       if (!Array.isArray(incoming)) return false;
       const existing = _memCache.get(storeKey) || [];
-      const merged = _mergeHistoryLists(incoming, existing, storeKey);
-      const result = luuLichSu(storeKey, merged);
-      return opts && opts.awaitWrite ? Promise.resolve(result).then(ok => ok !== false) : true;
+      const merged = _mergeHistoryLists(incoming, existing);
+      luuLichSu(storeKey, merged);
+      return true;
     } catch (e) {
       return false;
     }
@@ -401,7 +389,6 @@
   // Chờ mọi lần ghi IndexedDB đang chạy hoàn tất (dùng trước khi reload trang)
   async function whenIdle() {
     await _readyPromise;
-    await Promise.resolve(); // let pending _openDB awaits register their transactions
     let guard = 0;
     while (_inflight.size > 0 && guard++ < 20) {
       await Promise.all(Array.from(_inflight).map((p) => p.catch(() => { })));

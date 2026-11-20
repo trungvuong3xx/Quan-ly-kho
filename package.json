@@ -1,12 +1,11 @@
 {
   "name": "quan-ly-kho",
   "version": "1.0.0",
-  "description": "Qu\u00e1\u00ba\u00a3n L\u00c3\u00bd Kho PWA and Android APK",
+  "description": "Quản Lý Kho PWA and Android APK",
   "main": "index.html",
   "scripts": {
     "build": "node build-web.js",
-    "test": "node --test tests/*.test.js",
-    "test:browser": "playwright test"
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
   "author": "",
@@ -16,9 +15,5 @@
     "@capacitor/app": "^8.1.1",
     "@capacitor/cli": "^8.5.1",
     "@capacitor/core": "^8.5.1"
-  },
-  "devDependencies": {
-    "@playwright/test": "^1.65.1",
-    "fake-indexeddb": "^6.2.8"
   }
 }
