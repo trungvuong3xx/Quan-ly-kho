@@ -407,7 +407,7 @@
     container.addEventListener("click", (e) => {
       if (preventNextClick) {
         preventNextClick = false;
-        if (!e.target.closest(".kq-swipe-actions, .btp-swipe-actions")) {
+        if (!e.target.closest(".kq-swipe-actions, .btp-swipe-actions, .tp-swipe-actions")) {
           e.stopPropagation();
           e.preventDefault();
         }
@@ -418,7 +418,7 @@
       const content = target.closest(contentSelector);
       if (!content) return;
       const wrap = content.parentElement;
-      const actionsEl = wrap ? wrap.querySelector(".kq-swipe-actions, .btp-swipe-actions") : null;
+      const actionsEl = wrap ? wrap.querySelector(".kq-swipe-actions, .btp-swipe-actions, .tp-swipe-actions") : null;
       if (!actionsEl) return;
       const defaultW = actionsEl.classList.contains("kq-swipe-actions--dual") ? 140 : 76;
       const actionWidth = actionsEl.offsetWidth > 0 ? actionsEl.offsetWidth : defaultW;

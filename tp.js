@@ -546,12 +546,13 @@ function taoHtmlNhomTP(g, isFirst, context, coTuKhoa) {
   const kgText = formatKgTP(g.tongKg);
   const subItemsHtml = isExpanded ? taoHtmlSubItemsTP(g.items) : "";
 
-  const swipeActions = ctx === "log" ? `
+  const swipeActions = `
       <div class="tp-swipe-actions">
-        <button type="button" class="tp-swipe-btn-del" onclick="xoaNhomTPByB64('${keyB64}', event)" title="Xóa nhóm">
+        <button type="button" class="tp-swipe-btn-del" onclick="xoaNhomTPByB64('${keyB64}', event)" title="Xóa nhóm QC">
           <i class="ti ti-trash"></i>
+          <span>Xóa</span>
         </button>
-      </div>` : "";
+      </div>`;
 
   return `<div class="tp-swipe-container${flashClass}" data-group-key="${keyB64}">
     <div class="tp-swipe-row-wrap">
@@ -665,17 +666,16 @@ function hienKetQuaTP() {
     napThuVienXLSX(null, { imLang: true });
   }
 
-  const stat = tinhThongKePhienTP(phienTP);
-
-  const elTongBao = document.getElementById("tp-tong-cuon");
-  const elTongKg = document.getElementById("tp-tong-kg");
-  if (elTongBao) elTongBao.textContent = stat.tongBao;
-  if (elTongKg) elTongKg.textContent = formatKgTP(stat.tongKg);
-
   document.getElementById("tp-cam").style.display = "none";
   document.getElementById("tp-ketqua").style.display = "block";
 
   locKetQuaTP();
+}
+
+function khoiTaoSwipeKQTP() {
+  if (window.ScannerCore && typeof window.ScannerCore.khoiTaoSwipe === "function") {
+    window.ScannerCore.khoiTaoSwipe("tp-tbody-chitiet", ".tp-swipe-content", "__swipeKqInitTP");
+  }
 }
 
 let timerSearchTP = null;
@@ -719,12 +719,19 @@ function locKetQuaTP() {
     if (sttGocMap.has(g.key)) g.stt = sttGocMap.get(g.key);
   });
 
+  // Cập nhật Khung Tóm Tắt trên đầu theo tổng toàn phiên (đồng bộ khi xóa, giữ nguyên khi lọc)
+  const elTongBao = document.getElementById("tp-tong-cuon");
+  const elTongKg = document.getElementById("tp-tong-kg");
+  if (elTongBao) elTongBao.textContent = statGoc.tongBao;
+  if (elTongKg) elTongKg.textContent = formatKgTP(statGoc.tongKg);
+
   // 1. Render Bảng Chi Tiết (Gom nhóm accordion theo QC)
   const tbodyChiTiet = document.getElementById("tp-tbody-chitiet");
   const tfootChiTiet = document.getElementById("tp-tfoot-chitiet");
   if (tbodyChiTiet) {
     if (stat.gomNhom.length === 0) {
-      tbodyChiTiet.innerHTML = '<div style="padding:16px; text-align:center; color:var(--row-muted);">Không tìm thấy mã phù hợp</div>';
+      const emptyMsgChiTiet = coTuKhoa ? "Không tìm thấy mã phù hợp" : "Chưa có mã quét nào trong phiên";
+      tbodyChiTiet.innerHTML = `<div style="padding:16px; text-align:center; color:var(--row-muted);">${emptyMsgChiTiet}</div>`;
     } else {
       tbodyChiTiet.innerHTML = stat.gomNhom.map((g) => taoHtmlNhomTP(g, false, "kq", coTuKhoa)).join("");
     }
@@ -746,7 +753,8 @@ function locKetQuaTP() {
   const tfootGom = document.getElementById("tp-tfoot-gom");
   if (tbodyGom) {
     if (stat.gomNhom.length === 0) {
-      tbodyGom.innerHTML = '<div style="padding:16px; text-align:center; color:var(--row-muted);">Không có dữ liệu tổng hợp</div>';
+      const emptyMsgGom = coTuKhoa ? "Không tìm thấy mã phù hợp" : "Không có dữ liệu tổng hợp";
+      tbodyGom.innerHTML = `<div style="padding:16px; text-align:center; color:var(--row-muted);">${emptyMsgGom}</div>`;
     } else {
       tbodyGom.innerHTML = stat.gomNhom.map((g) => `
         <div class="tp-gom-grid" style="border-bottom:1px solid var(--border-row); font-size:13px; line-height:1.3;">
@@ -767,6 +775,8 @@ function locKetQuaTP() {
       </div>
     `;
   }
+
+  khoiTaoSwipeKQTP();
 }
 window.locKetQuaTP = locKetQuaTP;
 
@@ -872,6 +882,9 @@ async function batDauPhienMoiTP(ngayMoi) {
   if (window.expandedTPGroupsLog) window.expandedTPGroupsLog.clear();
   if (window.expandedTPGroupsKq) window.expandedTPGroupsKq.clear();
   if (window.tempSearchCollapsedTP) window.tempSearchCollapsedTP.clear();
+  if (timerSearchTP) { clearTimeout(timerSearchTP); timerSearchTP = null; }
+  const oTimMoi = document.getElementById("tp-ketqua-search");
+  if (oTimMoi) oTimMoi.value = "";
   demSoDotTP = 1;
   dangQuetTP = true;
   window.dangQuetTP = true;
@@ -1123,6 +1136,9 @@ function khoiPhucTP(data) {
   if (window.expandedTPGroupsLog) window.expandedTPGroupsLog.clear();
   if (window.expandedTPGroupsKq) window.expandedTPGroupsKq.clear();
   if (window.tempSearchCollapsedTP) window.tempSearchCollapsedTP.clear();
+  if (timerSearchTP) { clearTimeout(timerSearchTP); timerSearchTP = null; }
+  const oTimKp = document.getElementById("tp-ketqua-search");
+  if (oTimKp) oTimKp.value = "";
   phienTP.forEach(it => {
     if (it.id) tapMaDaQuetTP.add(it.id);
   });

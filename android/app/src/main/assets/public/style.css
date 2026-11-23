@@ -4388,8 +4388,11 @@ body.cam-active #tpPage.active {
   box-sizing: border-box;
   padding: 0;
   background: var(--surface);
+  transition: transform 0.2s cubic-bezier(0.2, 0.9, 0.3, 1);
   cursor: pointer;
   user-select: none;
+  -webkit-user-select: none;
+  touch-action: pan-y;
 }
 
 /* Lưới cố định 5 cột TP (dùng chung cho Live Log, Tiêu đề, Nhóm, Tem con, Footer Chi Tiết) */
@@ -4498,9 +4501,12 @@ body.cam-active #tpPage.active {
   font-size: 12px;
   font-weight: 700;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
+  gap: 2px;
   cursor: pointer;
+  padding: 0;
 }
 
 .tp-group-details {
@@ -4564,6 +4570,7 @@ body.cam-active #tpPage.active {
 }
 
 .tp-sub-del-btn {
+  position: relative;
   background: transparent;
   border: none;
   color: var(--danger);
@@ -4572,4 +4579,10 @@ body.cam-active #tpPage.active {
   display: flex;
   align-items: center;
   justify-content: center;
+  touch-action: manipulation;
+}
+.tp-sub-del-btn::after {
+  content: "";
+  position: absolute;
+  inset: -8px;
 }

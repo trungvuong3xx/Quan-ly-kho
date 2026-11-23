@@ -775,7 +775,7 @@ function docCacKhoiLSC5_() {
 
     if (ngayRaw !== "" && ngayRaw !== null) {
       curNgay = ngayRaw;
-    } else if (msp !== "" && msp !== null) {
+    } else if ((msp !== "" && msp !== null) || (qc !== "" && qc !== null)) {
       ngayRaw = curNgay;
     }
 
@@ -788,11 +788,11 @@ function docCacKhoiLSC5_() {
     const wCell = r[21];
     const xCell = r[22];
 
-    if (msp !== "" && msp !== null) {
+    if ((msp !== "" && msp !== null) || (qc !== "" && qc !== null)) {
       dongLai();
       cur = {
-        msp: String(msp).trim(),
-        ten: String(qc).trim(),
+        msp: String(msp == null ? "" : msp).trim(),
+        ten: String(qc == null ? "" : qc).trim(),
         ngay: chuanHoaNgayLSC5_(ngayRaw),
         bao: soBaoDong,
         kg: 0,
@@ -1297,8 +1297,16 @@ function formatNgayDayDuLSC5_(dVal) {
 }
 
 function isCellToMauXuatLSC5_(bg) {
-  const c = String(bg == null ? "" : bg).trim().toLowerCase();
-  return c !== "" && c !== "#ffffff" && c !== "#fff" && c !== "white" && c !== "transparent";
+  if (!bg) return false;
+  const c = String(bg).trim().toLowerCase();
+  if (!c || c === "#ffffff" || c === "#fff" || c === "white" || c === "transparent") return false;
+  // Chỉ nhận diện dương tính các màu vàng/cam xuất kho (bỏ qua màu xen kẽ xám/xanh Zebra stripes)
+  const exportColors = [
+    "#fde68a", "#fef08a", "#ffff00", "#fff2cc", "#ffe599", "#ffd966",
+    "#fce5cd", "#f9cb9c", "#ffeb3b", "#ffee58", "#fff176", "#fef9c3",
+    "#fef3c7", "#f59e0b", "#fbbf24", "#d97706", "#ffc000", "#e69138"
+  ];
+  return exportColors.indexOf(c) !== -1;
 }
 
 function docChiTietKhoiLSC5ChoXuat_(sh) {
@@ -1336,7 +1344,7 @@ function docChiTietKhoiLSC5ChoXuat_(sh) {
 
     if (ngayRaw !== "" && ngayRaw !== null) {
       curNgay = ngayRaw;
-    } else if (msp !== "" && msp !== null) {
+    } else if ((msp !== "" && msp !== null) || (qc !== "" && qc !== null)) {
       ngayRaw = curNgay;
     }
 
@@ -1372,11 +1380,11 @@ function docChiTietKhoiLSC5ChoXuat_(sh) {
     const zCell = r[24];
     const aaCell = r[25];
 
-    if (msp !== "" && msp !== null) {
+    if ((msp !== "" && msp !== null) || (qc !== "" && qc !== null)) {
       dongLai();
       cur = {
-        msp: String(msp).trim(),
-        ten: String(qc).trim(),
+        msp: String(msp == null ? "" : msp).trim(),
+        ten: String(qc == null ? "" : qc).trim(),
         ngay: ngayChuan,
         ngayNgan: ngayNgan,
         bao: soBaoDong,
@@ -1455,8 +1463,9 @@ function layTonChuaXuatLSC5(payload) {
 
     for (let i = 0; i < blocks.length; i++) {
       const b = blocks[i];
-      if (!b.msp) continue;
-      if (targetMsp && b.msp !== targetMsp) continue;
+      const itemKey = b.msp || b.ten;
+      if (!itemKey) continue;
+      if (targetMsp && b.msp !== targetMsp && b.ten !== targetMsp) continue;
       // Bỏ qua các dòng đã ghép/ẩn (cột V = X) hoặc đã xuất hết (cột X = ĐÃ XUẤT)
       if (b.daAn) continue;
       if (b.trangThaiX === "ĐÃ XUẤT" || b.trangThaiX === "DA XUAT") continue;
@@ -1469,7 +1478,7 @@ function layTonChuaXuatLSC5(payload) {
 
       if (allCells.length > 0) {
         if (unexportedBags.length === 0) continue; // Tất cả các ô E-P đều đã tô màu xuất
-        if (unexportedBags.length === allCells.length && b.trangThaiX !== "CÒN") {
+        if (unexportedBags.length === allCells.length && b.trangThaiX !== "CÒN" && b.baoHieuLuc > 0 && b.kgHieuLuc > 0) {
           conBao = b.baoHieuLuc;
           conKg = Math.round(b.kgHieuLuc * 100) / 100;
         } else {
@@ -1484,10 +1493,10 @@ function layTonChuaXuatLSC5(payload) {
 
       if (conBao <= 0 || conKg <= 0) continue;
 
-      if (!itemsByMsp[b.msp]) itemsByMsp[b.msp] = [];
-      itemsByMsp[b.msp].push({
+      if (!itemsByMsp[itemKey]) itemsByMsp[itemKey] = [];
+      itemsByMsp[itemKey].push({
         row: b.rowCuoiCung,
-        msp: b.msp,
+        msp: b.msp || b.ten,
         ten: b.ten,
         ngay: b.ngay,
         ngayNgan: b.ngayNgan,
@@ -1559,6 +1568,16 @@ function danhDauXuatLSC5NoLock_(payload) {
       const lotRow = Number(m.row || m.lotRow);
       if (Number.isInteger(lotRow) && lotRow >= 3) {
         affectedLotRows[lotRow] = { mode: "FULL", ngay: mNgay, loai: mLoai };
+        const blk = blockByRowCuoi[lotRow];
+        if (blk && blk.allBagCells) {
+          blk.allBagCells.forEach(function (c) {
+            if (!c.daXuat && c.col >= 5 && c.col <= 16) {
+              const colLetter = String.fromCharCode(64 + c.col);
+              cellsToColor.push(colLetter + c.row);
+              c.daXuat = true;
+            }
+          });
+        }
       }
     }
   }

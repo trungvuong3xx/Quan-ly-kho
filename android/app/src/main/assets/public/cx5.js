@@ -39,8 +39,10 @@ let dangHienGoiYCX5 = false;
 let tonChuaXuatLSC5Map = {};
 let tonChuaXuatCX1Map = {};
 let dangTaiTonChuaXuatCX5 = false;
+let tonLSC5LastFetchTs = 0;
 let filteredKgCandidatesCX5 = [];
 let selectedKgCandidateCX5 = null;
+const CX5_PENDING_MARKS_KEY = "cx5_pending_marks";
 
 let doiChieuCX5 = {};
 
@@ -569,11 +571,15 @@ function chonQCX5(item) {
 }
 
 async function taiTonChuaXuatCX5(forceRefresh) {
-  if (!forceRefresh && Object.keys(tonChuaXuatLSC5Map).length > 0) return;
+  const now = Date.now();
+  if (!forceRefresh && tonLSC5LastFetchTs > 0 && (now - tonLSC5LastFetchTs) < 120000) return;
   dangTaiTonChuaXuatCX5 = true;
   try {
     const pLSC5 = callApiCX5({ action: "layTonChuaXuatLSC5", payload: {} }).then(res => {
-      if (res && res.itemsByMsp) tonChuaXuatLSC5Map = res.itemsByMsp;
+      if (res && res.itemsByMsp) {
+        tonChuaXuatLSC5Map = res.itemsByMsp;
+        tonLSC5LastFetchTs = Date.now();
+      }
     }).catch(() => {});
 
     const pCX1 = fetch(API_CX1_FOR_CX5, {
@@ -598,11 +604,34 @@ async function taiTonChuaXuatCX5(forceRefresh) {
 }
 window.taiTonChuaXuatCX5 = taiTonChuaXuatCX5;
 
+function resolveMspFromTenCX5(mspVal, tenVal) {
+  let mspClean = String(mspVal || "").trim();
+  const tenClean = String(tenVal || "").trim();
+  if (!mspClean && tenClean && Array.isArray(mspDataCX5) && mspDataCX5.length > 0) {
+    const tenUpper = boDauCX5(tenClean).toUpperCase();
+    const found = mspDataCX5.find(i => i && i.ten && boDauCX5(i.ten).toUpperCase() === tenUpper);
+    if (found && found.msp) {
+      mspClean = String(found.msp).trim();
+      const mspEl = document.getElementById("cx5-msp");
+      if (mspEl) mspEl.value = mspClean;
+      if (found.vung) {
+        const vungEl = document.getElementById("cx5-vung");
+        if (vungEl) vungEl.value = found.vung;
+      }
+    }
+  }
+  return mspClean;
+}
+
 function layUngVienKgChoQCCX5(msp, vung, queryStr) {
-  const mspClean = String(msp || "").trim();
-  if (!mspClean) return [];
+  const tenEl = document.getElementById("cx5-ten");
+  const tenClean = tenEl ? tenEl.value.trim() : "";
+  const mspClean = resolveMspFromTenCX5(msp, tenClean);
+  if (!mspClean && !tenClean) return [];
   const isFor = (vung === "FOR");
-  const rawLots = isFor ? (tonChuaXuatCX1Map[mspClean] || []) : (tonChuaXuatLSC5Map[mspClean] || []);
+  const rawLots = isFor
+    ? ((mspClean && tonChuaXuatCX1Map[mspClean]) || (tenClean && tonChuaXuatCX1Map[tenClean]) || [])
+    : ((mspClean && tonChuaXuatLSC5Map[mspClean]) || (tenClean && tonChuaXuatLSC5Map[tenClean]) || []);
   const q = String(queryStr || "").trim().toLowerCase();
 
   // Tập các lô và bao lẻ đã được chọn vào phienCX5 trong phiên hiện tại
@@ -696,12 +725,15 @@ function hienGoiYKgCX5() {
     closeDropdownKgCX5();
     return;
   }
-  const msp = document.getElementById("cx5-msp") ? document.getElementById("cx5-msp").value : "";
-  if (!msp) {
+  const ten = document.getElementById("cx5-ten") ? document.getElementById("cx5-ten").value.trim() : "";
+  const mspRaw = document.getElementById("cx5-msp") ? document.getElementById("cx5-msp").value : "";
+  const msp = resolveMspFromTenCX5(mspRaw, ten);
+  if (!msp && !ten) {
     closeDropdownKgCX5();
     return;
   }
-  if (Object.keys(tonChuaXuatLSC5Map).length === 0 && !dangTaiTonChuaXuatCX5) {
+  const expired = tonLSC5LastFetchTs === 0 || (Date.now() - tonLSC5LastFetchTs) >= 120000;
+  if (expired && !dangTaiTonChuaXuatCX5) {
     taiTonChuaXuatCX5(false).catch(() => {});
   }
   onInputKgCX5();
@@ -713,7 +745,9 @@ function onInputKgCX5() {
     closeDropdownKgCX5();
     return;
   }
-  const msp = document.getElementById("cx5-msp") ? document.getElementById("cx5-msp").value : "";
+  const ten = document.getElementById("cx5-ten") ? document.getElementById("cx5-ten").value.trim() : "";
+  const mspRaw = document.getElementById("cx5-msp") ? document.getElementById("cx5-msp").value : "";
+  const msp = resolveMspFromTenCX5(mspRaw, ten);
   const vung = document.getElementById("cx5-vung") ? document.getElementById("cx5-vung").value : "NORMAL";
   const kgEl = document.getElementById("cx5-kg");
   const query = kgEl ? kgEl.value.trim() : "";
@@ -722,7 +756,7 @@ function onInputKgCX5() {
     selectedKgCandidateCX5 = null;
   }
 
-  if (!msp) {
+  if (!msp && !ten) {
     closeDropdownKgCX5();
     return;
   }
@@ -735,7 +769,17 @@ window.onInputKgCX5 = onInputKgCX5;
 function renderDropdownKgCX5() {
   const el = document.getElementById("cx5-kg-dropdown");
   if (!el) return;
-  if (!isXuatCX5(loaiCX5) || filteredKgCandidatesCX5.length === 0) {
+  if (!isXuatCX5(loaiCX5)) {
+    el.classList.remove("open");
+    el.innerHTML = "";
+    return;
+  }
+  if (dangTaiTonChuaXuatCX5 && filteredKgCandidatesCX5.length === 0) {
+    el.innerHTML = '<div class="cx5-dropdown-title" style="display:flex;align-items:center;gap:6px;"><i class="ti ti-refresh spin"></i> Đang tải danh sách tồn LSC5...</div>';
+    el.classList.add("open");
+    return;
+  }
+  if (filteredKgCandidatesCX5.length === 0) {
     el.classList.remove("open");
     el.innerHTML = "";
     return;
@@ -846,7 +890,8 @@ function timMarkTuDongKhiThemCX5(msp, vung, bao, kg) {
       : { type: "LOT", source: c.source, row: c.row, lotRow: c.row, bao: c.bao, kg: c.kg, label: c.label };
   }
   // Nếu không bấm chọn nhưng gõ đúng y hệt 1 lô hoặc 1 bao lẻ duy nhất đang tồn
-  const cands = layUngVienKgChoQCCX5(msp, vung, String(kg));
+  const mspKey = resolveMspFromTenCX5(msp, document.getElementById("cx5-ten") ? document.getElementById("cx5-ten").value.trim() : "");
+  const cands = layUngVienKgChoQCCX5(mspKey, vung, String(kg));
   const exactLot = cands.find(c => c.kind === "LOT" && Number(c.bao) === bao && Math.abs(Number(c.kg) - kg) < 0.05);
   if (exactLot) {
     return { type: "LOT", source: exactLot.source, row: exactLot.row, lotRow: exactLot.row, bao: exactLot.bao, kg: exactLot.kg, label: exactLot.label };
@@ -882,8 +927,8 @@ function onKeydownCX5(e) {
 }
 
 function themDongCX5() {
-  const msp = document.getElementById("cx5-msp").value;
   const ten = document.getElementById("cx5-ten").value.trim();
+  const msp = resolveMspFromTenCX5(document.getElementById("cx5-msp").value, ten);
   const vungEl = document.getElementById("cx5-vung");
   const vung = (vungEl && vungEl.value === "FOR") ? "FOR" : "NORMAL";
   const kg = parseFloat(document.getElementById("cx5-kg").value);
@@ -1605,6 +1650,16 @@ function luuPendingCX5(list) {
   capNhatDongPendingCX5();
 }
 
+function docPendingMarksCX5() {
+  try { return JSON.parse(localStorage.getItem(CX5_PENDING_MARKS_KEY)) || []; } catch (e) { return []; }
+}
+
+function luuPendingMarksCX5(list) {
+  try {
+    localStorage.setItem(CX5_PENDING_MARKS_KEY, JSON.stringify(list || []));
+  } catch (e) {}
+}
+
 function capNhatDongPendingCX5() {
   const soLuong = docPendingCX5().length;
   const noiDung = "Còn " + soLuong + " mục chưa đồng bộ — sẽ tự gửi lại khi có mạng";
@@ -1943,6 +1998,17 @@ async function dongBoTrucTiepCX5() {
         }
       });
       luuPendingCX5(pending);
+      if (isXuatCX5(loaiCX5) && (lsc5Marks.length > 0 || cx1Marks.length > 0)) {
+        const pendingMarks = docPendingMarksCX5();
+        pendingMarks.push({
+          id: "MARKS_" + Date.now() + "_" + Math.random().toString(36).slice(2, 6),
+          dateStr: ngayCX5,
+          loaiText: loaiText,
+          lsc5Marks: lsc5Marks,
+          cx1Marks: cx1Marks
+        });
+        luuPendingMarksCX5(pendingMarks);
+      }
     } catch (ePend) {}
     showCanhBaoCX5("Lỗi mạng khi đồng bộ — đã lưu vào hàng chờ trên máy", "warning");
   } finally {
@@ -2822,10 +2888,13 @@ async function dongBoOfflineCX5() {
   let thatBai = 0;
   try {
     const pending = docPendingCX5();
-    if (!pending || pending.length === 0) return { thanhCong: 0, thatBai: 0 };
+    const pendingMarks = docPendingMarksCX5();
+    if ((!pending || pending.length === 0) && (!pendingMarks || pendingMarks.length === 0)) {
+      return { thanhCong: 0, thatBai: 0 };
+    }
     
     const thanhCongIds = new Set();
-    for (const payload of pending) {
+    for (const payload of (pending || [])) {
       try {
         const r = await callApiCX5({ action: "submitEntryX5", payload });
         if (r && r.success) {
@@ -2847,6 +2916,39 @@ async function dongBoOfflineCX5() {
         return !thanhCongIds.has(pId);
       });
       luuPendingCX5(conLai);
+    }
+
+    // Đồng bộ bù các đánh dấu LSC5 / CX1 bị lưu hàng chờ khi mất mạng
+    if (pendingMarks && pendingMarks.length > 0) {
+      const doneMarkIds = new Set();
+      for (const mk of pendingMarks) {
+        try {
+          let ok = true;
+          if (mk.lsc5Marks && mk.lsc5Marks.length > 0) {
+            const rLsc = await callApiCX5({
+              action: "danhDauXuatLSC5",
+              payload: { marks: mk.lsc5Marks, dateStr: mk.dateStr, loaiText: mk.loaiText }
+            });
+            if (!rLsc || !rLsc.success) ok = false;
+          }
+          if (mk.cx1Marks && mk.cx1Marks.length > 0) {
+            const rCx1 = await fetch(API_CX1_FOR_CX5, {
+              method: "POST",
+              headers: { "Content-Type": "text/plain;charset=utf-8" },
+              body: JSON.stringify({
+                action: "danhDauXuatCX1",
+                payload: { marks: mk.cx1Marks, dateStr: mk.dateStr, loaiText: mk.loaiText }
+              })
+            }).then(r => r.json()).catch(() => null);
+            if (!rCx1 || !rCx1.success) ok = false;
+          }
+          if (ok && mk.id) doneMarkIds.add(mk.id);
+        } catch (eMk) {}
+      }
+      if (doneMarkIds.size > 0) {
+        const curMarks = docPendingMarksCX5();
+        luuPendingMarksCX5(curMarks.filter(m => !doneMarkIds.has(m.id)));
+      }
     }
   } finally {
     dangDongBoOfflineCX5Lock = false;
