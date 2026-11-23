@@ -1509,17 +1509,19 @@
         <button id="btn-tp-view-chitiet" class="btn" style="flex:1; border-radius:8px; margin:0; padding:7px 12px; font-size:13px; font-weight:700; background:var(--surface); color:var(--row-text); border:none; box-shadow:0 2px 6px rgba(0,0,0,0.06);" onclick="toggleTPView('chitiet')">Chi Tiết</button>
         <button id="btn-tp-view-gom" class="btn" style="flex:1; border-radius:8px; margin:0; padding:7px 12px; font-size:13px; font-weight:700; background:transparent; color:var(--row-muted); border:none;" onclick="toggleTPView('gom')">Tổng Hợp</button>
       </div>
-      <input type="text" id="tp-ketqua-search" placeholder="🔍 Tìm kiếm mã hoặc QC..." autocorrect="off" spellcheck="false" oninput="locKetQuaTP()" style="width:100%; padding:9px 12px; font-size:13px; border-radius:10px; border:1px solid var(--border-card); margin-bottom:12px; background:var(--surface-2); color:var(--row-text); box-sizing:border-box;">
+      <input type="text" id="tp-ketqua-search" placeholder="🔍 Tìm kiếm mã hoặc QC..." autocorrect="off" spellcheck="false" oninput="onSearchTPInput()" style="width:100%; padding:9px 12px; font-size:13px; border-radius:10px; border:1px solid var(--border-card); margin-bottom:12px; background:var(--surface-2); color:var(--row-text); box-sizing:border-box;">
 
       <!-- Khung Bảng Chi Tiết -->
       <div id="tp-wrap-chitiet" class="table-sticky-wrap">
         <div class="kq-card-wrap">
           <div class="kq-table-header">
-            <div style="flex:0.6;">STT</div>
-            <div style="flex:1.4;">Mã ID</div>
-            <div style="flex:1.8;">Quy Cách Đủ</div>
-            <div style="flex:1; text-align:right;">KG</div>
-            <div style="width:28px;"></div>
+            <div class="tp-kq-grid">
+              <div style="text-align:center;">STT</div>
+              <div>QC</div>
+              <div style="text-align:center;">BAO</div>
+              <div style="text-align:right;">KG</div>
+              <div></div>
+            </div>
           </div>
           <div id="tp-tbody-chitiet" style="display:flex; flex-direction:column; width:100%;"></div>
           <div id="tp-tfoot-chitiet" class="kq-table-footer"></div>
@@ -1530,9 +1532,11 @@
       <div id="tp-wrap-gom" class="table-sticky-wrap" style="display:none;">
         <div class="kq-card-wrap">
           <div class="kq-table-header">
-            <div style="flex:2;">QC</div>
-            <div style="flex:0.8; text-align:center;">BAO</div>
-            <div style="flex:1; text-align:right;">KG</div>
+            <div class="tp-gom-grid">
+              <div>QC</div>
+              <div style="text-align:center;">BAO</div>
+              <div style="text-align:right;">KG</div>
+            </div>
           </div>
           <div id="tp-tbody-gom" style="display:flex; flex-direction:column; width:100%;"></div>
           <div id="tp-tfoot-gom" class="kq-table-footer"></div>

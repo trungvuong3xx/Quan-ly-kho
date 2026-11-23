@@ -37,6 +37,13 @@ Project-level behavioral and tooling guidelines.
 
 ## BỘ QUY TẮC CỐ ĐỊNH BẤT DI BẤT DỊCH (BẢO VỆ DỰ ÁN)
 
+### 0. 🎯 ĐƯỜNG DẪN DỰ ÁN DUY NHẤT VÀ TUYỆT ĐỐI (`C:\NTV\Code gốc`):
+- **THƯ MỤC LÀM VIỆC ĐỘC TÔN**: Mọi hoạt động của AI và lập trình viên đối với dự án này (phân tích, tra cứu, đọc file, chỉnh sửa code, tạo mới file, xóa file, thực thi lệnh Terminal / PowerShell / Git / Node.js, build Web PWA, build Android APK...) CHỈ ĐƯỢC PHÉP THỰC HIỆN DUY NHẤT TẠI THƯ MỤC: `C:\NTV\Code gốc`.
+- **TUYỆT ĐỐI CẤM THAO TÁC NGOÀI ĐƯỜNG DẪN NÀY**:
+  1. Tuyệt đối KHÔNG được mở, đọc, ghi, chuyển hướng `cd`, thực thi script hoặc tham chiếu sang bất kỳ thư mục hay dự án nào khác bên ngoài `C:\NTV\Code gốc` (đặc biệt cấm sang `C:\NTV\ERP BOT`, `C:\NTV\AntiBanERP`, `C:\NTV\QR CH Play`, `OneDrive`, `Desktop`,...).
+  2. Mọi đường dẫn file trong tài liệu, cấu hình, liên kết Markdown (`file:///...`) BẮT BUỘC phải trỏ chính xác về `C:\NTV\Code gốc\...` (tuyệt đối không dùng đường dẫn cũ như `OneDrive\Tài liệu\Code gốc`).
+  3. Dự án này là độc lập hoàn toàn, không phụ thuộc và không chia sẻ tài nguyên thực thi với bất kỳ dự án nào khác.
+
 ### 1. Cấu hình Android & Build APK (TUYỆT ĐỐI KHÔNG DÙNG JAVA 21):
 - **CI WORKFLOW (`.github/workflows/build-apk.yml`)**: BẮT BUỘC `Setup Java 17` (`distribution: 'temurin'`, `java-version: 17`). TUYỆT ĐỐI CẤM dùng Java 21 runner!
 - **GRADLE COMPILATION (`android/app/build.gradle`)**: `sourceCompatibility` và `targetCompatibility` PHẢI LUÔN LÀ `JavaVersion.VERSION_17`.
@@ -80,5 +87,5 @@ Project-level behavioral and tooling guidelines.
    - Phải kiểm tra hành vi bấm/chạm thực tế xem phản hồi giao diện và logic có hoạt động trơn tru không trước khi hoàn tất task.
 
 ### 7. 🚫 PHÂN TÁCH RÕ RÀNG DỰ ÁN (KHÔNG NHẦM LẪN VỚI ERP BOT):
-1. Dự án hiện tại (`Code gốc` / `Quan-ly-kho`) chỉ bao gồm **App Quét Kho PWA & Android APK** (Quét QR, Chỉ X5, BTP, Chỉ X1, Tồn Kho, Kiểm Kê) và các Google Apps Script của kho.
-2. Dự án `C:\NTV\ERP BOT` (Bot tự động nhập liệu ERP iGP) là một dự án **hoàn toàn độc lập, không liên quan** đến dự án Quản lý kho này. Tuyệt đối KHÔNG gộp chung hoặc trỏ nhầm sang `C:\NTV\ERP BOT`.
+1. Dự án hiện tại (`Code gốc` / `Quan-ly-kho`) chỉ bao gồm **App Quét Kho PWA & Android APK** (Quét QR, Chỉ X5, BTP, TP - Thành Phẩm, Chỉ X1, Tồn Kho, Kiểm Kê) và các Google Apps Script của kho tại đường dẫn duy nhất `C:\NTV\Code gốc`.
+2. Dự án `C:\NTV\ERP BOT` (Bot tự động nhập liệu ERP iGP) là một dự án **hoàn toàn độc lập, tách biệt 100%**, không liên quan đến dự án Quản lý kho này. Tuyệt đối KHÔNG gộp chung, trỏ nhầm, load skill hay thực thi bất kỳ mã nguồn nào của `C:\NTV\ERP BOT` tại đây.

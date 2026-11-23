@@ -4386,33 +4386,67 @@ body.cam-active #tpPage.active {
   z-index: 2;
   width: 100%;
   box-sizing: border-box;
-  padding: 8px 6px;
+  padding: 0;
   background: var(--surface);
   cursor: pointer;
   user-select: none;
 }
 
+/* Lưới cố định 5 cột TP (dùng chung cho Live Log, Tiêu đề, Nhóm, Tem con, Footer Chi Tiết) */
+.tp-kq-grid,
 .tp-group-row {
   display: grid;
-  grid-template-columns: 24px 1fr auto auto 18px;
+  grid-template-columns: 26px minmax(0, 1fr) 44px 78px 18px;
   align-items: center;
   gap: 8px;
   width: 100%;
+  box-sizing: border-box;
+  padding: 8px 8px;
+}
+
+/* Lưới cố định 3 cột Bảng Tổng Hợp TP */
+.tp-gom-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 54px 78px;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 8px 8px;
+}
+
+/* Triệt tiêu padding bọc ngoài để .tp-kq-grid / .tp-gom-grid là nguồn padding duy nhất */
+#tp-wrap-chitiet .kq-table-header,
+#tp-wrap-chitiet .kq-table-footer,
+#tp-wrap-chitiet .tp-swipe-content,
+#tp-cam .tp-swipe-content,
+#tp-wrap-gom .kq-table-header,
+#tp-wrap-gom .kq-table-footer {
+  padding: 0;
 }
 
 .tp-col-stt {
   font-size: 12px;
   font-weight: 700;
   color: var(--text-lighter);
+  text-align: center;
 }
 
 .tp-col-qc {
   font-size: 13px;
   font-weight: 700;
   color: var(--row-text);
+  white-space: normal;
+  word-break: break-word;
+  line-height: 1.3;
+}
+
+#tp-cam .tp-col-qc {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
   overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  line-height: 1.25;
 }
 
 .tp-badge-bao {
@@ -4420,9 +4454,10 @@ body.cam-active #tpPage.active {
   font-weight: 800;
   color: #2563eb;
   background: var(--primary-soft);
-  padding: 1px 7px;
+  padding: 1px 6px;
   border-radius: 6px;
-  flex-shrink: 0;
+  text-align: center;
+  justify-self: center;
 }
 
 .tp-col-kg {
@@ -4470,18 +4505,22 @@ body.cam-active #tpPage.active {
 
 .tp-group-details {
   background: var(--surface-2);
-  border-radius: 8px;
-  padding: 4px 6px;
-  margin: 2px 4px 6px 4px;
-  border: 1px solid var(--border-card);
+  border-radius: 0;
+  padding: 0;
+  margin: 0;
+  border-left: none;
+  border-right: none;
+  border-top: 1px dashed var(--border-card);
+  border-bottom: 1px dashed var(--border-card);
 }
 
 .tp-sub-item {
   display: grid;
-  grid-template-columns: 20px 1fr auto auto 24px;
+  grid-template-columns: 26px minmax(0, 1fr) 44px 78px 18px;
   align-items: center;
   gap: 8px;
-  padding: 6px 4px;
+  width: 100%;
+  padding: 6px 8px;
   border-bottom: 1px dashed var(--border-card);
   box-sizing: border-box;
 }
@@ -4494,6 +4533,7 @@ body.cam-active #tpPage.active {
   font-size: 11px;
   font-weight: 600;
   color: var(--text-lighter);
+  text-align: center;
 }
 
 .tp-sub-id {
@@ -4519,7 +4559,7 @@ body.cam-active #tpPage.active {
   font-size: 11px;
   font-weight: 600;
   color: var(--row-muted);
-  text-align: right;
+  text-align: center;
   white-space: nowrap;
 }
 
@@ -4528,5 +4568,8 @@ body.cam-active #tpPage.active {
   border: none;
   color: var(--danger);
   cursor: pointer;
-  padding: 2px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }

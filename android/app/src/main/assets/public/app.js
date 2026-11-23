@@ -38,14 +38,19 @@ function formatKg(value) {
 
 // ── Hàm nạp lười thư viện xuất Excel (chỉ tải khi bấm Xuất, giúp mở app tức thì) ──
 let isXlsxLoading = false;
-let xlsxLoadingCallbacks = [];
+let xlsxLoadingQueue = [];
 
-function napThuVienXLSX(callback) {
+function napThuVienXLSX(callback, options) {
+  const opts = options || {};
   if (typeof XLSX !== "undefined") {
     if (callback) callback();
     return;
   }
-  if (callback) xlsxLoadingCallbacks.push(callback);
+  xlsxLoadingQueue.push({
+    onSuccess: callback || null,
+    onFail: typeof opts.onFail === "function" ? opts.onFail : null,
+    imLang: !!opts.imLang
+  });
   if (isXlsxLoading) return;
   isXlsxLoading = true;
 
@@ -53,84 +58,188 @@ function napThuVienXLSX(callback) {
   script.src = "lib/xlsx.full.min.js";
   script.onload = () => {
     isXlsxLoading = false;
-    const cbs = xlsxLoadingCallbacks;
-    xlsxLoadingCallbacks = [];
-    cbs.forEach(cb => { try { cb(); } catch (e) {} });
+    const queue = xlsxLoadingQueue;
+    xlsxLoadingQueue = [];
+    queue.forEach(item => {
+      try { if (item.onSuccess) item.onSuccess(); } catch (e) {}
+    });
   };
   script.onerror = () => {
     isXlsxLoading = false;
-    xlsxLoadingCallbacks = [];
-    if (typeof showCanhBao === "function") showCanhBao("Không thể nạp thư viện xuất Excel. Vui lòng thử lại!", "error");
+    const queue = xlsxLoadingQueue;
+    xlsxLoadingQueue = [];
+    const coYeuCauCu = queue.some(item => !item.onFail && !item.imLang);
+    if (coYeuCauCu && typeof showCanhBao === "function") {
+      showCanhBao("Không thể nạp thư viện xuất Excel. Vui lòng thử lại!", "error");
+    }
+    const err = new Error("Không thể nạp thư viện xuất Excel");
+    queue.forEach(item => {
+      try { if (item.onFail) item.onFail(err); } catch (e) {}
+    });
   };
   document.head.appendChild(script);
 }
 window.napThuVienXLSX = napThuVienXLSX;
 
 // ── Hàm tiện ích Xuất File Excel dùng chung ─────────
-function exportToExcel(filename, sheetName, dataArray) {
-  if (!dataArray || dataArray.length === 0) {
-    if (typeof showCanhBao === "function") showCanhBao("Không có dữ liệu để xuất file Excel!", "warning");
-    return;
-  }
-  if (typeof XLSX === "undefined") {
-    napThuVienXLSX(() => exportToExcel(filename, sheetName, dataArray));
-    return;
-  }
-  try {
-    const ws = XLSX.utils.json_to_sheet(dataArray);
+function exportToExcel(filename, sheetName, dataArray, options) {
+  const opts = options || {};
+  const isChiaSe = !!opts.chiaSe;
+  const excelMime = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
 
-    // Tự động căn chỉnh độ rộng cột chuẩn đẹp
-    if (dataArray.length > 0) {
-      const keys = Object.keys(dataArray[0]);
-      const colWidths = keys.map(key => {
-        let maxLen = key.length;
-        for (let i = 0; i < Math.min(dataArray.length, 100); i++) {
-          const val = dataArray[i][key];
-          const len = val != null ? String(val).length : 0;
-          if (len > maxLen) maxLen = len;
+  return new Promise((resolve) => {
+    try {
+      if (!dataArray || dataArray.length === 0) {
+        if (!isChiaSe && typeof showCanhBao === "function") {
+          showCanhBao("Không có dữ liệu để xuất file Excel!", "warning");
         }
-        return { wch: Math.min(Math.max(maxLen + 3, 10), 45) };
-      });
-      ws['!cols'] = colWidths;
-    }
-
-    const wb = XLSX.utils.book_new();
-    let safeSheetName = (sheetName || "Báo Cáo").replace(/[\\/*?:\[\]]/g, "").slice(0, 31).trim() || "Báo Cáo";
-    XLSX.utils.book_append_sheet(wb, ws, safeSheetName);
-    const safeBaseName = (filename || "BaoCaoKho").replace(/\.xlsx$/i, "");
-    const fullFileName = safeBaseName + ".xlsx";
-
-    if (window.AndroidNative && typeof window.AndroidNative.saveFileToDownload === "function") {
-      const base64Data = XLSX.write(wb, { bookType: 'xlsx', type: 'base64' });
-      const res = window.AndroidNative.saveFileToDownload(fullFileName, base64Data, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
-      if (res && res.startsWith("OK")) {
-        if (typeof moXacNhanApp === "function") {
-          moXacNhanApp(
-            `Đã lưu file Excel:\n${fullFileName}\nvào thư mục Download của điện thoại!\n\nBạn có muốn gửi file này qua Zalo hoặc mở bằng Excel không?`,
-            () => {
-              if (typeof window.AndroidNative.shareFile === "function") {
-                window.AndroidNative.shareFile(fullFileName, base64Data, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
-              }
-            },
-            "Chia sẻ / Mở file",
-            null,
-            "Đóng",
-            "Xuất Excel thành công"
-          );
-        } else if (typeof showCanhBao === "function") {
-          showCanhBao("Đã lưu " + fullFileName + " vào Download!", "success");
-        }
+        resolve({ success: false, error: "Không có dữ liệu để xuất file Excel!" });
         return;
       }
-    }
 
-    XLSX.writeFile(wb, fullFileName);
-    if (typeof showCanhBao === "function") {
-      showCanhBao("Đã tải xuống " + fullFileName, "success");
+      if (typeof XLSX === "undefined") {
+        const loaderOpts = { imLang: !!opts.imLang };
+        if (isChiaSe) {
+          loaderOpts.onFail = (err) => resolve({
+            success: false,
+            error: (err && err.message) ? err.message : "Không thể nạp thư viện xuất Excel!"
+          });
+        }
+        napThuVienXLSX(async () => {
+          try {
+            const res = await exportToExcel(filename, sheetName, dataArray, options);
+            resolve(res);
+          } catch (err) {
+            resolve({ success: false, error: (err && err.message) ? err.message : "Lỗi khi xuất file Excel!" });
+          }
+        }, loaderOpts);
+        return;
+      }
+
+      const ws = XLSX.utils.json_to_sheet(dataArray);
+
+      // Tự động căn chỉnh độ rộng cột chuẩn đẹp
+      if (dataArray.length > 0) {
+        const keys = Object.keys(dataArray[0]);
+        const colWidths = keys.map(key => {
+          let maxLen = key.length;
+          for (let i = 0; i < Math.min(dataArray.length, 100); i++) {
+            const val = dataArray[i][key];
+            const len = val != null ? String(val).length : 0;
+            if (len > maxLen) maxLen = len;
+          }
+          return { wch: Math.min(Math.max(maxLen + 3, 10), 45) };
+        });
+        ws['!cols'] = colWidths;
+      }
+
+      const wb = XLSX.utils.book_new();
+      let safeSheetName = (sheetName || "Báo Cáo").replace(/[\\/*?:\[\]]/g, "").slice(0, 31).trim() || "Báo Cáo";
+      XLSX.utils.book_append_sheet(wb, ws, safeSheetName);
+      const safeBaseName = (filename || "BaoCaoKho").replace(/\.xlsx$/i, "");
+      const fullFileName = safeBaseName + ".xlsx";
+
+      if (window.AndroidNative && typeof window.AndroidNative.saveFileToDownload === "function") {
+        const base64Data = XLSX.write(wb, { bookType: 'xlsx', type: 'base64' });
+        const res = window.AndroidNative.saveFileToDownload(fullFileName, base64Data, excelMime);
+        if (res && res.startsWith("OK")) {
+          if (isChiaSe) {
+            if (typeof window.AndroidNative.shareFile === "function") {
+              try {
+                window.AndroidNative.shareFile(fullFileName, base64Data, excelMime);
+              } catch (e) {
+                console.warn("shareFile lỗi:", e);
+              }
+              if (typeof showCanhBao === "function") {
+                showCanhBao("Đã lưu " + fullFileName + " vào Download!", "success");
+              }
+            } else if (typeof moXacNhanApp === "function") {
+              moXacNhanApp(
+                `Đã lưu file Excel:\n${fullFileName}\nvào thư mục Download của điện thoại!\n\nBạn có muốn gửi file này qua Zalo hoặc mở bằng Excel không?`,
+                () => {
+                  if (typeof window.AndroidNative.shareFile === "function") {
+                    window.AndroidNative.shareFile(fullFileName, base64Data, excelMime);
+                  }
+                },
+                "Chia sẻ / Mở file",
+                null,
+                "Đóng",
+                "Xuất Excel thành công"
+              );
+            } else if (typeof showCanhBao === "function") {
+              showCanhBao("Đã lưu " + fullFileName + " vào Download!", "success");
+            }
+            resolve({ success: true, method: "native_share" });
+            return;
+          } else {
+            if (typeof moXacNhanApp === "function") {
+              moXacNhanApp(
+                `Đã lưu file Excel:\n${fullFileName}\nvào thư mục Download của điện thoại!\n\nBạn có muốn gửi file này qua Zalo hoặc mở bằng Excel không?`,
+                () => {
+                  if (typeof window.AndroidNative.shareFile === "function") {
+                    window.AndroidNative.shareFile(fullFileName, base64Data, excelMime);
+                  }
+                },
+                "Chia sẻ / Mở file",
+                null,
+                "Đóng",
+                "Xuất Excel thành công"
+              );
+            } else if (typeof showCanhBao === "function") {
+              showCanhBao("Đã lưu " + fullFileName + " vào Download!", "success");
+            }
+            resolve({ success: true, method: "native_save" });
+            return;
+          }
+        } else if (isChiaSe) {
+          resolve({ success: false, error: "Không thể lưu file Excel vào thư mục Download!" });
+          return;
+        }
+      }
+
+      if (isChiaSe) {
+        try {
+          const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+          const blob = new Blob([wbout], { type: excelMime });
+          const file = new File([blob], fullFileName, { type: excelMime });
+          if (typeof navigator !== "undefined" && navigator.canShare && navigator.canShare({ files: [file] })) {
+            navigator.share({ files: [file], title: fullFileName, text: fullFileName })
+              .then(() => {
+                if (typeof showCanhBao === "function") {
+                  showCanhBao("Đã chia sẻ " + fullFileName, "success");
+                }
+                resolve({ success: true, method: "web_share" });
+              })
+              .catch((err) => {
+                if (err && err.name === "AbortError") {
+                  resolve({ success: false, cancelled: true });
+                } else {
+                  console.warn("navigator.share thất bại, fallback tải về:", err);
+                  XLSX.writeFile(wb, fullFileName);
+                  if (typeof showCanhBao === "function") {
+                    showCanhBao("Đã tải xuống " + fullFileName, "success");
+                  }
+                  resolve({ success: true, method: "download" });
+                }
+              });
+            return;
+          }
+        } catch (err) {
+          console.warn("Lỗi chuẩn bị Web Share, fallback tải về:", err);
+        }
+      }
+
+      XLSX.writeFile(wb, fullFileName);
+      if (typeof showCanhBao === "function") {
+        showCanhBao("Đã tải xuống " + fullFileName, "success");
+      }
+      resolve({ success: true, method: "download" });
+    } catch (e) {
+      const msg = "Lỗi khi xuất file Excel: " + (e && e.message ? e.message : "Không xác định");
+      if (!isChiaSe && typeof showCanhBao === "function") showCanhBao(msg, "error");
+      resolve({ success: false, error: msg });
     }
-  } catch (e) {
-    if (typeof showCanhBao === "function") showCanhBao("Lỗi khi xuất file Excel: " + e.message, "error");
-  }
+  });
 }
 window.exportToExcel = exportToExcel;
 
@@ -380,6 +489,24 @@ function layNgayHomNayLocal() {
 }
 window.layNgayHomNayLocal = layNgayHomNayLocal;
 
+window.ngayTuDongTP = window.ngayTuDongTP || null;
+
+function khoiTaoTatCaNgayMacDinh() {
+  const today = layNgayHomNayLocal();
+  ["cx5-ngay", "cx1-ngay", "btp-ngay", "kk-ngay"].forEach(inputId => {
+    const inputEl = document.getElementById(inputId);
+    if (inputEl && !inputEl.value) inputEl.value = today;
+  });
+  const tpNgayEl = document.getElementById("tp-ngay");
+  if (tpNgayEl) {
+    if (!tpNgayEl.value || tpNgayEl.value === window.ngayTuDongTP) {
+      tpNgayEl.value = today;
+      window.ngayTuDongTP = today;
+    }
+  }
+}
+window.khoiTaoTatCaNgayMacDinh = khoiTaoTatCaNgayMacDinh;
+
 function chuyenTrang(id, el) {
   const header = document.getElementById('header');
   if (header) {
@@ -413,12 +540,8 @@ function chuyenTrang(id, el) {
   }
   if (id === "trangChu" && typeof capNhatTrangChu === "function") capNhatTrangChu();
 
-  // Tự động khởi tạo ngày hôm nay nếu ô chọn ngày đang trống
-  const today = layNgayHomNayLocal();
-  ["cx5-ngay", "cx1-ngay", "btp-ngay", "kk-ngay"].forEach(inputId => {
-    const inputEl = document.getElementById(inputId);
-    if (inputEl && !inputEl.value) inputEl.value = today;
-  });
+  // Tự động khởi tạo ngày hôm nay nếu ô chọn ngày đang trống (hoặc tp-ngay qua đêm)
+  khoiTaoTatCaNgayMacDinh();
 }
 window.chuyenTrang = chuyenTrang;
 
@@ -466,6 +589,8 @@ function chuyenTrangKhongNav(id) {
   if (page) page.classList.add("active");
   if (id === "lichSuQuetQR" && typeof renderLichSuQR === "function") renderLichSuQR();
   if (id === "lichSuTP" && typeof renderLichSuTP === "function") renderLichSuTP();
+
+  khoiTaoTatCaNgayMacDinh();
 }
 window.chuyenTrangKhongNav = chuyenTrangKhongNav;
 

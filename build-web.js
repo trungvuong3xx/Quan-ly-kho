@@ -76,6 +76,17 @@ fs.writeFileSync(path.join(androidAssetsDir, 'capacitor.plugins.json'), pluginsJ
 function kiemTraQuyTacBuild() {
   console.log('--- Đang kiểm tra bộ quy tắc cố định build APK ---');
   
+  // 0. Kiểm tra đường dẫn dự án độc tôn duy nhất trên máy cục bộ: C:\NTV\Code gốc
+  const isCI = process.env.CI === 'true' || process.env.GITHUB_ACTIONS === 'true';
+  if (!isCI) {
+    const normalizedCurrentDir = path.resolve(__dirname).toLowerCase().replace(/\\/g, '/');
+    if (!normalizedCurrentDir.endsWith('/ntv/code gốc') && !normalizedCurrentDir.endsWith('/ntv/code goc')) {
+      console.error('\n❌ LỖI ĐƯỜNG DẪN: Dự án chỉ được phép thực hiện duy nhất tại C:\\NTV\\Code gốc!');
+      console.error(`👉 Thư mục hiện tại đang chạy: ${__dirname}\n`);
+      process.exit(1);
+    }
+  }
+
   // 1. Kiểm tra CI workflow
   const workflowPath = path.join(__dirname, '.github', 'workflows', 'build-apk.yml');
   if (fs.existsSync(workflowPath)) {

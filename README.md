@@ -102,7 +102,7 @@
 
 ## 4. CƠ CHẾ HOẠT ĐỘNG TỪNG PHÂN HỆ NGHIỆP VỤ
 
-### 4.1. Phân Hệ Quét QR (Nhập / Xuất Kho) — [`quetqr.js`](file:///c:/Users/Admin/OneDrive/Tài%20liệu/Code%20gốc/quetqr.js)
+### 4.1. Phân Hệ Quét QR (Nhập / Xuất Kho) — [`quetqr.js`](file:///c:/NTV/Code%20gốc/quetqr.js)
 - **Quy ước**: `1 mã QR = 1 Bao hàng`.
 - **Luồng hoạt động**:
   1. Người dùng chọn **Ngày** và **Loại giao dịch** (Nhập SX, Nhập Trả, Xuất SX, Xuất Bán, Bình Thuận...).
@@ -115,7 +115,7 @@
   4. Bấm "Gửi dữ liệu" $\rightarrow$ Đẩy mảng dữ liệu lên Google Sheets. Nếu mất mạng, tự động đưa vào hàng chờ `quetqr_pending_saves`.
   5. Toàn bộ phiên hoàn tất được lưu vào Lịch sử 30 ngày (`quetqr_lichsu` trong `IndexedDB`).
 
-### 4.2. Phân Hệ Chỉ For — [`cx1.js`](file:///c:/Users/Admin/OneDrive/Tài%20liệu/Code%20gốc/cx1.js)
+### 4.2. Phân Hệ Chỉ For — [`cx1.js`](file:///c:/NTV/Code%20gốc/cx1.js)
 - **Đặc thù**: Quét mã theo từng **Đợt** (Đợt 1, Đợt 2...), tổng hợp số Bao và số KG.
 - **Tính năng nổi bật**:
   - Tự động nạp và lưu cache danh mục quy cách từ Google Sheets (Sheet `LIST`).
@@ -123,19 +123,19 @@
   - Hỗ trợ cả 2 chế độ: Quét camera hoặc Nhập tay.
   - Hỗ trợ tiếp tục phiên quét cũ từ lịch sử.
 
-### 4.3. Phân Hệ Chỉ X5 — [`cx5.js`](file:///c:/Users/Admin/OneDrive/Tài%20liệu/Code%20gốc/cx5.js)
+### 4.3. Phân Hệ Chỉ X5 — [`cx5.js`](file:///c:/NTV/Code%20gốc/cx5.js)
 - **Đặc thù**: Màn hình nhập số liệu sản xuất tốc độ cao cho công nhân kho.
 - **Bàn phím số ảo tích hợp (Virtual Numeric Numpad)**:
   - Công nhân không cần dùng bàn phím hệ thống (tránh che khuất màn hình).
   - Bàn phím số ảo tích hợp sẵn các phím tắt nhanh: `Enter`, `Xóa`, `Số lượng lượt`.
 - **Cơ chế đối chiếu**: So sánh số lượng bao/kg giữa các lượt quét để tránh thất thoát.
 
-### 4.4. Phân Hệ Bán Thành Phẩm (BTP) — [`btp.js`](file:///c:/Users/Admin/OneDrive/Tài%20liệu/Code%20gốc/btp.js)
+### 4.4. Phân Hệ Bán Thành Phẩm (BTP) — [`btp.js`](file:///c:/NTV/Code%20gốc/btp.js)
 - **Đặc thù**: Chia làm **5 Phiên quét độc lập** trong ngày (Phiên 1 $\rightarrow$ Phiên 5).
 - Quản lý trạng thái đã đồng bộ / chưa đồng bộ theo từng dòng.
 - Nút "Đồng bộ hàng chờ" hiển thị số lượng mã đang chờ khi có mạng trở lại.
 
-### 4.5. Kiểm Kê & Tồn Kho — [`kiemke.js`](file:///c:/Users/Admin/OneDrive/Tài%20liệu/Code%20gốc/kiemke.js), [`tonkho.js`](file:///c:/Users/Admin/OneDrive/Tài%20liệu/Code%20gốc/tonkho.js)
+### 4.5. Kiểm Kê & Tồn Kho — [`kiemke.js`](file:///c:/NTV/Code%20gốc/kiemke.js), [`tonkho.js`](file:///c:/NTV/Code%20gốc/tonkho.js)
 - **Kiểm kê**: Quét mã đối soát thực tế tại kho, tự động đếm số lượng, phát hiện trùng lặp, xuất trực tiếp ra file Excel `.xlsx` qua nút "Xuất File Excel".
 - **Tồn kho**: Tra cứu tồn kho tức thời của từng sản phẩm theo ngày trực tiếp từ Google Sheets.
 
@@ -143,7 +143,12 @@
 
 ## 5. BỘ QUY TẮC CỐ ĐỊNH BẤT DI BẤT DỊCH (QUY TẮC BẢO VỆ DỰ ÁN)
 
-> ⚠️ **CẢNH BÁO NGUY HIỂM**: Mọi lập trình viên hoặc AI khi chỉnh sửa dự án BẮT BUỘC tuân thủ tuyệt đối 5 quy tắc dưới đây. Vi phạm sẽ dẫn đến việc ứng dụng bị crash hoặc mất toàn bộ dữ liệu kho của khách hàng.
+> ⚠️ **CẢNH BÁO NGUY HIỂM**: Mọi lập trình viên hoặc AI khi chỉnh sửa dự án BẮT BUỘC tuân thủ tuyệt đối các quy tắc dưới đây. Vi phạm sẽ dẫn đến việc ứng dụng bị crash hoặc mất toàn bộ dữ liệu kho của khách hàng.
+
+### 5.0. Đường Dẫn Thực Thi Độc Tôn (`C:\NTV\Code gốc`)
+- **Phạm vi hoạt động duy nhất**: Toàn bộ dự án chỉ được phép lưu trữ, phát triển, kiểm tra, build và triển khai DUY NHẤT tại thư mục: `C:\NTV\Code gốc`.
+- **Nghiêm cấm tuyệt đối**: Cấm can thiệp, mở file, đọc/ghi hay thực thi script sang các thư mục khác (như `C:\NTV\ERP BOT`, `OneDrive`, `Desktop`,...). Script `build-web.js` đã tích hợp chốt chặn tự động từ chối chạy nếu phát hiện sai đường dẫn trên máy cục bộ.
+- **Tách biệt 100% với ERP BOT**: Dự án này hoàn toàn độc lập, không dùng chung hay liên quan đến mã nguồn của dự án bot ERP.
 
 ### 5.1. Cấu Hình Android & Build APK (TUYỆT ĐỐI CẤM JAVA 21)
 - **Lý do kỹ thuật**: Trình biên dịch AOT (`dex2oat`) trên hệ điều hành Android 14 (thiết bị Redmi K20 Pro) không tương thích với bytecode sinh ra từ Java 21, gây lỗi **treo vô tận ở màn hình "Đang cài đặt..."**.
@@ -171,7 +176,7 @@
 
 ## 6. CƠ CHẾ LƯU TRỮ OFFLINE & BẢO VỆ DỮ LIỆU
 
-### 6.1. Kiến Trúc Lưu Trữ Đa Tầng Tại [`scanner-core.js`](file:///c:/Users/Admin/OneDrive/Tài%20liệu/Code%20gốc/scanner-core.js)
+### 6.1. Kiến Trúc Lưu Trữ Đa Tầng Tại [`scanner-core.js`](file:///c:/NTV/Code%20gốc/scanner-core.js)
 ```
 [ THAO TÁC QUÉT ] ──> [ RAM Cache 0ms ] ──> Cập nhật giao diện tức thì
                              │
@@ -219,7 +224,7 @@ Hệ thống sử dụng các Web App Google Apps Script đóng vai trò REST AP
 
 ## 8. CẦU NỐI NATIVE ANDROID BRIDGE (`AndroidNative`)
 
-Tại [`MainActivity.java`](file:///c:/Users/Admin/OneDrive/Tài%20liệu/Code%20gốc/android/app/src/main/java/com/ntv/quanlykho/MainActivity.java), một đối tượng Java có tên `AndroidNative` được gắn trực tiếp vào `window` của WebView:
+Tại [`MainActivity.java`](file:///c:/NTV/Code%20gốc/android/app/src/main/java/com/ntv/quanlykho/MainActivity.java), một đối tượng Java có tên `AndroidNative` được gắn trực tiếp vào `window` của WebView:
 
 ```javascript
 // 1. Lưu file vào thư mục Download của điện thoại

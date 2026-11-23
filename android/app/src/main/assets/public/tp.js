@@ -301,36 +301,115 @@ function nhapThuCongTP() {
 }
 window.nhapThuCongTP = nhapThuCongTP;
 
-// ── Quản lý Accordion Live Log ──
-window.expandedTPGroups = window.expandedTPGroups || new Set();
+// ── Quản lý Accordion Live Log & Bảng Kết Quả ──
+window.expandedTPGroupsLog = window.expandedTPGroupsLog || new Set();
+window.expandedTPGroupsKq = window.expandedTPGroupsKq || new Set();
+window.tempSearchCollapsedTP = window.tempSearchCollapsedTP || new Set();
 
-function toggleChiTietTPGroup(groupKey) {
-  if (window.expandedTPGroups.has(groupKey)) {
-    window.expandedTPGroups.delete(groupKey);
+function taoKhoaNhomTP(r) {
+  if (!r || !r.qcDu) return "KHÁC";
+  return String(r.qcDu).trim().replace(/\s+/g, " ") || "KHÁC";
+}
+
+function layDanhSachItemTheoNhomTP(groupKey, context) {
+  let source = phienTP.slice();
+  if (context === "kq") {
+    const oTim = document.getElementById("tp-ketqua-search");
+    const tuKhoa = oTim ? oTim.value.trim().toLowerCase() : "";
+    if (tuKhoa) {
+      source = source.filter(r =>
+        (r.id && r.id.toLowerCase().includes(tuKhoa)) ||
+        (r.qcDu && r.qcDu.toLowerCase().includes(tuKhoa)) ||
+        (r.maKien && r.maKien.toLowerCase().includes(tuKhoa)) ||
+        (r.tenHang && r.tenHang.toLowerCase().includes(tuKhoa))
+      );
+    }
   } else {
-    window.expandedTPGroups.add(groupKey);
+    source = source.slice(-30);
   }
+  return source.filter(it => taoKhoaNhomTP(it) === groupKey);
+}
+
+function taoHtmlSubItemsTP(items) {
+  return (items || []).map((it, subIdx) => {
+    const timePart = it.thoiGian && it.thoiGian.includes(" ") ? it.thoiGian.split(" ")[1] : "";
+    const subGio = timePart ? timePart.slice(0, 5) : "";
+    const subKg = formatKgTP(it.kg);
+    const safeIdCode = anToanHtmlTP(it.id);
+    const safeUid = anToanHtmlTP(it.uid || ("idx_" + subIdx));
+
+    return `<div class="tp-sub-item">
+      <span class="tp-sub-stt">${subIdx + 1}</span>
+      <span class="tp-sub-id">${safeIdCode}</span>
+      <span class="tp-sub-gio">${subGio}</span>
+      <span class="tp-sub-kg">${subKg}</span>
+      <button type="button" class="tp-sub-del-btn" onclick="xoaMaTP('${safeUid}', event)" title="Xóa mã này">
+        <i class="ti ti-x"></i>
+      </button>
+    </div>`;
+  }).join("");
+}
+
+function toggleChiTietTPGroup(groupKey, context) {
+  const ctx = context === "kq" ? "kq" : "log";
+  const oTim = ctx === "kq" ? document.getElementById("tp-ketqua-search") : null;
+  const coTuKhoa = !!(oTim && oTim.value.trim().length > 0);
   const safeId = 'tp-grp-' + btoa(encodeURIComponent(groupKey)).replace(/[^a-zA-Z0-9]/g, '');
-  const detailsEl = document.getElementById('details-' + safeId);
-  const chevEl = document.getElementById('chev-' + safeId);
-  const isOpen = window.expandedTPGroups.has(groupKey);
-  if (detailsEl && chevEl && (!isOpen || detailsEl.innerHTML.trim() !== "")) {
+  const detailsEl = document.getElementById(`details-${ctx}-${safeId}`);
+  const chevEl = document.getElementById(`chev-${ctx}-${safeId}`);
+
+  let isOpen = false;
+  if (ctx === "kq" && coTuKhoa) {
+    if (window.tempSearchCollapsedTP.has(groupKey)) {
+      window.tempSearchCollapsedTP.delete(groupKey);
+      isOpen = true;
+    } else {
+      window.tempSearchCollapsedTP.add(groupKey);
+      isOpen = false;
+    }
+  } else {
+    const targetSet = ctx === "kq" ? window.expandedTPGroupsKq : window.expandedTPGroupsLog;
+    if (targetSet.has(groupKey)) {
+      targetSet.delete(groupKey);
+      isOpen = false;
+    } else {
+      targetSet.add(groupKey);
+      isOpen = true;
+    }
+  }
+
+  if (detailsEl && chevEl) {
+    if (isOpen && detailsEl.innerHTML.trim() === "") {
+      const items = layDanhSachItemTheoNhomTP(groupKey, ctx);
+      detailsEl.innerHTML = taoHtmlSubItemsTP(items);
+    }
     detailsEl.style.display = isOpen ? 'block' : 'none';
     chevEl.style.transform = isOpen ? 'rotate(180deg)' : 'none';
-  } else {
+  } else if (ctx === "log") {
     capNhatLogTP();
   }
 }
 window.toggleChiTietTPGroup = toggleChiTietTPGroup;
 
-function onTapRowTP(groupKey, event) {
-  const content = event.currentTarget;
+function onTapRowTP(elOrKey, event) {
+  const content = (event && event.currentTarget) ? event.currentTarget : (elOrKey && elOrKey.classList ? elOrKey : null);
   if (content && content.classList.contains('swiped')) {
     content.style.transform = 'translateX(0px)';
     content.classList.remove('swiped');
     return;
   }
-  toggleChiTietTPGroup(groupKey);
+  let groupKey = "";
+  let context = "log";
+  if (content && content.getAttribute) {
+    const b64 = content.getAttribute("data-group-key");
+    context = content.getAttribute("data-context") || "log";
+    if (b64) {
+      try { groupKey = decodeURIComponent(atob(b64)); } catch (e) { groupKey = b64; }
+    }
+  } else if (typeof elOrKey === "string") {
+    groupKey = elOrKey;
+  }
+  if (groupKey) toggleChiTietTPGroup(groupKey, context);
 }
 window.onTapRowTP = onTapRowTP;
 
@@ -349,15 +428,17 @@ window.xoaNhomTPByB64 = xoaNhomTPByB64;
 function xoaNhomTP(key, ev) {
   if (ev) ev.stopPropagation();
   const targetKey = String(key || '');
-  const itemsInGroup = phienTP.filter(item => (item.qcDu || 'KHAC') === targetKey);
+  const itemsInGroup = phienTP.filter(item => taoKhoaNhomTP(item) === targetKey);
   const count = itemsInGroup.length;
   if (count === 0) return;
 
   const doXoa = () => {
     // Xóa khỏi Set chống trùng
     itemsInGroup.forEach(it => tapMaDaQuetTP.delete(it.id));
-    phienTP = phienTP.filter(item => (item.qcDu || 'KHAC') !== targetKey);
-    window.expandedTPGroups.delete(targetKey);
+    phienTP = phienTP.filter(item => taoKhoaNhomTP(item) !== targetKey);
+    window.expandedTPGroupsLog.delete(targetKey);
+    window.expandedTPGroupsKq.delete(targetKey);
+    window.tempSearchCollapsedTP.delete(targetKey);
 
     daXuatExcelTP = false;
     revisionTP++;
@@ -400,10 +481,19 @@ function xoaMaTP(uid, ev) {
 
   const item = phienTP[index];
   const tenMa = item ? item.id : "mã này";
+  const nhomKey = taoKhoaNhomTP(item);
 
   const doXoa = () => {
     if (item && item.id) tapMaDaQuetTP.delete(item.id);
     phienTP.splice(index, 1);
+
+    // Nếu xóa mã cuối của nhóm -> dọn sạch khóa khỏi cả hai Set mở nhóm
+    const conMaCungNhom = phienTP.some(it => taoKhoaNhomTP(it) === nhomKey);
+    if (!conMaCungNhom) {
+      window.expandedTPGroupsLog.delete(nhomKey);
+      window.expandedTPGroupsKq.delete(nhomKey);
+      window.tempSearchCollapsedTP.delete(nhomKey);
+    }
 
     daXuatExcelTP = false;
     revisionTP++;
@@ -437,51 +527,45 @@ function xoaMaTP(uid, ev) {
 }
 window.xoaMaTP = xoaMaTP;
 
-// ── Render Live Log Danh sách Quét ──
-function taoHtmlNhomLogTP(g, isFirst) {
+// ── Render Nhóm Dùng Chung cho Live Log & Bảng Kết Quả ──
+function taoHtmlNhomTP(g, isFirst, context, coTuKhoa) {
+  const ctx = context === "kq" ? "kq" : "log";
   const safeQC = anToanHtmlTP(g.qcDu);
   const keyB64 = btoa(encodeURIComponent(g.key));
   const safeId = 'tp-grp-' + keyB64.replace(/[^a-zA-Z0-9]/g, '');
-  const isExpanded = window.expandedTPGroups.has(g.key);
+
+  let isExpanded = false;
+  if (ctx === "kq") {
+    isExpanded = coTuKhoa ? !window.tempSearchCollapsedTP.has(g.key) : window.expandedTPGroupsKq.has(g.key);
+  } else {
+    isExpanded = window.expandedTPGroupsLog.has(g.key);
+  }
+
   const countBadge = `<span class="tp-badge-bao">×${g.items.length}</span>`;
-  const flashClass = isFirst ? ' scan-flash-new' : '';
+  const flashClass = (ctx === "log" && isFirst) ? ' scan-flash-new' : '';
   const kgText = formatKgTP(g.tongKg);
+  const subItemsHtml = isExpanded ? taoHtmlSubItemsTP(g.items) : "";
 
-  let subItemsHtml = isExpanded ? g.items.map((it, subIdx) => {
-    const subGio = it.thoiGian ? it.thoiGian.split(" ")[1] : "";
-    const subKg = formatKgTP(it.kg);
-    const safeIdCode = anToanHtmlTP(it.id);
-    const safeUid = anToanHtmlTP(it.uid || ("idx_" + subIdx));
-
-    return `<div class="tp-sub-item">
-      <span class="tp-sub-stt">${subIdx + 1}</span>
-      <span class="tp-sub-id">${safeIdCode}</span>
-      <span class="tp-sub-kg">${subKg}</span>
-      <span class="tp-sub-gio">${subGio}</span>
-      <button type="button" class="tp-sub-del-btn" onclick="xoaMaTP('${safeUid}', event)" title="Xóa mã này">
-        <i class="ti ti-x"></i>
-      </button>
-    </div>`;
-  }).join("") : "";
-
-  return `<div class="tp-swipe-container${flashClass}" data-group-key="${keyB64}">
-    <div class="tp-swipe-row-wrap">
-      <div class="tp-swipe-content" onclick="onTapRowTP('${anToanHtmlTP(g.key)}', event)">
-        <div class="tp-group-row">
-          <span class="tp-col-stt">${g.stt}</span>
-          <span class="tp-col-qc">${safeQC}</span>
-          ${countBadge}
-          <span class="tp-col-kg">${kgText}</span>
-          <i id="chev-${safeId}" class="ti ti-chevron-down tp-chevron" style="transform:${isExpanded ? 'rotate(180deg)' : 'none'};"></i>
-        </div>
-      </div>
+  const swipeActions = ctx === "log" ? `
       <div class="tp-swipe-actions">
         <button type="button" class="tp-swipe-btn-del" onclick="xoaNhomTPByB64('${keyB64}', event)" title="Xóa nhóm">
           <i class="ti ti-trash"></i>
         </button>
-      </div>
+      </div>` : "";
+
+  return `<div class="tp-swipe-container${flashClass}" data-group-key="${keyB64}">
+    <div class="tp-swipe-row-wrap">
+      <div class="tp-swipe-content" data-group-key="${keyB64}" data-context="${ctx}" onclick="onTapRowTP(this, event)">
+        <div class="tp-group-row">
+          <span class="tp-col-stt">${g.stt}</span>
+          <span class="tp-col-qc" title="${safeQC}">${safeQC}</span>
+          ${countBadge}
+          <span class="tp-col-kg">${kgText}</span>
+          <i id="chev-${ctx}-${safeId}" class="ti ti-chevron-down tp-chevron" style="transform:${isExpanded ? 'rotate(180deg)' : 'none'};"></i>
+        </div>
+      </div>${swipeActions}
     </div>
-    <div id="details-${safeId}" class="tp-group-details" style="display:${isExpanded ? 'block' : 'none'};">
+    <div id="details-${ctx}-${safeId}" class="tp-group-details" style="display:${isExpanded ? 'block' : 'none'};">
       ${subItemsHtml}
     </div>
   </div>`;
@@ -507,10 +591,10 @@ function capNhatLogTP() {
   const MAX_LOG_ITEMS = 30;
   const recentItems = phienTP.slice(-MAX_LOG_ITEMS);
 
-  // Gom nhóm theo qcDu
+  // Gom nhóm theo taoKhoaNhomTP
   const groupMap = new Map();
   recentItems.forEach(it => {
-    const k = it.qcDu || "KHÁC";
+    const k = taoKhoaNhomTP(it);
     if (!groupMap.has(k)) {
       groupMap.set(k, { key: k, qcDu: k, items: [], tongKg: 0 });
     }
@@ -522,7 +606,7 @@ function capNhatLogTP() {
   const groups = Array.from(groupMap.values()).reverse();
   groups.forEach((g, idx) => { g.stt = idx + 1; });
 
-  const html = groups.map((g, idx) => taoHtmlNhomLogTP(g, idx === 0)).join("");
+  const html = groups.map((g, idx) => taoHtmlNhomTP(g, idx === 0, "log", false)).join("");
   container.innerHTML = html;
 
   if (window.ScannerCore && typeof window.ScannerCore.khoiTaoSwipe === "function") {
@@ -537,9 +621,9 @@ function tinhThongKePhienTP(danhSach) {
   let tongKg = 0;
 
   list.forEach(it => {
-    const qc = it.qcDu || "KHÁC";
+    const qc = taoKhoaNhomTP(it);
     if (!groupMap.has(qc)) {
-      groupMap.set(qc, { qcDu: qc, soBao: 0, tongKg: 0, items: [] });
+      groupMap.set(qc, { key: qc, qcDu: qc, soBao: 0, tongKg: 0, items: [] });
     }
     const g = groupMap.get(qc);
     g.soBao++;
@@ -548,10 +632,13 @@ function tinhThongKePhienTP(danhSach) {
     tongKg += Number(it.kg) || 0;
   });
 
+  const gomNhom = Array.from(groupMap.values());
+  gomNhom.forEach((g, idx) => { g.stt = idx + 1; });
+
   return {
     tongBao: list.length, // 1 mã = 1 bao
     tongKg: tongKg,
-    gomNhom: Array.from(groupMap.values())
+    gomNhom: gomNhom
   };
 }
 window.tinhThongKePhienTP = tinhThongKePhienTP;
@@ -574,6 +661,10 @@ window.xemKetQuaTP = xemKetQuaTP;
 function hienKetQuaTP() {
   if (typeof khoaCuonTrangQuet === "function") khoaCuonTrangQuet(false); else document.body.classList.remove("cam-active");
 
+  if (typeof XLSX === "undefined" && typeof napThuVienXLSX === "function") {
+    napThuVienXLSX(null, { imLang: true });
+  }
+
   const stat = tinhThongKePhienTP(phienTP);
 
   const elTongBao = document.getElementById("tp-tong-cuon");
@@ -587,51 +678,65 @@ function hienKetQuaTP() {
   locKetQuaTP();
 }
 
+let timerSearchTP = null;
+function onSearchTPInput() {
+  const oTim = document.getElementById("tp-ketqua-search");
+  const tuKhoa = oTim ? oTim.value.trim() : "";
+  if (timerSearchTP) clearTimeout(timerSearchTP);
+  window.tempSearchCollapsedTP.clear();
+  if (!tuKhoa) {
+    locKetQuaTP();
+    return;
+  }
+  timerSearchTP = setTimeout(() => {
+    timerSearchTP = null;
+    locKetQuaTP();
+  }, 200);
+}
+window.onSearchTPInput = onSearchTPInput;
+
 function locKetQuaTP() {
   const oTim = document.getElementById("tp-ketqua-search");
   const tuKhoa = oTim ? oTim.value.trim().toLowerCase() : "";
+  const coTuKhoa = tuKhoa.length > 0;
+  if (!coTuKhoa) window.tempSearchCollapsedTP.clear();
+
+  // Tính STT gốc từ toàn bộ phiên để giữ STT nhất quán khi lọc
+  const statGoc = tinhThongKePhienTP(phienTP);
+  const sttGocMap = new Map();
+  statGoc.gomNhom.forEach(g => sttGocMap.set(g.key, g.stt));
 
   let list = phienTP.slice();
-  if (tuKhoa) {
+  if (coTuKhoa) {
     list = list.filter(r => (r.id && r.id.toLowerCase().includes(tuKhoa)) ||
       (r.qcDu && r.qcDu.toLowerCase().includes(tuKhoa)) ||
       (r.maKien && r.maKien.toLowerCase().includes(tuKhoa)) ||
       (r.tenHang && r.tenHang.toLowerCase().includes(tuKhoa)));
   }
 
-  // 1. Render Bảng Chi Tiết
+  const stat = tinhThongKePhienTP(list);
+  stat.gomNhom.forEach(g => {
+    if (sttGocMap.has(g.key)) g.stt = sttGocMap.get(g.key);
+  });
+
+  // 1. Render Bảng Chi Tiết (Gom nhóm accordion theo QC)
   const tbodyChiTiet = document.getElementById("tp-tbody-chitiet");
   const tfootChiTiet = document.getElementById("tp-tfoot-chitiet");
   if (tbodyChiTiet) {
-    if (list.length === 0) {
+    if (stat.gomNhom.length === 0) {
       tbodyChiTiet.innerHTML = '<div style="padding:16px; text-align:center; color:var(--row-muted);">Không tìm thấy mã phù hợp</div>';
     } else {
-      tbodyChiTiet.innerHTML = list.map((r, i) => `
-        <div class="kq-table-row" style="display:flex; align-items:center; padding:8px 6px; border-bottom:1px solid var(--border-row);">
-          <div style="flex:0.6; font-size:12px; color:var(--row-muted);">${i + 1}</div>
-          <div style="flex:1.4; font-family:'IBM Plex Mono', monospace; font-size:13px; font-weight:700;">${anToanHtmlTP(r.id)}</div>
-          <div style="flex:1.8; font-size:12px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${anToanHtmlTP(r.qcDu)}</div>
-          <div style="flex:1; text-align:right; font-family:'IBM Plex Mono', monospace; font-size:13px; font-weight:700; color:var(--success);">${formatKgTP(r.kg)}</div>
-          <div style="width:28px; text-align:right;">
-            <button type="button" class="btn-del-kq" onclick="xoaMaTP('${anToanHtmlTP(r.uid)}', event)" style="background:none; border:none; color:var(--red); padding:4px; cursor:pointer;">
-              <i class="ti ti-trash"></i>
-            </button>
-          </div>
-        </div>
-      `).join("");
+      tbodyChiTiet.innerHTML = stat.gomNhom.map((g) => taoHtmlNhomTP(g, false, "kq", coTuKhoa)).join("");
     }
   }
 
-  const stat = tinhThongKePhienTP(list);
   if (tfootChiTiet) {
-    // Dòng tổng: TỔNG | <tongBao> | <tongKg> (KHÔNG có chữ "bao", KHÔNG có chữ "kg")
     tfootChiTiet.innerHTML = `
-      <div style="display:flex; justify-content:space-between; align-items:center; padding:10px 6px; font-weight:800; font-size:14px;">
-        <span style="color:var(--text-main);">TỔNG</span>
-        <div style="display:flex; gap:16px;">
-          <span style="font-family:'IBM Plex Mono', monospace;">${stat.tongBao}</span>
-          <span style="font-family:'IBM Plex Mono', monospace; color:var(--success);">${formatKgTP(stat.tongKg)}</span>
-        </div>
+      <div class="tp-kq-grid" style="font-weight:800; font-size:14px;">
+        <div style="grid-column: 1 / 3; color:var(--text-main);">TỔNG</div>
+        <div style="text-align:center; font-family:'IBM Plex Mono', monospace;">${stat.tongBao}</div>
+        <div style="text-align:right; font-family:'IBM Plex Mono', monospace; color:var(--success);">${formatKgTP(stat.tongKg)}</div>
+        <div></div>
       </div>
     `;
   }
@@ -643,23 +748,22 @@ function locKetQuaTP() {
     if (stat.gomNhom.length === 0) {
       tbodyGom.innerHTML = '<div style="padding:16px; text-align:center; color:var(--row-muted);">Không có dữ liệu tổng hợp</div>';
     } else {
-      tbodyGom.innerHTML = stat.gomNhom.map((g, i) => `
-        <div class="kq-table-row" style="display:flex; align-items:center; padding:10px 6px; border-bottom:1px solid var(--border-row);">
-          <div style="flex:2; font-size:13px; font-weight:600; line-height:1.3;">${anToanHtmlTP(g.qcDu)}</div>
-          <div style="flex:0.8; text-align:center; font-family:'IBM Plex Mono', monospace; font-size:14px; font-weight:700;">${g.soBao}</div>
-          <div style="flex:1; text-align:right; font-family:'IBM Plex Mono', monospace; font-size:14px; font-weight:700; color:var(--success);">${formatKgTP(g.tongKg)}</div>
+      tbodyGom.innerHTML = stat.gomNhom.map((g) => `
+        <div class="tp-gom-grid" style="border-bottom:1px solid var(--border-row); font-size:13px; line-height:1.3;">
+          <div style="font-weight:600; color:var(--row-text); white-space:normal; word-break:break-word;">${anToanHtmlTP(g.qcDu)}</div>
+          <div style="text-align:center; font-family:'IBM Plex Mono', monospace; font-size:14px; font-weight:700;">${g.soBao}</div>
+          <div style="text-align:right; font-family:'IBM Plex Mono', monospace; font-size:14px; font-weight:700; color:var(--success);">${formatKgTP(g.tongKg)}</div>
         </div>
       `).join("");
     }
   }
 
   if (tfootGom) {
-    // Dòng tổng: TỔNG | <tongBao> | <tongKg> (KHÔNG có chữ "bao", KHÔNG có chữ "kg")
     tfootGom.innerHTML = `
-      <div style="display:flex; align-items:center; padding:10px 6px; font-weight:800; font-size:14px; border-top:2px solid var(--border-card);">
-        <div style="flex:2; color:var(--text-main);">TỔNG</div>
-        <div style="flex:0.8; text-align:center; font-family:'IBM Plex Mono', monospace;">${stat.tongBao}</div>
-        <div style="flex:1; text-align:right; font-family:'IBM Plex Mono', monospace; color:var(--success);">${formatKgTP(stat.tongKg)}</div>
+      <div class="tp-gom-grid" style="font-weight:800; font-size:14px;">
+        <div style="color:var(--text-main);">TỔNG</div>
+        <div style="text-align:center; font-family:'IBM Plex Mono', monospace;">${stat.tongBao}</div>
+        <div style="text-align:right; font-family:'IBM Plex Mono', monospace; color:var(--success);">${formatKgTP(stat.tongKg)}</div>
       </div>
     `;
   }
@@ -702,13 +806,35 @@ function toggleTPView(mode) {
 }
 window.toggleTPView = toggleTPView;
 
+// ── Theo dõi người dùng chủ động đổi ngày ──
+let nguoiDungDoiNgayTP = false;
+if (typeof document !== "undefined") {
+  const ganSuKienNgayTP = () => {
+    const el = document.getElementById("tp-ngay");
+    if (el && !el.__tpDateListenerAttached) {
+      el.__tpDateListenerAttached = true;
+      el.addEventListener("change", () => {
+        nguoiDungDoiNgayTP = true;
+      });
+    }
+  };
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", ganSuKienNgayTP);
+  } else {
+    ganSuKienNgayTP();
+  }
+}
+
 // ── Bắt đầu, Quét tiếp, Bắt đầu mới ──
 async function batDauTP() {
+  const today = layNgayHomNayTP();
   const ngayEl = document.getElementById("tp-ngay");
   if (ngayEl && !ngayEl.value) {
-    ngayEl.value = layNgayHomNayTP();
+    ngayEl.value = today;
+    window.ngayTuDongTP = today;
+    nguoiDungDoiNgayTP = false;
   }
-  ngayTP = (ngayEl && ngayEl.value) ? ngayEl.value : layNgayHomNayTP();
+  ngayTP = (ngayEl && ngayEl.value) ? ngayEl.value : today;
 
   let phienCu = null;
   try { phienCu = JSON.parse(localStorage.getItem(TP_DODANG_KEY)); } catch (e) { }
@@ -718,7 +844,7 @@ async function batDauTP() {
         "Bạn đang có phiên TP dở dang (" + phienCu.phienTP.length + " mã). Bạn muốn tiếp tục hay bắt đầu mới?",
         () => { khoiPhucTP(phienCu); },
         "Tiếp tục",
-        () => { xoaPhienDoDangTP(); batDauPhienMoiTP(); },
+        () => { xoaPhienDoDangTP(); batDauPhienMoiTP(ngayTP); },
         "Bắt đầu mới",
         "Phiên TP dở dang"
       );
@@ -726,14 +852,26 @@ async function batDauTP() {
     }
   }
 
-  batDauPhienMoiTP();
+  batDauPhienMoiTP(ngayTP);
 }
 window.batDauTP = batDauTP;
 
-async function batDauPhienMoiTP() {
+async function batDauPhienMoiTP(ngayMoi) {
   if (typeof khoaCuonTrangQuet === "function") khoaCuonTrangQuet(true); else document.body.classList.add("cam-active");
+  const today = layNgayHomNayTP();
+  const ngayEl = document.getElementById("tp-ngay");
+  if (ngayMoi) {
+    ngayTP = ngayMoi;
+    if (ngayEl) ngayEl.value = ngayMoi;
+  } else if (!ngayTP) {
+    ngayTP = (ngayEl && ngayEl.value) ? ngayEl.value : today;
+  }
+
   phienTP = [];
   tapMaDaQuetTP.clear();
+  if (window.expandedTPGroupsLog) window.expandedTPGroupsLog.clear();
+  if (window.expandedTPGroupsKq) window.expandedTPGroupsKq.clear();
+  if (window.tempSearchCollapsedTP) window.tempSearchCollapsedTP.clear();
   demSoDotTP = 1;
   dangQuetTP = true;
   window.dangQuetTP = true;
@@ -832,15 +970,23 @@ async function quetTiepTP() {
 window.quetTiepTP = quetTiepTP;
 
 async function quetMoiTP() {
+  const today = layNgayHomNayTP();
+  const ngayEl = document.getElementById("tp-ngay");
+  const ngayHienTai = ngayTP || (ngayEl && ngayEl.value) || today;
+  const ngayApDung = (!nguoiDungDoiNgayTP && ngayHienTai < today) ? today : ngayHienTai;
+
   const coMaChuaXuat = phienTP.length > 0 && !daXuatExcelTP;
   const thongBao = coMaChuaXuat
-    ? `Phiên hiện tại có ${phienTP.length} mã chưa xuất Excel! Bạn có chắc muốn tạo phiên mới?`
-    : "Bắt đầu phiên quét Thành Phẩm hoàn toàn mới?";
+    ? `Phiên hiện tại có ${phienTP.length} mã chưa xuất Excel! Bạn có chắc muốn tạo phiên mới (Ngày: ${ngayApDung})?`
+    : `Bắt đầu phiên quét Thành Phẩm hoàn toàn mới (Ngày: ${ngayApDung})?`;
 
   const doBatDauMoi = () => {
     luuVaoLichSuTP();
     xoaPhienDoDangTP();
-    batDauPhienMoiTP();
+    if (ngayApDung === today && ngayHienTai !== today) {
+      window.ngayTuDongTP = today;
+    }
+    batDauPhienMoiTP(ngayApDung);
   };
 
   if (typeof moXacNhanApp === "function") {
@@ -964,14 +1110,19 @@ function khoiPhucTP(data) {
   phienTP = data.phienTP.slice();
   idPhienHienTaiTP = data.idPhien || ("TP_" + Date.now() + "_" + Math.random().toString(36).slice(2, 8));
   ngayTP = data.ngay || layNgayHomNayTP();
+  const ngayEl = document.getElementById("tp-ngay");
+  if (ngayEl) ngayEl.value = ngayTP;
   phienSoTP = data.phienSo || 1;
   demSoDotTP = data.demSoDotTP || 1;
   daXuatExcelTP = !!data.daXuatExcel;
   revisionTP = data.revision || 1;
   capNhatLucTP = data.capNhatLuc || new Date().toISOString();
 
-  // Dựng lại Set chống trùng Dòng 1
+  // Dựng lại Set chống trùng Dòng 1 & xóa sạch Set mở nhóm cũ
   tapMaDaQuetTP.clear();
+  if (window.expandedTPGroupsLog) window.expandedTPGroupsLog.clear();
+  if (window.expandedTPGroupsKq) window.expandedTPGroupsKq.clear();
+  if (window.tempSearchCollapsedTP) window.tempSearchCollapsedTP.clear();
   phienTP.forEach(it => {
     if (it.id) tapMaDaQuetTP.add(it.id);
   });
@@ -1071,6 +1222,9 @@ function moLichSuTP() {
 window.moLichSuTP = moLichSuTP;
 
 function renderLichSuTP() {
+  if (typeof XLSX === "undefined" && typeof napThuVienXLSX === "function") {
+    napThuVienXLSX(null, { imLang: true });
+  }
   const container = document.getElementById("lichsu-tp-list");
   if (!container) return;
   const oTim = document.getElementById("lichsu-tp-tim");
@@ -1222,13 +1376,15 @@ function xoaTatCaLichSuTP() {
 window.xoaTatCaLichSuTP = xoaTatCaLichSuTP;
 
 // ── Xuất File Excel (2 cột chuẩn hóa cho APK & PWA) ──
-function xuatExcelTP() {
+let dangXuatTP = false;
+
+async function xuatExcelTP() {
+  if (dangXuatTP) return;
   if (!phienTP || phienTP.length === 0) {
     showCanhBaoTP("Chưa có dữ liệu để xuất file Excel!", "warning");
     return;
   }
 
-  // Dữ liệu đúng chuẩn 2 cột: Cột 1 = Thời gian, Cột 2 = Mã QR Gốc
   const data = phienTP.map(r => ({
     "Thời gian": r.thoiGian || "",
     "Mã QR Gốc": anToanCongThucExcel(r.rawQR)
@@ -1239,27 +1395,44 @@ function xuatExcelTP() {
   const stamp = `${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}_${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`;
   const filename = `Quet_TP_${stamp}`;
 
-  if (typeof exportToExcel === "function") {
-    exportToExcel(filename, "Thành Phẩm", data);
-    daXuatExcelTP = true;
-    luuPhienDoDangTPNgay();
-    luuVaoLichSuTP();
-    showCanhBaoTP("Đã xuất file Excel!", "success");
-  } else {
+  if (typeof exportToExcel !== "function") {
     showCanhBaoTP("Không tìm thấy bộ xuất Excel!", "error");
+    return;
+  }
+
+  dangXuatTP = true;
+  const idPhienLucXuat = idPhienHienTaiTP;
+  const revLucXuat = revisionTP;
+  try {
+    const res = await exportToExcel(filename, "Thành Phẩm", data, { chiaSe: true });
+    if (res && res.success) {
+      if (idPhienHienTaiTP === idPhienLucXuat && revisionTP === revLucXuat) {
+        daXuatExcelTP = true;
+        capNhatLucTP = new Date().toISOString();
+        luuPhienDoDangTPNgay();
+        luuVaoLichSuTP();
+      }
+    } else if (res && res.cancelled) {
+      showCanhBaoTP("Đã hủy chia sẻ Excel", "info");
+    } else if (res && res.error) {
+      showCanhBaoTP(res.error, "error");
+    }
+  } finally {
+    dangXuatTP = false;
   }
 }
 window.xuatExcelTP = xuatExcelTP;
 
-function xuatExcelPhienLichSuTP(idPhien) {
-  const list = docLichSuTP();
-  const session = list.find(s => s.idPhien === idPhien);
-  if (!session || !session.phienTP || session.phienTP.length === 0) {
+async function xuatExcelPhienLichSuTP(idPhien) {
+  if (dangXuatTP) return;
+  const listBefore = docLichSuTP();
+  const sessionBefore = listBefore.find(s => s.idPhien === idPhien);
+  if (!sessionBefore || !sessionBefore.phienTP || sessionBefore.phienTP.length === 0) {
     showCanhBaoTP("Phiên không có dữ liệu để xuất!", "warning");
     return;
   }
 
-  const data = session.phienTP.map(r => ({
+  const data = sessionBefore.phienTP.map(r => ({
     "Thời gian": r.thoiGian || "",
     "Mã QR Gốc": anToanCongThucExcel(r.rawQR)
   }));
@@ -1269,25 +1442,52 @@ function xuatExcelPhienLichSuTP(idPhien) {
   const stamp = `${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}_${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`;
   const filename = `Quet_TP_${stamp}`;
 
-  if (typeof exportToExcel === "function") {
-    exportToExcel(filename, "Thành Phẩm", data);
-    session.daXuatExcel = true;
-    luuLichSuTP(list);
-    renderLichSuTP();
-    showCanhBaoTP("Đã xuất file Excel phiên lịch sử!", "success");
+  if (typeof exportToExcel !== "function") {
+    showCanhBaoTP("Không tìm thấy bộ xuất Excel!", "error");
+    return;
+  }
+
+  dangXuatTP = true;
+  const revLucXuat = sessionBefore.revision || 0;
+  try {
+    const res = await exportToExcel(filename, "Thành Phẩm", data, { chiaSe: true });
+    if (res && res.success) {
+      const listNow = docLichSuTP();
+      const sNow = listNow.find(s => s.idPhien === idPhien);
+      if (sNow && (sNow.revision || 0) === revLucXuat) {
+        sNow.daXuatExcel = true;
+        sNow.capNhatLuc = new Date().toISOString();
+        luuLichSuTP(listNow);
+        if (idPhienHienTaiTP === sNow.idPhien && revisionTP === sNow.revision) {
+          daXuatExcelTP = true;
+          capNhatLucTP = sNow.capNhatLuc;
+          luuPhienDoDangTPNgay();
+        }
+        renderLichSuTP();
+      }
+    } else if (res && res.cancelled) {
+      showCanhBaoTP("Đã hủy chia sẻ Excel", "info");
+    } else if (res && res.error) {
+      showCanhBaoTP(res.error, "error");
+    }
+  } finally {
+    dangXuatTP = false;
   }
 }
 window.xuatExcelPhienLichSuTP = xuatExcelPhienLichSuTP;
 
-function xuatExcelTatCaLichSuTP() {
-  const list = docLichSuTP();
-  if (list.length === 0) {
+async function xuatExcelTatCaLichSuTP() {
+  if (dangXuatTP) return;
+  const listBefore = docLichSuTP();
+  if (listBefore.length === 0) {
     showCanhBaoTP("Không có lịch sử để xuất Excel!", "warning");
     return;
   }
 
   const allItems = [];
-  list.forEach(s => {
+  const revMap = new Map();
+  listBefore.forEach(s => {
+    revMap.set(s.idPhien, s.revision || 0);
     (s.phienTP || []).forEach(r => allItems.push(r));
   });
 
@@ -1306,12 +1506,37 @@ function xuatExcelTatCaLichSuTP() {
   const stamp = `${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}_${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`;
   const filename = `Quet_TP_TatCa_${stamp}`;
 
-  if (typeof exportToExcel === "function") {
-    exportToExcel(filename, "Thành Phẩm", data);
-    list.forEach(s => { s.daXuatExcel = true; });
-    luuLichSuTP(list);
-    renderLichSuTP();
-    showCanhBaoTP("Đã xuất toàn bộ lịch sử TP!", "success");
+  if (typeof exportToExcel !== "function") {
+    showCanhBaoTP("Không tìm thấy bộ xuất Excel!", "error");
+    return;
+  }
+
+  dangXuatTP = true;
+  try {
+    const res = await exportToExcel(filename, "Thành Phẩm", data, { chiaSe: true });
+    if (res && res.success) {
+      const listNow = docLichSuTP();
+      const nowIso = new Date().toISOString();
+      listNow.forEach(s => {
+        if (revMap.has(s.idPhien) && (s.revision || 0) === revMap.get(s.idPhien)) {
+          s.daXuatExcel = true;
+          s.capNhatLuc = nowIso;
+          if (idPhienHienTaiTP === s.idPhien && revisionTP === s.revision) {
+            daXuatExcelTP = true;
+            capNhatLucTP = nowIso;
+            luuPhienDoDangTPNgay();
+          }
+        }
+      });
+      luuLichSuTP(listNow);
+      renderLichSuTP();
+    } else if (res && res.cancelled) {
+      showCanhBaoTP("Đã hủy chia sẻ Excel", "info");
+    } else if (res && res.error) {
+      showCanhBaoTP(res.error, "error");
+    }
+  } finally {
+    dangXuatTP = false;
   }
 }
 window.xuatExcelTatCaLichSuTP = xuatExcelTatCaLichSuTP;
