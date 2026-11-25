@@ -2069,7 +2069,7 @@ function luuLichSuCX1(list) {
   if (window.ScannerCore && typeof window.ScannerCore.luuLichSu === "function") {
     window.ScannerCore.luuLichSu(CX1_LICHSU_KEY, list, () => {
       if (typeof showCanhBaoCX1 === "function") {
-        showCanhBaoCX1("⚠️ BỘ NHỚ ĐẦY (5MB)! Không thể lưu lịch sử Chỉ For. Vui lòng xóa bớt lịch sử cũ!", "error");
+        showCanhBaoCX1("⚠️ BỘ NHỚ ĐẦY (5MB)! Không thể lưu lịch sử Chỉ X1. Vui lòng xóa bớt lịch sử cũ!", "error");
       }
     });
     return;
@@ -2188,7 +2188,7 @@ function xemChiTietLichSuCX1(idPhien) {
   if (tfootDot) tfootDot.innerHTML = footDot;
   if (tbodyGom) tbodyGom.innerHTML = hangGom;
   if (tfootGom) tfootGom.innerHTML = footGom;
-  document.getElementById("lichsu-chitiet-tieude").textContent = "Chỉ For — " + entry.ngay;
+  document.getElementById("lichsu-chitiet-tieude").textContent = "Chỉ X1 — " + entry.ngay;
   const elBao = document.getElementById("ls-cx1-tong-bao");
   const elKg = document.getElementById("ls-cx1-tong-kg");
   if (elBao) elBao.textContent = (tongQRAll || 0).toLocaleString("vi-VN");

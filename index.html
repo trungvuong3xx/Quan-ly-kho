@@ -32,7 +32,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
-  <link rel="stylesheet" href="style.css?v=20261107-v160">
+  <link rel="stylesheet" href="style.css?v=20261125-v169">
   <link rel="stylesheet" href="lib/tabler-icons.min.css">
   <script src="lib/qrcode.min.js" defer></script>
   <script src="lib/zxing.min.js" defer></script>
@@ -215,7 +215,7 @@
     <div class="pending-session-card" id="phien-dodang-card" style="display:none">
       <div class="ps-header">
         <i class="ti ti-alert-circle" style="font-size: 18px;"></i>
-        <span>Phiên Chỉ FOR dở dang</span>
+        <span>Phiên Chỉ X1 dở dang</span>
       </div>
       <div class="ps-desc" id="phien-dodang-noidung"></div>
       <div class="ps-actions">
@@ -696,7 +696,7 @@
   </div>
 
   <div id="qr-ketqua" class="card" style="display:none">
-    <h3 id="qr-ketqua-tieude" style="color:var(--success); text-align:center; margin-bottom:20px;">Hoàn tất</h3>
+    <h3 id="qr-ketqua-tieude" style="color:var(--success); text-align:center; margin-bottom:20px;">Kết quả phiên</h3>
 
     <div class="kq-stat-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:14px;">
       <div style="background:var(--surface-2); border:1px solid var(--border-card); border-radius:12px; padding:10px; text-align:center;">
@@ -779,6 +779,7 @@
         <button class="kq-btn kq-btn--primary" onclick="batDauKiemKe()"><i class="ti ti-scan"></i> Bắt đầu quét</button>
         <button class="kq-btn kq-btn--excel" onclick="xuatExcelKiemKe()"><i class="ti ti-file-spreadsheet"></i> Xuất File Excel</button>
       </div>
+      <div id="kk-summary-card" style="display:none; margin-top:14px; padding:12px 14px; border-radius:12px; background:var(--surface-2, rgba(15,61,62,0.06)); border:1px solid var(--border-card, #d9dfe7); font-size:13.5px; line-height:1.5;"></div>
     </div>
     <div id="kk-cam" style="display:none; width:100%; max-width:600px; box-sizing:border-box; margin:0 auto; padding:6px 0;">
       <div id="kk-video-box" class="video-container btp-camera-main" style="margin-top:8px;">
@@ -841,7 +842,7 @@
 
 <div id="chiFor" class="page">
   <div id="cx1-form" class="card">
-    <h3>Chỉ For</h3>
+    <h3>Chỉ X1</h3>
     <label>Ngày</label>
     <input type="date" id="cx1-ngay" style="margin-bottom:16px;">
     <button class="kq-btn kq-btn--primary" style="width:100%; margin-top:8px;" onclick="batDauCX1('quet')"><i class="ti ti-scan"></i> Bắt đầu</button>
@@ -1007,7 +1008,7 @@
   </div>
 
   <div id="cx1-ketqua" class="card" style="display:none">
-    <h3 style="color:var(--success); text-align:center; margin-bottom:20px;">Hoàn tất</h3>
+    <h3 style="color:var(--success); text-align:center; margin-bottom:20px;">Kết quả phiên Chỉ X1</h3>
 
     <div class="kq-stat-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:14px;">
       <div style="background:var(--surface-2); border:1px solid var(--border-card); border-radius:12px; padding:10px; text-align:center;">
@@ -1203,7 +1204,7 @@
   </div>
 
   <div id="btp-ketqua" class="card" style="display:none">
-    <h3 style="color:var(--success); text-align:center; margin-bottom:20px;">Hoàn tất Quét BTP</h3>
+    <h3 style="color:var(--success); text-align:center; margin-bottom:20px;">Kết quả phiên BTP</h3>
 
     <div style="margin-bottom: 20px;">
       <!-- Khung Tóm Tắt (Summary Box) -->
@@ -1467,10 +1468,10 @@
         </button>
       </div>
 
-      <!-- Chế độ 2: Ô nhập tay khi mở bàn phím -->
-      <div id="tp-input-mode" class="tp-subcam-input-mode" style="display:none;">
-        <input type="text" id="tp-manual-input-cam" placeholder="Dán hoặc nhập 5 dòng mã TP..." autocorrect="off" spellcheck="false" onkeydown="if(event.key==='Enter') nhapThuCongTP()">
-        <button type="button" class="tp-input-submit-btn" onclick="nhapThuCongTP()" title="Thêm mã" aria-label="Thêm mã TP thủ công">
+      <!-- Chế độ 2: Ô nhập tay khi mở bàn phím (5 dòng theo chuẩn tem TP) -->
+      <div id="tp-input-mode" class="tp-subcam-input-mode" style="display:none; align-items:flex-end; gap:8px;">
+        <textarea id="tp-manual-input-cam" rows="5" placeholder="Dán hoặc nhập đủ 5 dòng mã TP:&#10;Dòng 1: Mã ID&#10;Dòng 2: Mã kiện&#10;Dòng 3: Số PCS&#10;Dòng 4: Tên hàng&#10;Dòng 5: Quy cách (có x) + Kg" autocorrect="off" spellcheck="false" style="flex:1; min-height:92px; padding:8px 10px; border-radius:10px; font-family:var(--font-mono); font-size:12.5px; line-height:1.35; resize:vertical; background:var(--surface-2); color:var(--text-main); border:1px solid var(--border-card);" onkeydown="if((event.ctrlKey||event.metaKey)&&event.key==='Enter'){event.preventDefault();nhapThuCongTP();}"></textarea>
+        <button type="button" class="tp-input-submit-btn" onclick="nhapThuCongTP()" title="Thêm mã" aria-label="Thêm mã TP thủ công" style="height:44px; min-width:44px; flex-shrink:0;">
           <i class="ti ti-check"></i>
         </button>
       </div>
@@ -1489,7 +1490,7 @@
   </div>
 
   <div id="tp-ketqua" class="card" style="display:none">
-    <h3 style="color:var(--success); text-align:center; margin-bottom:20px;">Hoàn tất Quét Thành Phẩm</h3>
+    <h3 style="color:var(--success); text-align:center; margin-bottom:20px;">Kết quả phiên Thành Phẩm</h3>
 
     <div style="margin-bottom: 20px;">
       <!-- Khung Tóm Tắt (Summary Box) -->
@@ -1905,11 +1906,11 @@
 
 <div class="overlay" id="overlay-thoat">
   <div class="overlay-card" style="text-align:center;">
-    <div class="overlay-title" style="text-align:center;">Bạn sợ à?</div>
+    <div class="overlay-title" style="text-align:center;">Thoát ứng dụng?</div>
     <div class="kq-actions" style="margin-top:8px;">
       <div class="row">
-        <button class="kq-btn kq-btn--next" onclick="khongThoatApp()">Không</button>
-        <button class="kq-btn kq-btn--danger" onclick="xacNhanThoatApp()">Tôi sợ</button>
+        <button class="kq-btn kq-btn--next" onclick="khongThoatApp()">Ở lại</button>
+        <button class="kq-btn kq-btn--danger" onclick="xacNhanThoatApp()">Thoát</button>
       </div>
     </div>
   </div>
@@ -1917,15 +1918,15 @@
 
 </div><!-- /#app-viewport -->
 
-<script src="app.js?v=20261107-v160" defer></script>
+<script src="app.js?v=20261125-v169" defer></script>
 <script src="scanner-core.js?v=20261107-v160" defer></script>
 <script src="quetqr.js?v=20261107-v160" defer></script>
-<script src="kiemke.js?v=20261107-v160" defer></script>
-<script src="cx1.js?v=20261107-v160" defer></script>
-<script src="cx5.js?v=20261125-v168" defer></script>
+<script src="kiemke.js?v=20261125-v169" defer></script>
+<script src="cx1.js?v=20261125-v169" defer></script>
+<script src="cx5.js?v=20261125-v169" defer></script>
 <script src="btp.js?v=20261107-v160" defer></script>
-<script src="tp.js?v=20261120-v165" defer></script>
-<script src="tonkho.js?v=20261107-v160" defer></script>
+<script src="tp.js?v=20261125-v169" defer></script>
+<script src="tonkho.js?v=20261125-v169" defer></script>
 
 <!-- BOTTOM SHEET MODAL LỊCH SỬ -->
 <div class="modal-overlay" id="modal-overlay" onclick="closeLichSuModal(event)">

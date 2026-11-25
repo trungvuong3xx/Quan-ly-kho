@@ -1505,11 +1505,20 @@ function renderDoiChieuCX5() {
 
   const btnDongBo = document.getElementById("cx5-btn-dongbo-tatca");
   if (btnDongBo) {
+    const conChuaDongBo = phienCX5.some(r => !r.daDongBo);
+    const daDongBoDu = phienCX5.length > 0 && !conChuaDongBo && countLech === 0 && countKhoOnly === 0 && countSxOnly === 0;
     btnDongBo.disabled = !coTheDongBo;
     btnDongBo.classList.toggle("is-pending", coTheDongBo);
-    btnDongBo.classList.toggle("is-done", !coTheDongBo && phienCX5.length > 0);
-    if (!coTheDongBo && phienCX5.length > 0) {
+    btnDongBo.classList.toggle("is-done", daDongBoDu);
+    if (coTheDongBo) {
+      btnDongBo.innerHTML = '<i class="ti ti-cloud-upload"></i> Đồng bộ lên Sheet';
+    } else if (daDongBoDu) {
       btnDongBo.innerHTML = '<i class="ti ti-check"></i> Đã đồng bộ đủ';
+    } else if (phienCX5.length > 0) {
+      const lyDo = countLech > 0
+        ? ('Còn ' + countLech + ' QC lệch — chưa thể gửi')
+        : 'Chưa có dòng khớp để đồng bộ';
+      btnDongBo.innerHTML = '<i class="ti ti-alert-triangle"></i> ' + lyDo;
     } else {
       btnDongBo.innerHTML = '<i class="ti ti-cloud-upload"></i> Đồng bộ lên Sheet';
     }

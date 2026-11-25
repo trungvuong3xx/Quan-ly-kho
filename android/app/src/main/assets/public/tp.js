@@ -1264,8 +1264,8 @@ function renderLichSuTP() {
     const stat = tinhThongKePhienTP(s.phienTP);
     const tgHienThi = s.thoiGian || s.ngay || "Không rõ";
     const statusBadge = s.daXuatExcel
-      ? '<span style="font-size:11px; padding:2px 8px; border-radius:12px; background:rgba(34,197,94,0.15); color:var(--success); font-weight:700;">Đã xuất Excel</span>'
-      : '<span style="font-size:11px; padding:2px 8px; border-radius:12px; background:rgba(239,68,68,0.15); color:var(--red); font-weight:700;">Chưa xuất Excel</span>';
+      ? '<span style="font-size:11px; padding:2px 8px; border-radius:12px; background:var(--success-bg); color:var(--success); font-weight:700;">Đã xuất Excel</span>'
+      : '<span style="font-size:11px; padding:2px 8px; border-radius:12px; background:var(--brass-bg); color:var(--warning-text); font-weight:700;">Chưa xuất Excel</span>';
 
     return `
       <div class="card" style="margin-bottom:12px; padding:14px; border-radius:12px;">

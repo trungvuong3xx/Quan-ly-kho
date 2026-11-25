@@ -328,8 +328,17 @@ function tkHienKetQua(ketQua) {
   const el = document.getElementById("tk-ket-qua");
   if (!el) return;
 
+  const ngayEl = document.getElementById("tk-ngay");
+  const ngayStr = ngayEl && ngayEl.value ? ngayEl.value.split("-").reverse().join("/") : "";
+  const metaHtml = `
+    <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; margin-top:12px; padding:8px 12px; border-radius:10px; background:var(--surface-2); border:1px solid var(--border-card); font-size:12.5px; color:var(--text-muted);">
+      <span>Ngày tra cứu: <strong style="color:var(--text-main); font-family:var(--font-mono);">${ngayStr || "Hôm nay"}</strong></span>
+      <span><strong style="color:var(--primary-text);">${ketQua.length}</strong> kết quả</span>
+    </div>
+  `;
+
   const btnHtml = `
-    <div style="margin-top:14px; margin-bottom:10px;">
+    <div style="margin-top:10px; margin-bottom:10px;">
       <button class="btn btn-excel btn-full" onclick="xuatExcelTonKho()">
         <i class="ti ti-file-spreadsheet"></i> Xuất File Excel Kết Quả
       </button>
@@ -366,7 +375,7 @@ function tkHienKetQua(ketQua) {
     `;
   }).join("");
 
-  el.innerHTML = btnHtml + cardsHtml;
+  el.innerHTML = metaHtml + btnHtml + cardsHtml;
 }
 
 function tkDongDropdown() {

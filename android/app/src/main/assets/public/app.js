@@ -1901,7 +1901,7 @@ window.chuyenTrangKhongNav = chuyenTrangKhongNav;
 // ── Trạng thái mạng & Bộ máy đồng bộ tập trung toàn bộ module ──────
 function demPendingMang() {
   let tong = 0;
-  const keys = [APP_PENDING_KEY, "quetqr_pending_saves", "qr_pending_saves", "cx1_pending_saves", "kk_pending_saves", "cx5_pending_saves", "btp_pending_saves"];
+  const keys = [APP_PENDING_KEY, "quetqr_pending_saves", "qr_pending_saves", "cx1_pending_saves", "kk_pending_saves", "cx5_pending_saves", "cx5_pending_marks", "btp_pending_saves"];
   for (let i = 0; i < keys.length; i++) {
     try {
       const raw = localStorage.getItem(keys[i]);
@@ -1914,11 +1914,37 @@ function demPendingMang() {
   return tong;
 }
 
+function thongKePendingMang_() {
+  const groups = [
+    { label: "Quét QR", keys: [APP_PENDING_KEY, "quetqr_pending_saves", "qr_pending_saves"] },
+    { label: "Chỉ X1", keys: ["cx1_pending_saves"] },
+    { label: "BTP", keys: ["btp_pending_saves"] },
+    { label: "Chỉ X5", keys: ["cx5_pending_saves", "cx5_pending_marks"] },
+    { label: "Kiểm kê", keys: ["kk_pending_saves"] }
+  ];
+  const parts = [];
+  groups.forEach(function (g) {
+    let cnt = 0;
+    g.keys.forEach(function (k) {
+      try {
+        const raw = localStorage.getItem(k);
+        if (raw && raw.length > 2) {
+          const arr = JSON.parse(raw);
+          if (Array.isArray(arr)) cnt += arr.length;
+        }
+      } catch (e) { }
+    });
+    if (cnt > 0) parts.push(g.label + ": " + cnt);
+  });
+  return parts.join(" · ");
+}
+
 let dangDongBoTongApp = false;
 
 async function dongBoTatCaOfflineApp() {
   if (dangDongBoTongApp) return;
   dangDongBoTongApp = true;
+  capNhatTrangThaiMang();
 
   try {
     // 1. Đồng bộ App QR (Xóa từng item theo ID sau khi gửi thành công)
@@ -2055,27 +2081,53 @@ function xoaSachPendingApp() {
   try { localStorage.removeItem("cx1_pending_saves"); } catch (e) { }
   try { localStorage.removeItem("btp_pending_saves"); } catch (e) { }
   try { localStorage.removeItem("cx5_pending_saves"); } catch (e) { }
+  try { localStorage.removeItem("cx5_pending_marks"); } catch (e) { }
   try { localStorage.removeItem("kk_pending_saves"); } catch (e) { }
   if (typeof luuPendingQuetQR === "function") luuPendingQuetQR([]);
   if (typeof luuPendingBTP === "function") luuPendingBTP([]);
   if (typeof luuPendingCX1 === "function") luuPendingCX1([]);
   if (typeof luuPendingCX5 === "function") luuPendingCX5([]);
+  if (typeof luuPendingMarksCX5 === "function") luuPendingMarksCX5([]);
   capNhatTrangThaiMang();
   if (typeof showCanhBao === "function") showCanhBao("Đã xóa sạch hàng chờ đồng bộ!");
 }
 window.xoaSachPendingApp = xoaSachPendingApp;
 
+function xacNhanXoaSachPendingApp() {
+  const soCho = demPendingMang();
+  if (soCho === 0) return;
+  const chiTiet = thongKePendingMang_();
+  if (typeof moXacNhanApp === "function") {
+    moXacNhanApp(
+      "Bạn chắc chắn muốn XÓA VĨNH VIỄN " + soCho + " bản ghi chưa gửi lên Sheet?\n(" + (chiTiet || "Hàng chờ thiết bị") + ")\nDữ liệu chưa gửi sẽ không thể khôi phục.",
+      function () { xoaSachPendingApp(); },
+      "Xóa vĩnh viễn",
+      null,
+      "Giữ lại",
+      "Xác nhận xóa hàng chờ"
+    );
+  }
+}
+window.xacNhanXoaSachPendingApp = xacNhanXoaSachPendingApp;
+
 function toggleHopThoaiDongBoMang() {
   const soCho = demPendingMang();
   if (soCho === 0) return;
+  const chiTiet = thongKePendingMang_();
 
   if (typeof moXacNhanApp === "function") {
+    const htmlMsg =
+      '<div>Đang có <strong>' + soCho + ' bản ghi</strong> lưu trên thiết bị chưa gửi lên Sheet.</div>' +
+      (chiTiet ? '<div style="margin-top:6px;font-size:12.5px;opacity:0.85;">' + chiTiet + '</div>' : '') +
+      '<div style="margin-top:12px;padding-top:10px;border-top:1px solid var(--border-card);">' +
+      '<button type="button" onclick="xacNhanXoaSachPendingApp()" style="background:none;border:none;color:var(--danger,#dc2626);font-size:12.5px;font-weight:700;cursor:pointer;text-decoration:underline;padding:4px 0;">Xóa hàng chờ này (cần xác nhận lần 2)</button>' +
+      '</div>';
     moXacNhanApp(
-      "Đang có " + soCho + " bản ghi chưa đồng bộ. Bạn muốn làm gì?",
+      htmlMsg,
       function () { dongBoTatCaOfflineApp(); },
       "⚡ Thử đồng bộ ngay",
-      function () { xoaSachPendingApp(); },
-      "🗑️ Xóa hàng chờ này",
+      null,
+      "Đóng",
       "Hàng chờ đồng bộ"
     );
   }
@@ -2088,17 +2140,20 @@ function capNhatTrangThaiMang() {
   if (!el.getAttribute("data-has-click")) {
     el.setAttribute("data-has-click", "true");
     el.style.cursor = "pointer";
-    el.title = "Bấm để tùy chọn đồng bộ hoặc xóa hàng chờ";
+    el.title = "Bấm để xem hoặc đồng bộ hàng chờ";
     el.onclick = toggleHopThoaiDongBoMang;
   }
 
   const soCho = demPendingMang();
   if (!navigator.onLine) {
-    const text = soCho > 0 ? ("Ngoại tuyến (" + soCho + " mã chờ đồng bộ)") : "Ngoại tuyến";
+    const text = soCho > 0 ? ("Ngoại tuyến (" + soCho + " bản ghi chờ gửi)") : "Ngoại tuyến";
     el.innerHTML = '<span class="live-pulse-dot" style="background:#ef4444;box-shadow:0 0 8px #ef4444;"></span>' + text;
     el.className = "mang-status show err";
   } else if (soCho > 0) {
-    el.innerHTML = '<span class="live-pulse-dot" style="background:#f59e0b;box-shadow:0 0 8px #f59e0b;"></span>Đang đồng bộ ' + soCho + ' mã...';
+    const label = dangDongBoTongApp
+      ? ("Đang đồng bộ " + soCho + " bản ghi...")
+      : ("Có " + soCho + " bản ghi chờ gửi");
+    el.innerHTML = '<span class="live-pulse-dot" style="background:#f59e0b;box-shadow:0 0 8px #f59e0b;"></span>' + label;
     el.className = "mang-status show warn";
   } else {
     el.className = "mang-status";

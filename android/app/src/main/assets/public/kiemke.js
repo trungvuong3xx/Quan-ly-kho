@@ -155,6 +155,26 @@ async function dungKiemKe() {
   document.getElementById("kk-status").textContent = "Hoàn tất — " + dsQuetKiemKe.length + " mã";
   document.getElementById("kk-form").style.display = "block";
   document.getElementById("kk-cam").style.display = "none";
+
+  const summaryEl = document.getElementById("kk-summary-card");
+  if (summaryEl) {
+    const tongMa = dsQuetKiemKe.length;
+    const pendingCount = docPendingKK().length;
+    const ngayHienThi = ngayKiemKe || layNgayLocalKK_();
+    let trangThaiHtml = "";
+    if (tongMa === 0) {
+      trangThaiHtml = '<span style="color:var(--text-muted);">Chưa có mã nào được quét trong lượt này.</span>';
+    } else if (pendingCount > 0) {
+      trangThaiHtml = '<span style="color:var(--warning-text, #b45309); font-weight:700;">Còn ' + pendingCount + ' mã chờ gửi lên Sheet (lưu tạm trên thiết bị)</span>';
+    } else {
+      trangThaiHtml = '<span style="color:var(--success, #047857); font-weight:700;">Đã gửi dữ liệu kiểm kê lên Sheet</span>';
+    }
+    summaryEl.innerHTML =
+      '<div style="font-weight:700; margin-bottom:4px;">Tổng kết kiểm kê (' + ngayHienThi + ')</div>' +
+      '<div>Số mã đã quét: <strong style="font-family:var(--font-mono);">' + tongMa + ' mã</strong></div>' +
+      '<div style="margin-top:4px;">' + trangThaiHtml + '</div>';
+    summaryEl.style.display = "block";
+  }
 }
 
 let dangDongBoKK = false;
