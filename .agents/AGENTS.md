@@ -89,3 +89,7 @@ Project-level behavioral and tooling guidelines.
 ### 7. 🚫 PHÂN TÁCH RÕ RÀNG DỰ ÁN (KHÔNG NHẦM LẪN VỚI ERP BOT):
 1. Dự án hiện tại (`Code gốc` / `Quan-ly-kho`) chỉ bao gồm **App Quét Kho PWA & Android APK** (Quét QR, Chỉ X5, BTP, TP - Thành Phẩm, Chỉ X1, Tồn Kho, Kiểm Kê) và các Google Apps Script của kho tại đường dẫn duy nhất `C:\NTV\Code gốc`.
 2. Dự án `C:\NTV\ERP BOT` (Bot tự động nhập liệu ERP iGP) là một dự án **hoàn toàn độc lập, tách biệt 100%**, không liên quan đến dự án Quản lý kho này. Tuyệt đối KHÔNG gộp chung, trỏ nhầm, load skill hay thực thi bất kỳ mã nguồn nào của `C:\NTV\ERP BOT` tại đây.
+
+### 8. 🧩 QUY TẮC BẢO TRÌ GOOGLE APPS SCRIPT CX5 (`appscript_cx5/`):
+- **Single Source of Truth**: Thư mục `appscript_cx5/` (gồm 5 module `00_Main.js`, `01_SheetThang_NhapXuat.js`, `02_LSC5.js`, `03_TraCuuTonKho.js`, `99_Legacy.js`) là nguồn mã nguồn duy nhất cho backend CX5.
+- **Cấm sửa trực tiếp `appscritp_cx5.txt`**: File `appscritp_cx5.txt` được sinh tự động. Mọi chỉnh sửa backend CX5 phải thực hiện trong `appscript_cx5/*.js`, sau đó chạy `npm run build:gas` để kiểm chứng Parity Check và đồng bộ ra `appscritp_cx5.txt`.

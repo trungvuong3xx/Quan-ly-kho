@@ -5,6 +5,7 @@
   "main": "index.html",
   "scripts": {
     "build": "node build-web.js",
+    "build:gas": "node scripts/bundle-gas-cx5.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
