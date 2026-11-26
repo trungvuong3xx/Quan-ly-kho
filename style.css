@@ -268,6 +268,21 @@ body {
   overflow: visible;
   animation: fadeInUp 0.25s ease-out;
 }
+
+/* 5 form khởi tạo phiên: có khung thẻ, padding & bo góc chuẩn (tách biệt với .card wrapper rỗng) */
+#form-chon,
+#cx1-form,
+#btp-form,
+#tp-form,
+#cx5-form {
+  background: var(--surface);
+  border: 1px solid var(--border-card);
+  border-radius: 18px;
+  padding: 18px 16px;
+  box-shadow: var(--shadow-card);
+  overflow: visible;
+  box-sizing: border-box;
+}
 h3 {
   margin-bottom: 18px;
   padding-bottom: 12px;
@@ -2167,7 +2182,7 @@ body { padding: 0 !important; background: var(--bg-body); color: var(--text-main
 .page { flex: 1; height: 100%; position: absolute; inset: 0; padding: 0; max-width: 100%; overflow: hidden; display: none; flex-direction: column; }
 .page.active { display: flex; }
 /* Non-home pages still need scrolling */
-.page:not(#trangChu) { padding: 20px 8px 100px !important; overflow-y: auto !important; display: none; }
+.page:not(#trangChu) { padding: 20px 12px 100px !important; overflow-y: auto !important; display: none; }
 .page:not(#trangChu).active { display: block; }
 
 

@@ -124,7 +124,11 @@ html[data-theme="light"][data-skin="pa7"] {
   --steel: #111827;
   --steel-bg: #67e8f9;
 }
-html[data-theme="light"][data-skin="pa7"] .card,
+html[data-theme="light"][data-skin="pa7"] #form-chon,
+html[data-theme="light"][data-skin="pa7"] #cx1-form,
+html[data-theme="light"][data-skin="pa7"] #btp-form,
+html[data-theme="light"][data-skin="pa7"] #tp-form,
+html[data-theme="light"][data-skin="pa7"] #cx5-form,
 html[data-theme="light"][data-skin="pa7"] .grid-card,
 html[data-theme="light"][data-skin="pa7"] .btp-log-card,
 html[data-theme="light"][data-skin="pa7"] .tp-log-card,
@@ -204,7 +208,11 @@ html[data-theme="light"][data-skin="pa8"] body::before {
     radial-gradient(circle at 78% 82%, rgba(232, 121, 249, 0.28), transparent 50%),
     radial-gradient(circle at 18% 88%, rgba(52, 211, 153, 0.28), transparent 48%);
 }
-html[data-theme="light"][data-skin="pa8"] .card,
+html[data-theme="light"][data-skin="pa8"] #form-chon,
+html[data-theme="light"][data-skin="pa8"] #cx1-form,
+html[data-theme="light"][data-skin="pa8"] #btp-form,
+html[data-theme="light"][data-skin="pa8"] #tp-form,
+html[data-theme="light"][data-skin="pa8"] #cx5-form,
 html[data-theme="light"][data-skin="pa8"] .grid-card,
 html[data-theme="light"][data-skin="pa8"] .btp-log-card,
 html[data-theme="light"][data-skin="pa8"] .tp-log-card,
@@ -315,7 +323,11 @@ html[data-theme="light"][data-skin="pa10"] {
   --steel: #6366f1;
   --steel-bg: rgba(99, 102, 241, 0.14);
 }
-html[data-theme="light"][data-skin="pa10"] .card,
+html[data-theme="light"][data-skin="pa10"] #form-chon,
+html[data-theme="light"][data-skin="pa10"] #cx1-form,
+html[data-theme="light"][data-skin="pa10"] #btp-form,
+html[data-theme="light"][data-skin="pa10"] #tp-form,
+html[data-theme="light"][data-skin="pa10"] #cx5-form,
 html[data-theme="light"][data-skin="pa10"] .grid-card,
 html[data-theme="light"][data-skin="pa10"] .btp-log-card,
 html[data-theme="light"][data-skin="pa10"] .tp-log-card,
@@ -380,7 +392,11 @@ html[data-theme="light"][data-skin="pa11"] {
   --steel: #38bdf8;
   --steel-bg: rgba(56, 189, 248, 0.16);
 }
-html[data-theme="light"][data-skin="pa11"] .card,
+html[data-theme="light"][data-skin="pa11"] #form-chon,
+html[data-theme="light"][data-skin="pa11"] #cx1-form,
+html[data-theme="light"][data-skin="pa11"] #btp-form,
+html[data-theme="light"][data-skin="pa11"] #tp-form,
+html[data-theme="light"][data-skin="pa11"] #cx5-form,
 html[data-theme="light"][data-skin="pa11"] .grid-card,
 html[data-theme="light"][data-skin="pa11"] .btp-log-card,
 html[data-theme="light"][data-skin="pa11"] .tp-log-card,
@@ -445,7 +461,11 @@ html[data-theme="light"][data-skin="pa12"] {
   --steel: #00b4d8;
   --steel-bg: rgba(0, 180, 216, 0.14);
 }
-html[data-theme="light"][data-skin="pa12"] .card,
+html[data-theme="light"][data-skin="pa12"] #form-chon,
+html[data-theme="light"][data-skin="pa12"] #cx1-form,
+html[data-theme="light"][data-skin="pa12"] #btp-form,
+html[data-theme="light"][data-skin="pa12"] #tp-form,
+html[data-theme="light"][data-skin="pa12"] #cx5-form,
 html[data-theme="light"][data-skin="pa12"] .btp-log-card,
 html[data-theme="light"][data-skin="pa12"] .tp-log-card,
 html[data-theme="light"][data-skin="pa12"] .kq-card-wrap,
@@ -488,7 +508,11 @@ body.cam-active .spinner-loading,
 body.cam-active .live-pulse-dot {
   animation-play-state: running;
 }
-html[data-theme="light"][data-skin="pa8"] body.cam-active .card,
+html[data-theme="light"][data-skin="pa8"] body.cam-active #form-chon,
+html[data-theme="light"][data-skin="pa8"] body.cam-active #cx1-form,
+html[data-theme="light"][data-skin="pa8"] body.cam-active #btp-form,
+html[data-theme="light"][data-skin="pa8"] body.cam-active #tp-form,
+html[data-theme="light"][data-skin="pa8"] body.cam-active #cx5-form,
 html[data-theme="light"][data-skin="pa8"] body.cam-active .grid-card,
 html[data-theme="light"][data-skin="pa8"] body.cam-active .btp-log-card,
 html[data-theme="light"][data-skin="pa8"] body.cam-active .tp-log-card,
@@ -501,7 +525,11 @@ html[data-theme="light"][data-skin="pa8"] body.cam-active .pending-session-card 
 
 /* Tôn trọng chế độ giảm trong suốt của hệ điều hành cho PA8 */
 @media (prefers-reduced-transparency: reduce) {
-  html[data-theme="light"][data-skin="pa8"] .card,
+  html[data-theme="light"][data-skin="pa8"] #form-chon,
+  html[data-theme="light"][data-skin="pa8"] #cx1-form,
+  html[data-theme="light"][data-skin="pa8"] #btp-form,
+  html[data-theme="light"][data-skin="pa8"] #tp-form,
+  html[data-theme="light"][data-skin="pa8"] #cx5-form,
   html[data-theme="light"][data-skin="pa8"] .grid-card,
   html[data-theme="light"][data-skin="pa8"] .btp-log-card,
   html[data-theme="light"][data-skin="pa8"] .tp-log-card,
