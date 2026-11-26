@@ -519,6 +519,7 @@ async function batDauQuetQR() {
           khiQuetDuocMaQR({ getText: () => txt });
         }
       });
+      window.zxingReaderQR = zxingReaderQR;
     } else if (videoEl && videoEl.paused) {
       videoEl.play().catch(() => {});
     }
@@ -691,6 +692,7 @@ async function tiepTucQuetQR() {
           khiQuetDuocMaQR({ getText: () => txt });
         }
       });
+      window.zxingReaderQR = zxingReaderQR;
     } else if (videoEl && videoEl.paused) {
       videoEl.play().catch(() => {});
     }
@@ -701,7 +703,11 @@ async function tiepTucQuetQR() {
 }
 window.tiepTucQuetQR = tiepTucQuetQR;
 
+let _lastToggleQRAt = 0;
 function toggleDungTiepTucQR() {
+  const now = Date.now();
+  if (now - _lastToggleQRAt < 300) return;
+  _lastToggleQRAt = now;
   if (dangQuetQR) dungQuetQR();
   else tiepTucQuetQR();
 }
@@ -1436,6 +1442,9 @@ async function quetTiepQuetQR() {
     btnToggle.title = "Dừng quét";
   }
 
+  const pauseOverlayQR = document.getElementById("qr-cam-pause-overlay");
+  if (pauseOverlayQR) pauseOverlayQR.style.display = "none";
+
   capNhatLogQR();
 
   try {
@@ -1453,6 +1462,7 @@ async function quetTiepQuetQR() {
           khiQuetDuocMaQR({ getText: () => txt });
         }
       });
+      window.zxingReaderQR = zxingReaderQR;
     } else if (videoEl && videoEl.paused) {
       videoEl.play().catch(() => {});
     }

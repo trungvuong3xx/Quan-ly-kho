@@ -836,6 +836,7 @@ async function khoiDongCameraBTP() {
             khiQuetDuocMaBTP({ getText: () => txt });
           }
         });
+        window.zxingReaderBTP = zxingReaderBTP;
       }
     } else if (btpVid && btpVid.paused) {
       btpVid.play().catch(() => { });
@@ -965,7 +966,11 @@ async function tiepTucBTP() {
   await khoiDongCameraBTP();
 }
 
+let _lastToggleBTPAt = 0;
 function toggleDungTiepTucBTP() {
+  const now = Date.now();
+  if (now - _lastToggleBTPAt < 300) return;
+  _lastToggleBTPAt = now;
   if (dangQuetBTP) {
     dungBTP();
   } else {

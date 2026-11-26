@@ -1010,7 +1010,11 @@ async function quetMoiTP() {
 }
 window.quetMoiTP = quetMoiTP;
 
+let _lastToggleTPAt = 0;
 function toggleDungTiepTucTP() {
+  const now = Date.now();
+  if (now - _lastToggleTPAt < 300) return;
+  _lastToggleTPAt = now;
   if (dangQuetTP) {
     dungTP();
   } else {
@@ -1145,6 +1149,7 @@ function khoiPhucTP(data) {
 
   dangQuetTP = true;
   window.dangQuetTP = true;
+  if (typeof khoaCuonTrangQuet === "function") khoaCuonTrangQuet(true); else document.body.classList.add("cam-active");
 
   document.getElementById("tp-form").style.display = "none";
   document.getElementById("tp-cam").style.display = "block";
@@ -1153,6 +1158,15 @@ function khoiPhucTP(data) {
 
   const statusEl = document.getElementById("tp-status");
   if (statusEl) statusEl.innerHTML = '<div class="cam-status-dot"></div><span>Đợt ' + demSoDotTP + '</span>';
+
+  const btnToggleTP = document.getElementById("btn-dung-tieptuc-tp");
+  if (btnToggleTP) {
+    btnToggleTP.innerHTML = SVG_SHUTTER_PAUSE;
+    btnToggleTP.classList.remove("paused");
+    btnToggleTP.title = "Dừng quét";
+  }
+  const pauseOverlayTP = document.getElementById("tp-cam-pause-overlay");
+  if (pauseOverlayTP) pauseOverlayTP.style.display = "none";
 
   const lastItem = phienTP.length > 0 ? phienTP[phienTP.length - 1] : null;
   maQRVuaQuetTP = lastItem ? lastItem.id : "";
