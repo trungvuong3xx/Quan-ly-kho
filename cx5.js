@@ -3716,7 +3716,7 @@ window.setOneHandCX5 = setOneHandCX5;
   } catch (e) {}
 
   function xuLyMoBanPhimInput(el) {
-    if (!el || el.tagName !== "INPUT") return;
+    if (!el || el.tagName !== "INPUT" || el.offsetParent === null) return;
     if (el.id === "cx5-kg" || el.id === "cx5-bao" || el.id === "cx1-kg" || el.id === "cx1-bao" || el.id === "qr-kg" || el.id === "qr-bao" || el.id === "cx5-sl-them-kg" || el.id === "cx5-sx-kg" || el.id === "cx1-them-kg" || el.id === "qr-them-kg" || el.classList.contains("cx5-sx-input")) {
       moBanPhimCX5(el, "kg");
     } else if (el.id === "cx5-ten" || el.id === "cx1-ten" || el.id === "qr-ten" || el.id === "cx5-sx-ten" || el.id === "cx5-sl-ten-tim") {

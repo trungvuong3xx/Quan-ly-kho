@@ -507,7 +507,30 @@ function khoiTaoTatCaNgayMacDinh() {
 }
 window.khoiTaoTatCaNgayMacDinh = khoiTaoTatCaNgayMacDinh;
 
+function dongBoCamActiveTheoTrang_(id) {
+  const camMap = {
+    quetQR: "qr-cam",
+    chiFor: "cx1-cam",
+    btpPage: "btp-cam",
+    tpPage: "tp-cam"
+  };
+  const camId = camMap[id];
+  if (camId) {
+    const camEl = document.getElementById(camId);
+    const isCamVisible = camEl && camEl.style.display !== "none" && window.getComputedStyle(camEl).display !== "none";
+    if (isCamVisible) {
+      document.body.classList.add("cam-active");
+      return;
+    }
+  }
+  document.body.classList.remove("cam-active");
+}
+
 function chuyenTrang(id, el) {
+  if (typeof dongBanPhimCX5 === "function") dongBanPhimCX5();
+  if (document.activeElement && typeof document.activeElement.blur === "function" && document.activeElement !== document.body) {
+    try { document.activeElement.blur(); } catch (e) { }
+  }
   const header = document.getElementById('header');
   if (header) {
     if (id === 'trangChu') header.style.display = 'flex';
@@ -533,9 +556,8 @@ function chuyenTrang(id, el) {
     if (id !== "btpPage" && typeof dungBTP === "function") dungBTP();
     if (id !== "tpPage" && typeof dungTP === "function") dungTP();
   }
-  if (id !== "btpPage" && id !== "tpPage") {
-    document.body.classList.remove("cam-active");
-  } else if (id === "btpPage" && typeof taiDanhSachQCBTP === "function") {
+  dongBoCamActiveTheoTrang_(id);
+  if (id === "btpPage" && typeof taiDanhSachQCBTP === "function") {
     taiDanhSachQCBTP();
   }
   if (id === "trangChu" && typeof capNhatTrangChu === "function") capNhatTrangChu();
@@ -555,6 +577,7 @@ window.diToiTab = diToiTab;
 
 // Điều hướng tới 1 trang KHÔNG có nút riêng trên bottom-nav (vd: Lịch sử, chi tiết lịch sử)
 function chuyenTrangKhongNav(id) {
+  if (typeof dongBanPhimCX5 === "function") dongBanPhimCX5();
   const header = document.getElementById('header');
   if (header) {
     if (id === 'trangChu') header.style.display = 'flex';
@@ -580,13 +603,12 @@ function chuyenTrangKhongNav(id) {
     if (id !== "btpPage" && typeof dungBTP === "function") dungBTP();
     if (id !== "tpPage" && typeof dungTP === "function") dungTP();
   }
-  if (id !== "btpPage" && id !== "tpPage") {
-    document.body.classList.remove("cam-active");
-  } else if (id === "btpPage" && typeof taiDanhSachQCBTP === "function") {
-    taiDanhSachQCBTP();
-  }
   const page = document.getElementById(id);
   if (page) page.classList.add("active");
+  dongBoCamActiveTheoTrang_(id);
+  if (id === "btpPage" && typeof taiDanhSachQCBTP === "function") {
+    taiDanhSachQCBTP();
+  }
   if (id === "lichSuQuetQR" && typeof renderLichSuQR === "function") renderLichSuQR();
   if (id === "lichSuTP" && typeof renderLichSuTP === "function") renderLichSuTP();
 

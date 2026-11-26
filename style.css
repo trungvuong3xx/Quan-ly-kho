@@ -2788,9 +2788,9 @@ body.cam-active *::after {
   width: 48px;
   height: 48px;
   border-radius: 50%;
-  background: var(--primary-solid);
-  border: none;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+  background: #16a34a;
+  border: 2px solid rgba(255, 255, 255, 0.35);
+  box-shadow: 0 2px 10px rgba(22, 163, 74, 0.45);
   color: #ffffff;
   display: flex !important;
   align-items: center !important;
@@ -2807,12 +2807,17 @@ body.cam-active *::after {
 
 .cam-shutter-center-btn:active {
   transform: scale(0.92);
-  background: var(--primary-solid-press);
+  background: #15803d;
 }
 
 .cam-shutter-center-btn.paused {
-  background: #475569;
+  background: #dc2626;
+  box-shadow: 0 2px 10px rgba(220, 38, 38, 0.45);
   color: #ffffff;
+}
+
+.cam-shutter-center-btn.paused:active {
+  background: #b91c1c;
 }
 
 .cam-shutter-center-btn svg {

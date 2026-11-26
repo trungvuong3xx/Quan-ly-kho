@@ -264,6 +264,10 @@ async function tiepTucKhoiTaoCX1(cheDo = "quet") {
   dangQuetCX1 = true;
   dangNhapCX1 = false;
   denPinBat = false;
+  if (typeof dongBanPhimCX5 === "function") dongBanPhimCX5();
+  if (document.activeElement && typeof document.activeElement.blur === "function") {
+    try { document.activeElement.blur(); } catch (e) { }
+  }
 
   if (typeof khoaCuonTrangQuet === "function") khoaCuonTrangQuet(true); else document.body.classList.add("cam-active");
   document.getElementById("cx1-form").style.display = "none";
@@ -327,6 +331,7 @@ function dungCX1() {
 }
 
 async function tiepTucCX1() {
+  if (typeof dongBanPhimCX5 === "function") dongBanPhimCX5();
   if (typeof khoaCuonTrangQuet === "function") khoaCuonTrangQuet(true); else document.body.classList.add("cam-active");
   const maxDot = phienCX1.length > 0 ? Math.max(0, ...phienCX1.map(r => r.dotQuet || 1)) : 0;
   demSoDot = maxDot > 0 ? maxDot + 1 : 1;

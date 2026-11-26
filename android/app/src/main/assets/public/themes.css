@@ -1,0 +1,388 @@
+/* ============================================================================
+   THEMES.CSS — HỆ THỐNG 8 PHONG CÁCH SÁNG CÔ LẬP (PA2, PA5, PA7, PA8, PA9, PA10, PA11, PA12)
+   Kiến trúc 2 thuộc tính: data-theme="light" + data-skin="pa*"
+   Không ghi đè nút Play/Pause (.cam-shutter-center-btn) và tự tắt hiệu ứng nặng khi body.cam-active
+   ============================================================================ */
+
+/* Scroll gọn cho danh sách 9 theme trong #modal-theme */
+#theme-options-list {
+  max-height: 62vh;
+  overflow-y: auto;
+  padding-right: 2px;
+}
+
+/* ── PA2: XANH DƯƠNG SÁNG (CRISP SKY BLUE) ─────────────────── */
+html[data-theme="light"][data-skin="pa2"] {
+  --bg-body: #f8fafc;
+  --bg-scan: #f1f5f9;
+  --surface: #ffffff;
+  --surface-grad: linear-gradient(145deg, #ffffff 0%, #f0f9ff 100%);
+  --surface-glass: rgba(255, 255, 255, 0.90);
+  --surface-2: #f0f9ff;
+  --text-main: #0f172a;
+  --text-muted: #475569;
+  --text-lighter: #64748b;
+  --row-text: #0f172a;
+  --row-muted: #475569;
+  --primary: #0284c7;
+  --primary-solid: #0284c7;
+  --primary-solid-press: #0369a1;
+  --primary-soft: #e0f2fe;
+  --primary-text: #0369a1;
+  --border: rgba(2, 132, 199, 0.22);
+  --border-card: #cbd5e1;
+  --border-strong: #7dd3fc;
+  --table-header-bg: #e0f2fe;
+  --table-row-hover: #f0f9ff;
+  --steel: #0284c7;
+  --steel-bg: rgba(2, 132, 199, 0.14);
+}
+
+/* ── PA5: HOÀNG HÔN NHIỆT ĐỚI (SUNSET CORAL) ───────────────── */
+html[data-theme="light"][data-skin="pa5"] {
+  --bg-body: #fffbf7;
+  --bg-scan: #fff3e8;
+  --surface: #ffffff;
+  --surface-grad: linear-gradient(145deg, #ffffff 0%, #fff3e8 100%);
+  --surface-glass: rgba(255, 251, 247, 0.90);
+  --surface-2: #fff3e8;
+  --text-main: #1c1917;
+  --text-muted: #57534e;
+  --text-lighter: #78716c;
+  --row-text: #1c1917;
+  --row-muted: #57534e;
+  --primary: #f97316;
+  --primary-solid: #ea580c;
+  --primary-solid-press: #c2410c;
+  --primary-soft: #ffedd5;
+  --primary-text: #c2410c;
+  --border: rgba(249, 115, 22, 0.24);
+  --border-card: #f3dfc8;
+  --border-strong: #fdba74;
+  --table-header-bg: #ffedd5;
+  --table-row-hover: #fff7ed;
+  --steel: #f97316;
+  --steel-bg: rgba(249, 115, 22, 0.14);
+}
+html[data-theme="light"][data-skin="pa5"] .kq-btn--primary,
+html[data-theme="light"][data-skin="pa5"] .bnav-btn.active {
+  background: linear-gradient(135deg, #f97316 0%, #ec4899 100%);
+  color: #ffffff;
+}
+html[data-theme="light"][data-skin="pa5"] .bnav-btn.active i,
+html[data-theme="light"][data-skin="pa5"] .bnav-btn.active span,
+html[data-theme="light"][data-skin="pa5"] .bnav-btn.active .text-icon {
+  color: #ffffff;
+}
+
+/* ── PA7: NEO-BRUTALISM POP (VIỀN ĐEN ĐẬM + BÓNG CỨNG) ────── */
+html[data-theme="light"][data-skin="pa7"] {
+  --bg-body: #fffdf0;
+  --bg-scan: #fef9c3;
+  --surface: #ffffff;
+  --surface-grad: #ffffff;
+  --surface-glass: #fffdf0;
+  --surface-2: #fef08a;
+  --text-main: #111827;
+  --text-muted: #374151;
+  --text-lighter: #4b5563;
+  --row-text: #111827;
+  --row-muted: #374151;
+  --primary: #111827;
+  --primary-solid: #fde047;
+  --primary-solid-press: #facc15;
+  --primary-soft: #fde047;
+  --primary-text: #111827;
+  --border: #111827;
+  --border-card: #111827;
+  --border-strong: #111827;
+  --table-header-bg: #fde047;
+  --table-row-hover: #fef9c3;
+  --shadow-card: 4px 4px 0px #111827;
+  --steel: #111827;
+  --steel-bg: #67e8f9;
+}
+html[data-theme="light"][data-skin="pa7"] .card,
+html[data-theme="light"][data-skin="pa7"] .grid-card,
+html[data-theme="light"][data-skin="pa7"] .btp-log-card,
+html[data-theme="light"][data-skin="pa7"] .tp-log-card,
+html[data-theme="light"][data-skin="pa7"] .tk-card {
+  border: 2px solid #111827;
+  box-shadow: 4px 4px 0px #111827;
+}
+html[data-theme="light"][data-skin="pa7"] .kq-btn--primary {
+  background: #fde047;
+  color: #111827;
+  border: 2px solid #111827;
+  box-shadow: 3px 3px 0px #111827;
+  font-weight: 800;
+}
+html[data-theme="light"][data-skin="pa7"] .bnav-btn.active {
+  background: #fde047;
+  border: 2px solid #111827;
+  color: #111827;
+}
+
+/* ── PA8: LIQUID GLASS CẦU VỒNG (VISIONOS PRISM) ───────────── */
+html[data-theme="light"][data-skin="pa8"] {
+  --bg-body: #f8fafc;
+  --bg-scan: #f1f5f9;
+  --surface: rgba(255, 255, 255, 0.76);
+  --surface-grad: rgba(255, 255, 255, 0.78);
+  --surface-glass: rgba(255, 255, 255, 0.72);
+  --surface-2: rgba(241, 245, 249, 0.78);
+  --text-main: #0f172a;
+  --text-muted: #475569;
+  --text-lighter: #64748b;
+  --row-text: #0f172a;
+  --row-muted: #475569;
+  --primary: #6366f1;
+  --primary-solid: #4f46e5;
+  --primary-solid-press: #4338ca;
+  --primary-soft: rgba(99, 102, 241, 0.14);
+  --primary-text: #4338ca;
+  --border: rgba(255, 255, 255, 0.88);
+  --border-card: rgba(148, 163, 184, 0.30);
+  --border-strong: rgba(129, 140, 248, 0.55);
+  --table-header-bg: rgba(224, 242, 254, 0.75);
+  --table-row-hover: rgba(243, 232, 255, 0.55);
+  --steel: #6366f1;
+  --steel-bg: rgba(99, 102, 241, 0.14);
+}
+html[data-theme="light"][data-skin="pa8"] body {
+  background:
+    radial-gradient(circle at 10% 15%, rgba(251, 146, 60, 0.28), transparent 45%),
+    radial-gradient(circle at 90% 18%, rgba(56, 189, 248, 0.34), transparent 48%),
+    radial-gradient(circle at 78% 82%, rgba(232, 121, 249, 0.28), transparent 50%),
+    radial-gradient(circle at 18% 88%, rgba(52, 211, 153, 0.28), transparent 48%),
+    #f8fafc;
+  background-attachment: fixed;
+}
+html[data-theme="light"][data-skin="pa8"] .card,
+html[data-theme="light"][data-skin="pa8"] .grid-card,
+html[data-theme="light"][data-skin="pa8"] .tk-card {
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1.5px solid rgba(255, 255, 255, 0.85);
+}
+html[data-theme="light"][data-skin="pa8"] .kq-btn--primary,
+html[data-theme="light"][data-skin="pa8"] .bnav-btn.active {
+  background: linear-gradient(135deg, #0ea5e9 0%, #8b5cf6 55%, #ec4899 100%);
+  color: #ffffff;
+}
+html[data-theme="light"][data-skin="pa8"] .bnav-btn.active i,
+html[data-theme="light"][data-skin="pa8"] .bnav-btn.active span,
+html[data-theme="light"][data-skin="pa8"] .bnav-btn.active .text-icon {
+  color: #ffffff;
+}
+
+/* ── PA9: INDUSTRIAL NEON XƯỞNG (TEENAGE ENGINEERING) ──────── */
+html[data-theme="light"][data-skin="pa9"] {
+  --bg-body: #f3f3ee;
+  --bg-scan: #e9e9e2;
+  --surface: #ffffff;
+  --surface-grad: #ffffff;
+  --surface-glass: rgba(255, 255, 255, 0.92);
+  --surface-2: #ecfccb;
+  --text-main: #171717;
+  --text-muted: #525252;
+  --text-lighter: #737373;
+  --row-text: #171717;
+  --row-muted: #525252;
+  --primary: #ff5500;
+  --primary-solid: #ff5500;
+  --primary-solid-press: #dc4800;
+  --primary-soft: #bef264;
+  --primary-text: #171717;
+  --border: #d4d4d4;
+  --border-card: #d4d4d4;
+  --border-strong: #84cc16;
+  --table-header-bg: #ecfccb;
+  --table-row-hover: #f7fee7;
+  --steel: #ff5500;
+  --steel-bg: rgba(255, 85, 0, 0.14);
+}
+html[data-theme="light"][data-skin="pa9"] body {
+  background-color: #f3f3ee;
+  background-image: radial-gradient(#cbd5e1 1px, transparent 1px);
+  background-size: 14px 14px;
+}
+html[data-theme="light"][data-skin="pa9"] .bnav-btn.active {
+  background: #ff5500;
+  color: #ffffff;
+}
+html[data-theme="light"][data-skin="pa9"] .bnav-btn.active i,
+html[data-theme="light"][data-skin="pa9"] .bnav-btn.active span,
+html[data-theme="light"][data-skin="pa9"] .bnav-btn.active .text-icon {
+  color: #ffffff;
+}
+
+/* ── PA10: HOLOGRAPHIC FOIL 7 SẮC ──────────────────────────── */
+@keyframes holoFoilShift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+html[data-theme="light"][data-skin="pa10"] {
+  --bg-body: #f5f7fc;
+  --bg-scan: #eef2ff;
+  --surface: #ffffff;
+  --surface-grad: linear-gradient(145deg, #ffffff 0%, #f5f3ff 100%);
+  --surface-glass: rgba(255, 255, 255, 0.90);
+  --surface-2: #eef2ff;
+  --text-main: #0f172a;
+  --text-muted: #475569;
+  --text-lighter: #64748b;
+  --row-text: #0f172a;
+  --row-muted: #475569;
+  --primary: #6366f1;
+  --primary-solid: #6366f1;
+  --primary-solid-press: #4f46e5;
+  --primary-soft: #e0e7ff;
+  --primary-text: #4338ca;
+  --border: rgba(99, 102, 241, 0.25);
+  --border-card: #c7d2fe;
+  --border-strong: #a5b4fc;
+  --table-header-bg: #e0e7ff;
+  --table-row-hover: #eef2ff;
+  --steel: #6366f1;
+  --steel-bg: rgba(99, 102, 241, 0.14);
+}
+html[data-theme="light"][data-skin="pa10"] .card,
+html[data-theme="light"][data-skin="pa10"] .grid-card,
+html[data-theme="light"][data-skin="pa10"] .tk-card {
+  background: linear-gradient(135deg, #ffffff, #f8fafc) padding-box,
+              linear-gradient(125deg, #38bdf8, #c084fc, #fb7185, #facc15, #34d399) border-box;
+  border: 2px solid transparent;
+}
+html[data-theme="light"][data-skin="pa10"] .kq-btn--primary,
+html[data-theme="light"][data-skin="pa10"] .bnav-btn.active {
+  background: linear-gradient(125deg, #ff6bcb, #ffb86c, #f8f970, #50fa7b, #38bdf8, #a78bfa, #ff6bcb);
+  background-size: 260% 260%;
+  animation: holoFoilShift 6s ease infinite;
+  color: #0f172a;
+  font-weight: 800;
+}
+html[data-theme="light"][data-skin="pa10"] .bnav-btn.active i,
+html[data-theme="light"][data-skin="pa10"] .bnav-btn.active span,
+html[data-theme="light"][data-skin="pa10"] .bnav-btn.active .text-icon {
+  color: #0f172a;
+}
+
+/* ── PA11: CLAYMORPHISM 3D KẸO NGỌT ────────────────────────── */
+html[data-theme="light"][data-skin="pa11"] {
+  --bg-body: #eef4ff;
+  --bg-scan: #e0ebff;
+  --surface: #ffffff;
+  --surface-grad: #ffffff;
+  --surface-glass: rgba(255, 255, 255, 0.92);
+  --surface-2: #f0f6ff;
+  --text-main: #1e293b;
+  --text-muted: #475569;
+  --text-lighter: #64748b;
+  --row-text: #1e293b;
+  --row-muted: #475569;
+  --primary: #6366f1;
+  --primary-solid: #6366f1;
+  --primary-solid-press: #4f46e5;
+  --primary-soft: #dbeafe;
+  --primary-text: #4338ca;
+  --border: rgba(148, 163, 184, 0.25);
+  --border-card: rgba(148, 163, 184, 0.28);
+  --border-strong: #93c5fd;
+  --table-header-bg: #dbeafe;
+  --table-row-hover: #eff6ff;
+  --steel: #38bdf8;
+  --steel-bg: rgba(56, 189, 248, 0.16);
+}
+html[data-theme="light"][data-skin="pa11"] .card,
+html[data-theme="light"][data-skin="pa11"] .grid-card,
+html[data-theme="light"][data-skin="pa11"] .tk-card {
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.9);
+  box-shadow:
+    7px 7px 16px rgba(148, 163, 184, 0.26),
+    inset -3px -3px 8px rgba(148, 163, 184, 0.16),
+    inset 3px 3px 8px rgba(255, 255, 255, 0.95);
+}
+html[data-theme="light"][data-skin="pa11"] .kq-btn--primary,
+html[data-theme="light"][data-skin="pa11"] .bnav-btn.active {
+  background: linear-gradient(135deg, #38bdf8 0%, #6366f1 100%);
+  color: #ffffff;
+  border-radius: 16px;
+  box-shadow:
+    0 6px 14px rgba(99, 102, 241, 0.28),
+    inset -2px -3px 6px rgba(0, 0, 0, 0.14),
+    inset 2px 3px 6px rgba(255, 255, 255, 0.45);
+}
+html[data-theme="light"][data-skin="pa11"] .bnav-btn.active i,
+html[data-theme="light"][data-skin="pa11"] .bnav-btn.active span,
+html[data-theme="light"][data-skin="pa11"] .bnav-btn.active .text-icon {
+  color: #ffffff;
+}
+
+/* ── PA12: MECHA SCI-FI WHITE HUD (VÁT GÓC 45°) ────────────── */
+html[data-theme="light"][data-skin="pa12"] {
+  --bg-body: #f5f8fc;
+  --bg-scan: #e9f0f8;
+  --surface: #ffffff;
+  --surface-grad: #ffffff;
+  --surface-glass: rgba(255, 255, 255, 0.92);
+  --surface-2: #e0f7fa;
+  --text-main: #0f172a;
+  --text-muted: #475569;
+  --text-lighter: #64748b;
+  --row-text: #0f172a;
+  --row-muted: #475569;
+  --primary: #00b4d8;
+  --primary-solid: #00b4d8;
+  --primary-solid-press: #0096c7;
+  --primary-soft: #e0f7fa;
+  --primary-text: #0077b6;
+  --border: rgba(0, 180, 216, 0.28);
+  --border-card: #bae6fd;
+  --border-strong: #00b4d8;
+  --table-header-bg: #e0f7fa;
+  --table-row-hover: #f0f9ff;
+  --steel: #00b4d8;
+  --steel-bg: rgba(0, 180, 216, 0.14);
+}
+html[data-theme="light"][data-skin="pa12"] .card,
+html[data-theme="light"][data-skin="pa12"] .grid-card,
+html[data-theme="light"][data-skin="pa12"] .tk-card {
+  border-radius: 4px;
+  border-left: 4px solid #00b4d8;
+  clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px);
+}
+html[data-theme="light"][data-skin="pa12"] .kq-btn--primary {
+  background: #00b4d8;
+  color: #ffffff;
+  border-radius: 4px;
+  clip-path: polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px);
+}
+html[data-theme="light"][data-skin="pa12"] .bnav-btn.active {
+  background: #ff2a85;
+  color: #ffffff;
+  border-radius: 4px;
+  clip-path: polygon(6px 0, 100% 0, 100% calc(100% - 6px), calc(100% - 6px) 100%, 0 100%, 0 6px);
+}
+html[data-theme="light"][data-skin="pa12"] .bnav-btn.active i,
+html[data-theme="light"][data-skin="pa12"] .bnav-btn.active span,
+html[data-theme="light"][data-skin="pa12"] .bnav-btn.active .text-icon {
+  color: #ffffff;
+}
+
+/* ── BẢO VỆ HIỆU NĂNG K20 PRO KHI ĐANG QUÉT CAMERA ────────── */
+body.cam-active * {
+  animation-play-state: paused;
+}
+body.cam-active .reticle-laser-line {
+  animation-play-state: running;
+}
+html[data-theme="light"][data-skin="pa8"] body.cam-active .card,
+html[data-theme="light"][data-skin="pa8"] body.cam-active .grid-card,
+html[data-theme="light"][data-skin="pa8"] body.cam-active .btp-log-card {
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  background: #ffffff;
+}

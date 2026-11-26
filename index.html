@@ -14,7 +14,7 @@
   <meta name="theme-color" id="meta-theme-color" content="#0f172a">
 
   <script>
-    // Khôi phục theme người dùng đã chọn trước khi render CSS để không bao giờ bị lóe sáng
+    // Khôi phục theme + skin người dùng đã chọn trước khi render CSS để không bao giờ bị lóe sáng
     (function() {
       try {
         var t = localStorage.getItem('user_theme') || 'dark';
@@ -22,9 +22,11 @@
           t = 'dark';
           localStorage.setItem('user_theme', 'dark');
         }
+        var s = localStorage.getItem('user_skin') || (t === 'dark' ? 'dark' : 'pa2');
         document.documentElement.setAttribute('data-theme', t);
+        document.documentElement.setAttribute('data-skin', s);
         var meta = document.getElementById('meta-theme-color') || document.querySelector('meta[name="theme-color"]');
-        if (meta) meta.setAttribute('content', t === 'dark' ? '#0f172a' : '#e8ecf1');
+        if (meta) meta.setAttribute('content', t === 'dark' ? '#0b1415' : '#f8fafc');
       } catch (e) {}
     })();
   </script>
@@ -32,7 +34,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
-  <link rel="stylesheet" href="style.css?v=20261125-v169">
+  <link rel="stylesheet" href="style.css?v=20261126-v171">
+  <link rel="stylesheet" href="themes.css?v=20261126-v171">
   <link rel="stylesheet" href="lib/tabler-icons.min.css">
   <script src="lib/qrcode.min.js" defer></script>
   <script src="lib/zxing.min.js" defer></script>
@@ -1918,12 +1921,12 @@
 
 </div><!-- /#app-viewport -->
 
-<script src="app.js?v=20261126-v170" defer></script>
+<script src="app.js?v=20261126-v171" defer></script>
 <script src="scanner-core.js?v=20261107-v160" defer></script>
 <script src="quetqr.js?v=20261126-v170" defer></script>
 <script src="kiemke.js?v=20261125-v169" defer></script>
-<script src="cx1.js?v=20261126-v170" defer></script>
-<script src="cx5.js?v=20261125-v169" defer></script>
+<script src="cx1.js?v=20261126-v171" defer></script>
+<script src="cx5.js?v=20261126-v171" defer></script>
 <script src="btp.js?v=20261107-v160" defer></script>
 <script src="tp.js?v=20261125-v169" defer></script>
 <script src="tonkho.js?v=20261125-v169" defer></script>
@@ -1991,26 +1994,30 @@
     const htmlEl = document.documentElement;
 
     const danhSachThemes = [
-      { id: 'dark', ten: 'Giao diện Tối (Dark)', moTa: 'Nền than chì tối giản & dịu mắt khi quét ca đêm', bg: '#0f172a', accent: '#3b82f6', icon: 'ti-moon', metaColor: '#0f172a' },
-      { id: 'light', ten: 'Giao diện Sáng (Light)', moTa: 'Nền xám sáng đồng bộ, tương phản rõ ngoài trời', bg: '#e8ecf1', accent: '#2563eb', icon: 'ti-sun', metaColor: '#e8ecf1' }
+      { id: 'dark', baseTheme: 'dark',  skin: 'dark', ten: 'Tối Mặc Định (Dark)',       moTa: 'Nền tối dịu mắt, tiết kiệm pin AMOLED',              bg: '#0b1415', accent: '#5eead4', icon: 'ti-moon',      metaColor: '#0b1415' },
+      { id: 'pa2',  baseTheme: 'light', skin: 'pa2',  ten: 'PA2 — Xanh Dương Sáng',     moTa: 'Sáng sạch, tương phản cao ngoài trời',               bg: '#f8fafc', accent: '#0284c7', icon: 'ti-sun',       metaColor: '#f8fafc' },
+      { id: 'pa5',  baseTheme: 'light', skin: 'pa5',  ten: 'PA5 — Hoàng Hôn Nhiệt Đới', moTa: 'Cam San Hô chuyển Hồng Đào rực rỡ',                  bg: '#fffbf7', accent: 'linear-gradient(135deg,#f97316,#ec4899)', icon: 'ti-flame', metaColor: '#fffbf7' },
+      { id: 'pa7',  baseTheme: 'light', skin: 'pa7',  ten: 'PA7 — Neo-Brutalism Pop',   moTa: 'Viền đen đậm, bóng cứng, vàng chanh siêu nét',       bg: '#fffdf0', accent: '#fde047', icon: 'ti-bolt',      metaColor: '#fffdf0' },
+      { id: 'pa8',  baseTheme: 'light', skin: 'pa8',  ten: 'PA8 — Liquid Glass Cầu Vồng', moTa: 'Nền lăng kính pastel + thẻ kính mờ bóng',          bg: '#f0f9ff', accent: 'linear-gradient(135deg,#0ea5e9,#a855f7)', icon: 'ti-sparkles', metaColor: '#f8fafc' },
+      { id: 'pa9',  baseTheme: 'light', skin: 'pa9',  ten: 'PA9 — Industrial Neon',     moTa: 'Lưới kỹ thuật + Vàng Chanh Neon + Cam An Toàn',      bg: '#f3f3ee', accent: '#ff5500', icon: 'ti-cpu',       metaColor: '#f3f3ee' },
+      { id: 'pa10', baseTheme: 'light', skin: 'pa10', ten: 'PA10 — Holographic 7 Sắc',  moTa: 'Viền cầu vồng + nút phủ Hologram chuyển màu',        bg: '#f5f7fc', accent: 'linear-gradient(125deg,#ff6bcb,#f8f970,#38bdf8)', icon: 'ti-rainbow', metaColor: '#f5f7fc' },
+      { id: 'pa11', baseTheme: 'light', skin: 'pa11', ten: 'PA11 — Claymorphism 3D',    moTa: 'Thẻ & nút phồng nổi khối 3D mềm mịn',                bg: '#eef4ff', accent: 'linear-gradient(135deg,#38bdf8,#6366f1)', icon: 'ti-box', metaColor: '#eef4ff' },
+      { id: 'pa12', baseTheme: 'light', skin: 'pa12', ten: 'PA12 — Mecha Sci-Fi HUD',   moTa: 'Góc vát chéo 45°, vạch laser Hồng – Cyan',           bg: '#f5f8fc', accent: 'linear-gradient(135deg,#00b4d8,#ff2a85)', icon: 'ti-rocket', metaColor: '#f5f8fc' }
     ];
 
     function layThemeHienTai() {
-      const cur = htmlEl.getAttribute('data-theme') || 'dark';
-      return danhSachThemes.find(t => t.id === cur) || danhSachThemes[0];
+      const curBase = htmlEl.getAttribute('data-theme') || 'dark';
+      const curSkin = htmlEl.getAttribute('data-skin') || (curBase === 'dark' ? 'dark' : 'pa2');
+      if (curBase === 'dark') return danhSachThemes[0];
+      return danhSachThemes.find(t => t.id === curSkin) || danhSachThemes[1];
     }
-    
-    let isThemeToggling = false;
 
     function capNhatIconTheme() {
       const cur = layThemeHienTai();
       if (btnTheme) {
-        // Icon biểu thị hành động tiếp theo: Đang ở tối thì hiện Mặt trời để sang Sáng, đang ở sáng thì hiện Mặt trăng để sang Tối
-        const iconTiepTheo = cur.id === 'dark' ? 'ti-sun' : 'ti-moon';
-        const tenTiepTheo = cur.id === 'dark' ? 'Sáng' : 'Tối';
-        btnTheme.innerHTML = `<i class="ti ${iconTiepTheo}"></i>`;
-        btnTheme.title = `Đang dùng: ${cur.ten} — Bấm để đổi sang giao diện ${tenTiepTheo}`;
-        btnTheme.setAttribute('aria-label', `Giao diện hiện tại: ${cur.ten}. Bấm để chuyển sang ${tenTiepTheo}.`);
+        btnTheme.innerHTML = `<i class="ti ti-palette"></i>`;
+        btnTheme.title = `Đang dùng: ${cur.ten} — Bấm để chọn giao diện`;
+        btnTheme.setAttribute('aria-label', `Giao diện hiện tại: ${cur.ten}. Bấm để mở menu chọn giao diện.`);
       }
       const metaTheme = document.getElementById('meta-theme-color') || document.querySelector('meta[name="theme-color"]');
       if (metaTheme) {
@@ -2022,20 +2029,7 @@
     window.chuyenThemeSangToi = function(e) {
       if (e && e.preventDefault) e.preventDefault();
       if (e && e.stopPropagation) e.stopPropagation();
-      if (isThemeToggling) return;
-      isThemeToggling = true;
-      setTimeout(() => { isThemeToggling = false; }, 350);
-
-      const cur = htmlEl.getAttribute('data-theme') || 'dark';
-      const nextTheme = (cur === 'dark') ? 'light' : 'dark';
-      htmlEl.setAttribute('data-theme', nextTheme);
-      try {
-        localStorage.setItem('user_theme', nextTheme);
-      } catch (err) {}
-      capNhatIconTheme();
-      if (navigator.vibrate) {
-        try { navigator.vibrate(12); } catch (err) {}
-      }
+      window.moModalTheme();
     };
 
     function renderDanhSachTheme() {
@@ -2085,15 +2079,18 @@
     };
 
     window.chonTheme = function(themeId) {
-      htmlEl.setAttribute('data-theme', themeId);
+      const target = danhSachThemes.find(t => t.id === themeId) || danhSachThemes[0];
+      htmlEl.setAttribute('data-theme', target.baseTheme);
+      htmlEl.setAttribute('data-skin', target.skin);
       try {
-        localStorage.setItem('user_theme', themeId);
+        localStorage.setItem('user_theme', target.baseTheme);
+        localStorage.setItem('user_skin', target.skin);
       } catch (e) {}
       capNhatIconTheme();
       if (navigator.vibrate) navigator.vibrate(15);
       
       document.querySelectorAll('.theme-item-card').forEach(el => {
-        if (el.getAttribute('data-theme-id') === themeId) el.classList.add('active');
+        if (el.getAttribute('data-theme-id') === target.id) el.classList.add('active');
         else el.classList.remove('active');
       });
 

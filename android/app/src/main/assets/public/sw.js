@@ -13,11 +13,12 @@ if (laCapacitorNative) {
   });
 } else {
   // Logic Service Worker dành riêng cho Web PWA (GitHub Pages)
-  const CACHE_NAME = 'kho-cache-v170';
+  const CACHE_NAME = 'kho-cache-v171';
   const urlsToCache = [
   './',
   './index.html',
   './style.css',
+  './themes.css',
   './app.js',
   './scanner-core.js',
   './quetqr.js',

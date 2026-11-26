@@ -4,6 +4,7 @@ const path = require('path');
 const filesToCopy = [
   'index.html',
   'style.css',
+  'themes.css',
   'app.js',
   'scanner-core.js',
   'quetqr.js',
