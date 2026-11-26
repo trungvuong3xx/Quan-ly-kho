@@ -128,4 +128,88 @@ function kiemTraQuyTacBuild() {
 }
 kiemTraQuyTacBuild();
 
+// ── KIỂM TRA TỰ ĐỘNG TƯƠNG PHẢN WCAG 2.1 CHO HỆ THỐNG THEME (P3.1) ──────────
+function kiemTraTuongPhanTheme() {
+  const stylePath = path.join(__dirname, 'style.css');
+  const themesPath = path.join(__dirname, 'themes.css');
+  if (!fs.existsSync(stylePath) || !fs.existsSync(themesPath)) return;
+
+  const styleCss = fs.readFileSync(stylePath, 'utf8');
+  const themesCss = fs.readFileSync(themesPath, 'utf8');
+
+  if (themesCss.includes('.bnav-btn')) {
+    console.error('\n❌ LỖI THEME: Phát hiện selector cũ `.bnav-btn` trong themes.css (phải dùng `.nav-item`)!\n');
+    process.exit(1);
+  }
+
+  function hexToRgb(hex) {
+    if (!hex || !hex.startsWith('#')) return null;
+    let h = hex.slice(1).trim();
+    if (h.length === 3) h = h.split('').map(c => c + c).join('');
+    if (h.length !== 6) return null;
+    return [parseInt(h.slice(0, 2), 16), parseInt(h.slice(2, 4), 16), parseInt(h.slice(4, 6), 16)];
+  }
+  function lum([r, g, b]) {
+    const a = [r, g, b].map(v => {
+      v /= 255;
+      return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
+    });
+    return 0.2126 * a[0] + 0.7152 * a[1] + 0.0722 * a[2];
+  }
+  function contrast(h1, h2) {
+    const c1 = hexToRgb(h1), c2 = hexToRgb(h2);
+    if (!c1 || !c2) return null;
+    const l1 = lum(c1), l2 = lum(c2);
+    return (Math.max(l1, l2) + 0.05) / (Math.min(l1, l2) + 0.05);
+  }
+  function parseVars(txt, base = {}) {
+    const out = { ...base };
+    for (const m of txt.matchAll(/(--[a-z0-9-]+)\s*:\s*([^;]+);/gi)) {
+      out[m[1]] = m[2].trim();
+    }
+    return out;
+  }
+
+  const lightMatch = styleCss.match(/:root,\s*\[data-theme="light"\]\s*\{([\s\S]*?)\n\}/);
+  const darkMatch = styleCss.match(/\[data-theme="dark"\]\s*\{([\s\S]*?)\n\}/);
+  if (!lightMatch || !darkMatch) return;
+
+  const lightBase = parseVars(lightMatch[1]);
+  const allThemes = { dark: parseVars(darkMatch[1], lightBase) };
+  for (const m of themesCss.matchAll(/html\[data-theme="light"\]\[data-skin="([^"]+)"\]\s*\{([\s\S]*?)\n\}/g)) {
+    allThemes[m[1]] = parseVars(m[2], lightBase);
+  }
+
+  const errors = [];
+  for (const [name, v] of Object.entries(allThemes)) {
+    const bg = v['--bg-body'] && v['--bg-body'].startsWith('#') ? v['--bg-body'] : '#f8fafc';
+    const surf = v['--surface'] && v['--surface'].startsWith('#') ? v['--surface'] : '#ffffff';
+
+    const rMain = contrast(v['--text-main'], bg);
+    if (rMain !== null && rMain < 4.5) {
+      errors.push(`[${name}] text-main/bg-body = ${rMain.toFixed(2)}:1 (< 4.5:1)`);
+    }
+    const rMuted = contrast(v['--text-muted'], surf);
+    if (rMuted !== null && rMuted < 4.5) {
+      errors.push(`[${name}] text-muted/surface = ${rMuted.toFixed(2)}:1 (< 4.5:1)`);
+    }
+    const rBtn = contrast(v['--on-primary'], v['--primary-solid']);
+    if (rBtn !== null && rBtn < 3.0) {
+      errors.push(`[${name}] on-primary/primary-solid = ${rBtn.toFixed(2)}:1 (< 3.0:1)`);
+    }
+    const rSoft = contrast(v['--primary-text'], v['--primary-soft']);
+    if (rSoft !== null && rSoft < 4.0) {
+      errors.push(`[${name}] primary-text/primary-soft = ${rSoft.toFixed(2)}:1 (< 4.0:1)`);
+    }
+  }
+
+  if (errors.length > 0) {
+    console.error('\n❌ LỖI TƯƠNG PHẢN WCAG THEME:');
+    errors.forEach(e => console.error('  - ' + e));
+    process.exit(1);
+  }
+  console.log(`✅ Kiểm tra tương phản WCAG 2.1 (${Object.keys(allThemes).length} theme): ĐẠT CHUẨN 100%.`);
+}
+kiemTraTuongPhanTheme();
+
 
