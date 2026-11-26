@@ -2906,7 +2906,7 @@ let soLanBoQuaSaoLuuGiam = 0; // số lần liên tiếp bỏ qua sao lưu vì l
     } else if (loai === "warning") {
       el.style.color = "var(--warning)";
     } else if (loai === "info") {
-      el.style.color = "var(--accent-blue, #3b82f6)";
+      el.style.color = "var(--primary-text)";
     } else {
       el.style.color = "var(--text-muted)";
     }

@@ -130,11 +130,11 @@ function renderDropdownQR() {
     return;
   }
   const tieuDe = dangHienGoiYQR
-    ? '<div class="cx5-dropdown-title" style="padding:6px 10px; font-size:11px; font-weight:700; color:#64748b; border-bottom:1px solid #e2e8f0; text-transform:uppercase;">Gợi ý quy cách thường dùng</div>'
+    ? '<div class="cx5-dropdown-title" style="padding:6px 10px; font-size:11px; font-weight:700; color:var(--text-muted); border-bottom:1px solid var(--border-card); text-transform:uppercase;">Gợi ý quy cách thường dùng</div>'
     : "";
   el.innerHTML = tieuDe + filteredQR.map((item, idx) => {
     const tenEsc = (typeof escapeHtml === "function") ? escapeHtml(item.ten) : item.ten;
-    return '<div class="cx5-dropdown-item' + (idx === activeIndexQR ? " active" : "") + '" data-idx="' + idx + '" style="padding:10px 12px; cursor:pointer; border-bottom:1px solid #f1f5f9; font-size:14px; font-weight:600; color:#0f172a;">' + tenEsc + '</div>';
+    return '<div class="cx5-dropdown-item' + (idx === activeIndexQR ? " active" : "") + '" data-idx="' + idx + '" style="padding:10px 12px; cursor:pointer; border-bottom:1px solid var(--border-card); font-size:14px; font-weight:600; color:var(--text-main);">' + tenEsc + '</div>';
   }).join("");
   el.style.display = "block";
   el.classList.add("open");

@@ -89,13 +89,13 @@ function capNhatGiaoDienTheoLoaiCX5() {
   if (badge) {
     badge.textContent = layNhanLoaiCX5(loaiCX5);
     if (isXuat) {
-      badge.style.background = "rgba(245,158,11,0.14)";
-      badge.style.color = "#f59e0b";
-      badge.style.borderColor = "rgba(245,158,11,0.35)";
+      badge.style.background = "var(--brass-bg)";
+      badge.style.color = "var(--warning-text)";
+      badge.style.borderColor = "var(--warning)";
     } else {
-      badge.style.background = "rgba(59,130,246,0.12)";
-      badge.style.color = "#60a5fa";
-      badge.style.borderColor = "rgba(59,130,246,0.3)";
+      badge.style.background = "var(--primary-soft)";
+      badge.style.color = "var(--primary-text)";
+      badge.style.borderColor = "var(--border-strong)";
     }
   }
   const ghichuWrap = document.getElementById("cx5-ghichu-wrap");
@@ -2369,9 +2369,9 @@ function renderTongKgCX5() {
 
   let bannerHtml = "";
   if (dangTaiUngVienCX5) {
-    bannerHtml = '<div style="display:flex;align-items:center;gap:8px;padding:8px 12px;background:rgba(59,130,246,0.12);border-radius:8px;color:#60a5fa;font-size:13px;margin-bottom:12px;"><i class="ti ti-loader spin"></i> Đang tìm ứng viên ngày cũ từ Sheet...</div>';
+    bannerHtml = '<div style="display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--primary-soft);border-radius:8px;color:var(--primary-text);font-size:13px;margin-bottom:12px;"><i class="ti ti-loader spin"></i> Đang tìm ứng viên ngày cũ từ Sheet...</div>';
   } else if (loiTaiUngVienCX5) {
-    bannerHtml = '<div style="display:flex;align-items:center;gap:8px;padding:8px 12px;background:rgba(239,68,68,0.12);border-radius:8px;color:#f87171;font-size:13px;margin-bottom:12px;line-height:1.4;"><i class="ti ti-cloud-off" style="font-size:18px"></i> Lỗi kết nối máy chủ: 4G bị chặn hoặc đang ngoại tuyến. (Vuốt tắt app mở lại hoặc dùng Wi-Fi)</div>';
+    bannerHtml = '<div style="display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--danger-soft);border-radius:8px;color:var(--danger);font-size:13px;margin-bottom:12px;line-height:1.4;"><i class="ti ti-cloud-off" style="font-size:18px"></i> Lỗi kết nối máy chủ: 4G bị chặn hoặc đang ngoại tuyến. (Vuốt tắt app mở lại hoặc dùng Wi-Fi)</div>';
   }
 
   const html = keys.map(function (key) {
