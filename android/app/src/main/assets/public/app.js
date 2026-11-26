@@ -2497,7 +2497,8 @@ const BACKUP_KEYS = [
   "kk_pending_saves",
   "tk_freq",
   "camera_uu_tien",
-  "user_theme"
+  "user_theme",
+  "user_skin"
 ];
 
 function chuoiSangBase64Utf8(str) {
@@ -2659,7 +2660,7 @@ function xuLyFilePhucHoiDuLieu(event) {
         if (!key || typeof key !== "string") return false;
         if (/^(cx1|cx5|btp|tp|qr|quetqr|kk|app)_/.test(key)) return true;
         const validExactKeys = [
-          "user_theme", "tenNhanVien", "ten_nguoi_dung", "camera_uu_tien",
+          "user_theme", "user_skin", "tenNhanVien", "ten_nguoi_dung", "camera_uu_tien",
           "kho_tong_hop", "last_auto_backup_hash", "last_auto_backup_time"
         ];
         return validExactKeys.includes(key);
