@@ -144,7 +144,20 @@ function quayVeFormCX5() {
 window.quayVeFormCX5 = quayVeFormCX5;
 
 async function callApiCX5(body) {
-  const res = await fetch(API_CX5, { method: "POST", body: JSON.stringify(body) });
+  const endpoint = (window.APP_CONFIG && window.APP_CONFIG.ENDPOINTS && window.APP_CONFIG.ENDPOINTS.TON_KHO_CX5) || API_CX5;
+  const payloadBody = Object.assign({}, body);
+  if (!payloadBody.appToken && window.APP_CONFIG && typeof window.APP_CONFIG.getAppToken === "function") {
+    payloadBody.appToken = window.APP_CONFIG.getAppToken();
+  }
+  if (!payloadBody.nguoiThaoTac && window.APP_CONFIG && typeof window.APP_CONFIG.getNguoiThaoTac === "function") {
+    payloadBody.nguoiThaoTac = window.APP_CONFIG.getNguoiThaoTac();
+  }
+  if (!payloadBody.requestId && payloadBody.action && /^(submitEntryX5|batchSubmitEntryX5|ghiGhepCX5|xoaUngVienGhepCX5|danhDauXuatLSC5)$/.test(payloadBody.action)) {
+    payloadBody.requestId = (window.ScannerCore && typeof window.ScannerCore.taoRequestId === "function")
+      ? window.ScannerCore.taoRequestId("cx5_" + payloadBody.action)
+      : ("cx5_" + Date.now());
+  }
+  const res = await fetch(endpoint, { method: "POST", body: JSON.stringify(payloadBody) });
   const text = await res.text();
   try {
     return JSON.parse(text);

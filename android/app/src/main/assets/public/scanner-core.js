@@ -657,6 +657,43 @@
     return copyOk;
   }
 
+  // ── 6. Bảo vệ Excel Formula Injection, Idempotency & Cảnh báo quét bất thường ──
+  function anToanCongThucExcel(val) {
+    if (val === null || val === undefined) return "";
+    if (typeof val === "number" || typeof val === "boolean") return val;
+    const str = String(val);
+    if (/^[=+\-@\t\r]/.test(str)) {
+      return "'" + str;
+    }
+    return str;
+  }
+
+  function taoRequestId(prefix) {
+    const p = String(prefix || "req").replace(/[^a-zA-Z0-9_-]/g, "");
+    const rand = Math.random().toString(36).slice(2, 8);
+    return p + "_" + Date.now() + "_" + rand;
+  }
+
+  function kiemTraBatThuongKhiQuet(item) {
+    if (!item || typeof item !== "object") return null;
+    const kg = Number(item.kg);
+    if (!Number.isNaN(kg) && kg > 150) {
+      return "⚠️ Trọng lượng bất thường (" + kg + " kg) — vui lòng kiểm tra lại tem QR!";
+    }
+    return null;
+  }
+
+  function taoBoKhoaChongBamDup(delayMs) {
+    const ms = typeof delayMs === "number" && delayMs > 0 ? delayMs : 300;
+    let lastAt = 0;
+    return function () {
+      const now = Date.now();
+      if (now - lastAt < ms) return false;
+      lastAt = now;
+      return true;
+    };
+  }
+
   window.ScannerCore = {
     HISTORY_KEYS,
     initHistoryDB,
@@ -675,6 +712,10 @@
     docPending,
     luuPending,
     hienVienFeedback,
-    saoChepMaQR
+    saoChepMaQR,
+    anToanCongThucExcel,
+    taoRequestId,
+    kiemTraBatThuongKhiQuet,
+    taoBoKhoaChongBamDup
   };
-})(window);
+})(typeof window !== 'undefined' ? window : globalThis);

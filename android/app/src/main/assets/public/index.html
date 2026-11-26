@@ -33,7 +33,7 @@
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap" media="print" onload="this.media='all'">
   <link rel="stylesheet" href="style.css?v=20261126-v176">
   <link rel="stylesheet" href="themes.css?v=20261126-v176">
   <link rel="stylesheet" href="lib/tabler-icons.min.css">
@@ -198,7 +198,7 @@
 <!-- Glass Header -->
 <div class="header" id="header" style="display:flex;">
   <div class="header-left">
-    <div class="header-greeting" id="header-greeting">Xin chào, Admin</div>
+    <div class="header-greeting" id="header-greeting" onclick="doiTenNhanVien()" title="Chạm để đổi tên nhân viên" style="cursor:pointer;">Xin chào, Admin</div>
     <div class="title" id="header-title">Trung Vương</div>
   </div>
   <div class="header-right" style="display:flex; gap:8px; align-items:center;">
@@ -1921,14 +1921,15 @@
 
 </div><!-- /#app-viewport -->
 
-<script src="app.js?v=20261126-v176" defer></script>
-<script src="scanner-core.js?v=20261107-v160" defer></script>
-<script src="quetqr.js?v=20261126-v177" defer></script>
+<script src="config.js?v=20261126-v178" defer></script>
+<script src="app.js?v=20261126-v178" defer></script>
+<script src="scanner-core.js?v=20261126-v178" defer></script>
+<script src="quetqr.js?v=20261126-v178" defer></script>
 <script src="kiemke.js?v=20261125-v169" defer></script>
-<script src="cx1.js?v=20261126-v176" defer></script>
-<script src="cx5.js?v=20261126-v173" defer></script>
-<script src="btp.js?v=20261126-v177" defer></script>
-<script src="tp.js?v=20261126-v177" defer></script>
+<script src="cx1.js?v=20261126-v178" defer></script>
+<script src="cx5.js?v=20261126-v178" defer></script>
+<script src="btp.js?v=20261126-v178" defer></script>
+<script src="tp.js?v=20261126-v178" defer></script>
 <script src="tonkho.js?v=20261125-v169" defer></script>
 
 <!-- BOTTOM SHEET MODAL LỊCH SỬ -->
@@ -1984,6 +1985,29 @@
       const el = document.getElementById('header-greeting');
       if (el) el.textContent = `${greeting}, ${userName}`;
     }
+    window.doiTenNhanVien = function () {
+      const hienTai = (window.APP_CONFIG && typeof window.APP_CONFIG.getNguoiThaoTac === 'function')
+        ? window.APP_CONFIG.getNguoiThaoTac()
+        : (localStorage.getItem('tenNhanVien') || 'Admin');
+      if (typeof moPromptApp === 'function') {
+        moPromptApp(
+          'Nhập tên nhân viên / ca làm việc để ghi nhận thao tác:',
+          hienTai,
+          'Ví dụ: Nguyễn Văn A',
+          function (tenMoi) {
+            const clean = String(tenMoi || '').trim();
+            if (!clean) return;
+            try {
+              localStorage.setItem('tenNhanVien', clean);
+              localStorage.setItem('ten_nguoi_dung', clean);
+            } catch (e) {}
+            updateGreeting();
+            if (typeof showCanhBao === 'function') showCanhBao('Đã cập nhật nhân viên: ' + clean, 'success');
+          },
+          'Đổi tên nhân viên'
+        );
+      }
+    };
     updateGreeting();
     setInterval(updateGreeting, 60000);
     document.addEventListener('visibilitychange', () => {

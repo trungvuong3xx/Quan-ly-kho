@@ -544,25 +544,52 @@ function danhDauXuatCX1(payload) {
   }
 }
 
+function kiemTraTokenTuyChonQR_(body) {
+  try {
+    const requiredToken = PropertiesService.getScriptProperties().getProperty("APP_API_TOKEN");
+    if (!requiredToken) return true; // Tương thích ngược: chưa cấu hình token thì cho qua
+    return body && body.appToken === requiredToken;
+  } catch (e) {
+    return true;
+  }
+}
+
 function doPost(e) {
   try {
     if (!e || !e.postData || !e.postData.contents) {
       return reply({ error: "Dữ liệu gửi lên trống" });
     }
     const body = JSON.parse(e.postData.contents);
+    if (!kiemTraTokenTuyChonQR_(body)) {
+      return reply({ error: "Thiếu hoặc sai mã xác thực truy cập (appToken)" });
+    }
     const action = body.action;
 
+    // Chống ghi trùng (Idempotency) trong 10 phút khi mạng 4G chập chờn gây gửi lại
+    const isMutating = action === "luuKiemKe" || action === "luuCX1" || action === "danhDauXuatCX1" || action === "luuGiaoDich";
+    const reqId = (isMutating && body.requestId) ? ("idem_qr_" + String(body.requestId).slice(0, 80)) : "";
+    let cache = null;
+    if (reqId) {
+      try {
+        cache = CacheService.getScriptCache();
+        const cached = cache.get(reqId);
+        if (cached) {
+          return ContentService.createTextOutput(cached).setMimeType(ContentService.MimeType.JSON);
+        }
+      } catch (eCache) { cache = null; }
+    }
+
+    let resObj = null;
     if (action === "layDanhSachQC") return reply(layDanhSachQC());
     if (action === "getInfo") return reply(getInfo(body.msp));
     if (action === "taoNhieuID") return reply(taoNhieuID(body.soLuong));
     if (action === "kiemTraQR") return reply(kiemTraQR(body.id, body.msp, body.loai));
-    if (action === "luuKiemKe") return reply(luuKiemKe(body.data));
-    if (action === "luuCX1") return reply(luuCX1(body.data));
-    if (action === "layTonChuaXuatCX1") return reply(layTonChuaXuatCX1(body.payload));
-    if (action === "danhDauXuatCX1") return reply(danhDauXuatCX1(body.payload));
-
-    if (action === "luuGiaoDich") {
-      return reply(luuGiaoDich(
+    if (action === "luuKiemKe") resObj = luuKiemKe(body.data);
+    else if (action === "luuCX1") resObj = luuCX1(body.data);
+    else if (action === "layTonChuaXuatCX1") return reply(layTonChuaXuatCX1(body.payload));
+    else if (action === "danhDauXuatCX1") resObj = danhDauXuatCX1(body.payload);
+    else if (action === "luuGiaoDich") {
+      resObj = luuGiaoDich(
         body.id,
         body.msp,
         body.ten,
@@ -571,10 +598,15 @@ function doPost(e) {
         body.loai,
         body.kg,
         body.thoiGian // Nhận thêm thời gian truyền từ app
-      ));
+      );
+    } else {
+      return reply({ error: "Không rõ action" });
     }
 
-    return reply({ error: "Không rõ action" });
+    if (reqId && cache && resObj && !resObj.error) {
+      try { cache.put(reqId, JSON.stringify(resObj), 600); } catch (ePut) {}
+    }
+    return reply(resObj);
   } catch (err) {
     return reply({ error: "Lỗi xử lý request: " + err.message });
   }

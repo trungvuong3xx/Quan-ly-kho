@@ -116,7 +116,19 @@ function exportToExcel(filename, sheetName, dataArray, options) {
         return;
       }
 
-      const ws = XLSX.utils.json_to_sheet(dataArray);
+      // Chống Excel Formula Injection (=, +, -, @) đồng bộ toàn bộ app
+      const safeData = (window.ScannerCore && typeof window.ScannerCore.anToanCongThucExcel === "function" && Array.isArray(dataArray))
+        ? dataArray.map(row => {
+            if (!row || typeof row !== "object") return row;
+            const out = {};
+            for (const [k, v] of Object.entries(row)) {
+              out[k] = window.ScannerCore.anToanCongThucExcel(v);
+            }
+            return out;
+          })
+        : dataArray;
+
+      const ws = XLSX.utils.json_to_sheet(safeData);
 
       // Tự động căn chỉnh độ rộng cột chuẩn đẹp
       if (dataArray.length > 0) {

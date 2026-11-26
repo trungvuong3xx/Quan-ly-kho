@@ -173,6 +173,10 @@ function khiQuetDuocMa(result) {
   document.getElementById("cx1-dem").textContent = "Đã quét: " + phienCX1.length + " mã";
   luuPhienDoDangCX1Debounced();
   capNhatLogCX1();
+  if (window.ScannerCore && typeof window.ScannerCore.kiemTraBatThuongKhiQuet === "function") {
+    const canhBaoLa = window.ScannerCore.kiemTraBatThuongKhiQuet({ kg: data.kg });
+    if (canhBaoLa && typeof showCanhBaoCX1 === "function") showCanhBaoCX1(canhBaoLa, "warning");
+  }
 }
 
 let _timerLuuPhienCX1 = null;
@@ -411,14 +415,19 @@ function luuPendingCX1(list) {
 }
 
 async function guiLenSheetCX1(rows, timeoutMs = 30000) {
-  const URL_API = "https://script.google.com/macros/s/AKfycbzk7afcuHDOTnL6QSIQ0ZgT-CSiIDNZ8h5S8_IkGXahc7PQRvqZKpLpjkBphioXAyzDKQ/exec";
+  const URL_API = (window.APP_CONFIG && window.APP_CONFIG.ENDPOINTS && window.APP_CONFIG.ENDPOINTS.CX1_CX5_QR)
+    || "https://script.google.com/macros/s/AKfycbzk7afcuHDOTnL6QSIQ0ZgT-CSiIDNZ8h5S8_IkGXahc7PQRvqZKpLpjkBphioXAyzDKQ/exec";
+  const appToken = (window.APP_CONFIG && typeof window.APP_CONFIG.getAppToken === "function") ? window.APP_CONFIG.getAppToken() : "";
+  const nguoiThaoTac = (window.APP_CONFIG && typeof window.APP_CONFIG.getNguoiThaoTac === "function") ? window.APP_CONFIG.getNguoiThaoTac() : "Admin";
+  const firstRow = Array.isArray(rows) && rows.length > 0 ? rows[0] : null;
+  const reqId = "cx1_" + (firstRow ? (firstRow.id || "") + "_" + (firstRow.thoiGian || "") : Date.now()) + "_" + (Array.isArray(rows) ? rows.length : 0);
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   try {
     const res = await fetch(URL_API, {
       method: "POST",
       headers: { "Content-Type": "text/plain;charset=utf-8" },
-      body: JSON.stringify({ action: "luuCX1", data: rows }),
+      body: JSON.stringify({ action: "luuCX1", requestId: reqId, appToken: appToken, nguoiThaoTac: nguoiThaoTac, data: rows }),
       signal: controller.signal
     });
     clearTimeout(timer);

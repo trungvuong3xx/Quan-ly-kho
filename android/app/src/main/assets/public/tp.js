@@ -55,13 +55,13 @@ function anToanHtmlTP(str) {
     .replace(/'/g, "&#039;");
 }
 
-function anToanCongThucExcel(str) {
+function anToanExcelTP_(str) {
+  if (window.ScannerCore && typeof window.ScannerCore.anToanCongThucExcel === "function") {
+    return window.ScannerCore.anToanCongThucExcel(str);
+  }
   if (str === null || str === undefined) return "";
   const s = String(str);
-  if (/^[=+\-@\t\r]/.test(s)) {
-    return "'" + s;
-  }
-  return s;
+  return /^[=+\-@\t\r]/.test(s) ? "'" + s : s;
 }
 
 // ── Xử lý số khối lượng chính xác (parseKgTP & formatKgTP) ──
@@ -1417,7 +1417,7 @@ async function xuatExcelTP() {
 
   const data = phienTP.map(r => ({
     "Thời gian": r.thoiGian || "",
-    "Mã QR Gốc": anToanCongThucExcel(r.rawQR)
+    "Mã QR Gốc": anToanExcelTP_(r.rawQR)
   }));
 
   const now = new Date();
@@ -1464,7 +1464,7 @@ async function xuatExcelPhienLichSuTP(idPhien) {
 
   const data = sessionBefore.phienTP.map(r => ({
     "Thời gian": r.thoiGian || "",
-    "Mã QR Gốc": anToanCongThucExcel(r.rawQR)
+    "Mã QR Gốc": anToanExcelTP_(r.rawQR)
   }));
 
   const now = new Date();
@@ -1528,7 +1528,7 @@ async function xuatExcelTatCaLichSuTP() {
 
   const data = allItems.map(r => ({
     "Thời gian": r.thoiGian || "",
-    "Mã QR Gốc": anToanCongThucExcel(r.rawQR)
+    "Mã QR Gốc": anToanExcelTP_(r.rawQR)
   }));
 
   const now = new Date();

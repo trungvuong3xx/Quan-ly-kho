@@ -39,10 +39,49 @@ const LOAI_RULES = {
   XUAT_FOR:     { offset: 6, suffix: 0, dynamicVung: true }
 };
 
+const MUTATING_ACTIONS_CX5_ = {
+  submitEntryX5: true,
+  batchSubmitEntryX5: true,
+  ghiGhepCX5: true,
+  xoaUngVienGhepCX5: true,
+  danhDauXuatLSC5: true
+};
+
+function kiemTraTokenTuyChonCX5_(body) {
+  try {
+    const requiredToken = PropertiesService.getScriptProperties().getProperty('APP_API_TOKEN');
+    if (!requiredToken) return true; // Tương thích ngược: chưa cấu hình token thì cho qua
+    return body && body.appToken === requiredToken;
+  } catch (e) {
+    return true;
+  }
+}
+
 function doPost(e) {
   let result;
   try {
     const body = JSON.parse(e.postData.contents);
+    if (!kiemTraTokenTuyChonCX5_(body)) {
+      return ContentService.createTextOutput(JSON.stringify({
+        success: false,
+        message: "Thiếu hoặc sai mã xác thực truy cập (appToken)"
+      })).setMimeType(ContentService.MimeType.JSON);
+    }
+
+    // Chống ghi trùng (Idempotency) trong 10 phút khi client gửi lại do timeout 4G
+    const isMutating = !!MUTATING_ACTIONS_CX5_[body.action];
+    const reqId = (isMutating && body.requestId) ? ("idem_cx5_" + String(body.requestId).slice(0, 80)) : "";
+    let cache = null;
+    if (reqId) {
+      try {
+        cache = CacheService.getScriptCache();
+        const cached = cache.get(reqId);
+        if (cached) {
+          return ContentService.createTextOutput(cached).setMimeType(ContentService.MimeType.JSON);
+        }
+      } catch (eCache) { cache = null; }
+    }
+
     switch (body.action) {
       case "khoiTaoForm":
         result = khoiTaoForm(body.dateStr, body.forceRefresh);
@@ -79,6 +118,10 @@ function doPost(e) {
         break;
       default:
         result = { success: false, message: "Action không hợp lệ: " + body.action };
+    }
+
+    if (reqId && cache && result && result.success !== false && !result.error) {
+      try { cache.put(reqId, JSON.stringify(result), 600); } catch (ePut) {}
     }
   } catch (err) {
     result = { success: false, message: "Lỗi server: " + err.message };

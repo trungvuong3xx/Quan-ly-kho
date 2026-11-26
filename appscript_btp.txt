@@ -41,7 +41,15 @@ function chayTongHopBTPKhoang() {
 }
 
 function tongHopBTP() {
-  chayTongHopBTP();
+  var lock = LockService.getDocumentLock();
+  if (!lock.tryLock(15000)) {
+    throw new Error("Hệ thống đang tổng hợp BTP từ phiên khác, vui lòng thử lại sau vài giây.");
+  }
+  try {
+    chayTongHopBTP();
+  } finally {
+    lock.releaseLock();
+  }
 }
 
 // Tách số mắt (sau chữ "x" thứ 2) và chiều dài từ chuỗi quy cách QC

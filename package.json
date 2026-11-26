@@ -6,7 +6,7 @@
   "scripts": {
     "build": "node build-web.js",
     "build:gas": "node scripts/bundle-gas-cx5.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "node scripts/test-core.js"
   },
   "keywords": [],
   "author": "",

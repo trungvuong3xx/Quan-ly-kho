@@ -370,6 +370,10 @@ function themMaNhapTayQR() {
   if (typeof phatTiengBip === "function") phatTiengBip();
   luuPhienDoDangQRDebounced();
   capNhatLogQR();
+  if (window.ScannerCore && typeof window.ScannerCore.kiemTraBatThuongKhiQuet === "function") {
+    const canhBaoLa = window.ScannerCore.kiemTraBatThuongKhiQuet({ kg: kg });
+    if (canhBaoLa && typeof showCanhBaoQR === "function") showCanhBaoQR(canhBaoLa, "warning");
+  }
 
   if (kgInput) {
     kgInput.value = "";
@@ -599,6 +603,10 @@ function khiQuetDuocMaQR(result) {
 
   luuPhienDoDangQRDebounced();
   capNhatLogQR();
+  if (window.ScannerCore && typeof window.ScannerCore.kiemTraBatThuongKhiQuet === "function") {
+    const canhBaoLa = window.ScannerCore.kiemTraBatThuongKhiQuet({ kg: kgChuan });
+    if (canhBaoLa && typeof showCanhBaoQR === "function") showCanhBaoQR(canhBaoLa, "warning");
+  }
 
   maQRVuaQuetQR = data.id || rawText || "";
   const lockStatusEl = document.getElementById("qr-lock-status");
@@ -1488,7 +1496,9 @@ function quetMoiQuetQR() {
 window.quetMoiQuetQR = quetMoiQuetQR;
 
 // ── Gửi Dữ Liệu Lên Sheet ──────────────────────────────────────────
+let dangGuiQuetQR = false;
 async function guiDuLieuQuetQR() {
+  if (dangGuiQuetQR) return;
   if (soLuongDaGuiHienTaiQR > 0 && !phienQuetQR.some(r => r.daGui !== undefined)) {
     for (let i = 0; i < Math.min(soLuongDaGuiHienTaiQR, phienQuetQR.length); i++) {
       phienQuetQR[i].daGui = true;
@@ -1501,6 +1511,7 @@ async function guiDuLieuQuetQR() {
     return;
   }
 
+  dangGuiQuetQR = true;
   const btnGui = document.getElementById("btn-gui-dulieu-qr");
   if (btnGui) {
     btnGui.disabled = true;
@@ -1554,6 +1565,8 @@ async function guiDuLieuQuetQR() {
       btnGui.classList.toggle("is-pending", phienQuetQR.length > 0);
       btnGui.innerHTML = '<i class="ti ti-cloud-upload"></i> Gửi dữ liệu lên Sheet';
     }
+  } finally {
+    dangGuiQuetQR = false;
   }
 
   if (typeof capNhatTrangThaiMang === "function") capNhatTrangThaiMang();
@@ -1563,13 +1576,19 @@ window.guiDuLieuQuetQR = guiDuLieuQuetQR;
 async function guiLenSheetQuetQR(rows) {
   // Gửi song song theo pool 5 requests để tối ưu tốc độ nhanh nhất
   const POOL_SIZE = 5;
+  const appToken = (window.APP_CONFIG && typeof window.APP_CONFIG.getAppToken === "function") ? window.APP_CONFIG.getAppToken() : "";
+  const nguoiThaoTac = (window.APP_CONFIG && typeof window.APP_CONFIG.getNguoiThaoTac === "function") ? window.APP_CONFIG.getNguoiThaoTac() : "Admin";
   for (let i = 0; i < rows.length; i += POOL_SIZE) {
     const chunk = rows.slice(i, i + POOL_SIZE);
     const promises = chunk.map(r => {
+      const reqId = "qr_" + String(r.id || "").replace(/\s+/g, "") + "_" + String(r.thoiGian || "");
       return fetch(URL_API_QUETQR, {
         method: "POST",
         body: JSON.stringify({
           action: "luuGiaoDich",
+          requestId: reqId,
+          appToken: appToken,
+          nguoiThaoTac: nguoiThaoTac,
           id: r.id,
           msp: r.msp,
           ten: r.qc || r.msp,

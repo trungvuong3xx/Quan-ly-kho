@@ -2165,14 +2165,14 @@ function tiepTucTuChiTietLichSuBTP() {
 }
 window.tiepTucTuChiTietLichSuBTP = tiepTucTuChiTietLichSuBTP;
 
-// ── [TỐI ƯU MỤC 7.4]: Xuất CSV / Excel an toàn chống CSV Injection ──
-function anToanCongThucExcel(str) {
+// ── [TỐI ƯU MỤC 7.4]: Xuất CSV / Excel an toàn chống CSV Injection (dùng chung ScannerCore) ──
+function anToanExcelBTP_(str) {
+  if (window.ScannerCore && typeof window.ScannerCore.anToanCongThucExcel === "function") {
+    return window.ScannerCore.anToanCongThucExcel(str);
+  }
   if (str === null || str === undefined) return "";
   const s = String(str);
-  if (/^[=+\-@\t\r]/.test(s)) {
-    return "'" + s;
-  }
-  return s;
+  return /^[=+\-@\t\r]/.test(s) ? "'" + s : s;
 }
 
 function xuatCSVBTP() {
@@ -2180,9 +2180,9 @@ function xuatCSVBTP() {
   const header = ["Dot", "Mã QR Gốc", "Mã BTP", "Loại", "Thời Gian"];
   const rows = phienBTP.map(r => [
     r.dotQuet || 1,
-    anToanCongThucExcel(r.rawQR),
-    anToanCongThucExcel(r.msp),
-    anToanCongThucExcel(r.kg),
+    anToanExcelBTP_(r.rawQR),
+    anToanExcelBTP_(r.msp),
+    anToanExcelBTP_(r.kg),
     r.thoiGian ? (typeof r.thoiGian.toISOString === "function" ? r.thoiGian.toISOString() : r.thoiGian) : ""
   ]);
 
@@ -2213,9 +2213,9 @@ function xuatExcelBTP() {
     "STT": i + 1,
     "Đợt": r.dotQuet || 1,
     "Ngày": ngay,
-    "Mã QR Gốc": anToanCongThucExcel(r.rawQR),
-    "Mã BTP": anToanCongThucExcel(r.msp),
-    "Loại": anToanCongThucExcel(r.kg),
+    "Mã QR Gốc": anToanExcelBTP_(r.rawQR),
+    "Mã BTP": anToanExcelBTP_(r.msp),
+    "Loại": anToanExcelBTP_(r.kg),
     "Thời gian": r.thoiGian ? new Date(r.thoiGian).toLocaleTimeString("vi-VN") : ""
   }));
 
@@ -2241,9 +2241,9 @@ function xuatExcelLichSuBTP() {
         "STT": stt++,
         "Ngày": s.ngay || "—",
         "Đợt": r.dotQuet || 1,
-        "Mã QR Gốc": anToanCongThucExcel(r.rawQR),
-        "Mã BTP": anToanCongThucExcel(r.msp),
-        "Loại": anToanCongThucExcel(r.kg),
+        "Mã QR Gốc": anToanExcelBTP_(r.rawQR),
+        "Mã BTP": anToanExcelBTP_(r.msp),
+        "Loại": anToanExcelBTP_(r.kg),
         "Thời gian": r.thoiGian ? new Date(r.thoiGian).toLocaleTimeString("vi-VN") : ""
       });
     });
