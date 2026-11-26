@@ -500,13 +500,10 @@ html[data-theme="light"][data-skin="pa12"] .nav-item.active .text-icon {
 }
 
 /* ── BẢO VỆ HIỆU NĂNG K20 PRO KHI ĐANG QUÉT CAMERA ────────── */
-body.cam-active * {
+/* Chỉ tạm dừng hiệu ứng nền trang trí của PA10; KHÔNG dùng `body.cam-active *` vì sẽ làm đứng popup xóa (.overlay-card slideUp) */
+html[data-theme="light"][data-skin="pa10"] body.cam-active .kq-btn--primary,
+html[data-theme="light"][data-skin="pa10"] body.cam-active .nav-item.active {
   animation-play-state: paused;
-}
-body.cam-active .reticle-laser-line,
-body.cam-active .spinner-loading,
-body.cam-active .live-pulse-dot {
-  animation-play-state: running;
 }
 html[data-theme="light"][data-skin="pa8"] body.cam-active #form-chon,
 html[data-theme="light"][data-skin="pa8"] body.cam-active #cx1-form,

@@ -325,6 +325,12 @@ function phatTiengBip() {
       source.start(0);
       return;
     }
+    // Dùng WebAudio tổng hợp thay vì HTML5 <audio> khi buffer chưa giải mã xong
+    // Tránh Android WebView cướp media focus làm tạm dừng <video> camera sau lần quét đầu tiên
+    if (fastAudioCtx) {
+      phatAmThanhSung(fastAudioCtx);
+      return;
+    }
   } catch (e) { }
 
   // 2. Thử phát qua HTML5 Audio Element (dự phòng)
@@ -1518,6 +1524,15 @@ async function khoiTaoCameraFast(videoId, onDecodedCallback) {
   let lastMotionSamples = null;
 
   let isScanning = true;
+  videoEl.onpause = () => {
+    if (isScanning && videoEl.srcObject && document.visibilityState === 'visible') {
+      setTimeout(() => {
+        if (isScanning && videoEl.srcObject && videoEl.paused && document.visibilityState === 'visible') {
+          videoEl.play().catch(() => { });
+        }
+      }, 60);
+    }
+  };
   let isDecoding = false;
   let lastScanSuccessTime = Date.now();
   let lastVideoTime = -1;
@@ -1715,6 +1730,7 @@ async function khoiTaoCameraFast(videoId, onDecodedCallback) {
   return {
     reset: () => {
       isScanning = false;
+      videoEl.onpause = null;
       if (animFrameMap[videoId]) {
         clearTimeout(animFrameMap[videoId]);
         animFrameMap[videoId] = null;

@@ -34,8 +34,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
-  <link rel="stylesheet" href="style.css?v=20261126-v175">
-  <link rel="stylesheet" href="themes.css?v=20261126-v175">
+  <link rel="stylesheet" href="style.css?v=20261126-v176">
+  <link rel="stylesheet" href="themes.css?v=20261126-v176">
   <link rel="stylesheet" href="lib/tabler-icons.min.css">
   <script src="lib/qrcode.min.js" defer></script>
   <script src="lib/zxing.min.js" defer></script>
@@ -534,7 +534,7 @@
     <span id="qr-dem" style="display:none;"></span>
     <input type="checkbox" id="qr-cho-phep-trung-cam" style="display:none;" onchange="if(typeof capNhatTrangThaiTrungQR==='function') capNhatTrangThaiTrungQR()">
     <div id="qr-video-box" class="video-container btp-camera-main">
-      <video id="reader" autoplay playsinline muted disablePictureInPicture style="position:absolute; width:100%; height:100%; object-fit:cover; transform:translateZ(0); will-change:transform;"></video>
+      <video id="reader" autoplay playsinline muted disablePictureInPicture poster="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" style="position:absolute; width:100%; height:100%; object-fit:cover; transform:translateZ(0); will-change:transform;"></video>
       <div id="qr-cam-flash-overlay" class="cam-flash-overlay"></div>
 
       <!-- Khung ngắm Reticle 4 góc bo + laser scan -->
@@ -786,7 +786,7 @@
     </div>
     <div id="kk-cam" style="display:none; width:100%; max-width:600px; box-sizing:border-box; margin:0 auto; padding:6px 0;">
       <div id="kk-video-box" class="video-container btp-camera-main" style="margin-top:8px;">
-        <video id="kk-reader" autoplay playsinline muted disablePictureInPicture style="position:absolute; width:100%; height:100%; object-fit:cover; transform:translateZ(0); will-change:transform;"></video>
+        <video id="kk-reader" autoplay playsinline muted disablePictureInPicture poster="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" style="position:absolute; width:100%; height:100%; object-fit:cover; transform:translateZ(0); will-change:transform;"></video>
         <div id="kk-cam-flash-overlay" class="cam-flash-overlay"></div>
 
         <!-- Khung ngắm Reticle 4 góc bo + laser scan -->
@@ -855,7 +855,7 @@
     <span id="cx1-dem" class="cx5-badge" style="display:none;"></span>
     <input type="checkbox" id="cx1-cho-phep-trung-cam" style="display:none;" onchange="if(typeof capNhatTrangThaiTrungCX1==='function') capNhatTrangThaiTrungCX1()">
     <div id="cx1-video-box" class="video-container btp-camera-main">
-      <video id="cx1-reader" autoplay playsinline muted disablePictureInPicture style="position:absolute; width:100%; height:100%; object-fit:cover; transform:translateZ(0); will-change:transform;"></video>
+      <video id="cx1-reader" autoplay playsinline muted disablePictureInPicture poster="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" style="position:absolute; width:100%; height:100%; object-fit:cover; transform:translateZ(0); will-change:transform;"></video>
       <div id="cx1-cam-flash-overlay" class="cam-flash-overlay"></div>
 
       <!-- Khung ngắm Reticle 4 góc bo + laser scan -->
@@ -1113,7 +1113,7 @@
     <span id="btp-dem" style="display:none;"></span>
     <input type="checkbox" id="btp-cho-phep-trung-cam" style="display:none;">
     <div id="btp-video-box" class="video-container btp-camera-main">
-      <video id="btp-reader" autoplay playsinline muted disablePictureInPicture style="position:absolute; width:100%; height:100%; object-fit:cover; transform:translateZ(0); will-change:transform;"></video>
+      <video id="btp-reader" autoplay playsinline muted disablePictureInPicture poster="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" style="position:absolute; width:100%; height:100%; object-fit:cover; transform:translateZ(0); will-change:transform;"></video>
       <div id="btp-cam-flash-overlay" class="cam-flash-overlay"></div>
 
       <!-- Khung ngắm Reticle 4 góc bo + laser scan -->
@@ -1399,7 +1399,7 @@
     <span id="tp-dem" style="display:none;"></span>
     <input type="checkbox" id="tp-cho-phep-trung-cam" style="display:none;">
     <div id="tp-video-box" class="video-container tp-camera-main">
-      <video id="tp-reader" autoplay playsinline muted disablePictureInPicture style="position:absolute; width:100%; height:100%; object-fit:cover; transform:translateZ(0); will-change:transform;"></video>
+      <video id="tp-reader" autoplay playsinline muted disablePictureInPicture poster="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" style="position:absolute; width:100%; height:100%; object-fit:cover; transform:translateZ(0); will-change:transform;"></video>
       <div id="tp-cam-flash-overlay" class="cam-flash-overlay"></div>
 
       <!-- Khung ngắm Reticle 4 góc bo + laser scan -->
@@ -1921,11 +1921,11 @@
 
 </div><!-- /#app-viewport -->
 
-<script src="app.js?v=20261126-v173" defer></script>
+<script src="app.js?v=20261126-v176" defer></script>
 <script src="scanner-core.js?v=20261107-v160" defer></script>
 <script src="quetqr.js?v=20261126-v173" defer></script>
 <script src="kiemke.js?v=20261125-v169" defer></script>
-<script src="cx1.js?v=20261126-v173" defer></script>
+<script src="cx1.js?v=20261126-v176" defer></script>
 <script src="cx5.js?v=20261126-v173" defer></script>
 <script src="btp.js?v=20261107-v160" defer></script>
 <script src="tp.js?v=20261125-v169" defer></script>

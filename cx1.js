@@ -262,6 +262,7 @@ async function tiepTucKhoiTaoCX1(cheDo = "quet") {
 
   cheDoCX1 = "quet";
   dangQuetCX1 = true;
+  window.dangQuetCX1 = true;
   dangNhapCX1 = false;
   denPinBat = false;
   if (typeof dongBanPhimCX5 === "function") dongBanPhimCX5();
@@ -303,6 +304,7 @@ async function tiepTucKhoiTaoCX1(cheDo = "quet") {
           khiQuetDuocMa({ getText: () => txt });
         }
       });
+      window.zxingReaderCX1 = zxingReaderCX1;
     } else if (cx1Vid && cx1Vid.paused) {
       cx1Vid.play().catch(() => { });
     }
@@ -372,7 +374,11 @@ async function tiepTucCX1() {
   }
 }
 
+let _lastToggleCX1At = 0;
 function toggleDungTiepTuc() {
+  const now = Date.now();
+  if (now - _lastToggleCX1At < 300) return;
+  _lastToggleCX1At = now;
   if (dangQuetCX1) {
     dungCX1();
   } else {
@@ -1843,6 +1849,8 @@ async function quetTiepCX1() {
     btnToggle.classList.remove("paused");
     btnToggle.title = "Dừng quét";
   }
+  const pauseOverlay = document.getElementById("cx1-cam-pause-overlay");
+  if (pauseOverlay) pauseOverlay.style.display = "none";
 
   try {
     const cx1Vid = document.getElementById("cx1-reader");
@@ -1858,6 +1866,7 @@ async function quetTiepCX1() {
           khiQuetDuocMa({ getText: () => txt });
         }
       });
+      window.zxingReaderCX1 = zxingReaderCX1;
     } else if (cx1Vid && cx1Vid.paused) {
       cx1Vid.play().catch(() => { });
     }
@@ -1972,6 +1981,8 @@ async function khoiPhucCX1(state) {
     btnToggle.classList.remove("paused");
     btnToggle.title = "Dừng quét";
   }
+  const pauseOverlay = document.getElementById("cx1-cam-pause-overlay");
+  if (pauseOverlay) pauseOverlay.style.display = "none";
 
   try {
     const cx1Vid = document.getElementById("cx1-reader");
@@ -1987,6 +1998,7 @@ async function khoiPhucCX1(state) {
           khiQuetDuocMa({ getText: () => txt });
         }
       });
+      window.zxingReaderCX1 = zxingReaderCX1;
     } else if (cx1Vid && cx1Vid.paused) {
       cx1Vid.play().catch(() => { });
     }

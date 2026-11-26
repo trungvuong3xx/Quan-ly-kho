@@ -2658,6 +2658,17 @@ body.cam-active *::after {
   animation: laserScan 2.4s ease-in-out infinite alternate;
 }
 
+.video-container video::-webkit-media-controls,
+.video-container video::-webkit-media-controls-enclosure,
+.video-container video::-webkit-media-controls-panel,
+.video-container video::-webkit-media-controls-start-playback-button,
+.video-container video::-webkit-media-controls-overlay-play-button {
+  display: none !important;
+  -webkit-appearance: none !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
 .video-container:has(.cam-pause-overlay[style*="flex"]) .reticle-laser-line,
 .video-container:has(.cam-sleep-overlay[style*="flex"]) .reticle-laser-line {
   animation-play-state: paused;
