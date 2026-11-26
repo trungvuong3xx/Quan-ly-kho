@@ -368,7 +368,7 @@ function themMaNhapTayQR() {
   }
 
   if (typeof phatTiengBip === "function") phatTiengBip();
-  luuPhienDoDangQR();
+  luuPhienDoDangQRDebounced();
   capNhatLogQR();
 
   if (kgInput) {
@@ -596,7 +596,7 @@ function khiQuetDuocMaQR(result) {
   const demEl = document.getElementById("qr-dem");
   if (demEl) demEl.textContent = "Đã quét: " + phienQuetQR.length + " bao";
 
-  luuPhienDoDangQR();
+  luuPhienDoDangQRDebounced();
   capNhatLogQR();
 
   maQRVuaQuetQR = data.id || rawText || "";
@@ -737,8 +737,13 @@ function toggleChiTietQRGroup(groupKey) {
   const chevList = document.querySelectorAll('[id="chev-' + safeId + '"]');
   const isOpen = window.expandedQRGroups.has(groupKey);
   if (detailsList.length > 0) {
-    detailsList.forEach(el => el.style.display = isOpen ? 'block' : 'none');
+    let canRenderLai = false;
+    detailsList.forEach(el => {
+      if (isOpen && el.innerHTML.trim() === "") canRenderLai = true;
+      el.style.display = isOpen ? 'block' : 'none';
+    });
     chevList.forEach(el => el.style.transform = isOpen ? 'rotate(180deg)' : 'none');
+    if (canRenderLai) capNhatLogQR();
   } else {
     capNhatLogQR();
   }
@@ -881,7 +886,8 @@ function capNhatLogQR() {
     const kgText = tongKgNhom > 0 ? (Number.isInteger(tongKgNhom) ? tongKgNhom : tongKgNhom.toFixed(1)) : '—';
     const escapedKeyJs = String(g.key || "").replace(/\\/g, "\\\\").replace(/'/g, "\\'").replace(/"/g, "&quot;");
 
-    let subItemsHtml = g.items.map((it, subIdx) => {
+    // Lazy-render: chỉ dựng HTML các bao con khi nhóm đang được người dùng mở
+    let subItemsHtml = !isExpanded ? "" : g.items.map((it, subIdx) => {
       const subGio = it.item.thoiGian ? new Date(it.item.thoiGian).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit", second: "2-digit" }) : "";
       const subKg = (it.item.kg !== undefined && it.item.kg !== null && Number(it.item.kg) > 0) ? it.item.kg : '0';
       const safeSubQc = typeof escapeHtml === "function" ? escapeHtml(it.item.qc || g.qc) : (it.item.qc || g.qc);
@@ -926,11 +932,16 @@ function capNhatLogQR() {
     html += `<div style="text-align:center; padding:6px 0; font-size:11px; color:#64748b; font-style:italic;">... và ${conLai} loại mã trước đó (xem đầy đủ ở bảng kết quả)</div>`;
   }
 
-  if (container) container.innerHTML = html;
-  if (containerNhap) containerNhap.innerHTML = html;
-
-  khoiTaoSuKienSwipeQR("qr-log-list");
-  khoiTaoSuKienSwipeQR("qr-nhap-log-list");
+  const camVisible = container && container.offsetParent !== null;
+  const nhapVisible = containerNhap && containerNhap.offsetParent !== null;
+  if (container && (camVisible || !nhapVisible)) {
+    container.innerHTML = html;
+    khoiTaoSuKienSwipeQR("qr-log-list");
+  }
+  if (containerNhap && (nhapVisible || !camVisible)) {
+    containerNhap.innerHTML = html;
+    khoiTaoSuKienSwipeQR("qr-nhap-log-list");
+  }
 }
 
 // ── Quản lý trạng thái Accordion Bảng Kết Quả Quét QR ──────────────────
@@ -1596,7 +1607,22 @@ function luuPendingQuetQR(list) {
 window.luuPendingQuetQR = luuPendingQuetQR;
 
 // ── Quản lý Phiên Dở Dang ──────────────────────────────────────────
+let _timerLuuPhienQR = null;
+function luuPhienDoDangQRDebounced() {
+  if (_timerLuuPhienQR) clearTimeout(_timerLuuPhienQR);
+  _timerLuuPhienQR = setTimeout(() => {
+    _timerLuuPhienQR = null;
+    luuPhienDoDangQR();
+  }, 500);
+}
+window.addEventListener("pagehide", function () { if (_timerLuuPhienQR) luuPhienDoDangQR(); });
+document.addEventListener("visibilitychange", function () { if (document.visibilityState === "hidden" && _timerLuuPhienQR) luuPhienDoDangQR(); });
+
 function luuPhienDoDangQR() {
+  if (_timerLuuPhienQR) {
+    clearTimeout(_timerLuuPhienQR);
+    _timerLuuPhienQR = null;
+  }
   if (phienQuetQR.some(r => r.daGui !== undefined)) {
     soLuongDaGuiHienTaiQR = phienQuetQR.filter(r => r.daGui).length;
   }

@@ -171,11 +171,26 @@ function khiQuetDuocMa(result) {
     kg: data.kg, thoiGian: new Date(), dotQuet: demSoDot
   });
   document.getElementById("cx1-dem").textContent = "Đã quét: " + phienCX1.length + " mã";
-  luuPhienDoDangCX1();
+  luuPhienDoDangCX1Debounced();
   capNhatLogCX1();
 }
 
+let _timerLuuPhienCX1 = null;
+function luuPhienDoDangCX1Debounced() {
+  if (_timerLuuPhienCX1) clearTimeout(_timerLuuPhienCX1);
+  _timerLuuPhienCX1 = setTimeout(() => {
+    _timerLuuPhienCX1 = null;
+    luuPhienDoDangCX1();
+  }, 500);
+}
+window.addEventListener("pagehide", function () { if (_timerLuuPhienCX1) luuPhienDoDangCX1(); });
+document.addEventListener("visibilitychange", function () { if (document.visibilityState === "hidden" && _timerLuuPhienCX1) luuPhienDoDangCX1(); });
+
 function luuPhienDoDangCX1() {
+  if (_timerLuuPhienCX1) {
+    clearTimeout(_timerLuuPhienCX1);
+    _timerLuuPhienCX1 = null;
+  }
   try {
     localStorage.setItem("cx1_phien_dodang", JSON.stringify({
       phienCX1, demSoDot, ngayCX1, capNhat: new Date().toISOString(),
@@ -1253,8 +1268,13 @@ function toggleChiTietCX1Group(groupKey) {
   const chevList = document.querySelectorAll('[id="chev-' + safeId + '"]');
   const isOpen = window.expandedCX1Groups.has(groupKey);
   if (detailsList.length > 0) {
-    detailsList.forEach(el => el.style.display = isOpen ? 'block' : 'none');
+    let canRenderLai = false;
+    detailsList.forEach(el => {
+      if (isOpen && el.innerHTML.trim() === "") canRenderLai = true;
+      el.style.display = isOpen ? 'block' : 'none';
+    });
     chevList.forEach(el => el.style.transform = isOpen ? 'rotate(180deg)' : 'none');
+    if (canRenderLai) capNhatLogCX1();
   } else {
     capNhatLogCX1();
   }
@@ -1396,7 +1416,8 @@ function capNhatLogCX1() {
     const kgText = tongKgNhom > 0 ? (Number.isInteger(tongKgNhom) ? tongKgNhom : tongKgNhom.toFixed(1)) : '—';
     const escapedKeyJs = String(g.key || "").replace(/\\/g, "\\\\").replace(/'/g, "\\'").replace(/"/g, "&quot;");
 
-    let subItemsHtml = g.items.map((it, subIdx) => {
+    // Lazy-render: chỉ dựng HTML các bao con khi nhóm đang mở
+    let subItemsHtml = !isExpanded ? "" : g.items.map((it, subIdx) => {
       const subGio = it.item.thoiGian ? new Date(it.item.thoiGian).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit", second: "2-digit" }) : "";
       const subKg = (it.item.kg !== undefined && it.item.kg !== null && Number(it.item.kg) > 0) ? it.item.kg : '0';
       const safeSubQc = typeof escapeHtml === "function" ? escapeHtml(it.item.qc || g.qc) : (it.item.qc || g.qc);
@@ -1441,8 +1462,10 @@ function capNhatLogCX1() {
     html += `<div style="text-align:center; padding:6px 0; font-size:11px; color:#64748b; font-style:italic;">... và ${conLai} loại mã trước đó (xem đầy đủ ở bảng kết quả)</div>`;
   }
 
-  if (containerQuet) containerQuet.innerHTML = html;
-  if (containerNhap) containerNhap.innerHTML = html;
+  const camVisible = containerQuet && containerQuet.offsetParent !== null;
+  const nhapVisible = containerNhap && containerNhap.offsetParent !== null;
+  if (containerQuet && (camVisible || !nhapVisible)) containerQuet.innerHTML = html;
+  if (containerNhap && (nhapVisible || !camVisible)) containerNhap.innerHTML = html;
 
   khoiTaoSuKienSwipeCX1("cx1-log-list");
   khoiTaoSuKienSwipeCX1("cx1-nhap-log-list");
