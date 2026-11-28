@@ -998,6 +998,23 @@ function xoaDongCX5(seq) {
   if (!dong) return;
   if (dong.daDongBo) { showCanhBaoCX5("Đã đồng bộ, không thể xoá"); return; }
   phienCX5 = phienCX5.filter(r => r.seq !== seq);
+  // Dọn các thẻ pallet mồ côi trong tongKgDataCX5 khi QC/lượt đã bị xóa hết khỏi phienCX5
+  if (phienCX5.length === 0) {
+    tongKgDataCX5 = {};
+    tongKetPhienCX5 = [];
+  } else if (tongKgDataCX5 && typeof tongKgDataCX5 === "object") {
+    const activeLotIds = new Set(phienCX5.map(r => idPhienHienTaiC5 + "_" + r.luot));
+    const activeQcKeys = new Set(phienCX5.map(r => String(r.msp || "").trim() + "|" + String(r.ten || "").trim()));
+    Object.keys(tongKgDataCX5).forEach(k => {
+      const card = tongKgDataCX5[k];
+      if (!card) { delete tongKgDataCX5[k]; return; }
+      const qcKey = String(card.msp || "").trim() + "|" + String(card.ten || "").trim();
+      const lotId = card.homNay && card.homNay.lotId;
+      if (!activeQcKeys.has(qcKey) || (lotId && !activeLotIds.has(lotId))) {
+        delete tongKgDataCX5[k];
+      }
+    });
+  }
   luuPhienDoDangCX5();
   renderBangChiTietCX5();
   renderBangTongHopCX5();
@@ -2051,8 +2068,13 @@ async function dongBoTrucTiepCX5() {
 window.dongBoTrucTiepCX5 = dongBoTrucTiepCX5;
 
 function buildLocalTongKgDataCX5(dsQC) {
-  if (!dsQC || dsQC.length === 0) return;
+  if (!dsQC || dsQC.length === 0) {
+    tongKgDataCX5 = {};
+    tongKetPhienCX5 = [];
+    return;
+  }
   const oldState = Object.assign({}, tongKgDataCX5);
+  tongKgDataCX5 = {};
   const daXuLyQC = new Set();
 
   dsQC.forEach(function (q) {
@@ -2166,6 +2188,7 @@ function moTongKgCX5(dsQC) {
       }
       
       const oldState = Object.assign({}, tongKgDataCX5);
+      tongKgDataCX5 = {};
       tongKetPhienCX5 = [];
       const daXuLyQC = new Set();
       dsQC.forEach(function (q) {
